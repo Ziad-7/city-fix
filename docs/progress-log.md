@@ -2,6 +2,22 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-21 — Phase B: all citizen screens (branch `feat/mobile-citizen-app`)
+
+**Done** (two Sonnet 5.5 implementers in parallel, checked by Claude Opus 5.5)
+- **B1:** Home (greeting, red hero with the Cairo skyline, service tiles, "حوالين بيتك" with "أنا كمان", latest updates, emergency numbers); problem type screen (emergency box, 12 Egyptian categories with "خطر" tags, voice entry, utility hotlines); report form (camera/gallery photos, mock AI suggestion with top-3 categories and severity, description, GPS location with fallback, landmark, privacy toggles, duplicate panel "نفس المشكلة، تابعها", offline note); "تسلم إيدك!" success screen with the جدع الشارع medal progress and share.
+- **B2:** طلباتي list with filters; request tracking (summary, priority strip with reasons, RTL timeline, WhatsApp updates toggle, share, dev-only "simulate progress"); CityServe catalog and bulky-waste booking (items, working-day picker, slot, payment, fee placeholder) that lands in طلباتي; CityPulse map with status/category filters and a pin card; profile (name, area, toggles, stats and medal, sign out).
+- Checks: typecheck and lint clean, 61 tests in 14 suites passing.
+- Docs: [API contract](api-contract.md) and [team role briefs](team/README.md) so backend & database, AI, admin web and optimizer/DevOps can work in parallel.
+
+**How to test**
+- `cd apps/mobile && npx expo start`, sign in with `01012345678` / `123456`, send a report (try "فيه حفرة كبيرة قدام المدرسة" with the pothole category to see the AI card and the duplicate panel), book a bulky-waste pickup, and open both in طلباتي.
+
+**Known issues (going to review)**
+- On/off switches look broken in the web preview; `Alert` dialogs don't show on web.
+- Voice notes and notifications are stubs ("قريبًا"); the map in the report form is a static preview.
+- Not yet run on a real phone.
+
 ## 2026-10-21 — Phase A: mobile foundation (branch `feat/mobile-citizen-app`)
 
 **Done** (implemented by Sonnet 5.5, checked by Claude Opus 5.5)
