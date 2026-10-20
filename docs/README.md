@@ -8,6 +8,8 @@
 | [`design/screens/`](design/screens/) | HTML mockups of every screen — open in a browser |
 | [`design/assets/`](design/assets/) | Logo and skyline SVGs |
 | [`mobile/implementation-spec.md`](mobile/implementation-spec.md) | What the citizen app must do, routes, architecture, environment gotchas |
+| [`api-contract.md`](api-contract.md) | The API between the apps and the backend — endpoints, shapes, business rules |
+| [`team/`](team/) | Role briefs: who works on what in parallel (backend & database, AI, admin web, optimizer/DevOps) |
 | [`progress-log.md`](progress-log.md) | Dated log of what was built, how to test it, known issues |
 
 Live design files (private until shared by the owner): the design system and the screen canvas are on claude.ai — ask Abood for access.
