@@ -1,0 +1,45 @@
+import { StyleSheet, View } from 'react-native';
+import { STATUS_LABEL_AR, type IncidentStatus } from '@/domain/types';
+import { colors, radius } from '@/theme/tokens';
+import { AppText } from './AppText';
+
+export type ChipKind = IncidentStatus | 'critical';
+
+export const STATUS_COLORS: Record<ChipKind, { fg: string; bg: string }> = {
+  received: { fg: colors.statusReceived, bg: colors.statusReceivedBg },
+  triaged: { fg: colors.statusReceived, bg: colors.statusReceivedBg },
+  assigned: { fg: colors.statusAssigned, bg: colors.statusAssignedBg },
+  in_progress: { fg: colors.statusProgress, bg: colors.statusProgressBg },
+  resolved: { fg: colors.statusResolved, bg: colors.statusResolvedBg },
+  closed: { fg: colors.statusReceived, bg: colors.statusReceivedBg },
+  critical: { fg: colors.urgentDeep, bg: colors.urgentSoft },
+};
+
+/** Pin colours for the map (same status language as chips). */
+export const statusColor = (s: IncidentStatus) => STATUS_COLORS[s].fg;
+
+export type StatusChipProps = {
+  status: ChipKind;
+  /** Override the Arabic label (default: the status label; critical = "خطر"). */
+  label?: string;
+};
+
+/** Pill with a 6 px dot and an Arabic word: status is never colour-only. */
+export function StatusChip({ status, label }: StatusChipProps) {
+  const c = STATUS_COLORS[status];
+  const text = label ?? (status === 'critical' ? 'خطر' : STATUS_LABEL_AR[status]);
+  return (
+    <View style={[styles.chip, { backgroundColor: c.bg }]}>
+      <View style={[styles.dot, { backgroundColor: c.fg }]} />
+      <AppText variant="caption" color={c.fg} style={styles.text}>
+        {text}
+      </AppText>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 26, paddingHorizontal: 10, borderRadius: radius.pill, alignSelf: 'flex-start' },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  text: { fontWeight: '600', lineHeight: 18 },
+});
