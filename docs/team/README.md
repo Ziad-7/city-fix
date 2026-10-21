@@ -22,7 +22,7 @@ The citizen mobile app (and the citizen website) run on mock data behind a fixed
 ## Admin web — City Command Center (short brief)
 
 - Next.js + TypeScript + Tailwind, Arabic RTL, the flag palette from `docs/design/tokens.json`.
-- Screens: incident queue with priority breakdown and work-order panel (`docs/design/screens/Admin.html`), budget optimizer (`docs/design/screens/Budget.html`), map, service-request queue.
+- Screens: incident queue with priority breakdown and work-order panel (`docs/design/screens/admin/Incidents.html`), budget optimizer (`docs/design/screens/admin/Budget.html`), map, service-request queue.
 - Start on mock data behind the same typed service interfaces as the mobile app (copy `apps/mobile/src/domain/types.ts`), then switch to the API.
 
 ## Budget optimizer + DevOps (short brief)
