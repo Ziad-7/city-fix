@@ -75,7 +75,7 @@
 
 .board-wrap{position:relative}
 .board{display:grid;grid-template-columns:repeat(4,minmax(240px,1fr));gap:14px;overflow-x:auto;padding-bottom:6px}
-.colm{background:#EFEBE3;border-radius:var(--ftc-radius-md);padding:12px;display:flex;flex-direction:column;gap:10px;min-height:560px}
+.colm{background:#EFEBE3;border-radius:var(--ftc-radius-md);padding:12px;display:flex;flex-direction:column;gap:10px;min-height:800px}
 .colm h2{margin:0;font:600 15px/24px var(--ftc-font-display);display:flex;align-items:center;gap:8px}
 .colm h2 .n{margin-inline-start:auto;background:var(--ftc-surface);border-radius:999px;padding:0 10px;font-size:13px;line-height:22px;font-family:var(--ftc-font-sans);font-variant-numeric:tabular-nums}
 .colm .dot{width:10px;height:10px;border-radius:50%}
@@ -99,7 +99,7 @@
 .tasks .box{width:20px;height:20px;border-radius:6px;border:2px solid var(--ftc-line);display:flex;align-items:center;justify-content:center;flex:none}
 .tasks .done .box{background:var(--ftc-status-resolved);border-color:var(--ftc-status-resolved);color:#fff}
 .is-hidden{display:none!important}
-@media (max-width:760px){.board{grid-template-columns:repeat(4,260px)}.drawer{position:static;width:auto;margin-top:12px}.scrim{display:none}.board-wrap{display:flex;flex-direction:column}}
+@media (max-width:760px){.colm{min-height:0}.board{grid-template-columns:repeat(4,260px)}.drawer{position:static;width:auto;margin-top:12px}.scrim{display:none}.board-wrap{display:flex;flex-direction:column}}
 </style>
 </head>
 <body>
