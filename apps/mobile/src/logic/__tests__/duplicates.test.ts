@@ -1,5 +1,5 @@
 import { buildSeed } from '@/services/mock/seed';
-import { findDuplicates } from '../duplicates';
+import { findDuplicates, pickDuplicateView, splitByUser } from '../duplicates';
 import { haversineM } from '@/utils/geo';
 
 const { incidents } = buildSeed(Date.UTC(2026, 9, 21, 12));
@@ -28,5 +28,36 @@ describe('findDuplicates', () => {
     const at = { lat: pothole.location.lat + 0.004, lng: pothole.location.lng };
     expect(findDuplicates(incidents, 'pothole', at)).toHaveLength(0);
     expect(findDuplicates(incidents, 'pothole', at, 600)).toHaveLength(1);
+  });
+});
+
+describe('splitByUser', () => {
+  const near = findDuplicates(incidents, 'pothole', pothole.location);
+  it('moves the user\'s own incident to alreadyReported with its report id', () => {
+    const r = splitByUser(near, new Map([[pothole.id, 'FTC-1042']]), new Set());
+    expect(r.duplicates).toHaveLength(0);
+    expect(r.alreadyReported).toEqual([expect.objectContaining({ incidentId: pothole.id, reportId: 'FTC-1042' })]);
+  });
+  it('drops followed incidents entirely', () => {
+    const r = splitByUser(near, new Map(), new Set([pothole.id]));
+    expect(r).toEqual({ duplicates: [], alreadyReported: [] });
+  });
+  it('keeps everything else joinable', () => {
+    expect(splitByUser(near, new Map(), new Set()).duplicates).toHaveLength(1);
+  });
+});
+
+describe('pickDuplicateView', () => {
+  const match = { incidentId: 'A', title: 't', categoryId: 'pothole' as const, distanceM: 120, followers: 3, status: 'received' as const };
+  const own = { incidentId: 'B', reportId: 'FTC-1', title: 't', categoryId: 'pothole' as const, distanceM: 40 };
+  it('shows the own-report note when the nearest match is the user\'s own', () => {
+    expect(pickDuplicateView({ duplicates: [match], alreadyReported: [own] }, 'pothole')).toEqual({ kind: 'own', own });
+  });
+  it('offers the join panel when a joinable duplicate is nearer than the own one', () => {
+    expect(pickDuplicateView({ duplicates: [{ ...match, distanceM: 10 }], alreadyReported: [own] }, 'pothole').kind).toBe('join');
+  });
+  it('ignores matches of another category than the one being submitted', () => {
+    expect(pickDuplicateView({ duplicates: [match], alreadyReported: [own] }, 'garbage')).toEqual({ kind: 'none' });
+    expect(pickDuplicateView(null, 'pothole')).toEqual({ kind: 'none' });
   });
 });

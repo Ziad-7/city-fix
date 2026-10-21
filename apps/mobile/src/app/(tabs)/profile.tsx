@@ -1,5 +1,5 @@
 import Constants from 'expo-constants';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { EmergencyRow } from '@/components';
 import { Icon } from '@/components/Icon';
@@ -19,6 +19,10 @@ export default function ProfileScreen() {
 
   const [draft, setDraft] = useState(name ?? '');
   const [saved, setSaved] = useState(false);
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (savedTimer.current) clearTimeout(savedTimer.current);
+  }, []);
 
   const stats = useMemo(() => {
     const byId = new Map(incidents.map((i) => [i.id, i]));
@@ -39,7 +43,8 @@ export default function ProfileScreen() {
   const saveName = () => {
     setName(trimmed || null);
     setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    if (savedTimer.current) clearTimeout(savedTimer.current);
+    savedTimer.current = setTimeout(() => setSaved(false), 2000);
   };
 
   const changeGovernorate = (g: string) => {

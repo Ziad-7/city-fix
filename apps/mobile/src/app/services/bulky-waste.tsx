@@ -62,6 +62,7 @@ export default function BulkyWasteScreen() {
 
   return (
     <Screen
+      avoidKeyboard
       header={<ScreenHeader title="رفع مخلفات كبيرة" />}
       gap={20}
       contentStyle={styles.content}

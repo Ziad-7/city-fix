@@ -3,7 +3,7 @@ import { Medal } from '@/components/brand';
 import { AppText, Card, ProgressBar } from '@/components/ui';
 import { colors, fonts, radius } from '@/theme/tokens';
 import { toArabicDigits } from '@/utils/digits';
-import { medalTitle, nextMedal, remainingLine } from './medal';
+import { medalFor, remainingLine } from '@/domain/medals';
 
 type Props = { reports: number; fixed: number };
 
@@ -18,8 +18,9 @@ function Stat({ value, label }: { value: number; label: string }) {
 
 /** "إحصائياتي": report and fixed counts, medal title (or progress toward the next one). */
 export function StatsCard({ reports, fixed }: Props) {
-  const title = medalTitle(reports);
-  const next = nextMedal(reports);
+  const medal = medalFor(reports);
+  const title = medal.earnedTitle;
+  const next = medal.next;
   return (
     <Card rounded="lg" padding={16} style={styles.card}>
       <AppText style={styles.heading} accessibilityRole="header">إحصائياتي</AppText>
@@ -34,11 +35,11 @@ export function StatsCard({ reports, fixed }: Props) {
         </View>
       ) : null}
       {next ? (
-        <View style={styles.next} accessible accessibilityLabel={remainingLine(next.remaining, next.title)}>
+        <View style={styles.next} accessible accessibilityLabel={remainingLine(medal.remaining, next.title)}>
           <AppText variant="caption" color={colors.inkMuted}>
-            {remainingLine(next.remaining, next.title)}
+            {remainingLine(medal.remaining, next.title)}
           </AppText>
-          <ProgressBar value={next.progress} color={colors.gold} trackColor={colors.goldSoft} height={6} />
+          <ProgressBar value={medal.progress} color={colors.gold} trackColor={colors.goldSoft} height={6} />
         </View>
       ) : null}
     </Card>

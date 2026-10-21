@@ -2,6 +2,26 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-21 — Phase C: review and fixes (branch `feat/mobile-citizen-app`, draft PR #1)
+
+**Done**
+- Independent review by Opus 5.5: 0 blockers, 6 major, 22 minor, 9 nits, 4 web-only ([review](reviews/2026-10-21-mobile-review.md)).
+- Fixes by Sonnet 5.5 (all majors, all web-only, most minors/nits — see the review's Resolution table), checked by Claude:
+  - Back navigation after sending a report or booking now returns to Home.
+  - The duplicate panel never offers your own report; it says "إنت مبلّغ عنها بالفعل" and links to it. "متابع" state is shared across Home, map and detail.
+  - Keyboard no longer covers fields or buttons (sign-in, report, bulky booking); the code auto-submits at 6 digits.
+  - Critical problems show the "خطر" badge everywhere, with an alert marker on the map.
+  - API mode: handles `204` responses, keeps the login token across restarts, signs out cleanly on `401`.
+  - Single medal rule (`domain/medals.ts`), report validation (photo or 10+ characters) in the shared schema, gender-neutral copy, web switches and notices fixed, README rewritten.
+- Android RTL checked in React Native's source: the root `direction: 'rtl'` applies on Android too, so no fallback was needed.
+- API contract updated: `alreadyReported` in triage results, `isFollowing` on incidents, the duplicate exclusion rule.
+- Checks: typecheck and lint clean, 89 tests in 17 suites passing.
+
+**Still open**
+- Real-device test on Android and iPhone: keyboard avoidance, RTL, native map pins.
+- Login token is stored in AsyncStorage; move to `expo-secure-store` with a development build.
+- Offline queue and the photo upload flow (`/uploads/sign`) are not built yet.
+
 ## 2026-10-21 — Phase B: all citizen screens (branch `feat/mobile-citizen-app`)
 
 **Done** (two Sonnet 5.5 implementers in parallel, checked by Claude Opus 5.5)

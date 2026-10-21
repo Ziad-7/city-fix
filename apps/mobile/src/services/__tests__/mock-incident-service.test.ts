@@ -43,16 +43,35 @@ describe('mock services', () => {
     expect((await s.incidents.getIncident(report.incidentId))?.status).toBe('received');
   });
 
-  it('detects a duplicate and linking increments followers and reporters', async () => {
+  it('linking to an incident the user does not follow adds one follower and one reporter', async () => {
     const s = createMockServices();
-    const [pothole] = (await s.incidents.listIncidents()).filter((i) => i.categoryId === 'pothole');
-    const dups = await s.incidents.findDuplicates('pothole', { lat: pothole.location.lat + 0.0003, lng: pothole.location.lng });
-    expect(dups[0].incidentId).toBe(pothole.id);
+    const garbage = (await s.incidents.listIncidents()).find((i) => i.categoryId === 'garbage')!;
+    const { incident } = await s.incidents.submitReport(DEMO_USER_ID, input({ linkToIncidentId: garbage.id, location: garbage.location }));
+    expect(incident.id).toBe(garbage.id);
+    expect(incident.followers).toBe(garbage.followers + 1);
+    expect(incident.linkedReportIds.length).toBe(garbage.linkedReportIds.length + 1);
+  });
 
-    const { incident } = await s.incidents.submitReport(DEMO_USER_ID, input({ categoryId: 'pothole', location: pothole.location, linkToIncidentId: pothole.id }));
-    expect(incident.id).toBe(pothole.id);
-    expect(incident.followers).toBe(pothole.followers + 1);
-    expect(incident.linkedReportIds.length).toBe(pothole.linkedReportIds.length + 1);
+  it('follow then link counts the user once (+1, not +2) and listFollowing reports it', async () => {
+    const s = createMockServices();
+    const garbage = (await s.incidents.listIncidents()).find((i) => i.categoryId === 'garbage')!;
+    await s.incidents.followIncident('u9', garbage.id);
+    const { incident } = await s.incidents.submitReport('u9', input({ linkToIncidentId: garbage.id, location: garbage.location }));
+    expect(incident.followers).toBe(garbage.followers + 1);
+    expect(incident.linkedReportIds.length).toBe(garbage.linkedReportIds.length + 1);
+    expect(await s.incidents.listFollowing('u9')).toEqual([garbage.id]);
+  });
+
+  it('new incident ids are zero-padded and the reporter follows it', async () => {
+    const s = createMockServices();
+    const { incident } = await s.incidents.submitReport(DEMO_USER_ID, input());
+    expect(incident.id).toMatch(/^INC-\d{4}$/);
+    expect(await s.incidents.listFollowing(DEMO_USER_ID)).toContain(incident.id);
+  });
+
+  it('listFollowing includes the incidents of the user\'s own reports', async () => {
+    const s = createMockServices();
+    expect(await s.incidents.listFollowing(DEMO_USER_ID)).toContain('INC-501');
   });
 
   it('followIncident increments followers once per user', async () => {
@@ -85,10 +104,37 @@ describe('mock services', () => {
     expect((await s.serviceRequests.listMine(DEMO_USER_ID))[0].id).toBe(req.id);
   });
 
-  it('triage service returns duplicates for a nearby location', async () => {
+  it('triage never offers the user\'s own pothole as a duplicate: it reports it as already reported', async () => {
     const s = createMockServices();
-    const res = await s.triage.analyze({ description: 'حفرة كبيرة في الشارع', categoryId: 'pothole', location: { lat: 30.0563, lng: 31.3306 } });
-    expect(res.options[0].categoryId).toBe('pothole');
-    expect(res.duplicates.length).toBeGreaterThan(0);
+    const near = { lat: 30.0563, lng: 31.3306 };
+    const res = await s.triage.analyze({ userId: DEMO_USER_ID, description: 'حفرة كبيرة في الشارع', categoryId: 'pothole', location: near });
+    expect(res.duplicates).toHaveLength(0);
+    expect(res.alreadyReported?.[0]).toMatchObject({ incidentId: 'INC-501', reportId: 'FTC-1042' });
+  });
+
+  it('triage offers the same pothole as a joinable duplicate to another user, until they follow it', async () => {
+    const s = createMockServices();
+    const near = { lat: 30.0563, lng: 31.3306 };
+    const ask = () => s.triage.analyze({ userId: 'someone-else', description: 'حفرة كبيرة في الشارع', categoryId: 'pothole', location: near });
+    const first = await ask();
+    expect(first.duplicates[0].incidentId).toBe('INC-501');
+    expect(first.alreadyReported).toHaveLength(0);
+    await s.incidents.followIncident('someone-else', 'INC-501');
+    expect((await ask()).duplicates).toHaveLength(0);
+  });
+
+  it('after reporting a new pothole the user gets the "already reported" note for it, not a join offer', async () => {
+    const s = createMockServices();
+    const spot = { lat: 30.07, lng: 31.36 };
+    const { report } = await s.incidents.submitReport(DEMO_USER_ID, input({ categoryId: 'pothole', location: { ...spot, address: 'شارع تجريبي' } }));
+    const res = await s.triage.analyze({ userId: DEMO_USER_ID, description: 'حفرة', categoryId: 'pothole', location: spot });
+    expect(res.duplicates).toHaveLength(0);
+    expect(res.alreadyReported?.[0].reportId).toBe(report.id);
+  });
+
+  it('serves concurrent first loads from a single seed', async () => {
+    const s = createMockServices();
+    const [a, b] = await Promise.all([s.incidents.listIncidents(), s.incidents.listIncidents()]);
+    expect(a[0].createdAt).toBe(b[0].createdAt);
   });
 });

@@ -19,7 +19,7 @@ import { getCategory } from '@/domain/categories';
 import { SERVICES } from '@/domain/services-catalog';
 import { isOpenStatus } from '@/domain/types';
 import { isCriticalIncident, priorityReason } from '@/logic/priority';
-import { useReports, useRequestItem, useServiceRequests, useSession } from '@/store';
+import { refreshAll, useReports, useRequestItem, useServiceRequests, useSession } from '@/store';
 import { colors, fonts } from '@/theme/tokens';
 import { isolateLtr, maskPhone } from '@/utils/digits';
 import { formatDateAr, formatDateTimeAr } from '@/utils/time';
@@ -37,6 +37,7 @@ export default function RequestDetailScreen() {
   const whatsapp = useSession((s) => s.prefs.whatsappUpdates);
   const setPrefs = useSession((s) => s.setPrefs);
   const [simulating, setSimulating] = useState(false);
+  const [simulateError, setSimulateError] = useState(false);
 
   const steps = useMemo(() => {
     if (!item) return [];
@@ -44,6 +45,7 @@ export default function RequestDetailScreen() {
     return buildTimelineSteps(item.request.timeline, 'service', item.status);
   }, [item]);
 
+  const failed = !item && (reportsStatus === 'error' || servicesStatus === 'error');
   const loading = !item && (reportsStatus === 'idle' || reportsStatus === 'loading' || servicesStatus === 'idle' || servicesStatus === 'loading');
 
   if (!item) {
@@ -51,6 +53,8 @@ export default function RequestDetailScreen() {
       <Screen header={<ScreenHeader title="متابعة الطلب" />}>
         {loading ? (
           <StateMessage loading title="بنجيب التفاصيل…" />
+        ) : failed ? (
+          <StateMessage tone="error" icon="wifi" title="مقدرناش نحمّل الطلب" body="اتأكد من النت وجرّب تاني" actionLabel="جرّب تاني" onAction={() => void refreshAll()} />
         ) : (
           <StateMessage
             icon="search"
@@ -73,8 +77,8 @@ export default function RequestDetailScreen() {
 
   const share = async () => {
     const message = isReport
-      ? `بلّغت عن "${item.title}" على تطبيق FixTheCity، رقم البلاغ ${isolateLtr(`#${item.id}`)}. تابعوا معايا لحد ما يتصلّح.`
-      : `حجزت خدمة "${item.title}" على تطبيق FixTheCity، رقم الطلب ${isolateLtr(`#${item.id}`)}.`;
+      ? `بلّغت عن "${item.title}" على فيكس ذا سيتي، رقم البلاغ ${isolateLtr(`#${item.id}`)}. تابعوا معايا لحد ما يتصلّح.`
+      : `حجزت خدمة "${item.title}" على فيكس ذا سيتي، رقم الطلب ${isolateLtr(`#${item.id}`)}.`;
     try {
       await Share.share({ message });
     } catch {
@@ -84,12 +88,15 @@ export default function RequestDetailScreen() {
 
   const simulate = async () => {
     setSimulating(true);
+    setSimulateError(false);
     try {
       if (item.kind === 'report') {
         if (item.incident) await simulateReport(item.incident.id);
       } else {
         await simulateService(item.id);
       }
+    } catch {
+      setSimulateError(true);
     } finally {
       setSimulating(false);
     }
@@ -170,6 +177,7 @@ export default function RequestDetailScreen() {
         </View>
       ) : null}
 
+      {simulateError ? <AppText variant="caption" color={colors.urgent} center>المحاكاة مش متاحة دلوقتي.</AppText> : null}
       {__DEV__ ? (
         <Button
           label="محاكاة تحديث الحالة"

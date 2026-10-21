@@ -39,7 +39,7 @@ export default function RequestsScreen() {
     body = (
       <StateMessage
         icon="clipboard"
-        title="لسه معندكش طلبات"
+        title="لسه مفيش طلبات"
         body="أول ما تبلّغ عن مشكلة أو تحجز خدمة هتلاقيها هنا وتتابع حالتها."
         actionLabel="بلّغ عن مشكلة"
         onAction={() => router.push('/report/category')}

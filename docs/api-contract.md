@@ -42,7 +42,8 @@ Incident = {
   estimatedCostEgp: number, linkedReportIds: string[], followers: number,
   location: Place, sensitivePlace?: string, areaUnderserved: boolean,
   workOrderId?: string, eta?: string /* e.g. "خلال ٣ أيام" */,
-  timeline: TimelineEntry[], createdAt, updatedAt
+  timeline: TimelineEntry[], createdAt, updatedAt,
+  isFollowing?: boolean   // per caller: true if they reported or follow it
 }
 
 Report = {
@@ -68,9 +69,12 @@ NewServiceRequestInput = { serviceType, details, location }
 MapPin = { id, categoryId, title, status, severity, lat, lng }
 
 DuplicateMatch    = { incidentId, title, categoryId, distanceM: number, followers: number, status }
+AlreadyReported   = { incidentId, reportId /* the caller's own report */, title, categoryId, distanceM: number }
 TriageSuggestion  = {
   options: { categoryId, confidence: number }[],  // top 3, confidence desc, sum <= 1
-  severity: Severity, summary: string /* one Arabic line */, duplicates: DuplicateMatch[]
+  severity: Severity, summary: string /* one Arabic line */,
+  duplicates: DuplicateMatch[],          // joinable only: never an incident the caller reported or follows
+  alreadyReported?: AlreadyReported[]    // nearby incidents the caller reported themselves
 }
 ```
 
@@ -137,7 +141,8 @@ From the plan (§7). Admin role required.
 
 ## Business rules the backend owns
 
-- **Duplicates:** an open incident (`status` not `resolved`/`closed`) of the **same category** within **250 m** of the new location. Use PostGIS `ST_DWithin(location, point, 250)` on `geography`. Return nearest first with `distanceM`.
+- **Duplicates:** an open incident (`status` not `resolved`/`closed`) of the **same category** within **250 m** of the new location. Use PostGIS `ST_DWithin(location, point, 250)` on `geography`. Return nearest first with `distanceM`. Exclude incidents the caller already follows; incidents the caller reported go to `alreadyReported` (with their `reportId`) instead of `duplicates`.
+- **Report validation:** a category plus at least one photo **or** a description of 10+ characters.
 - **Priority:** deterministic, same formula as `apps/mobile/src/logic/priority.ts` (severity 5/15/28/40; sensitive place +20; reporters `min(20, (n-1)×3)`; age `min(15, round(daysOpen/targetDays×10))`; underserved area +5; cap 100). Recompute when reporters/followers change and daily for age. Return every factor so the UI can explain the score.
 - **Timeline:** every status change writes an `activity_log` row; `Incident.timeline` / `ServiceRequest.timeline` are built from it, oldest first.
 - **Privacy:** citizens never see other citizens' phone numbers or names; anonymous reports hide the reporter from admins too (keep the id for abuse handling only).

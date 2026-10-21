@@ -29,7 +29,10 @@ export type ScreenProps = {
   testID?: string;
 };
 
-type ScrollIntoView = (node: View | null) => void;
+/** Just the host methods used for scroll-into-view (the RN 0.88 ref types are not exported by name). */
+type Measurable = { measureLayout: (relativeTo: unknown, onSuccess: (x: number, y: number) => void, onFail: () => void) => void };
+type ScrollHandle = { getInnerViewRef?: () => unknown; scrollTo: (o: { y: number; animated: boolean }) => void };
+type ScrollIntoView = (node: Measurable | null) => void;
 const ScrollIntoViewContext = createContext<ScrollIntoView | null>(null);
 
 /** For inputs inside `<Screen avoidKeyboard>`: call with the field's wrapper when it gets focus. */
@@ -39,7 +42,7 @@ export const useScrollIntoView = (): ScrollIntoView | null => useContext(ScrollI
 export function Screen({
   children, scroll = true, padded = true, footer, header, edges = ['top', 'bottom'], refreshControl, gap, contentStyle, background = colors.paper, avoidKeyboard, testID,
 }: ScreenProps) {
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollHandle>(null);
   const body: StyleProp<ViewStyle> = [padded ? { paddingHorizontal: layout.gutter } : null, gap ? { gap } : null, contentStyle];
 
   const scrollIntoView = useCallback<ScrollIntoView>((node) => {
@@ -50,8 +53,8 @@ export function Screen({
     setTimeout(() => {
       try {
         node.measureLayout(
-          inner as never,
-          (_x, y) => sv.scrollTo({ y: Math.max(0, y - 24), animated: true }),
+          inner,
+          (_x: number, y: number) => sv.scrollTo({ y: Math.max(0, y - 24), animated: true }),
           () => undefined,
         );
       } catch {
@@ -65,7 +68,7 @@ export function Screen({
       {header}
       {scroll ? (
         <ScrollView
-          ref={scrollRef}
+          ref={scrollRef as never}
           style={styles.flex}
           contentContainerStyle={[styles.content, body]}
           refreshControl={refreshControl}

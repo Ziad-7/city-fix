@@ -18,7 +18,7 @@ export function reportedByAr(n: number): string {
 
 /** "١٢ جار قالوا أنا كمان" */
 export function neighboursAr(n: number): string {
-  if (n <= 0) return 'كن أول واحد يقول أنا كمان';
+  if (n <= 0) return 'أول واحد يقول أنا كمان';
   if (n === 1) return 'جار قال أنا كمان';
   if (n === 2) return 'جارين قالوا أنا كمان';
   if (n <= 10) return `${toArabicDigits(n)} جيران قالوا أنا كمان`;

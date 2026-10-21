@@ -194,3 +194,53 @@ Screenshots were taken from the web export at 390×844 with deviceScaleFactor 2.
 | `48-profile-select-sheet.png` | District sheet; RTL is correct on web (see R12 for device). |
 | `49-report-no-category.png` / `50-report-category-picker.png` | Report without a category; category picker sheet. |
 | `51-after-signout.png` | Sign-out returns to sign-in. |
+
+## Resolution (2026-10-21)
+
+Checks after the fixes: `npx tsc --noEmit` clean, `npx expo lint` clean, `npx jest` 17 suites / 89 tests pass. The web export was re-walked at 390x844 (sign-in with OTP auto-submit, report, duplicate note, success, tracking, back, bulky booking, toggles, map critical pin). Screenshots are in `/tmp/claude-0/-home-claude/ea209f5e-0b2e-58b1-a3f6-d7cf9a3fe6ba/scratchpad/screens-fix/`.
+
+| ID | Status | Note |
+| --- | --- | --- |
+| R1 | Fixed | Success uses `router.dismissAll()` (then `push` for "تابع البلاغ"), also for "الرئيسية" and the Android BackHandler. Verified: back from tracking lands on Home. Bulky booking already `replace`d the form, so no stale form remains (verified: back goes to Home). |
+| R2 | Fixed | `userId` threaded through `TriageService.analyze`; own and followed incidents are excluded from `duplicates`; own ones come back as `alreadyReported` and the form shows "إنت مبلّغ عنها بالفعل" with "افتح بلاغك". Followed state comes from the store. Tests added. Contract note: `/triage` needs the same server-side rule and an `alreadyReported` list. |
+| R3 | Fixed (device check pending) | `Screen avoidKeyboard` (KeyboardAvoidingView `padding` on both platforms, scroll-into-view on focus) on sign-in, report/new, bulky-waste. OTP submits at 6 digits. Needs an Android and iOS phone to confirm. |
+| R4 | Fixed | "خطر" chip on pin sheet, Home nearby cards, request cards and request detail (severity critical or critical priority). Native pins get an alert glyph; web rows show the chip. |
+| R5 | Fixed | 204 and empty bodies resolve to `undefined`. Jest test with mocked fetch (204, JSON, 4xx, 5xx, network, 401). |
+| R6 | Fixed | `Session.token`, persisted with the session, restored on hydration, 401 signs out with "الجلسة خلصت، سجّل دخول تاني." on the sign-in screen. Tests added. Stored in AsyncStorage: `expo-secure-store` is not installed, so moving to it is a follow-up. |
+| R7 | Fixed | Duplicate search covers the AI top-3 plus the manual pick; the form shows only matches of the category that will be submitted. |
+| R8 | Fixed | Banner counts real messages only. |
+| R9 | Fixed | Regular priority shows the bare label; test added. |
+| R10 | Fixed | Linking counts a follower once (+1, not +2); test added. |
+| R11 | Fixed | `{detail}` is shown; 5xx, 422 arrays and network errors map to friendly Arabic lines. |
+| R12 | Fixed | `direction: 'rtl'` on the SelectField backdrop, logical radii, bottom safe-area padding. |
+| R13 | Fixed | Utility hotline tiles use `paper` background with `redDeep` text. |
+| R14 | Fixed | One module, `domain/medals.ts`, progress = n / next goal, tested. Both old modules deleted. |
+| R15 | Fixed | Home uses `RequestCard`; `UpdateRow` deleted; hard-coded thumb colour moved to a token. |
+| R16 | Fixed | Gendered and MSA phrases rewritten (all listed strings). |
+| R17 | Fixed | Fallback keeps the district centre but leaves the address empty. |
+| R18 | Fixed | `loadDb` memoises the in-flight promise; test added. |
+| R19 | Fixed | Chips are 44 px; small buttons are 40 px with hitSlop; pin sheet close is 44 px. |
+| R20 | Fixed | TextInput `accessibilityLabel` and hint; SelectField options expose `selected`. |
+| R21 | Fixed | No native callout title, `accessibilityLabel` on markers, `tracksViewChanges` off after first draw. Needs a device check. |
+| R22 | Fixed | StatusChip uses the 600 font family. |
+| R23 | Fixed | Detail screen has an error state with retry; `simulate` has a `catch`. |
+| R24 | Fixed | Rule lives in the shared `newReportSchema`; `validation.ts` is a thin wrapper; test added. Contract notes not edited (docs). |
+| R25 | Fixed | README known stubs, API mode and RTL text rewritten. |
+| R26 | Fixed | `followingIds` in `useReports` (+ `listFollowing`), used by Home, map and detail. API mode proposes `Incident.isFollowing`. |
+| R27 | Partially | The emergency box now sits at the top of the in-form category picker. The Home "إنارة الشوارع" tile still opens the form directly (it is a shortcut). |
+| R28 | Partially | Copy kept as the review allows; both gaps are listed in README "Known stubs". No offline queue built. |
+| R29 | Fixed | Chip no longer pins to the top. |
+| R30 | Fixed | `play` no longer mirrors. |
+| R31 | Partially | `Placeholder` and the API/mock `IncidentService.findDuplicates` removed. `getReport`, `getIncident`, `listMapPins`, `ServiceRequestService.get` kept for the deep-link fetch (listed in README). |
+| R32 | Partially | Tokens added for gold pressed, thumb icon, map ground; most literals replaced. The Egyptian flag colours on sign-in stay as illustration. |
+| R33 | Fixed | New incident ids are zero-padded. |
+| R34 | Fixed | Seed service day uses `nextWorkingDays`. |
+| R35 | Partially | Radio dots on the OTP channel chips and a trailing arrow on "ابعت البلاغ". Bulky checkboxes skipped (the check mark already shows selection). |
+| R36 | Fixed | District removed from the medal line; Arabic share texts use "فيكس ذا سيتي". |
+| R37 | Fixed | Timer stored in a ref and cleared. |
+| W1 | Fixed | Switch wrapped in an LTR view on web, thumb colours from tokens. Verified in screenshots. |
+| W2 | Fixed | `InlineNotice` replaces `Alert.alert` ("قريبًا"); `confirmAction` promoted to `components/ui`. |
+| W3 | Fixed | Empty-filter message is in-flow on web. |
+| W4 | Fixed | Pin rows have `accessibilityRole` and a label. |
+
+Android RTL: `direction` is in the shared view config (`ReactNativeStyleAttributes.js:101`), Fabric's `YogaStylableProps.cpp` passes it to Yoga, `SurfaceMountingManager.kt:811` applies the resolved direction with `View.setLayoutDirection`, and `ParagraphShadowNode.cpp:81` gives text its direction. The `@platform ios` tag in the docs is stale, so no `forceRTL` fallback was added. Still confirm on an Android phone.

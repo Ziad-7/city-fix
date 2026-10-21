@@ -12,7 +12,7 @@ export const callHotline = (number: string) => {
 const tone = {
   urgent: { bg: colors.urgentSoft, fg: colors.urgentDeep },
   gold: { bg: colors.goldSoft, fg: colors.goldDeep },
-  plain: { bg: colors.surface, fg: colors.ink },
+  plain: { bg: colors.paper, fg: colors.redDeep },
 } as const;
 
 /** One `tel:` tile: big Arabic-Indic number over the service name. */

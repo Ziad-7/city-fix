@@ -25,7 +25,7 @@ export default function RootLayout() {
   const signedIn = useIsSignedIn();
   const ready = (fontsLoaded || !!fontError) && hydrated;
 
-  // Web preview only: native RTL comes from the expo-localization config plugin.
+  // Web preview only: on native, RTL comes from the root `direction: 'rtl'` style below (see README).
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
       document.documentElement.dir = 'rtl';
@@ -79,7 +79,9 @@ function useFonts() {
 }
 
 // direction: 'rtl' lays the whole app out right-to-left even in Expo Go, which ignores the
-// expo-localization forcesRTL plugin. On wide web windows keep the phone-sized column centred.
+// expo-localization forcesRTL plugin. RN's docs tag the prop `@platform ios`, but on Android Fabric applies it too:
+// `direction` is in the shared view config, YogaStylableProps.cpp feeds it to Yoga, the resolved direction reaches
+// SurfaceMountingManager.updateLayout (View.setLayoutDirection) and ParagraphShadowNode (text alignment). On wide web windows keep the phone-sized column centred.
 const styles = StyleSheet.create({
   root: { flex: 1, direction: 'rtl', backgroundColor: colors.paper, width: '100%', maxWidth: Platform.OS === 'web' ? 480 : undefined, alignSelf: 'center' },
 });

@@ -14,6 +14,8 @@ npx expo start --web    # quick visual check in a browser (maps show a list on w
 
 The layout is right-to-left on every phone, whatever its system language: the root layout sets
 `direction: 'rtl'` (Expo Go ignores the `expo-localization` `forcesRTL` plugin, so we don't rely on it alone).
+React Native's docs tag `direction` as iOS-only, but in RN 0.88 (Fabric) it is a shared view prop: Yoga resolves it
+and Android applies it to views and text (see the comment in `src/app/_layout.tsx`). Still confirm on an Android phone.
 Native system UI (alerts, the back-swipe gesture) still follows the phone's language in Expo Go; a development
 build with `forcesRTL` fixes that too. The web preview also sets `dir="rtl"` on the page.
 
@@ -36,9 +38,11 @@ Installs must use `npx expo install <pkg>` (set `EXPO_OFFLINE=1` in sandboxes wh
 `src/services/index.ts` picks the implementation from `EXPO_PUBLIC_API_MODE`:
 
 - `mock` (default): everything is local. Data is seeded on first run and persisted in AsyncStorage (`ftc.mock.db.v1`).
-- `api`: `fetch` against `EXPO_PUBLIC_API_URL` using `POST/GET /reports`, `GET /incidents`, `GET /incidents/{id}`,
-  `POST/GET /service-requests`, `GET /map/incidents` (plus assumed `/auth/otp`, `/auth/verify`, `/triage`,
-  `/incidents/{id}/follow`). Not wired or tested yet.
+- `api`: `fetch` against `EXPO_PUBLIC_API_URL`, following [`docs/api-contract.md`](../../docs/api-contract.md)
+  (`/auth/*`, `/reports`, `/incidents`, `/incidents/{id}/follow`, `/service-requests`, `/map/incidents`, `/triage`).
+  Not tested against a real backend yet. The bearer token is saved with the session (AsyncStorage for now; move it to
+  `expo-secure-store` when a dev build is used), restored on app start, and a `401` signs the user out with a notice.
+  Errors show the contract's `{ "detail" }` or a friendly Arabic line, never "HTTP 500".
 
 Screens only talk to the store hooks, so switching modes needs no screen changes.
 
@@ -48,7 +52,7 @@ Screens only talk to the store hooks, so switching modes needs no screen changes
 src/
   app/          routes only (Expo Router): _layout, sign-in, (tabs)/*, report/*, requests/[id], services/*
   components/   Icon, TabBar, Hotlines, ui/ (AppText, Button, Card, Chip, ChoiceChip, StatusChip, TextField,
-                SelectField, ToggleRow, ProgressBar, Screen, ScreenHeader, Placeholder),
+                SelectField, ToggleRow, ProgressBar, Screen, ScreenHeader, InlineNotice, confirm),
                 brand/ (LogoMark, LogoLockup, LogoPill, Skyline, Medal), map/ (IncidentMap .native/.web)
   domain/       types, categories (12), hotlines, locations, services-catalog, zod schemas
   logic/        priority (score + factors), duplicates (250 m), triage-mock (keyword classifier)
@@ -60,9 +64,17 @@ src/
 
 ## Known stubs
 
-- All screens except `sign-in` are placeholders ("قيد التنفيذ") until Phase B.
+Everything below is labelled "قريبًا" (or is copy only) in the UI:
+
 - OTP is mocked (no SMS/WhatsApp is sent); AI triage is a deterministic keyword classifier.
-- "English" and "خط أكبر" links on the sign-in screen show a "قريبًا" alert.
+- Voice note recording, the notifications bell, "English" and "خط أكبر" (sign-in, profile), tree maintenance and the other
+  non-bulky city services: notice only.
+- Offline queue: the report footer says the report is saved and sent when the net returns, but nothing is queued yet; a failed
+  submit shows an error. Reopening a resolved report (mentioned in its timeline) does not exist either.
+- Photos are sent as local `file://` URIs; the contract's `/uploads/sign` flow is not implemented, so API mode needs it first.
+- Detail screens read the cached lists only (a deep link to an uncached id shows "مش لاقيين"); `getReport`, `getIncident`,
+  `listMapPins` and `ServiceRequestService.get` exist for that but no screen calls them yet.
 - `react-native-maps` has no web support; `IncidentMap.web.tsx` renders a list instead. Config plugin not added
   (Expo Go needs no API key); a development build will need one.
 - The mock `simulateProgress` actions are for demos only.
+- Needs a real-device check: keyboard avoidance on Android (edge-to-edge), RTL on Android, horizontal chip rows starting at the right.

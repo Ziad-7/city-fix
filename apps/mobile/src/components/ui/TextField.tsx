@@ -36,7 +36,7 @@ export function TextField({
   const scrollIntoView = useScrollIntoView();
   const borderColor = error ? colors.urgent : focused ? colors.red : colors.line;
   return (
-    <View ref={wrapRef} style={[styles.wrap, style]}>
+    <View ref={wrapRef as never} style={[styles.wrap, style]}>
       {label ? <AppText variant="label">{label}</AppText> : null}
       <View
         style={[
@@ -62,7 +62,7 @@ export function TextField({
           onSubmitEditing={onSubmitEditing}
           onFocus={() => {
             setFocused(true);
-            scrollIntoView?.(wrapRef.current);
+            scrollIntoView?.(wrapRef.current as never);
           }}
           onBlur={() => setFocused(false)}
           textAlignVertical={multiline ? 'top' : 'center'}

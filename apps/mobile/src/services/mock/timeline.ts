@@ -35,7 +35,7 @@ export function serviceTimelineEntry(status: IncidentStatus, at: string): Timeli
     received: 'وصلنا طلبك',
     triaged: 'اتراجع الطلب',
     assigned: 'اتحدد فريق وميعاد التنفيذ',
-    in_progress: 'العربية في الطريق ليك',
+    in_progress: 'العربية في الطريق',
     resolved: 'اتنفّذ الطلب',
   };
   return { status, at, actor: 'خدمات الحي', note: notes[status] ?? 'اتقفل الطلب' };

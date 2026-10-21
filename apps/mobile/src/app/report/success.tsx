@@ -4,7 +4,7 @@ import { BackHandler, Pressable, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LogoMark, MedalIcon } from '@/components/brand';
 import { Icon } from '@/components/Icon';
-import { DISTRICT_TITLE, medalFor } from '@/components/report/medal';
+import { DISTRICT_TITLE, medalFor } from '@/domain/medals';
 import { moreReportsAr } from '@/components/report/text';
 import { AppText, Button, Card, ProgressBar, Screen } from '@/components/ui';
 import { useReports, useSession } from '@/store';
@@ -15,13 +15,13 @@ export default function SuccessScreen() {
   const insets = useSafeAreaInsets();
   const last = useReports((s) => s.lastSubmitted);
   const reportCount = useReports((s) => s.reports.length);
-  const district = useSession((s) => s.district);
   const whatsapp = useSession((s) => s.prefs.whatsappUpdates);
 
-  // Android hardware back must not return to the form: it goes home instead.
+  // Android hardware back must not return to the form: it goes home instead. `dismissAll` pops the whole
+  // flow (category, form, this screen) so Home is the same instance as before, not a second copy on top.
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      router.replace('/');
+      router.dismissAll();
       return true;
     });
     return () => sub.remove();
@@ -43,7 +43,7 @@ export default function SuccessScreen() {
   const share = async () => {
     try {
       await Share.share({
-        message: `بلّغت عن مشكلة في ${district} على فيكس ذا سيتي، ورقم البلاغ ${isolateLtr(`#${report.id}`)}. لو شايفها كمان، افتح التطبيق وقول "أنا كمان" عشان نرفع أولويتها.`,
+        message: `بلّغت عن مشكلة على فيكس ذا سيتي، ورقم البلاغ ${isolateLtr(`#${report.id}`)}. لو شايفها كمان، افتح التطبيق وقول "أنا كمان" عشان نرفع أولويتها.`,
       });
     } catch {
       // sharing is optional; a dismissed or unsupported share sheet is not an error
@@ -56,9 +56,12 @@ export default function SuccessScreen() {
       padded={false}
       footer={
         <View style={styles.footer}>
-          <Button testID="track-report" label="تابع البلاغ" onPress={() => router.replace(`/requests/${report.id}`)} />
+          <Button testID="track-report" label="تابع البلاغ" onPress={() => {
+            router.dismissAll();
+            router.push(`/requests/${report.id}`);
+          }} />
           <Button testID="share-report" label="ابعته لجروب العمارة" variant="secondary" icon="share" onPress={share} style={{ minHeight: 48 }} />
-          <Pressable testID="go-home" accessibilityRole="link" onPress={() => router.replace('/')} style={styles.home}>
+          <Pressable testID="go-home" accessibilityRole="link" onPress={() => router.dismissAll()} style={styles.home}>
             <AppText variant="smallStrong" color={colors.red}>الرئيسية</AppText>
           </Pressable>
         </View>
@@ -97,14 +100,14 @@ export default function SuccessScreen() {
           <View style={styles.medalRow}>
             <MedalIcon size={56} />
             <View style={{ flex: 1 }}>
-              <AppText variant="caption" color={colors.goldDeep}>{medal.tier === 'none' ? 'قرّبت من لقب' : medal.tier === 'district' ? 'أعلى لقب' : 'لقب جديد'}</AppText>
+              <AppText variant="caption" color={colors.goldDeep}>{medal.tier === 'none' ? 'في الطريق للقب' : medal.tier === 'district' ? 'أعلى لقب' : 'لقب جديد'}</AppText>
               <AppText variant="sloganSm" color={colors.goldDeep}>{medal.title}</AppText>
             </View>
           </View>
           <AppText variant="small">
             {medal.next
-              ? `ده بلاغك رقم ${n} في ${district}. ${moreReportsAr(medal.remaining)} وتبقى `
-              : `ده بلاغك رقم ${n} في ${district}. وصلت لأعلى لقب، شكرًا إنك بتصلّح مدينتك.`}
+              ? `ده بلاغك رقم ${n}. ${moreReportsAr(medal.remaining)} وتاخد لقب `
+              : `ده بلاغك رقم ${n}. ده أعلى لقب، شكرًا إنك بتصلّح مدينتك.`}
             {medal.next ? <AppText variant="smallStrong">{medal.next.title}</AppText> : null}
             {medal.next ? '.' : null}
           </AppText>
