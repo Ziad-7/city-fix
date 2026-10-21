@@ -18,6 +18,7 @@ import { Icon } from '@/ui/Icon';
 import { RequestRow } from '@/ui/RequestRow';
 import { StateMessage } from '@/ui/StateMessage';
 import { DangerTag, STATUS_COLOR } from '@/ui/StatusChip';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 const TILES: { icon: IconName; label: string; href: string }[] = [
   { icon: 'alert-triangle', label: 'بلاغ عن مشكلة', href: '/report/category' },
@@ -38,6 +39,7 @@ const LEGEND = [
 ];
 
 export default function HomePage() {
+  usePageTitle('الرئيسية');
   const name = useSession((s) => s.name);
   const governorate = useSession((s) => s.governorate);
   const district = useSession((s) => s.district);
@@ -114,7 +116,7 @@ export default function HomePage() {
           <div className="w-stack">
             {loading ? <StateMessage loading title="بنجيب البلاغات اللي حواليك…" /> : null}
             {!loading && !failed && nearby.length === 0 ? (
-              <StateMessage icon="shield-check" title="مفيش بلاغات مفتوحة حواليك" body="لو شايف مشكلة، بلّغ عنها وجيرانك يقدروا يقولوا «أنا كمان»." />
+              <StateMessage icon="shield-check" title="مفيش بلاغات مفتوحة حواليك" body="لو فيه مشكلة، بلّغ عنها وجيرانك يقدروا يقولوا «أنا كمان»." />
             ) : null}
             {nearby.map(({ incident, distanceM }) => {
               const cat = getCategory(incident.categoryId);

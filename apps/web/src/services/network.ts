@@ -4,6 +4,3 @@
 export async function isOffline(): Promise<boolean> {
   return typeof navigator !== 'undefined' && navigator.onLine === false;
 }
-
-export const isOnlineState = (s: { isConnected: boolean | null; isInternetReachable: boolean | null }) =>
-  s.isConnected === true && s.isInternetReachable !== false;

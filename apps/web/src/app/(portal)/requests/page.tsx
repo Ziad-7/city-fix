@@ -17,12 +17,14 @@ import { itemCritical, itemIcon, itemPhoto } from '@/ui/RequestRow';
 import { StateMessage } from '@/ui/StateMessage';
 import { StatusChips } from '@/ui/StatusChip';
 import { Thumb } from '@/ui/Thumb';
+import { usePageTitle } from '@/lib/usePageTitle';
+import { serviceDepartment } from '@/lib/service-labels';
 
 /** The "who and when" column: department plus ETA, schedule or fix date. */
 function depLine(item: RequestItem): { who: string; when: string } {
   if (item.kind === 'service') {
     const d = item.request.details;
-    return { who: 'خدمات الحي', when: `الميعاد: ${dayLabel(d.day)} · ${slotLabel(d.slot)}` };
+    return { who: serviceDepartment(item.request.serviceType), when: `الميعاد: ${dayLabel(d.day)} · ${slotLabel(d.slot)}` };
   }
   const who = item.incident?.department ?? '';
   if (!isOpenStatus(item.status)) return { who, when: `اتصلّح ${formatDateAr(item.incident?.updatedAt ?? item.createdAt)}` };
@@ -30,6 +32,7 @@ function depLine(item: RequestItem): { who: string; when: string } {
 }
 
 export default function RequestsPage() {
+  usePageTitle('طلباتي');
   const items = useRequestItems();
   const reportsStatus = useReports((s) => s.status);
   const servicesStatus = useServiceRequests((s) => s.status);

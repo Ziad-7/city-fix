@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { API_MODE } from '@/services';
-import { transcribe, uploadFile } from '@/services/api/upload';
+import { uploadAndTranscribeVoiceNote } from '@/store';
 
 // "سجّل بصوتك": the citizen speaks and the words land in the description box.
 // - API mode with MediaRecorder: record, upload as a voice note, POST /ai/transcribe (the contract's path;
@@ -167,16 +167,19 @@ export function useVoiceNote({ onText, onVoiceNote }: { onText: (text: string) =
           return;
         }
         setState('working');
+        // The shared upload + transcription (same as the app): the clip goes through /uploads/sign with a content type
+        // from the contract's list (the recorder's own type minus its codec suffix), then /ai/transcribe.
+        const clip = URL.createObjectURL(blob);
         try {
-          const path = await uploadFile(blob, 'voice_note', blob.type);
-          if (alive.current) cbs.current.onVoiceNote?.(path);
-          const { text } = await transcribe(path);
+          const { path, text } = await uploadAndTranscribeVoiceNote(clip, blob.type.split(';')[0], (uploaded) => {
+            if (alive.current) cbs.current.onVoiceNote?.(uploaded);
+          });
           if (!alive.current) return;
-          if (text.trim()) cbs.current.onText(text.trim());
+          if (!path) setError(MSG_FAILED);
+          else if (text) cbs.current.onText(text);
           else setError(MSG_SILENT);
-        } catch {
-          if (alive.current) setError(MSG_FAILED);
         } finally {
+          URL.revokeObjectURL(clip);
           if (alive.current) setState('idle');
         }
       };

@@ -12,8 +12,10 @@ import { MedalIcon } from '@/ui/brand';
 import { SelectField, ToggleRow } from '@/ui/controls';
 import { SosGrid } from '@/ui/Hotlines';
 import { Icon } from '@/ui/Icon';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 export default function ProfilePage() {
+  usePageTitle('حسابي');
   const router = useRouter();
   const { phone, name, governorate, district, prefs, setArea, setPrefs, setName } = useSession();
   const reports = useReports((s) => s.reports);
@@ -90,7 +92,7 @@ export default function ProfilePage() {
           </section>
           {confirmOut ? (
             <div className="ftc-card p-sec" role="alertdialog" aria-labelledby="out-q">
-              <b id="out-q">متأكد إنك عايز تخرج؟</b>
+              <b id="out-q">تخرج من الحساب؟</b>
               <div className="w-row">
                 <button className="ftc-btn ftc-btn--primary" type="button" onClick={() => void signOut()} data-testid="sign-out-confirm">أيوه، اخرج</button>
                 <button className="ftc-btn ftc-btn--secondary w-neutral" type="button" onClick={() => setConfirmOut(false)}>لأ</button>
@@ -115,8 +117,8 @@ export default function ProfilePage() {
               <span><span className="cap">{medal.earnedTitle ? 'لقبك' : 'في الطريق للقب'}</span><span className="ttl">{medal.title}</span></span>
             </div>
             <div className="p-next">
-              <span>{medal.next ? remainingLine(medal.remaining, medal.next.title) : 'وصلت لأعلى لقب. شكرًا إنك بتصلّح مدينتك.'}</span>
-              <span className="ftc-bar" role="progressbar" aria-valuemin={0} aria-valuemax={medal.goal} aria-valuenow={Math.min(stats.reports, medal.goal)}>
+              <span>{medal.next ? remainingLine(medal.remaining, medal.next.title) : 'ده أعلى لقب. شكرًا على مشاركتك في تصليح مدينتك.'}</span>
+              <span className="ftc-bar" role="progressbar" aria-label="التقدّم للقب الجاي" aria-valuemin={0} aria-valuemax={medal.goal} aria-valuenow={Math.min(stats.reports, medal.goal)}>
                 <span style={{ width: `${Math.round(medal.progress * 100)}%` }} />
               </span>
             </div>

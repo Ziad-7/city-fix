@@ -11,8 +11,10 @@ import { useReports, useSession } from '@/store';
 import { isolateLtr, toArabicDigits } from '@/utils/digits';
 import { MedalIcon } from '@/ui/brand';
 import { Icon } from '@/ui/Icon';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 export default function SuccessPage() {
+  usePageTitle('وصل بلاغك');
   const router = useRouter();
   const last = useReports((s) => s.lastSubmitted);
   const reportCount = useReports((s) => s.reports.length);
@@ -33,7 +35,7 @@ export default function SuccessPage() {
     `هيتحوّل للجهة المسؤولة: ${incident.department}`,
     whatsapp ? 'هنبعتلك على واتساب في كل خطوة' : 'هنبعتلك رسالة SMS في كل خطوة',
   ];
-  const message = `بلّغت عن مشكلة على سيتي فيكس، ورقم البلاغ ${isolateLtr(`#${report.id}`)}. لو شايفها كمان، افتح التطبيق وقول "أنا كمان" عشان نرفع أولويتها.`;
+  const message = `بلّغت عن مشكلة على سيتي فيكس، ورقم البلاغ ${isolateLtr(`#${report.id}`)}. لو المشكلة عندك كمان، افتح الرابط وقول "أنا كمان" عشان نرفع أولويتها.`;
   const link = absoluteUrl(`/requests/${report.id}`);
 
   return (
@@ -43,7 +45,7 @@ export default function SuccessPage() {
           <span className="u-disc"><img src="/brand/cityfix-mark.svg" alt="" /></span>
           <h1>تسلم إيدك!</h1>
           {joined ? (
-            <p>اتضمّيت للبلاغ الموجود، رقمه <b dir="ltr">#{incident.linkedReportIds[0]}</b>. ده بيرفع أولويته.</p>
+            <p>بلاغك اتضم للبلاغ الموجود، رقمه <b dir="ltr">#{incident.linkedReportIds[0]}</b>. ده بيرفع أولويته.</p>
           ) : (
             <p>بلاغك وصل، ورقمه <b dir="ltr" data-testid="report-number">#{report.id}</b></p>
           )}
@@ -64,10 +66,10 @@ export default function SuccessPage() {
               </span>
             </div>
             <p className="ftc-small" style={{ margin: 0 }}>
-              {medal.next ? <>ده بلاغك رقم {n}. {moreReportsAr(medal.remaining)} وتاخد لقب <b>{medal.next.title}</b>.</> : `ده بلاغك رقم ${n}. ده أعلى لقب، شكرًا إنك بتصلّح مدينتك.`}
+              {medal.next ? <>ده بلاغك رقم {n}. {moreReportsAr(medal.remaining)} وتاخد لقب <b>{medal.next.title}</b>.</> : `ده بلاغك رقم ${n}. ده أعلى لقب، شكرًا على مشاركتك في تصليح مدينتك.`}
             </p>
             <div className="pr">
-              <span className="ftc-bar" role="progressbar" aria-valuemin={0} aria-valuemax={medal.goal} aria-valuenow={Math.min(reportCount, medal.goal)}>
+              <span className="ftc-bar" role="progressbar" aria-label="التقدّم للقب الجاي" aria-valuemin={0} aria-valuemax={medal.goal} aria-valuenow={Math.min(reportCount, medal.goal)}>
                 <span style={{ width: `${Math.round(medal.progress * 100)}%` }} />
               </span>
               <b><bdi dir="ltr">{toArabicDigits(Math.min(reportCount, medal.goal))} / {toArabicDigits(medal.goal)}</bdi></b>

@@ -1,7 +1,10 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CategoryGrid } from '@/ui/CategoryGrid';
 import { EmergencyBox, UtilityCard } from '@/ui/Hotlines';
 import { Icon } from '@/ui/Icon';
+
+export const metadata: Metadata = { title: 'نوع المشكلة' };
 
 export default function CategoryPage() {
   return (
