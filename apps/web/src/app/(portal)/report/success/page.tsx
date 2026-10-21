@@ -33,14 +33,14 @@ export default function SuccessPage() {
     `هيتحوّل للجهة المسؤولة: ${incident.department}`,
     whatsapp ? 'هنبعتلك على واتساب في كل خطوة' : 'هنبعتلك رسالة SMS في كل خطوة',
   ];
-  const message = `بلّغت عن مشكلة على فيكس ذا سيتي، ورقم البلاغ ${isolateLtr(`#${report.id}`)}. لو شايفها كمان، افتح التطبيق وقول "أنا كمان" عشان نرفع أولويتها.`;
+  const message = `بلّغت عن مشكلة على سيتي فيكس، ورقم البلاغ ${isolateLtr(`#${report.id}`)}. لو شايفها كمان، افتح التطبيق وقول "أنا كمان" عشان نرفع أولويتها.`;
   const link = absoluteUrl(`/requests/${report.id}`);
 
   return (
     <main className="ftc-web-main" id="main" style={{ paddingTop: 40 }}>
       <div className="u-card" role="status" data-testid="success">
         <div className="u-hero">
-          <span className="u-disc"><img src="/brand/fixthecity-mark.svg" alt="" /></span>
+          <span className="u-disc"><img src="/brand/cityfix-mark.svg" alt="" /></span>
           <h1>تسلم إيدك!</h1>
           {joined ? (
             <p>اتضمّيت للبلاغ الموجود، رقمه <b dir="ltr">#{incident.linkedReportIds[0]}</b>. ده بيرفع أولويته.</p>

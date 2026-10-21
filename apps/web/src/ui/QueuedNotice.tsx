@@ -14,7 +14,7 @@ export function QueuedNotice({ id }: { id: string }) {
     <main className="ftc-web-main" id="main" style={{ paddingTop: 40 }}>
       <div className="u-card" role="status" data-testid="report-queued">
         <div className="u-hero">
-          <span className="u-disc"><img src="/brand/fixthecity-mark.svg" alt="" /></span>
+          <span className="u-disc"><img src="/brand/cityfix-mark.svg" alt="" /></span>
           <h1>{sent ? 'بلاغك اتبعت' : 'بلاغك اتحفظ'}</h1>
           <p>{sent ? 'النت رجع وبلاغك وصل. هتلاقيه في طلباتي.' : 'مفيش نت دلوقتي، فحفظنا البلاغ على جهازك. هيتبعت لوحده أول ما النت يرجع.'}</p>
         </div>

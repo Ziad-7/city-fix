@@ -24,7 +24,7 @@ export function TopBar() {
   return (
     <header className="ftc-web-topbar">
       <div className="ftc-web-topbar__inner w-top">
-        <Link className="w-logo" href="/" aria-label="فيكس ذا سيتي"><Logo /></Link>
+        <Link className="w-logo" href="/" aria-label="سيتي فيكس"><Logo /></Link>
         <nav className="w-nav" aria-label="التنقل الرئيسي">
           {NAV.map((n) => (
             <Link key={n.href} href={n.href} aria-current={isActive(path, n.href) ? 'page' : undefined}>{n.label}</Link>
@@ -72,7 +72,7 @@ export function TabBar() {
 export function Footer() {
   return (
     <footer className="w-foot">
-      <span>FixTheCity · النسخة ١٫٠</span>
+      <span>CityFix · النسخة ١٫٠</span>
       <span>بلّغ.. وإحنا نتابع لحد ما تتصلّح</span>
     </footer>
   );

@@ -2,11 +2,11 @@
 
 /** Arabic lockup from docs/design/assets (never redrawn). */
 export function Logo({ height = 40 }: { height?: number }) {
-  return <img src="/brand/fixthecity-lockup-ar.svg" alt="فيكس ذا سيتي" height={height} style={{ height, width: 'auto' }} />;
+  return <img src="/brand/cityfix-lockup-ar.svg" alt="سيتي فيكس" height={height} style={{ height, width: 'auto' }} />;
 }
 
 export function LogoMark({ size = 48 }: { size?: number }) {
-  return <img src="/brand/fixthecity-mark.svg" alt="" width={size} height={size} />;
+  return <img src="/brand/cityfix-mark.svg" alt="" width={size} height={size} />;
 }
 
 export function Skyline({ className }: { className?: string }) {

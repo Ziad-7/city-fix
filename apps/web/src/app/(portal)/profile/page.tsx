@@ -101,7 +101,7 @@ export default function ProfilePage() {
               <Icon name="arrow-forward" size={20} />خروج
             </button>
           )}
-          <p className="p-ver">FixTheCity · النسخة ١٫٠</p>
+          <p className="p-ver">CityFix · النسخة ١٫٠</p>
         </div>
         <aside className="p-side" aria-label="إحصائياتي">
           <section className="ftc-card p-sec" aria-labelledby="st">

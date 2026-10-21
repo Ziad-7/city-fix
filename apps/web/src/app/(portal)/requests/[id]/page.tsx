@@ -67,8 +67,8 @@ export default function RequestDetailPage() {
   const photo = isReport ? item.report.photoUris[0] : undefined;
   const link = absoluteUrl(`/requests/${item.id}`);
   const message = isReport
-    ? `بلّغت عن "${item.title}" على فيكس ذا سيتي، رقم البلاغ ${isolateLtr(`#${item.id}`)}. تابعوا معايا لحد ما يتصلّح.`
-    : `حجزت خدمة "${item.title}" على فيكس ذا سيتي، رقم الطلب ${isolateLtr(`#${item.id}`)}.`;
+    ? `بلّغت عن "${item.title}" على سيتي فيكس، رقم البلاغ ${isolateLtr(`#${item.id}`)}. تابعوا معايا لحد ما يتصلّح.`
+    : `حجزت خدمة "${item.title}" على سيتي فيكس، رقم الطلب ${isolateLtr(`#${item.id}`)}.`;
 
   const tiles = isReport
     ? [

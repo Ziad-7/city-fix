@@ -123,8 +123,8 @@ export function SignIn() {
 
   return (
     <div className="s-split">
-      <section className="s-hero" aria-label="فيكس ذا سيتي">
-        <span className="s-pill"><LogoMark size={28} />فيكس ذا سيتي</span>
+      <section className="s-hero" aria-label="سيتي فيكس">
+        <span className="s-pill"><LogoMark size={28} />سيتي فيكس</span>
         <h2 className="ftc-slogan">مدينتك أحلى لما نصلّحها سوا</h2>
         <p>بلّغ.. وإحنا نتابع لحد ما تتصلّح. صوّر المشكلة، ونوصّلها للجهة المسؤولة، ونبعتلك كل خطوة.</p>
         <Skyline className="s-sky" />

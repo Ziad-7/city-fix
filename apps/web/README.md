@@ -1,4 +1,4 @@
-# Fix the City — citizen website (`apps/web`)
+# CityFix — citizen website (`apps/web`)
 
 The browser version of the citizen app: report a problem, follow it, book a CityServe service, browse the map. It mirrors the mobile app screen for screen and follows the web mockups in [`docs/design/screens/web/`](../../docs/design/screens/web/). Brief: [`docs/team/citizen-web-portal.md`](../../docs/team/citizen-web-portal.md).
 
