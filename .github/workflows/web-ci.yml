@@ -1,0 +1,61 @@
+name: web-ci
+
+on:
+  push:
+    paths:
+      - 'apps/web/**'
+      - 'apps/mobile/src/**'
+      - '.github/workflows/web-ci.yml'
+  pull_request:
+    paths:
+      - 'apps/web/**'
+      - 'apps/mobile/src/**'
+      - '.github/workflows/web-ci.yml'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      # The website's copy of the shared mobile code must match apps/mobile/src.
+      - run: npm run check:shared
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_API_MODE: mock
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: check
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+        env:
+          CI: 'true'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7
