@@ -2,6 +2,66 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-21 — Phase C: review and fixes (branch `feat/mobile-citizen-app`, draft PR #1)
+
+**Done**
+- Independent review by Opus 5.5: 0 blockers, 6 major, 22 minor, 9 nits, 4 web-only ([review](reviews/2026-10-21-mobile-review.md)).
+- Fixes by Sonnet 5.5 (all majors, all web-only, most minors/nits — see the review's Resolution table), checked by Claude:
+  - Back navigation after sending a report or booking now returns to Home.
+  - The duplicate panel never offers your own report; it says "إنت مبلّغ عنها بالفعل" and links to it. "متابع" state is shared across Home, map and detail.
+  - Keyboard no longer covers fields or buttons (sign-in, report, bulky booking); the code auto-submits at 6 digits.
+  - Critical problems show the "خطر" badge everywhere, with an alert marker on the map.
+  - API mode: handles `204` responses, keeps the login token across restarts, signs out cleanly on `401`.
+  - Single medal rule (`domain/medals.ts`), report validation (photo or 10+ characters) in the shared schema, gender-neutral copy, web switches and notices fixed, README rewritten.
+- Android RTL checked in React Native's source: the root `direction: 'rtl'` applies on Android too, so no fallback was needed.
+- API contract updated: `alreadyReported` in triage results, `isFollowing` on incidents, the duplicate exclusion rule.
+- Checks: typecheck and lint clean, 89 tests in 17 suites passing.
+
+**Still open**
+- Real-device test on Android and iPhone: keyboard avoidance, RTL, native map pins.
+- Login token is stored in AsyncStorage; move to `expo-secure-store` with a development build.
+- Offline queue and the photo upload flow (`/uploads/sign`) are not built yet.
+
+## 2026-10-21 — Phase B: all citizen screens (branch `feat/mobile-citizen-app`)
+
+**Done** (two Sonnet 5.5 implementers in parallel, checked by Claude Opus 5.5)
+- **B1:** Home (greeting, red hero with the Cairo skyline, service tiles, "حوالين بيتك" with "أنا كمان", latest updates, emergency numbers); problem type screen (emergency box, 12 Egyptian categories with "خطر" tags, voice entry, utility hotlines); report form (camera/gallery photos, mock AI suggestion with top-3 categories and severity, description, GPS location with fallback, landmark, privacy toggles, duplicate panel "نفس المشكلة، تابعها", offline note); "تسلم إيدك!" success screen with the جدع الشارع medal progress and share.
+- **B2:** طلباتي list with filters; request tracking (summary, priority strip with reasons, RTL timeline, WhatsApp updates toggle, share, dev-only "simulate progress"); CityServe catalog and bulky-waste booking (items, working-day picker, slot, payment, fee placeholder) that lands in طلباتي; CityPulse map with status/category filters and a pin card; profile (name, area, toggles, stats and medal, sign out).
+- Checks: typecheck and lint clean, 61 tests in 14 suites passing.
+- Docs: [API contract](api-contract.md) and [team role briefs](team/README.md) so backend & database, AI, admin web and optimizer/DevOps can work in parallel.
+
+**How to test**
+- `cd apps/mobile && npx expo start`, sign in with `01012345678` / `123456`, send a report (try "فيه حفرة كبيرة قدام المدرسة" with the pothole category to see the AI card and the duplicate panel), book a bulky-waste pickup, and open both in طلباتي.
+
+**Known issues (going to review)**
+- On/off switches look broken in the web preview; `Alert` dialogs don't show on web.
+- Voice notes and notifications are stubs ("قريبًا"); the map in the report form is a static preview.
+- Not yet run on a real phone.
+
+## 2026-10-21 — Phase A: mobile foundation (branch `feat/mobile-citizen-app`)
+
+**Done** (implemented by Sonnet 5.5, checked by Claude Opus 5.5)
+- Expo SDK 58 app config: Expo Router entry, `fixthecity` scheme, red splash and app icon, Arabic permission strings, RTL.
+- Theme from `docs/design/tokens.json` (flag palette, Readex Pro / IBM Plex Sans Arabic / Aref Ruqaa).
+- Shared UI kit: AppText, Button, Card, StatusChip, Chip, TextField, SelectField, ToggleRow, ProgressBar, Screen, ScreenHeader; brand Logo, Cairo Skyline, Medal; SVG Icon set; hotline buttons; incident map (native map, web list fallback).
+- Domain model mirroring the plan's DB entities (Report, Incident, ServiceRequest, statuses), Egyptian categories, hotlines, governorates/districts, CityServe catalog, zod schemas.
+- Logic: deterministic priority score with factor explanations, duplicate detection (same category, open, within 250 m), mock CityBrain triage (Egyptian Arabic keywords → top-3 categories + severity).
+- Services behind interfaces with mock implementations persisted on the phone (10 seeded incidents around Nasr City, a demo report and a service request) and API implementations ready for the FastAPI backend (`EXPO_PUBLIC_API_MODE=api`).
+- Zustand stores (session, reports, service requests) and navigation: protected routes, custom tab bar with the gold Report button.
+- Sign-in screen complete (+20 phone validation, SMS/WhatsApp code, governorate/district).
+- Tests (24 passing), ESLint, CI workflow `.github/workflows/mobile-ci.yml`.
+- Fix by Claude: the root layout now sets `direction: 'rtl'`, so the app is right-to-left in Expo Go on any phone language.
+
+**How to test**
+- `cd apps/mobile && npm install && npx expo start`, scan with Expo Go.
+- Sign in with any valid Egyptian mobile (e.g. `01012345678`) and code `123456`.
+- `npm run typecheck && npm run lint && npm test`.
+
+**Known issues**
+- Other screens are placeholders ("قيد التنفيذ") until Phase B.
+- API mode is untested (no backend yet); it assumes extra endpoints `/auth/otp`, `/auth/verify`, `/triage`, `/incidents/{id}/follow` — to agree with the backend owner.
+- Only checked on the web build so far; needs a run on a real Android and iPhone.
+
 ## 2026-10-21 — Stage 0/1 kickoff: citizen app moves to mobile
 
 **Done**
