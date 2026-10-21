@@ -1,5 +1,5 @@
 """Database seeding with realistic demo data."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
 from sqlalchemy.orm import Session
 from app.models import (
@@ -12,6 +12,7 @@ from app.models import (
     WorkOrder,
     ActivityLog,
     StaffAccount,
+    AISuggestion,
     IncidentStatusEnum,
     SeverityEnum,
     WorkOrderStatusEnum,
@@ -19,11 +20,12 @@ from app.models import (
 from app.logic.priority import compute_priority
 from app.logic.timeline import incident_timeline_entry, service_timeline_entry
 from app.auth import hash_password
+from app.helpers import now_utc, iso_z
 
 
 def seed_db(db: Session) -> None:
     """Seed database with demo data."""
-    now = datetime.utcnow()
+    now = now_utc()
     report_counter = [1043]  # Use list to allow modification in loop
 
     # ========================================================================

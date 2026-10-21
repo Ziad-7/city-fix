@@ -170,6 +170,7 @@ class ServiceRequest(Base):
     address = Column(String(500), nullable=False)
     landmark = Column(String(255), nullable=True)
     status = Column(Enum(IncidentStatusEnum), default=IncidentStatusEnum.RECEIVED)
+    paid = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 

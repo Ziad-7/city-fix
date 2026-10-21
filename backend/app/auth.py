@@ -1,10 +1,12 @@
 """Authentication logic."""
 import hashlib
+import hmac
 import jwt
+import os
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
 from app.config import settings
 from app.db import get_db
@@ -13,15 +15,21 @@ from app.schemas import StaffSession
 
 
 def hash_password(password: str) -> str:
-    """Hash password with PBKDF2-SHA256."""
-    salt = b"fixthecity-salt"  # In production, use random salt
+    """Hash password with PBKDF2-SHA256 and random 16-byte salt."""
+    salt = os.urandom(16)
     hashed = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 100000)
-    return hashed.hex()
+    return f"{salt.hex()}${hashed.hex()}"
 
 
 def verify_password(password: str, hash_value: str) -> bool:
-    """Verify password against hash."""
-    return hash_password(password) == hash_value
+    """Verify password against hash using constant-time comparison."""
+    try:
+        salt_hex, hash_hex = hash_value.split("$")
+        salt = bytes.fromhex(salt_hex)
+        hashed = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 100000)
+        return hmac.compare_digest(hashed.hex(), hash_hex)
+    except (ValueError, AttributeError):
+        return False
 
 
 def create_jwt_token(
@@ -35,7 +43,7 @@ def create_jwt_token(
         "sub": sub,
         "role": role,
         "department": department,
-        "exp": datetime.utcnow() + expires_delta,
+        "exp": datetime.now(timezone.utc) + expires_delta,
     }
     encoded_jwt = jwt.encode(to_encode, settings.jwt_secret, algorithm="HS256")
     return encoded_jwt
@@ -47,36 +55,30 @@ def decode_jwt_token(token: str) -> dict:
         payload = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])
         return payload
     except jwt.InvalidTokenError as e:
-        raise HTTPException(status_code=401, detail="البريد أو كلمة السر غلط") from e
-
-
-def normalize_phone(phone: str) -> str:
-    """
-    Normalize Egyptian phone number to +201... format.
-    Input can be: 01012345678, +201012345678, etc.
-    """
-    phone = phone.replace(" ", "").replace("-", "")
-    if phone.startswith("+20"):
-        return phone
-    if phone.startswith("01"):
-        return "+2" + phone
-    if phone.startswith("1"):
-        return "+20" + phone
-    raise ValueError("Invalid phone format")
+        raise HTTPException(status_code=401, detail="لازم تسجّل دخول") from e
 
 
 def is_valid_phone(phone: str) -> bool:
-    """Check if phone matches Egyptian pattern."""
-    normalized = normalize_phone(phone)
-    return bool(re.match(r"^\+201[0125]\d{8}$", normalized))
+    """Validate raw Egyptian phone number format: 01[0125]XXXXXXXX."""
+    return bool(re.match(r"^01[0125]\d{8}$", phone))
+
+
+def normalize_phone(phone: str) -> str:
+    """Normalize Egyptian phone number to +20 format."""
+    if not is_valid_phone(phone):
+        raise ValueError("Invalid phone format")
+    return "+20" + phone[1:]
 
 
 def current_user(
-    token: Optional[str] = None, db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    authorization: Optional[str] = Header(None),
 ) -> dict:
-    """Extract current user from JWT token in Authorization header."""
-    if not token:
-        raise HTTPException(status_code=401, detail="مش مسموح")
+    """Extract current user from Authorization: Bearer <token> header."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="لازم تسجّل دخول")
+
+    token = authorization[7:]
     payload = decode_jwt_token(token)
     return payload
 

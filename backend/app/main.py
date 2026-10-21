@@ -1,6 +1,7 @@
 """FastAPI application entry point."""
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.config import settings
@@ -76,6 +77,12 @@ app.include_router(auth.router)
 # ============================================================================
 # Error handlers
 # ============================================================================
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handle validation errors (422)."""
+    return JSONResponse(status_code=422, content={"detail": "البيانات مش مكتملة"})
 
 
 @app.exception_handler(Exception)

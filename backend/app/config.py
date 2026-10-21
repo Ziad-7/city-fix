@@ -10,8 +10,8 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "sqlite:///./fixthecity.db"
 
-    # JWT
-    jwt_secret: str = "dev-secret-change-in-production"
+    # JWT (must be >= 32 bytes for HS256)
+    jwt_secret: str = "dev-secret-change-in-production-now!!"
 
     # OTP mode: "demo" uses fixed code "123456", "real" sends via SMS/WhatsApp
     otp_mode: str = "demo"

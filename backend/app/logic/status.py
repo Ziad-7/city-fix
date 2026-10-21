@@ -1,7 +1,7 @@
 """Status change functions that write activity logs."""
-from datetime import datetime
 from sqlalchemy.orm import Session
 from app.models import Incident, ServiceRequest, WorkOrder, ActivityLog
+from app.helpers import now_utc
 
 
 def change_incident_status(
@@ -16,7 +16,7 @@ def change_incident_status(
     The note is shown to citizens in the timeline.
     """
     incident.status = status
-    incident.updated_at = datetime.utcnow()
+    incident.updated_at = now_utc()
 
     activity = ActivityLog(
         entity_type="incident",
@@ -25,7 +25,7 @@ def change_incident_status(
         note=note,
         actor=actor,
         kind="status_change",
-        at=datetime.utcnow(),
+        at=now_utc(),
     )
     db.add(activity)
     db.flush()
@@ -50,7 +50,7 @@ def change_service_request_status(
         note=note,
         actor=actor,
         kind="status_change",
-        at=datetime.utcnow(),
+        at=now_utc(),
     )
     db.add(activity)
     db.flush()
@@ -67,10 +67,10 @@ def change_work_order_status(
     Change work order status and write an activity log entry.
     """
     work_order.status = status
-    work_order.updated_at = datetime.utcnow()
+    work_order.updated_at = now_utc()
 
     if status == "done":
-        work_order.resolved_at = datetime.utcnow()
+        work_order.resolved_at = now_utc()
 
     activity = ActivityLog(
         entity_type="work_order",
@@ -79,7 +79,7 @@ def change_work_order_status(
         note=note,
         actor=actor,
         kind="status_change",
-        at=datetime.utcnow(),
+        at=now_utc(),
     )
     db.add(activity)
     db.flush()

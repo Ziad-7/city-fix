@@ -25,7 +25,7 @@ async def request_otp(body: OTPRequestInput) -> dict:
     In real mode, sends via SMS or WhatsApp.
     """
     if not is_valid_phone(body.phone):
-        raise HTTPException(status_code=400, detail="رقم الهاتف غير صحيح")
+        raise HTTPException(status_code=400, detail="رقم الموبايل مش صحيح")
 
     # In demo mode, we just return 204
     # In real mode, we would generate and send an OTP
@@ -39,7 +39,7 @@ async def verify_otp(body: OTPVerifyInput, db: Session = Depends(get_db)) -> dic
     Creates the citizen profile if it doesn't exist.
     """
     if not is_valid_phone(body.phone):
-        raise HTTPException(status_code=400, detail="رقم الهاتف غير صحيح")
+        raise HTTPException(status_code=400, detail="رقم الموبايل مش صحيح")
 
     normalized_phone = normalize_phone(body.phone)
 

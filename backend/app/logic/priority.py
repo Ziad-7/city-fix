@@ -63,7 +63,7 @@ def compute_priority(inp: PriorityInput) -> Priority:
         {
             "key": "age",
             "label": "مدة الانتظار مقارنة بالمستهدف",
-            "points": min(MAX["age"], round(ratio * 10)),
+            "points": min(MAX["age"], int(ratio * 10 + 0.5)),  # JS Math.round semantics
             "max": MAX["age"],
         },
         {

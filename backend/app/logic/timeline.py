@@ -1,7 +1,6 @@
 """Timeline entry generation - ported from mobile app."""
 from datetime import datetime
-from app.models import IncidentStatusEnum
-from sqlalchemy.orm import Session
+from app.helpers import iso_z
 
 
 SEVERITY_LABEL_AR = {
@@ -19,7 +18,7 @@ def incident_timeline_entry(
     Generate a timeline entry for an incident status change.
     Returns a dict: {status, note, actor, at}
     """
-    at_iso = at.isoformat() if isinstance(at, datetime) else at
+    at_iso = iso_z(at) if isinstance(at, datetime) else at
     if status == "received":
         return {"status": status, "at": at_iso, "actor": "النظام", "note": "وصلنا بلاغك"}
     elif status == "triaged":
@@ -59,7 +58,7 @@ def service_timeline_entry(status: str, at: datetime) -> dict:
     Generate a timeline entry for a service request status change.
     Returns a dict: {status, note, actor, at}
     """
-    at_iso = at.isoformat() if isinstance(at, datetime) else at
+    at_iso = iso_z(at) if isinstance(at, datetime) else at
     notes = {
         "received": "وصلنا طلبك",
         "triaged": "اتراجع الطلب",
