@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { NewServiceRequestInput, ServiceRequest } from '@/domain/types';
+import { tr } from '@/i18n';
 import { services } from '@/services';
 import { useSession } from './useSession';
 
@@ -11,6 +12,8 @@ type ServiceRequestsState = {
   requests: ServiceRequest[];
   refresh: () => Promise<void>;
   bookService: (input: NewServiceRequestInput) => Promise<ServiceRequest>;
+  /** Deep link / uncached id: fetches one request. Resolves false when it does not exist. */
+  loadRequest: (id: string) => Promise<boolean>;
   /** Dev only. */
   simulateProgress: (id: string) => Promise<void>;
   reset: () => void;
@@ -18,7 +21,7 @@ type ServiceRequestsState = {
 
 const uid = () => {
   const id = useSession.getState().userId;
-  if (!id) throw new Error('لازم تسجّل دخول الأول');
+  if (!id) throw new Error(tr('لازم تسجّل دخول الأول', 'Please sign in first'));
   return id;
 };
 
@@ -32,7 +35,7 @@ export const useServiceRequests = create<ServiceRequestsState>((set, get) => ({
     try {
       set({ requests: await services.serviceRequests.listMine(uid()), status: 'ready' });
     } catch (e) {
-      set({ status: 'error', error: e instanceof Error ? e.message : 'حصلت مشكلة، جرّب تاني' });
+      set({ status: 'error', error: e instanceof Error ? e.message : tr('حصلت مشكلة، جرّب تاني', 'Something went wrong. Try again') });
     }
   },
 
@@ -41,6 +44,15 @@ export const useServiceRequests = create<ServiceRequestsState>((set, get) => ({
     const req = await services.serviceRequests.book(userId, input);
     set((s) => ({ requests: [req, ...s.requests] }));
     return req;
+  },
+
+  async loadRequest(id) {
+    const req = await services.serviceRequests.get(id);
+    if (!req) return false;
+    set((s) => ({
+      requests: s.requests.some((r) => r.id === req.id) ? s.requests.map((r) => (r.id === req.id ? req : r)) : [req, ...s.requests].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    }));
+    return true;
   },
 
   async simulateProgress(id) {

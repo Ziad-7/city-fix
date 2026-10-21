@@ -32,19 +32,25 @@ while IFS= read -r f; do
   check "$rel" "$f"
 done < <(find src/shared/components -type f -name '*.ts' | sort)
 
-# Services and stores: copied unchanged except the platform files
-# (services/index.ts, services/api/http.ts, services/mock/db.ts, store/useSession.ts).
+# Services, stores and i18n: copied unchanged except the platform files (services/index.ts, services/network.ts,
+# services/api/http.ts, services/api/uploads.ts, services/mock/db.ts, store/useSession.ts, store/useOutboxSync.ts,
+# notifications/os.ts).
 for f in services/interfaces.ts services/api/index.ts \
   services/mock/auth-service.ts services/mock/incident-service.ts services/mock/index.ts services/mock/seed.ts \
   services/mock/service-request-service.ts services/mock/timeline.ts services/mock/triage-service.ts \
-  services/__tests__/mock-incident-service.test.ts \
-  store/actions.ts store/index.ts store/useReports.ts store/useRequests.ts store/useServiceRequests.ts; do
+  services/mock/localize.ts services/mock/upload-service.ts services/mock/transcription-service.ts \
+  services/media.ts services/sendReport.ts \
+  services/__tests__/mock-incident-service.test.ts services/__tests__/mock-english.test.ts \
+  services/__tests__/mock-transcription.test.ts services/__tests__/reopen.test.ts \
+  store/actions.ts store/index.ts store/useReports.ts store/useRequests.ts store/useServiceRequests.ts \
+  store/usePrefs.ts store/useNotifications.ts store/useOutbox.ts store/outboxFlush.ts \
+  i18n/index.ts i18n/labels.ts i18n/__tests__/i18n.test.ts; do
   check "$f" "src/$f"
 done
 
 # The identity stylesheet is copied from the design pack.
-if ! diff -q ../../docs/design/css/fixthecity.css src/styles/fixthecity.css >/dev/null 2>&1; then
-  echo "drift: docs/design/css/fixthecity.css != apps/web/src/styles/fixthecity.css"
+if ! diff -q ../../docs/design/css/cityfix.css src/styles/cityfix.css >/dev/null 2>&1; then
+  echo "drift: docs/design/css/cityfix.css != apps/web/src/styles/cityfix.css"
   status=1
 fi
 

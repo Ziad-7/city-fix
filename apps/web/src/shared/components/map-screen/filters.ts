@@ -3,12 +3,12 @@ import type { CategoryId, Incident, IncidentStatus, MapPin } from '@/domain/type
 
 export type MapStatusFilter = 'all' | 'received' | 'assigned' | 'in_progress' | 'resolved';
 
-export const MAP_STATUS_FILTERS: { id: MapStatusFilter; labelAr: string }[] = [
-  { id: 'all', labelAr: 'الكل' },
-  { id: 'received', labelAr: 'وصل' },
-  { id: 'assigned', labelAr: 'اتحوّل' },
-  { id: 'in_progress', labelAr: 'جاري التنفيذ' },
-  { id: 'resolved', labelAr: 'اتصلّح' },
+export const MAP_STATUS_FILTERS: { id: MapStatusFilter; labelAr: string; labelEn: string }[] = [
+  { id: 'all', labelAr: 'الكل', labelEn: 'All' },
+  { id: 'received', labelAr: 'وصل', labelEn: 'Received' },
+  { id: 'assigned', labelAr: 'اتحوّل', labelEn: 'Assigned' },
+  { id: 'in_progress', labelAr: 'جاري التنفيذ', labelEn: 'In progress' },
+  { id: 'resolved', labelAr: 'اتصلّح', labelEn: 'Fixed' },
 ];
 
 /** Chips group the six statuses into the four the citizen sees: triaged counts as وصل, closed as اتصلّح. */

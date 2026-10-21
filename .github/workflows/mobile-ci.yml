@@ -10,9 +10,17 @@ on:
       - 'apps/mobile/**'
       - '.github/workflows/mobile-ci.yml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: apps/mobile
@@ -27,3 +35,8 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test -- --ci
+      # Smoke build: the app must bundle for web. Offline mode so Expo never asks for a login or network.
+      - run: npx expo export --platform web
+        env:
+          EXPO_OFFLINE: '1'
+          CI: 'true'

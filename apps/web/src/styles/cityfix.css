@@ -1,5 +1,5 @@
 /*
- * FixTheCity — shared identity stylesheet.
+ * CityFix — shared identity stylesheet.
  * Source of truth for values: docs/design/tokens.json. Rules: docs/design/identity.html.
  * Every design page (mobile, citizen web, admin) links this file. The web apps copy these
  * variables into their Tailwind theme; the mobile app mirrors them in src/theme/tokens.ts.

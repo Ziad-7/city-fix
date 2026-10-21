@@ -1,6 +1,6 @@
 @import 'tailwindcss';
-/* Shared identity stylesheet (copied from docs/design/css/fixthecity.css; checked by scripts/check-shared.sh). */
-@import '../styles/fixthecity.css';
+/* Shared identity stylesheet (copied from docs/design/css/cityfix.css; checked by scripts/check-shared.sh). */
+@import '../styles/cityfix.css';
 /* Page styles of the citizen-website mockups (docs/design/screens/web), merged into one file. */
 @import '../styles/web.css';
 /* Website-only additions: states and pieces the static mockups don't draw. */

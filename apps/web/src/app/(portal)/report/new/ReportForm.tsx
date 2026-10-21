@@ -9,10 +9,9 @@ import { validateReportForm, type ReportFormErrors } from '@/components/report/v
 import { pickDuplicateView } from '@/logic/duplicates';
 import { useAreaCenter } from '@/lib/area';
 import { useReportLocation } from '@/lib/location';
-import { isNetworkFailure, isOffline, sendReport, useOutbox } from '@/lib/outbox';
 import { compressImage } from '@/lib/photo';
 import { API_MODE, services } from '@/services';
-import { useSession } from '@/store';
+import { useReports, useSession } from '@/store';
 import { toArabicDigits } from '@/utils/digits';
 import { CategoryPicker } from '@/ui/CategoryGrid';
 import { ToggleRow } from '@/ui/controls';
@@ -28,7 +27,6 @@ export function ReportForm() {
   const params = useSearchParams();
   const paramCategory = isCategoryId(params.get('category')) ? (params.get('category') as CategoryId) : null;
 
-  const queueReport = useOutbox((s) => s.add);
   const userId = useSession((s) => s.userId);
   const governorate = useSession((s) => s.governorate);
   const district = useSession((s) => s.district);
@@ -153,25 +151,20 @@ export function ReportForm() {
         voiceNoteUri,
       };
       try {
-        if (isOffline()) throw new TypeError('offline');
-        await sendReport(input);
+        // Uploads the photos and the voice note, then sends. With no connection (or an unreachable server) the
+        // shared store keeps the report in its outbox and says so: show the "saved" notice in place.
+        const res = await useReports.getState().submitReport(input);
+        if (res.queued) {
+          setQueuedId(res.item.id);
+          return;
+        }
         router.replace('/report/success');
       } catch (e) {
-        let err = e;
-        // No connection: keep the report on this device and send it when the connection is back.
-        if (isNetworkFailure(e) && userId) {
-          try {
-            setQueuedId(queueReport(userId, input).id);
-            return;
-          } catch (full) {
-            err = full;
-          }
-        }
-        setSubmitError(err instanceof Error && err.message && !(err instanceof TypeError) ? err.message : 'معرفناش نبعت البلاغ، جرّب تاني.');
+        setSubmitError(e instanceof Error && e.message && !(e instanceof TypeError) ? e.message : 'معرفناش نبعت البلاغ، جرّب تاني.');
         setSubmitting(null);
       }
     },
-    [submitting, categoryId, trimmed, photos, place, anonymous, blurFaces, triage, governorate, district, router, userId, queueReport, voiceNoteUri],
+    [submitting, categoryId, trimmed, photos, place, anonymous, blurFaces, triage, governorate, district, router, voiceNoteUri],
   );
 
   const pickCategory = (id: CategoryId) => {
