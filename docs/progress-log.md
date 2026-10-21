@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-21 — Design follow-ups
+
+**Done**
+- Priority decision: the formula in `apps/mobile/src/logic/priority.ts` is the source of truth (waiting time in whole days; equity bonus only for areas marked underserved). Admin example INC-0042 corrected from 93 to **78** ("أولوية عالية", still "خطر") on Incidents, IncidentDetail, Overview and Map.
+- Gender-neutral copy in the app and web design: "البلاغ ده متسجّل باسمك بالفعل".
+- Mobile designs: on/off settings drawn as switches, matching the app and website.
+- Mobile checks: typecheck, lint, 89 tests passing.
 ## 2026-10-21 — Team roles: 5 members, one brief each
 
 **Done**
