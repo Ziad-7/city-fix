@@ -1,5 +1,5 @@
 """Database models using SQLAlchemy 2.0."""
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import (
     Boolean,
     Column,
@@ -16,6 +16,11 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import declarative_base, relationship
 import enum
+
+
+def utc_now():
+    """Get current time as timezone-aware UTC."""
+    return datetime.now(timezone.utc)
 
 Base = declarative_base()
 
@@ -61,7 +66,7 @@ class Profile(Base):
     governorate = Column(String(100), nullable=True)
     district = Column(String(100), nullable=True)
     prefs = Column(JSON, default={})
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
 
 class Department(Base):
@@ -113,7 +118,7 @@ class Incident(Base):
     area_underserved = Column(Boolean, default=False)
     work_order_id = Column(String(50), nullable=True)
     eta = Column(String(255), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Indexes for common queries
@@ -143,7 +148,7 @@ class Report(Base):
     anonymous = Column(Boolean, default=False)
     blur_faces = Column(Boolean, default=False)
     severity_suggested = Column(String(20), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
 
 class IncidentFollower(Base):
@@ -153,7 +158,7 @@ class IncidentFollower(Base):
 
     incident_id = Column(String(50), ForeignKey("incidents.id"), primary_key=True)
     user_id = Column(String(50), ForeignKey("profiles.id"), primary_key=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
 
 class ServiceRequest(Base):
@@ -171,7 +176,7 @@ class ServiceRequest(Base):
     landmark = Column(String(255), nullable=True)
     status = Column(Enum(IncidentStatusEnum), default=IncidentStatusEnum.RECEIVED)
     paid = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
 
 class WorkOrder(Base):
@@ -190,7 +195,7 @@ class WorkOrder(Base):
     due_at = Column(DateTime, nullable=True)
     estimated_cost_egp = Column(Integer, nullable=True)
     tasks = Column(JSON, default=[])  # List of {label, done}
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     resolved_at = Column(DateTime, nullable=True)
 
@@ -238,7 +243,7 @@ class AISuggestion(Base):
     model = Column(String(100), nullable=True)
     latency_ms = Column(Integer, nullable=True)
     accepted = Column(Boolean, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
 
 class BudgetPlan(Base):
@@ -252,4 +257,4 @@ class BudgetPlan(Base):
     skipped = Column(JSON, nullable=False)
     total_cost = Column(Integer, nullable=False)
     remaining = Column(Integer, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
