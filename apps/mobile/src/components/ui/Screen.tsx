@@ -21,7 +21,7 @@ export type ScreenProps = {
   background?: string;
   /**
    * Screens with text inputs: lifts the body and the fixed footer above the keyboard and scrolls a
-   * focused field into view. `behavior="padding"` on both platforms: with SDK 58's mandatory edge-to-edge
+   * focused field into view. `behavior="padding"` on both platforms: with Android's mandatory edge-to-edge
    * the Android window is not reliably resized for the keyboard, and React Native's padding maths
    * (frame bottom minus keyboard top) also works when it is, because the overlap is then zero.
    */
@@ -29,7 +29,7 @@ export type ScreenProps = {
   testID?: string;
 };
 
-/** Just the host methods used for scroll-into-view (the RN 0.88 ref types are not exported by name). */
+/** Just the host methods used for scroll-into-view (React Native's ref types are not exported by name). */
 type Measurable = { measureLayout: (relativeTo: unknown, onSuccess: (x: number, y: number) => void, onFail: () => void) => void };
 type ScrollHandle = { getInnerViewRef?: () => unknown; scrollTo: (o: { y: number; animated: boolean }) => void };
 type ScrollIntoView = (node: Measurable | null) => void;

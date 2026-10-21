@@ -79,5 +79,10 @@ Everything below is labelled "قريبًا" (or is copy only) in the UI:
   `listMapPins` and `ServiceRequestService.get` exist for that but no screen calls them yet.
 - `react-native-maps` has no web support; `IncidentMap.web.tsx` renders a list instead. Config plugin not added
   (Expo Go needs no API key); a development build will need one.
+- **Before the next Android APK:** `react-native-maps` uses Google Maps on Android, and a standalone build needs a Maps API key
+  (`android.config.googleMaps.apiKey`, set from an EAS secret through an `app.config.js`; never committed). Without it the app will crash when
+  the map tab opens. Expo Go hides this because it ships its own key. This is separate from the startup crash in the handoff.
+- There is no `eas.json` in the repo, so the APK that crashed can't be rebuilt from the repo with the same settings. Commit the
+  build profile (e.g. a `preview` profile with `"buildType": "apk"`) with the next build.
 - The mock `simulateProgress` actions are for demos only.
 - Needs a real-device check: keyboard avoidance on Android (edge-to-edge), RTL on Android, horizontal chip rows starting at the right.
