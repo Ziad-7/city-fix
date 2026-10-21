@@ -5,7 +5,8 @@ One backend serves three clients with the same endpoints and shapes: the citizen
 This is what the citizen mobile app sends and expects. The app already runs on mock data behind these exact shapes; switching to the real backend is a config change (`EXPO_PUBLIC_API_MODE=api`, `EXPO_PUBLIC_API_URL=https://…`). The admin web app will use the same API plus the `/admin/*` routes.
 
 **Source of truth for types:** `apps/mobile/src/domain/types.ts`. The client is `apps/mobile/src/services/api/`.
-**Changing the contract:** open a PR that edits this file and tag the mobile, citizen web and backend owners. Don't change shapes silently.
+**Owners:** member 4 (API & DB) owns this file; member 5 owns the AI routes. See [`team/README.md`](team/README.md).
+**Changing the contract:** open a PR that edits this file and tag every client owner it affects (members 1, 2, 3). Items marked *proposed* must be agreed before anyone relies on them. Don't change shapes silently.
 
 ## Conventions
 
@@ -132,6 +133,13 @@ The app currently sends local photo URIs. Proposal:
 
 The mobile app and the website both `PUT` the file to `uploadUrl` (the URL must accept a browser `PUT` with CORS) (a Supabase Storage signed upload URL), then sends `path` in `photoUris`. Reads use short-lived signed URLs returned by the API. Faces and plates are blurred before a photo is shown to anyone but the reporter and admins (stretch: run the blur on upload).
 
+### Staff auth (Command Center) — proposed
+| Method | Path | Body | Response |
+| --- | --- | --- | --- |
+| POST | `/auth/staff-login` | `{ email, password }` | `{ userId, name, role: "staff" \| "admin", departmentId?, district, token }` |
+
+Staff tokens carry the role; `staff` only updates incidents of their department, `admin` sees everything and runs the budget.
+
 ### Admin (Command Center — web)
 From the plan (§7). Admin role required.
 | Method | Path | Notes |
@@ -140,7 +148,22 @@ From the plan (§7). Admin role required.
 | PATCH | `/incidents/{id}` | `{ status?, severity?, categoryId?, department?, note? }` — writes a timeline entry with the note shown to citizens |
 | POST | `/admin/work-orders` | `{ incidentId? , serviceRequestId?, department, assignee }` |
 | PATCH | `/admin/work-orders/{id}` | `{ status?, assignee?, note? }` |
-| POST | `/admin/budget/optimize` | `{ budgetEgp, incidentIds? }` → `{ selected: [...], skipped: [...], totalCost, remaining, coveredPriority }` (owner: optimizer) |
+| POST | `/admin/budget/optimize` | `{ budgetEgp, incidentIds? }` → `{ selected: [...], skipped: [...], totalCost, remaining, coveredPriority }` (owner: member 5, AI & smart features) |
+| GET | `/admin/work-orders` | Query `status`, `departmentId` — *proposed* |
+| GET | `/admin/service-requests` | Query `status`, `serviceType`, `day` — *proposed* |
+| PATCH | `/admin/service-requests/{id}` | `{ status?, scheduledDay?, slot?, assignee?, note? }` — writes a timeline entry — *proposed* |
+| POST | `/admin/incidents/{id}/merge` | `{ intoIncidentId }` — staff-confirmed merge of duplicates; moves reports and followers — *proposed* |
+| GET | `/admin/incidents/{id}/similar` | Ranked similar open incidents (AI help on top of the 250 m rule) — *proposed, member 5* |
+| GET | `/admin/insights` | `{ summary, hotspots[], risingCategories[], overdueDepartments[] }` weekly Arabic summary — *proposed, member 5* |
+
+`GET /incidents` and `GET /incidents/{id}` with a staff token also return `linkedReports` (anonymised: `reporter: "مواطن" | "بلاغ بدون اسم"`) and the stored triage suggestion — *proposed*.
+
+### AI (CityBrain) — proposed, owner member 5
+| Method | Path | Body | Response |
+| --- | --- | --- | --- |
+| POST | `/ai/transcribe` | `{ path }` (an uploaded voice note) | `{ text, language: "ar-EG", confidence }` |
+
+Proposed additions to `TriageSuggestion`: `source: "model" | "fallback"` and `emergency?: boolean` (true when the text mentions gas, fire, injury or collapse; clients then show the emergency numbers first).
 
 ## Business rules the backend owns
 
