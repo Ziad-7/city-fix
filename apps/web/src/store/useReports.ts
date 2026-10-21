@@ -6,7 +6,7 @@ import { services } from '@/services';
 import { classifyFailure } from '@/services/media';
 import { isOffline } from '@/services/network';
 import { sendReport } from '@/services/sendReport';
-import { useOutbox, type OutboxItem } from './useOutbox';
+import { reloadOutbox, useOutbox, type OutboxItem } from './useOutbox';
 import { useSession } from './useSession';
 
 type LoadStatus = 'idle' | 'loading' | 'ready' | 'error';
@@ -106,7 +106,10 @@ export const useReports = create<ReportsState>((set, get) => ({
 
   async submitReport(input) {
     const userId = uid();
-    const queue = (original: NewReportInput): SubmitResult => ({ queued: true, item: useOutbox.getState().enqueue(userId, original) });
+    const queue = async (original: NewReportInput): Promise<SubmitResult> => {
+      await reloadOutbox(); // website: another tab may have queued a report, never write a stale queue over it
+      return { queued: true, item: useOutbox.getState().enqueue(userId, original) };
+    };
     if (await isOffline()) return queue(input);
     let toSend = input;
     try {

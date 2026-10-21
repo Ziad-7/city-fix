@@ -22,7 +22,7 @@ describe('appendTranscript', () => {
 
 describe('address formatting', () => {
   it('joins street and area', () => expect(formatAddress({ street: 'شارع عباس العقاد', district: 'مدينة نصر' })).toBe('شارع عباس العقاد، مدينة نصر'));
-  it('falls back to name and city', () => expect(formatAddress({ street: null, name: 'ميدان الحصري', city: 'الجيزة' })).toBe('ميدان الحصري، الجيزة'));
+  it('falls back to name and city', () => expect(formatAddress({ street: null, name: 'شارع زاكر حسين', city: 'مدينة نصر' })).toBe('شارع زاكر حسين، مدينة نصر'));
   it('returns empty when nothing useful', () => {
     expect(formatAddress(null)).toBe('');
     expect(formatAddress({ street: ' ', district: '' })).toBe('');
