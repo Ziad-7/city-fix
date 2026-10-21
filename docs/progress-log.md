@@ -7,14 +7,15 @@ Newest first. Each entry: what was done, how to test it, known issues.
 **Done**
 - Next.js App Router site in `apps/web` with every citizen screen from the web mockups: sign-in, home, report flow (category, form with photo, location and duplicate check, success), my requests and tracking timeline, CityServe and bulky-waste booking, Leaflet map with filters, profile. RTL Arabic, desktop and phone layouts.
 - Domain, logic, utils and service code copied unchanged from `apps/mobile/src`; `npm run check:shared` fails on drift. Mock mode (localStorage, code `123456`) and API mode, same as mobile.
-- 89 Vitest tests and 8 Playwright journeys (desktop and phone) pass. CI workflow `.github/workflows/web-ci.yml`.
+- Report form extras: voice note (browser speech recognition, or upload + `/ai/transcribe` in API mode), offline queue that sends saved reports when the connection is back, and street names from GPS via OSM Nominatim. Implemented by Claude, reviewed and hardened by a Sonnet 5.5 agent (cross-tab send lock, mic released on unmount, debounced geocoding).
+- 100 Vitest tests and 11 Playwright journeys (desktop and phone) pass. CI workflow `.github/workflows/web-ci.yml`.
 
 **How to test**
 - `cd apps/web && npm install && npm run dev`, sign in with `01012345678` and `123456`.
 - `npm run check:shared && npm run typecheck && npm run lint && npm test && npm run test:e2e`.
 
 **Known issues**
-- See the "Known gaps" list in `apps/web/README.md`: token in localStorage, voice note stub, no offline queue, no reverse geocoding, API mode untested.
+- See the "Known gaps" list in `apps/web/README.md`: token in localStorage, upload and transcribe endpoints not built yet, API mode untested.
 - Map tiles could not be loaded in the build sandbox, so the map was checked with its fallback background only.
 
 ## 2026-10-21 — Android APK startup crash: root cause and fix

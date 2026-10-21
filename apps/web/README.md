@@ -69,11 +69,16 @@ scripts/        check-shared.sh
 
 Vercel works out of the box: set the project root to `apps/web`, and set `NEXT_PUBLIC_API_MODE` (and `NEXT_PUBLIC_API_URL` for `api`). No secrets are needed for mock mode.
 
+## Report form extras
+
+- **Voice note** (`src/lib/voice.ts`): in API mode the browser records, uploads the clip as a voice note and fills the description from `/ai/transcribe`; otherwise it uses the browser's own speech recognition in Egyptian Arabic (Chrome, Edge, Safari), so it works in mock mode too. Firefox in mock mode says it can't record and the citizen types.
+- **Offline queue** (`src/lib/outbox.ts`): a report sent with no connection is kept in `localStorage` (`ftc.outbox.v1`) and sent when the browser is back online; a banner shows what is waiting. One tab sends at a time (Web Locks).
+- **Street names** (`src/lib/geocode.ts`): a GPS fix, and moving the pin after one, fill the address from OSM Nominatim (`NEXT_PUBLIC_GEOCODER_URL`, `off` to disable). A street the citizen typed is never overwritten.
+
 ## Known gaps
 
 - The session token is kept in `localStorage`. An httpOnly cookie needs backend support.
-- The voice note button is a stub ("قريبًا") until the backend has `/ai/transcribe`.
-- No offline queue: a report sent with no connection fails with a retry message.
-- No reverse geocoding: using GPS fills in "موقعك الحالي" rather than a street name.
-- Photo upload in API mode follows the proposed `/uploads/sign` contract, which the backend has not built yet.
+- Photo and voice-note upload in API mode follow the proposed `/uploads/sign` and `/ai/transcribe` contracts, which the backend has not built yet.
+- If the server accepts a queued report but the answer is lost, the retry sends it again: preventing that needs an idempotency key in the contract.
+- A queued report the server refuses stays first in the queue and holds the ones behind it until it is sent.
 - API mode is untested (no backend yet).

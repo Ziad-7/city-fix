@@ -7,6 +7,7 @@ import { getCategory } from '@/domain/categories';
 import { SEVERITY_LABEL_AR, STATUS_LABEL_AR, type AlreadyReported, type CategoryId, type DuplicateMatch, type Place, type TriageSuggestion } from '@/domain/types';
 import { reportedByAr } from '@/components/report/text';
 import type { LocationState } from '@/lib/location';
+import { MAX_SECONDS, useVoiceNote } from '@/lib/voice';
 import { toArabicDigits } from '@/utils/digits';
 import { formatDistanceAr } from '@/utils/geo';
 import { Icon } from '@/ui/Icon';
@@ -151,17 +152,34 @@ export function CategoryRow({ selected, onPress }: { selected: CategoryId | null
   );
 }
 
-/** Voice note row: recording comes with the AI member's /ai/transcribe; until then it points to the text box. */
-export function VoiceRow({ highlight }: { highlight?: boolean }) {
-  const [notice, setNotice] = useState(!!highlight);
+/** "سجّل بصوتك": tap to talk, tap again to stop; the words are added to the description (see lib/voice). */
+export function VoiceRow({ highlight, onText, onVoiceNote }: { highlight?: boolean; onText: (text: string) => void; onVoiceNote: (path: string) => void }) {
+  const { engine, state, seconds, interim, error, toggle } = useVoiceNote({ onText, onVoiceNote });
+  const recording = state === 'recording';
+  const clock = `${toArabicDigits(Math.floor(seconds / 60))}:${toArabicDigits(String(seconds % 60).padStart(2, '0'))}`;
+  const title = recording ? 'بنسمعك…' : state === 'working' ? 'بنكتب كلامك…' : 'سجّل بصوتك';
+  const sub = recording
+    ? `دوس تاني لما تخلص · ${clock} من ${toArabicDigits(MAX_SECONDS / 60)}:٠٠`
+    : engine
+      ? 'قول المشكلة بالعامية وإحنا نكتبها'
+      : 'المتصفح ده مش بيدعم التسجيل. اكتب الوصف تحت.';
   return (
     <div className="w-stack" style={{ gap: 6 }}>
-      <div className="r-voice">
-        <button className="mic" type="button" aria-label="سجّل بصوتك" aria-describedby="voice-soon" onClick={() => setNotice(true)}><Icon name="mic" size={20} /></button>
-        <span className="tx"><span className="w-t">سجّل بصوتك</span><span className="w-m">قول المشكلة بالعامية وإحنا نكتبها</span></span>
-        <span className="a-soon" id="voice-soon">قريبًا</span>
+      <div className={`r-voice${highlight && state === 'idle' && !error ? ' a-voice-hl' : ''}`}>
+        <button
+          className={`mic${recording ? ' a-mic-on' : ''}`}
+          type="button"
+          aria-label={recording ? 'وقّف التسجيل' : 'سجّل بصوتك'}
+          disabled={!engine || state === 'working'}
+          onClick={toggle}
+          data-testid="voice-button"
+        >
+          {state === 'working' ? <span className="a-spin a-spin--on-red" aria-hidden="true" /> : <Icon name={recording ? 'x' : 'mic'} size={20} />}
+        </button>
+        <span className="tx"><span className="w-t" aria-live="polite">{title}</span><span className="w-m">{sub}</span></span>
       </div>
-      {notice ? <span className="a-note" aria-live="polite">تسجيل الصوت قريبًا. دلوقتي اكتب وصف المشكلة بالعامية وإحنا نفهمها.</span> : null}
+      {interim ? <span className="ftc-help" aria-live="polite">«{interim}»</span> : null}
+      {error ? <span className="a-err" role="alert" data-testid="voice-error">{error}</span> : null}
     </div>
   );
 }

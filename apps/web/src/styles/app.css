@@ -85,3 +85,13 @@ button.m-item { width: 100%; background: transparent; font: inherit; text-align:
 .a-dl dt { color: var(--ftc-ink-muted); }
 .a-dl dd { margin: 0; font-weight: 600; }
 .a-initial { font: 700 30px/1 var(--ftc-font-display); color: var(--ftc-red); }
+
+/* Offline outbox banner, under the top bar on every signed-in page. */
+.a-outbox { max-width: calc(var(--ftc-web-max) - 2 * var(--ftc-space-6)); margin: var(--ftc-space-4) auto 0; width: calc(100% - 2 * var(--ftc-space-4)); align-items: center; }
+
+/* Voice note: recording state and the highlight when arriving from "اتكلم بدل ما تكتب". */
+.r-voice .mic:disabled { background: var(--ftc-line); cursor: not-allowed; }
+.r-voice .mic.a-mic-on { background: var(--ftc-red-deep); animation: a-pulse 1.2s ease-in-out infinite; }
+.r-voice.a-voice-hl { border-color: var(--ftc-red); box-shadow: 0 0 0 3px var(--ftc-red-soft); }
+@keyframes a-pulse { 0%, 100% { box-shadow: 0 0 0 0 var(--ftc-red-soft); } 50% { box-shadow: 0 0 0 8px var(--ftc-red-soft); } }
+@media (prefers-reduced-motion: reduce) { .r-voice .mic.a-mic-on { animation: none; } }

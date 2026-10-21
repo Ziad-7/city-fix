@@ -9,13 +9,14 @@ import { validateReportForm, type ReportFormErrors } from '@/components/report/v
 import { pickDuplicateView } from '@/logic/duplicates';
 import { useAreaCenter } from '@/lib/area';
 import { useReportLocation } from '@/lib/location';
+import { isNetworkFailure, isOffline, sendReport, useOutbox } from '@/lib/outbox';
 import { compressImage } from '@/lib/photo';
 import { API_MODE, services } from '@/services';
-import { uploadPhoto } from '@/services/api/upload';
-import { useReports, useSession } from '@/store';
+import { useSession } from '@/store';
 import { toArabicDigits } from '@/utils/digits';
 import { CategoryPicker } from '@/ui/CategoryGrid';
 import { ToggleRow } from '@/ui/controls';
+import { QueuedNotice } from '@/ui/QueuedNotice';
 import { Icon } from '@/ui/Icon';
 import { AiSuggestion, AlreadyReportedNote, CategoryRow, DuplicatePanel, LocationCard, PhotoSlots, VoiceRow, type TriageState } from './parts';
 
@@ -27,7 +28,7 @@ export function ReportForm() {
   const params = useSearchParams();
   const paramCategory = isCategoryId(params.get('category')) ? (params.get('category') as CategoryId) : null;
 
-  const submitReport = useReports((s) => s.submitReport);
+  const queueReport = useOutbox((s) => s.add);
   const userId = useSession((s) => s.userId);
   const governorate = useSession((s) => s.governorate);
   const district = useSession((s) => s.district);
@@ -40,6 +41,11 @@ export function ReportForm() {
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [description, setDescription] = useState('');
+  const [voiceNoteUri, setVoiceNoteUri] = useState<string | undefined>();
+  const addSpokenText = useCallback((text: string) => {
+    setDescription((d) => (d.trim() ? `${d.trimEnd()} ${text}` : text));
+    setErrors((e) => ({ ...e, description: undefined }));
+  }, []);
   const [blurFaces, setBlurFaces] = useState(true);
   const [anonymous, setAnonymous] = useState(false);
   const [manualCategory, setManualCategory] = useState<CategoryId | null>(null);
@@ -52,6 +58,7 @@ export function ReportForm() {
   const [errors, setErrors] = useState<ReportFormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState<'send' | 'join' | null>(null);
+  const [queuedId, setQueuedId] = useState<string | null>(null);
 
   const trimmed = description.trim();
   const hasInput = photos.length > 0 || trimmed.length >= 5;
@@ -132,27 +139,39 @@ export function ReportForm() {
       if (Object.keys(found).length > 0) return;
 
       setSubmitting(linkTo ? 'join' : 'send');
+      const input = {
+        categoryId: values.categoryId as CategoryId,
+        description: values.description,
+        photoUris: photos,
+        location: values.location,
+        anonymous,
+        blurFaces,
+        severity: triage?.severity,
+        governorate,
+        district,
+        linkToIncidentId: linkTo,
+        voiceNoteUri,
+      };
       try {
-        const photoUris = API_MODE === 'api' ? await Promise.all(photos.map(uploadPhoto)) : photos;
-        await submitReport({
-          categoryId: values.categoryId as CategoryId,
-          description: values.description,
-          photoUris,
-          location: values.location,
-          anonymous,
-          blurFaces,
-          severity: triage?.severity,
-          governorate,
-          district,
-          linkToIncidentId: linkTo,
-        });
+        if (isOffline()) throw new TypeError('offline');
+        await sendReport(input);
         router.replace('/report/success');
       } catch (e) {
-        setSubmitError(e instanceof Error && e.message ? e.message : 'معرفناش نبعت البلاغ، جرّب تاني.');
+        let err = e;
+        // No connection: keep the report on this device and send it when the connection is back.
+        if (isNetworkFailure(e) && userId) {
+          try {
+            setQueuedId(queueReport(userId, input).id);
+            return;
+          } catch (full) {
+            err = full;
+          }
+        }
+        setSubmitError(err instanceof Error && err.message && !(err instanceof TypeError) ? err.message : 'معرفناش نبعت البلاغ، جرّب تاني.');
         setSubmitting(null);
       }
     },
-    [submitting, categoryId, trimmed, photos, place, anonymous, blurFaces, submitReport, triage, governorate, district, router],
+    [submitting, categoryId, trimmed, photos, place, anonymous, blurFaces, triage, governorate, district, router, userId, queueReport, voiceNoteUri],
   );
 
   const pickCategory = (id: CategoryId) => {
@@ -173,6 +192,8 @@ export function ReportForm() {
     ],
     [cat, place.address, district, photos.length, blurFaces, anonymous],
   );
+
+  if (queuedId) return <QueuedNotice id={queuedId} />;
 
   return (
     <main className="ftc-web-main" id="main">
@@ -207,7 +228,7 @@ export function ReportForm() {
 
           <section className="ftc-card r-sec" aria-labelledby="h-desc">
             <h2 className="w-h3" id="h-desc">وصف المشكلة</h2>
-            <VoiceRow highlight={params.get('voice') === '1'} />
+            <VoiceRow highlight={params.get('voice') === '1'} onText={addSpokenText} onVoiceNote={setVoiceNoteUri} />
             <div className="ftc-field">
               <label className="w-sr" htmlFor="desc">وصف المشكلة</label>
               <textarea
@@ -259,6 +280,7 @@ export function ReportForm() {
           <div className="r-send">
             {submitError ? <span className="a-err" role="alert" style={{ textAlign: 'center' }}>{submitError}</span> : null}
             {!submitError && errorCount > 0 ? <span className="a-err" role="alert" style={{ textAlign: 'center' }}>راجع الحقول اللي متعلّمة بالأحمر.</span> : null}
+            <span className="off"><Icon name="wifi" size={14} />النت ضعيف؟ البلاغ هيتحفظ ويتبعت أول ما يرجع</span>
             <button className="ftc-btn ftc-btn--primary" type="button" disabled={!!submitting || photoBusy} onClick={() => void submit()} data-testid="submit-report">
               {submitting === 'send' ? <span className="a-spin a-spin--on-red" aria-hidden="true" /> : null}ابعت البلاغ <Icon name="arrow-forward" size={20} strokeWidth={2} />
             </button>
