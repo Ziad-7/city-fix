@@ -130,18 +130,18 @@ export function DuplicatePanel({
   );
 }
 
-/** "إنت مبلّغ عنها بالفعل": the nearest same-category problem is the citizen's own report, so there is nothing to join. */
+/** "البلاغ ده متسجّل باسمك بالفعل": the nearest same-category problem is the citizen's own report, so there is nothing to join. */
 export function AlreadyReportedNote({ own, onOpen }: { own: AlreadyReported; onOpen: () => void }) {
   return (
-    <View testID="already-reported" accessibilityLabel="إنت مبلّغ عنها بالفعل" style={styles.own}>
+    <View testID="already-reported" accessibilityLabel="البلاغ ده متسجّل باسمك بالفعل" style={styles.own}>
       <View style={styles.dupHead}>
         <View style={styles.ownIcon}>
           <Icon name="check" size={18} color={colors.statusResolved} strokeWidth={2.5} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
-          <AppText style={{ fontFamily: fonts.sans700, fontSize: 15, lineHeight: 24 }}>إنت مبلّغ عنها بالفعل</AppText>
+          <AppText style={{ fontFamily: fonts.sans700, fontSize: 15, lineHeight: 24 }}>البلاغ ده متسجّل باسمك بالفعل</AppText>
           <AppText variant="small" color={colors.inkMuted}>
-            {own.title} على بعد {formatDistanceAr(own.distanceM)}. مش محتاج تبلّغ تاني، تقدر تتابع بلاغك.
+            {own.title} على بعد {formatDistanceAr(own.distanceM)}. مفيش داعي لبلاغ تاني، وتقدر تتابع بلاغك.
           </AppText>
         </View>
       </View>
