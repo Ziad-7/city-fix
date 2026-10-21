@@ -2,7 +2,16 @@
 
 - **Date:** 2026-10-21 · **Build:** EAS `fe133744-b43d-47f1-a44e-66d08c1e5277` (SDK 58 era, R8-minified release)
 - **Reproduced by:** Abood, on an Android 17 (API 37) x86_64 emulator in Android Studio. Crash about 200 ms after launch, every time.
-- **Status:** fix in the repo; **needs a new EAS build to confirm** (Android/Maven downloads are blocked in Claude's sandbox, so it couldn't be built there).
+- **Status:** rebuilt with EAS; the user confirmed the new APK works on 2026-10-21. Google Maps configuration and map-screen testing remain deferred.
+
+## Rebuild and user confirmation
+
+- Source: PR #9, commit `ca4a759eeb5669df8a22c67abe9ee42777c092da`.
+- EAS preview build: [`8193f7e1-441d-48f6-9c78-b3a554a471ba`](https://expo.dev/accounts/abdulrahman-111s-team/projects/cityfix/builds/8193f7e1-441d-48f6-9c78-b3a554a471ba), finished successfully.
+- [APK tested by the user](https://expo.dev/artifacts/eas/znsGljvrlANIdd7KaOchEilNnoiTpeeAh6kj1XVFlxo.apk). The user planned Android Studio testing and then reported that it works; the confirmation did not specify a device/Android version or include a new Logcat capture.
+- Verified before building: typecheck, lint, all 89 tests, PR CI, and generated Android keep rules. The generated SDK 57 project also had release minification disabled by default.
+- The checkout was linked locally to the existing EAS project `b5233e95-74ba-4502-a86a-06fb7fad1e9b` (`abdulrahman-111s-team/cityfix`), using its existing signing credentials. EAS linking added the project ID/owner and changed the slug to `cityfix` in the uploaded build configuration; those linking-only edits were restored after the build and are not committed. Future builders must link to the same project before building.
+- `GOOGLE_MAPS_API_KEY` was deliberately omitted at the user's request. This result confirms the reported startup improvement, not map functionality or a complete end-to-end release test. Configure the key and rebuild before opening/testing the standalone map screen.
 
 ## What crashed
 
