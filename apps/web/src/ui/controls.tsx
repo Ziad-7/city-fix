@@ -57,7 +57,7 @@ export function radioKeys(e: KeyboardEvent<HTMLElement>, index: number, count: n
 
 /** Single-choice group of `.w-choice` radios (keyboard: Space/Enter, arrows move between options and focus). */
 export function ChoiceGroup<T extends string>({
-  options, value, onChange, label, labelledBy, className, testIdPrefix, marker = true,
+  options, value, onChange, label, labelledBy, className, style, testIdPrefix, marker = true,
 }: {
   options: { id: T; label: ReactNode; ariaLabel?: string; className?: string; style?: CSSProperties }[];
   value: T | null;
@@ -65,12 +65,13 @@ export function ChoiceGroup<T extends string>({
   label?: string;
   labelledBy?: string;
   className?: string;
+  style?: CSSProperties;
   testIdPrefix?: string;
   /** The round marker before the label (off for the day tiles). */
   marker?: boolean;
 }) {
   return (
-    <div className={className} role="radiogroup" aria-label={label} aria-labelledby={labelledBy}>
+    <div className={className} style={style} role="radiogroup" aria-label={label} aria-labelledby={labelledBy}>
       {options.map((o, i) => {
         const on = o.id === value;
         return (

@@ -7,16 +7,15 @@ import { DEFAULT_PLACE, findDistrict } from '@/domain/locations';
 import { bulkyBookingSchema, placeSchema } from '@/domain/schemas';
 import { BULKY_ITEMS, FEE_LABEL, PAYMENT_METHODS, SLOTS, nextWorkingDays } from '@/domain/services-catalog';
 import type { PaymentMethod, SlotId } from '@/domain/types';
-import { dayLabel, dayParts, parseIsoDay } from '@/components/services/day';
+import { dayLabel } from '@/components/services/day';
 import { paymentLabel, slotLabel } from '@/components/requests/labels';
 import { useServiceRequests, useSession } from '@/store';
 import { CheckGroup, ChoiceGroup } from '@/ui/controls';
+import { DayPicker } from '@/ui/DayPicker';
 import { Icon } from '@/ui/Icon';
 import { usePageTitle } from '@/lib/usePageTitle';
 
 type Errors = Partial<Record<'items' | 'day' | 'address', string>>;
-
-const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 
 /** Bulky-waste pickup booking (same rules as apps/mobile/src/app/services/bulky-waste.tsx). */
 export default function BulkyWastePage() {
@@ -78,24 +77,7 @@ export default function BulkyWastePage() {
           </section>
           <section className="ftc-card v-sec" aria-labelledby="b2">
             <header><h2 className="w-h3" id="b2">اختار الميعاد</h2><span>الخدمة من الأحد للخميس</span></header>
-            <ChoiceGroup
-              className="v-days"
-              label="اليوم"
-              marker={false}
-              value={day}
-              onChange={setDay}
-              testIdPrefix="day"
-              options={days.map((d) => {
-                const p = dayParts(d);
-                return {
-                  id: d,
-                  ariaLabel: dayLabel(d),
-                  className: 'v-day',
-                  style: { flexDirection: 'column', padding: '12px 4px', gap: 2 },
-                  label: <><span>{p.weekday}</span><b>{p.dayOfMonth}</b><small>{MONTHS[parseIsoDay(d).getMonth()]}</small></>,
-                };
-              })}
-            />
+            <DayPicker days={days} value={day} onChange={setDay} />
             <div className="ftc-field">
               <span className="ftc-label" id="sl">الفترة</span>
               <ChoiceGroup className="v-pair" labelledBy="sl" options={SLOTS.map((s) => ({ id: s.id, label: s.labelAr }))} value={slot} onChange={setSlot} />

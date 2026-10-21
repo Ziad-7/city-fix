@@ -23,11 +23,11 @@ import { usePageTitle } from '@/lib/usePageTitle';
 const TILES: { icon: IconName; label: string; href: string }[] = [
   { icon: 'alert-triangle', label: 'بلاغ عن مشكلة', href: '/report/category' },
   { icon: 'trash', label: 'رفع مخلفات', href: '/services/bulky-waste' },
-  { icon: 'tree', label: 'صيانة الشجر', href: '/services' },
+  { icon: 'tree', label: 'صيانة الشجر', href: '/services/tree' },
   { icon: 'map', label: 'خريطة المدينة', href: '/map' },
   { icon: 'clipboard', label: 'طلباتي', href: '/requests' },
   { icon: 'bulb', label: 'إنارة الشوارع', href: '/report/new?category=streetlight_out' },
-  { icon: 'clock', label: 'مواعيد جمع القمامة', href: '/services' },
+  { icon: 'clock', label: 'مواعيد جمع القمامة', href: '/services/garbage-schedule' },
   { icon: 'more', label: 'كل الخدمات', href: '/services' },
 ];
 

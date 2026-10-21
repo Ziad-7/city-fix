@@ -36,7 +36,9 @@ export default function ServicesPage() {
                 <span className="ftc-icon-well"><Icon name={s.icon} size={24} /></span>
                 <h2>{s.titleAr}</h2>
                 <p>{s.subtitleAr}</p>
-                <span className="ftc-btn ftc-btn--primary ftc-btn--sm" style={{ alignSelf: 'flex-start' }}><Icon name="calendar" size={18} />احجز دلوقتي</span>
+                <span className="ftc-btn ftc-btn--primary ftc-btn--sm" style={{ alignSelf: 'flex-start' }}>
+                  {s.serviceType ? <><Icon name="calendar" size={18} />احجز دلوقتي</> : <><Icon name="clock" size={18} />شوف المواعيد</>}
+                </span>
               </Link>
             ) : (
               <div key={s.id} className="ftc-tile v-card" aria-label={`${s.titleAr}، قريبًا`}>
