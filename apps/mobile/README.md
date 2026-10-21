@@ -1,6 +1,7 @@
 # CityFix (سيتي فيكس): citizen mobile app
 
-Arabic-first (RTL) Expo React Native app for reporting city problems in Egypt and booking city services.
+Arabic-first (RTL) Expo React Native app for reporting city problems in Egypt and booking city services, with English (LTR)
+as a second language switched at runtime (see [Languages](#languages)).
 Expo SDK 57, React Native 0.86.3, Expo Router, TypeScript, zustand, zod.
 
 Mobile developer: read the [Expo Go compatibility and APK crash handoff](../../docs/mobile/2026-10-21-expo-go-and-apk-handoff.md)
@@ -15,12 +16,12 @@ npx expo start          # then scan the QR code with Expo Go (Android or iOS)
 npx expo start --web    # quick visual check in a browser (maps show a list on web)
 ```
 
-The layout is right-to-left on every phone, whatever its system language: the root layout sets
-`direction: 'rtl'` (Expo Go ignores the `expo-localization` `forcesRTL` plugin, so we don't rely on it alone).
-The app uses the root view's `direction: 'rtl'` style for native layout. Recheck RTL screens on Android and iOS
-after SDK changes; the successful Android preview launch does not establish that every RTL screen is correct.
-Native system UI (alerts, the back-swipe gesture) still follows the phone's language in Expo Go; a development
-build with `forcesRTL` fixes that too. The web preview also sets `dir="rtl"` on the page.
+The layout direction follows the app language, whatever the phone's system language: the root layout sets
+`direction: 'rtl'` for Arabic and `'ltr'` for English (Expo Go ignores the `expo-localization` `forcesRTL` plugin, so we
+don't rely on it alone). Recheck RTL screens on Android and iOS after SDK changes; the successful Android preview launch
+does not establish that every RTL screen is correct. Native system UI (alerts, the back-swipe gesture) still follows the
+phone's language in Expo Go; a development build with `forcesRTL` fixes that for Arabic. The web preview also sets
+`dir` and `lang` on the page.
 
 Demo sign-in: any valid Egyptian mobile (`01[0125]` + 8 digits), then any 6-digit code (the screen shows `123456`).
 
@@ -63,9 +64,49 @@ now adds keep rules through `expo-build-properties`. See the [crash analysis](..
   AsyncStorage), restored on app start, and a `401` signs the user out with a notice. Photos are resized (1600 px, JPEG 0.7)
   and uploaded through `POST /uploads/sign` + `PUT` (voice notes and the tree-booking photo too); a report that can't be sent (offline / server down) is queued in
   `useOutbox` (AsyncStorage `ftc.outbox.v1`) and flushed when the connection returns.
-  Errors show the contract's `{ "detail" }` or a friendly Arabic line, never "HTTP 500".
+  Errors show the contract's `{ "detail" }` or a friendly line in the app language, never "HTTP 500".
 
 Screens only talk to the store hooks, so switching modes needs no screen changes.
+
+## Languages
+
+Arabic is the default; English is a full second language. People switch in **Profile → Language** (or the "English" /
+"العربية" link on sign-in). The switch is live: no reload, and the screen you are on updates at once.
+
+How it works:
+
+- The language lives in `store/usePrefs.ts` (`lang: 'ar' | 'en'`, persisted in AsyncStorage `ftc.prefs.v1`, default `'ar'`).
+- `src/app/_layout.tsx` flips the root view's `direction` (rtl/ltr). Directional icons (back, forward, chevron) mirror only
+  in Arabic (`Icon`). Use logical styles (`start`/`end`, `marginStart`, `paddingEnd`, `borderEndWidth`), never
+  `left`/`right` or `row-reverse`.
+- `localDigits()` prints Arabic-Indic digits in Arabic and Western digits in English; `formatDate`, `formatDateTime`,
+  `relativeTime`, `greeting` (`utils/time.ts`) and `formatDistance` (`utils/geo.ts`) follow the language too.
+- Domain names (categories, statuses, severities, departments, districts, services, items, slots, payments, medals,
+  hotlines) keep their Arabic in the domain files; `src/i18n/labels.ts` has the English and helpers such as
+  `labelOfCategory(c)`, `statusLabel(s, ar)` and `placeName(ar)`.
+- Data from the backend comes in the request language (mock: `services/mock/localize.ts` localises at read time). Lists
+  are fetched again after a switch (`store/actions.ts`). Notification text is fixed when the notification is created.
+- `AppText` never uses Aref Ruqaa for English: slogans switch to Readex Pro bold.
+
+To translate new UI:
+
+```tsx
+import { useTr } from '@/i18n';
+
+function MyCard() {
+  const tr = useTr(); // subscribes the component: it re-renders on a language switch
+  return <AppText>{tr('بلّغ عن مشكلة', 'Report a problem')}</AppText>;
+}
+```
+
+- Every component that renders translated text calls `useTr()` (or `useLang()`), or is rendered by a parent that does.
+- Outside React (helpers, stores, zod messages) use `tr(ar, en)` / `getLang()`; they read the language **when called**.
+  Never call them at module level (a constant built at import time stays in one language). Wrap it in a function instead.
+- A `useMemo` whose result contains text must list `lang` (or `tr`) in its dependencies. Don't keep translated text in
+  `useState`: keep the key or the condition and translate while rendering.
+- Plurals: write both forms ("1 report" / "2 reports"); the Arabic helpers handle the Arabic count forms.
+- Follow the tone and exact terms in the [English glossary](../../docs/mobile/english-glossary.md) (sentence case, "EGP",
+  Western digits, slogans in Readex Pro).
 
 ## Folder map
 
@@ -76,6 +117,7 @@ src/
                 SelectField, ToggleRow, ProgressBar, Screen, ScreenHeader, InlineNotice, confirm),
                 brand/ (LogoMark, LogoLockup, LogoPill, Skyline, Medal), map/ (IncidentMap .native/.web)
   domain/       types, categories (12), hotlines, locations, services-catalog, zod schemas
+  i18n/         tr / useTr / useLang / useIsRTL, labels.ts (English domain labels)
   logic/        priority (score + factors), duplicates (250 m), triage-mock (keyword classifier)
   notifications/ os.ts (expo-notifications: Android channel, local notifications, taps; no-op on web)
   services/     interfaces.ts, mock/ (seeded, AsyncStorage), api/ (fetch, uploads), media (resize + upload pipeline),
@@ -83,7 +125,7 @@ src/
   store/        useSession (persisted, token in SecureStore), useReports, useServiceRequests, useRequests (merged list),
                 useOutbox + outboxFlush + useOutboxSync (offline queue), useNotifications (status diff), usePrefs, actions
   theme/        tokens.ts (light theme from docs/design/tokens.json)
-  utils/        digits (Arabic-Indic, phone), time (Arabic relative time), geo (haversine)
+  utils/        digits (Arabic-Indic / Western, phone), time (Arabic and English dates, relative time), geo (haversine, distance)
 ```
 
 ## Known stubs
@@ -91,7 +133,7 @@ src/
 Real since Phase D (mock mode simulates the server side):
 
 - Voice notes (expo-audio, native only; the web preview says recording is on the phone): record up to 60 s, play, delete,
-  re-record; the clip is uploaded and transcribed (mock: canned Egyptian Arabic sentences) into the description.
+  re-record; the clip is uploaded and transcribed (mock: canned sentences in the app language) into the description.
 - Map pin picker with reverse geocoding on the report and tree forms (native; web shows the static sketch).
 - Emergency flag from triage (gas, fire, injury, collapse): the hotlines show first, the report can still be sent.
 - Uploads (`/uploads/sign` + `PUT`), photo resize, offline queue with backoff and "ابعت دلوقتي", token in SecureStore.
@@ -102,9 +144,8 @@ Real since Phase D (mock mode simulates the server side):
 
 Still stubbed:
 
-- OTP is mocked (no SMS/WhatsApp is sent); AI triage is a deterministic keyword classifier; transcription is canned text in
-  mock mode.
-- "English" (sign-in, profile) is a notice only: the app is Arabic-only for now.
+- OTP is mocked (no SMS/WhatsApp is sent); AI triage is a deterministic keyword classifier (Egyptian Arabic keywords plus a
+  short English list); transcription is canned text in mock mode.
 - No push notifications: OS notifications are local and only fire while the app runs and refreshes (on start, pull-to-refresh,
   status changes the app itself sees). Server push needs a development build and a backend sender.
 - The garbage schedule is static demo data (`domain/garbage-schedule.ts`) until `GET /services/garbage-schedule` exists.
@@ -118,4 +159,5 @@ Still stubbed:
   `GOOGLE_MAPS_API_KEY` and puts it in the manifest; set it as an EAS environment variable (never commit it). Without it a
   standalone build crashes when the map tab, the report form or the tree form (pin picker) opens. Expo Go doesn't need it.
 - The mock `simulateProgress` actions are for demos only.
-- Needs a real-device check: keyboard avoidance on Android (edge-to-edge), RTL on Android, horizontal chip rows starting at the right.
+- Needs a real-device check: keyboard avoidance on Android (edge-to-edge), RTL on Android, horizontal chip rows starting at the
+  right in Arabic and at the left in English, and a live language switch on Android and iOS (only the web preview was checked).

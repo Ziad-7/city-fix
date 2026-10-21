@@ -42,8 +42,8 @@ export function ServiceCard({ service, onPress, notice }: Props) {
         <Icon name="chevron" size={18} color={colors.inkMuted} />
       </Pressable>
       {available ? (
-        // The schedule is not a booking: English says so (the Arabic label is unchanged, see the 2026-10-21 review).
-        <Button label={tr('احجز دلوقتي', service.serviceType ? 'Book now' : 'See the times')} icon="calendar" onPress={onPress} />
+        // The schedule is not a booking: both languages say so (see the 2026-10-21 review).
+        <Button label={tr(service.serviceType ? 'احجز دلوقتي' : 'شوف المواعيد', service.serviceType ? 'Book now' : 'See the times')} icon="calendar" onPress={onPress} />
       ) : null}
       {notice ? (
         <View style={styles.notice} accessibilityLiveRegion="polite">

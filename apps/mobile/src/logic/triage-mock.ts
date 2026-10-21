@@ -127,7 +127,7 @@ export function triageMock(input: TriageInput): TriageSuggestion {
 
   const summary = tr(
     `الغالب إنها "${top.labelAr}" — ${SEVERITY_LABEL_AR[severity]}، وهتروح لـ${top.department}.`,
-    `Most likely "${categoryLabel(top.id, top.labelAr)}" — ${severityLabel(severity, SEVERITY_LABEL_AR[severity])}. It will go to ${departmentLabel(top.department)}.`,
+    `Most likely “${categoryLabel(top.id, top.labelAr)}” — ${severityLabel(severity, SEVERITY_LABEL_AR[severity])}. It will go to ${departmentLabel(top.department)}.`,
   );
   return { options, severity, summary, duplicates: [], source: 'fallback', emergency };
 }

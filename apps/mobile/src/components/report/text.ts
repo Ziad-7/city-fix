@@ -35,17 +35,19 @@ export function moreReports(n: number): string {
   return n === 1 ? '1 more report' : `${n} more reports`;
 }
 
+const ME_TOO = 'Me\u00a0too';
+
 /** "Reported by 6 people" */
 export function reportedBy(n: number): string {
   if (getLang() !== 'en') return reportedByAr(n);
   return n <= 1 ? 'Reported by 1 person' : `Reported by ${n} people`;
 }
 
-/** "12 neighbours said Me too" */
+/** "12 neighbours said Me too" ("Me too" is kept on one line: it is the button's name). */
 export function neighbours(n: number): string {
   if (getLang() !== 'en') return neighboursAr(n);
-  if (n <= 0) return 'Be the first to say Me too';
-  return n === 1 ? '1 neighbour said Me too' : `${n} neighbours said Me too`;
+  if (n <= 0) return `Be the first to say ${ME_TOO}`;
+  return n === 1 ? `1 neighbour said ${ME_TOO}` : `${n} neighbours said ${ME_TOO}`;
 }
 
 /** "40 m" / "1.2 km" in English, "٤٠ متر" / "١٫٢ كم" in Arabic. */

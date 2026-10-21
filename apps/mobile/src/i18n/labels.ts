@@ -126,7 +126,7 @@ export const ITEM_EN: Record<string, string> = {
   'مخلفات بناء': 'Building waste',
   'تقليم': 'Trimming',
   'إزالة شجرة واقعة': 'Remove a fallen tree',
-  'شجرة مايلة أو خطر': 'Leaning or dangerous tree',
+  'شجرة مايلة أو خطر': 'Leaning or unsafe tree',
   'رش / مكافحة آفات': 'Spraying / pest control',
 };
 

@@ -6,6 +6,8 @@ The app is Arabic-first. English is a full second language that people switch to
 - Plain, friendly, short English. Translate the meaning, not word by word. Speak to the person directly ("your report"); it's naturally gender-neutral.
 - Say what happens next, like the Arabic does: "We got your report. We'll review it within 24 hours."
 - Never blame: "We're still on it", not "Pending".
+- Keep short units on one line with a no-break space: "9\u00a0AM", "Me\u00a0too" (the button's name).
+- Lists are joined with commas, not " + " ("near a school or hospital, 7 reports, high risk").
 - Western digits (0–9) everywhere in English. Money: "1,800 EGP". Dates: "22 Oct". Times: "10:12 AM". Phone: "010 1234 5678", prefix "+20".
 - Egyptian names stay as names: Fawry, InstaPay, Nasr City, district names (see `src/i18n/labels.ts`).
 - Slogans: Aref Ruqaa is for Arabic only. In English, slogans use the display font (Readex Pro bold).
@@ -52,5 +54,9 @@ The app is Arabic-first. English is a full second language that people switch to
 | حسب لائحة الحي | as per the district's rates |
 | خروج | Sign out |
 | مش لاقيين | We couldn't find it |
+| متابعة البلاغ / الطلب | Track your report / Track your request |
+| الجهة المسؤولة | Handled by |
+| الجاية (garbage) | Next pickup |
+| العربية بتعدّي … | Pickup time: … |
 
 Statuses, severities, categories, departments, hotlines, places, services and medals: `apps/mobile/src/i18n/labels.ts`.
