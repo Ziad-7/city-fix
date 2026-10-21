@@ -11,7 +11,7 @@
 | [`design/assets/`](design/assets/) | Logo and skyline SVGs |
 | [`mobile/implementation-spec.md`](mobile/implementation-spec.md) | What the citizen app must do, routes, architecture, environment gotchas |
 | [`api-contract.md`](api-contract.md) | The API between the apps and the backend — endpoints, shapes, business rules |
-| [`team/`](team/) | Role briefs: who works on what in parallel (citizen web portal, backend & database, AI, admin web, optimizer/DevOps) |
+| [`team/`](team/) | **Who does what:** the 5 roles, owners, folders, hand-offs, week plan, and one brief per role (citizen website, admin web, API & database, AI & smart features) |
 | [`progress-log.md`](progress-log.md) | Dated log of what was built, how to test it, known issues |
 
 Live design files (private until shared by the owner): the design system and the screen canvas are on claude.ai — ask Abood for access.
