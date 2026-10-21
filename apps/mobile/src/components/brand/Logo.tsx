@@ -15,25 +15,28 @@ export function LogoMark({ size = 36 }: { size?: number }) {
   );
 }
 
-/** Arabic lockup: mark at the start (right in RTL) + "فيكس ذا سيتي" (فيكس red, ذا سيتي ink). */
+/** Arabic lockup: mark at the start (right in RTL) + "سيتي فيكس" (سيتي ink, فيكس red), see docs/design/assets/cityfix-lockup-ar.svg. */
 export function LogoLockup({ height = 36 }: { height?: number }) {
   return (
-    <View style={styles.lockup} accessibilityRole="image" accessibilityLabel="فيكس ذا سيتي">
+    <View style={styles.lockup} accessibilityRole="image" accessibilityLabel="سيتي فيكس">
       <LogoMark size={height} />
       <AppText style={{ fontFamily: fonts.display700, fontSize: height * 0.5, lineHeight: height * 0.7 }}>
+        {'سيتي '}
         <AppText color={colors.red} style={{ fontFamily: fonts.display700, fontSize: height * 0.5, lineHeight: height * 0.7 }}>فيكس</AppText>
-        {' ذا سيتي'}
       </AppText>
     </View>
   );
 }
 
-/** White pill with the mark and the red brand name, for placing on red heroes. */
+/** White pill with the mark and the brand name ("سيتي" ink, "فيكس" red), for placing on red heroes. */
 export function LogoPill() {
   return (
     <View style={styles.pill}>
       <LogoMark size={26} />
-      <AppText color={colors.red} style={{ fontFamily: fonts.display700, fontSize: 15, lineHeight: 22 }}>فيكس ذا سيتي</AppText>
+      <AppText style={{ fontFamily: fonts.display700, fontSize: 15, lineHeight: 22 }} accessibilityLabel="سيتي فيكس">
+        {'سيتي '}
+        <AppText color={colors.red} style={{ fontFamily: fonts.display700, fontSize: 15, lineHeight: 22 }}>فيكس</AppText>
+      </AppText>
     </View>
   );
 }

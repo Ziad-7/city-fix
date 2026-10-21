@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
+import { EmergencyAlert } from '@/components/Hotlines';
 import { AiSuggestion, CategoryPicker, CategoryRow, type TriageState } from '@/components/report/AiSuggestion';
 import { useReportLocation } from '@/components/report/location';
 import { PhotoSlots, type PhotoPair } from '@/components/report/PhotoSlots';
@@ -14,6 +15,7 @@ import { CATEGORIES } from '@/domain/categories';
 import { DEFAULT_PLACE, findDistrict } from '@/domain/locations';
 import type { CategoryId, TriageSuggestion } from '@/domain/types';
 import { pickDuplicateView } from '@/logic/duplicates';
+import { detectEmergency } from '@/logic/triage-mock';
 import { services } from '@/services';
 import { uploadAndTranscribeVoiceNote, useReports, useSession } from '@/store';
 import { colors } from '@/theme/tokens';
@@ -206,6 +208,8 @@ export default function NewReportScreen() {
           </View>
         ) : (
           <View style={{ gap: 4 }}>
+            {/* Safety net: emergency numbers show even when the AI suggestion is loading or failed. */}
+            {!triage?.emergency && detectEmergency(trimmed) ? <EmergencyAlert /> : null}
             <AiSuggestion
               state={triageState}
               suggestion={triage}

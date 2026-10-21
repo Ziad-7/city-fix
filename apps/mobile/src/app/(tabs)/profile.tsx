@@ -159,7 +159,7 @@ export default function ProfileScreen() {
         testID="sign-out"
       />
       <View style={styles.version}>
-        <AppText variant="caption" color={colors.inkMuted} center>FixTheCity · النسخة {toArabicDigits(version)}</AppText>
+        <AppText variant="caption" color={colors.inkMuted} center>CityFix · النسخة {toArabicDigits(version)}</AppText>
       </View>
     </Screen>
   );

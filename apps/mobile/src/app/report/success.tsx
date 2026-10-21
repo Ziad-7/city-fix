@@ -45,7 +45,7 @@ export default function SuccessScreen() {
   const share = async () => {
     try {
       await Share.share({
-        message: `بلّغت عن مشكلة على فيكس ذا سيتي، ورقم البلاغ ${isolateLtr(`#${report.id}`)}. لو شايفها كمان، افتح التطبيق وقول "أنا كمان" عشان نرفع أولويتها.`,
+        message: `بلّغت عن مشكلة على سيتي فيكس، ورقم البلاغ ${isolateLtr(`#${report.id}`)}. لو شايفها كمان، افتح التطبيق وقول "أنا كمان" عشان نرفع أولويتها.`,
       });
     } catch {
       // sharing is optional; a dismissed or unsupported share sheet is not an error

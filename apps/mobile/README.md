@@ -1,4 +1,4 @@
-# FixTheCity: citizen mobile app
+# CityFix (سيتي فيكس): citizen mobile app
 
 Arabic-first (RTL) Expo React Native app for reporting city problems in Egypt and booking city services.
 Expo SDK 57, React Native 0.86.3, Expo Router, TypeScript, zustand, zod.

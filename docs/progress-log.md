@@ -2,6 +2,21 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-21 — Phase D: remaining citizen features + rename to CityFix (branch `feat/mobile-phase-d`)
+
+**Done** (three Sonnet 5.5 implementers in parallel, reviewed and fixed by Opus 5.5 — [review](reviews/2026-10-21-phase-d-review.md))
+- **Report form:** voice notes (record, play, re-record, 60 s max) turned into editable text; map pin picker (tap/drag, "استخدم موقعي", address from the map); emergency box with ١٢٢ ١٢٣ ١٨٠ ١٢٩ when the text mentions gas, fire, injury or a collapse (also when the AI suggestion fails).
+- **Reliability:** photos resized to 1600 px and uploaded through `/uploads/sign`; offline queue (reports sent automatically when the connection returns, "مستني النت" cards in طلباتي); login token in secure storage; requests open directly from a link; pull-to-refresh.
+- **Account and services:** notifications centre with a badge on Home and phone notifications; "خط أكبر"; tree maintenance booking (free); garbage collection schedule; reopen a fixed report ("لسه المشكلة موجودة؟").
+- **Rename:** the product is now **CityFix / سيتي فيكس** ([0003](decisions/0003-rename-to-cityfix.md)): app name, logo, screens, design pack, docs. Package id, slug, link scheme and `FTC-` numbers stay.
+- Checks: typecheck, lint, 172 tests in 30 suites, web export.
+
+**How to test**
+- Install a new APK (`eas build -p android --profile preview`) or use Expo Go 57. Try: a voice note on a new report, moving the pin, typing "فيه ريحة غاز", airplane mode then sending a report, "محاكاة تحديث الحالة" on a report to see a notification, booking a tree service, the garbage schedule, and reopening a fixed report.
+
+**Still open**
+- Needs a pass on a real phone (recording, map picker, notifications, secure storage). API mode untested against a real backend. English is still a stub.
+
 ## 2026-10-21 — Android APK startup crash: root cause and fix
 
 **Done**
