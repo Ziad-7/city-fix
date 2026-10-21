@@ -11,15 +11,15 @@
 <style>
 .ftc-admin-sidebar .brand{display:flex;align-items:center;gap:10px;padding:0 8px 18px}
 .ftc-admin-sidebar .brand b{display:block;font:700 16px/22px var(--ftc-font-display)}
-.ftc-admin-sidebar .brand small{display:block;font-size:12px;line-height:18px;color:#B3B3B3}
-.ftc-admin-sidebar a:hover:not([aria-current]){background:rgba(255,255,255,.08);color:#F2EFEA}
+.ftc-admin-sidebar .brand small{display:block;font-size:12px;line-height:18px;color:var(--ftc-on-ink-muted)}
+.ftc-admin-sidebar a:hover:not([aria-current]){background:rgba(255,255,255,.08);color:var(--ftc-on-ink)}
 .ftc-admin-sidebar a .lbl{flex:1}
-.ftc-admin-sidebar a .count{font-size:12px;color:#B3B3B3}
+.ftc-admin-sidebar a .count{font-size:12px;color:var(--ftc-on-ink-muted)}
 .ftc-admin-sidebar a[aria-current="page"] .count{color:var(--ftc-ink);font-weight:700}
-.ftc-admin-sidebar .sb-user{margin-top:auto;border-top:1px solid #333;padding:14px 4px 0;display:flex;align-items:center;gap:10px}
+.ftc-admin-sidebar .sb-user{margin-top:auto;border-top:1px solid rgba(255,255,255,.12);padding:14px 4px 0;display:flex;align-items:center;gap:10px}
 .ftc-admin-sidebar .sb-user .who{flex:1;min-width:0}
 .ftc-admin-sidebar .sb-user b{display:block;font:600 14px/20px var(--ftc-font-sans)}
-.ftc-admin-sidebar .sb-user small{display:block;font-size:12px;line-height:16px;color:#B3B3B3}
+.ftc-admin-sidebar .sb-user small{display:block;font-size:12px;line-height:16px;color:var(--ftc-on-ink-muted)}
 .ftc-admin-sidebar .sb-user a.out{width:36px;height:36px;padding:0;justify-content:center;flex:none}
 .avatar{width:36px;height:36px;border-radius:50%;background:var(--ftc-gold);color:var(--ftc-ink);display:inline-flex;align-items:center;justify-content:center;font:700 15px/1 var(--ftc-font-display);flex:none}
 .page{display:flex;flex-direction:column;gap:20px}
@@ -75,7 +75,7 @@
 
 .board-wrap{position:relative}
 .board{display:grid;grid-template-columns:repeat(4,minmax(240px,1fr));gap:14px;overflow-x:auto;padding-bottom:6px}
-.colm{background:#EFEBE3;border-radius:var(--ftc-radius-md);padding:12px;display:flex;flex-direction:column;gap:10px;min-height:800px}
+.colm{background:rgba(22,22,22,.04);border-radius:var(--ftc-radius-md);padding:12px;display:flex;flex-direction:column;gap:10px;min-height:800px}
 .colm h2{margin:0;font:600 15px/24px var(--ftc-font-display);display:flex;align-items:center;gap:8px}
 .colm h2 .n{margin-inline-start:auto;background:var(--ftc-surface);border-radius:999px;padding:0 10px;font-size:13px;line-height:22px;font-family:var(--ftc-font-sans);font-variant-numeric:tabular-nums}
 .colm .dot{width:10px;height:10px;border-radius:50%}
@@ -130,7 +130,7 @@
     <div><h2 class="sec-title" id="dr-t" style="font-size:22px;line-height:32px">WO-318</h2><p class="sec-sub">حفرة في الطريق · عباس العقاد</p></div>
     <a class="close" href="WorkOrders.html" aria-label="اقفل"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg></a>
   </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="ftc-chip ftc-chip--progress">جاري التنفيذ</span><span class="ftc-tag-danger">أولوية عالية · 84</span></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="ftc-chip ftc-chip--progress">جاري التنفيذ</span><span class="ftc-tag-danger" style="background:var(--ftc-gold-soft);color:var(--ftc-gold-deep)">أولوية عالية · 66</span></div>
   <dl class="kv">
     <dt>البلاغ</dt><dd><a href="IncidentDetail.html">INC-0041</a> · 7 مواطنين</dd>
     <dt>الجهة</dt><dd>صيانة الطرق</dd>

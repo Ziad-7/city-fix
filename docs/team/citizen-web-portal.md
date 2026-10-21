@@ -13,13 +13,15 @@ You work **in parallel** with the mobile app and the backend, and you all meet a
 The website is the **same product** as the mobile app, not a new look. Someone who uses both must feel it is one app. So:
 
 - **Same brand, nothing new.** Use the files we already have:
-  - [`docs/design/brand-book.md`](../design/brand-book.md): flag palette, type, voice, Egypt rules, component specs. Read it first.
+  - [`docs/design/identity.html`](../design/identity.html): the visual identity guide (colours, type, components, per-surface rules, Tailwind theme). Read it first; it is the single source of rules.
+  - [`docs/design/css/fixthecity.css`](../design/css/fixthecity.css): the shared `--ftc-*` variables and `.ftc-*` components the mockups use.
+  - [`docs/design/brand-book.md`](../design/brand-book.md): brand idea, voice, Egypt rules, component specs.
   - [`docs/design/tokens.json`](../design/tokens.json): the source of truth for colours, fonts, sizes, spacing, radii, shadows. Turn it into Tailwind theme values / CSS variables. Don't hand-pick colours.
   - [`docs/design/screens/*.html`](../design/screens/): the mockups (`mobile/` for the phone, `web/` for the website — your pages must match `web/`). Open them in a browser (links in [`docs/design/README.md`](../design/README.md)).
   - [`docs/design/assets/`](../design/assets/): the logo lockups, the mark and the Cairo skyline SVG. Use these files; don't redraw them.
   - The running mobile app is the live reference: `cd apps/mobile && npx expo start --web` and compare side by side.
 - **Colours:** Egyptian flag palette only: red `#C8102E` (deep `#8E0A20`, soft `#FBE4E7`), gold `#D4A20B` for the main "report" action, ink `#161616`, paper `#F8F6F2` page background, white cards, line `#E6E1D8`. Status chips use the same status colours as the app (`apps/mobile/src/theme/tokens.ts`).
-- **Fonts:** Readex Pro (headings, numbers), IBM Plex Sans Arabic (body), Aref Ruqaa (the logo/wordmark only). From Google Fonts via `next/font`.
+- **Fonts:** Readex Pro (headings, numbers), IBM Plex Sans Arabic (body), Aref Ruqaa (short slogans and greetings only, max 6 words, never buttons, forms or numbers). From Google Fonts via `next/font`.
 - **Same components, same look:** buttons, cards, status chips, the "خطر" danger tag, choice chips, toggles, the priority strip with reasons, the RTL timeline, the medal, the hotline buttons. Copy the look from `apps/mobile/src/components/ui/` and `components/brand/` (sizes, radii, colours, states), rebuilt as React DOM components.
 - **Same words:** Egyptian Arabic copy, exactly as in the app (button labels, empty states, errors, "تسلم إيدك!", "أنا كمان", "نفس المشكلة، تابعها"). Copy the strings from the mobile screens; don't rewrite them.
 - **Same icons:** take the SVG paths from `apps/mobile/src/components/Icon.tsx`.
@@ -41,16 +43,16 @@ The website is the **same product** as the mobile app, not a new look. Someone w
 
 | Route | Mobile equivalent | Mockup | What it does |
 | --- | --- | --- | --- |
-| `/sign-in` | `sign-in.tsx` | web/SignIn.html | +20 phone, SMS/WhatsApp code (demo `123456`), governorate/district |
-| `/` | `(tabs)/index.tsx` | web/Home.html | Greeting, red hero + skyline, service tiles, "حوالين بيتك" with "أنا كمان", latest updates, emergency numbers |
-| `/report/category` | `report/category.tsx` | web/Category.html | Emergency box, 12 categories with "خطر" tags, utility hotlines |
-| `/report/new` | `report/new.tsx` | web/Report.html | Photo upload (file picker; camera on phones via `accept="image/*" capture`), description, AI suggestion card, location (browser geolocation + Leaflet pin picker), landmark, privacy toggles, duplicate panel + "already reported" note |
-| `/report/success` | `report/success.tsx` | web/Success.html | "تسلم إيدك!", report number, medal progress, share |
-| `/requests` | `(tabs)/requests.tsx` | web/Requests.html | My reports and service requests, filters |
-| `/requests/[id]` | `requests/[id].tsx` | web/Track.html | Summary, priority strip with reasons, timeline, share |
-| `/services`, `/services/bulky-waste` | `services/*` | web/Services.html | CityServe catalog, bulky-waste booking (items, working day, slot, payment) |
-| `/map` | `(tabs)/map.tsx` | web/Map.html | CityPulse map with status/category filters and a pin card |
-| `/profile` | `(tabs)/profile.tsx` | web/Profile.html | Name, area, toggles, stats and medal, sign out |
+| `/sign-in` | `sign-in.tsx` | [web/SignIn.html](../design/screens/web/SignIn.html) | +20 phone, SMS/WhatsApp code (demo `123456`), governorate/district |
+| `/` | `(tabs)/index.tsx` | [web/Home.html](../design/screens/web/Home.html) | Greeting, red hero + skyline, service tiles, "حوالين بيتك" with "أنا كمان", latest updates, emergency numbers |
+| `/report/category` | `report/category.tsx` | [web/Category.html](../design/screens/web/Category.html) | Emergency box, 12 categories with "خطر" tags, utility hotlines |
+| `/report/new` | `report/new.tsx` | [web/Report.html](../design/screens/web/Report.html) | Photo upload (file picker; camera on phones via `accept="image/*" capture`), description, AI suggestion card, location (browser geolocation + Leaflet pin picker), landmark, privacy toggles, duplicate panel + "already reported" note |
+| `/report/success` | `report/success.tsx` | [web/Success.html](../design/screens/web/Success.html) | "تسلم إيدك!", report number, medal progress, share |
+| `/requests` | `(tabs)/requests.tsx` | [web/Requests.html](../design/screens/web/Requests.html) | My reports and service requests, filters |
+| `/requests/[id]` | `requests/[id].tsx` | [web/Track.html](../design/screens/web/Track.html) | Summary, priority strip with reasons, timeline, share |
+| `/services`, `/services/bulky-waste` | `services/*` | [web/Services.html](../design/screens/web/Services.html) | CityServe catalog, bulky-waste booking (items, working day, slot, payment) |
+| `/map` | `(tabs)/map.tsx` | [web/Map.html](../design/screens/web/Map.html) | CityPulse map with status/category filters and a pin card |
+| `/profile` | `(tabs)/profile.tsx` | [web/Profile.html](../design/screens/web/Profile.html) | Name, area, toggles, stats and medal, sign out |
 
 Same rules as the app: report = category + (photo **or** 10+ characters); your own nearby reports never appear as "join this"; "متابع" state is the same everywhere; critical items show "خطر".
 

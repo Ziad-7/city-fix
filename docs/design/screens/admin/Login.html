@@ -11,15 +11,15 @@
 <style>
 body{background:var(--ftc-paper)}
 .login{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);min-height:calc(100vh - 36px)}
-.login-hero{background:var(--ftc-ink);color:#F2EFEA;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;position:relative}
+.login-hero{background:var(--ftc-ink);color:var(--ftc-on-ink);display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;position:relative}
 .login-hero .top{padding:40px 56px 0}
 .login-hero .lockup{display:flex;align-items:center;gap:12px}
 .login-hero .lockup b{font:700 20px/26px var(--ftc-font-display)}
 .login-hero h1{margin:56px 0 8px;font:700 56px/68px var(--ftc-font-display);color:#fff}
-.login-hero p{margin:0;max-width:420px;font:400 18px/32px var(--ftc-font-sans);color:#D9D5CE}
+.login-hero p{margin:0;max-width:420px;font:400 18px/32px var(--ftc-font-sans);color:var(--ftc-on-ink-muted)}
 .login-hero .skyline{width:100%;height:auto;margin-top:32px}
 .login-hero .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px}
-.login-hero .tags span{height:30px;padding:0 12px;border-radius:999px;border:1px solid #444;font:500 13px/28px var(--ftc-font-sans);color:#F2EFEA}
+.login-hero .tags span{height:30px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);font:500 13px/28px var(--ftc-font-sans);color:var(--ftc-on-ink)}
 .login-form{display:flex;align-items:center;justify-content:center;padding:40px 24px}
 .login-form form{width:100%;max-width:420px;display:flex;flex-direction:column;gap:18px}
 .login-form h2{margin:0;font:700 28px/38px var(--ftc-font-display)}
@@ -70,7 +70,7 @@ body{background:var(--ftc-paper)}
         <select class="ftc-select" id="district" name="district"><option>القاهرة · حي مدينة نصر أول</option><option>القاهرة · حي مدينة نصر ثان</option><option>القاهرة · حي مصر الجديدة</option></select></div>
       <div class="row"><label class="chk"><input type="checkbox" checked> افضل مسجّل على الجهاز ده</label><a href="Login.html">نسيت كلمة السر؟</a></div>
       <button class="ftc-btn ftc-btn--primary ftc-btn--block" type="submit">دخول</button>
-      <div class="staff-note"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>للموظفين فقط. لو إنت مواطن وعايز تبلّغ عن مشكلة، استخدم التطبيق أو الموقع.</span></div>
+      <div class="staff-note"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>للموظفين فقط. بلاغات المواطنين بتيجي من التطبيق أو الموقع.</span></div>
     </form>
   </section>
 </div>

@@ -3,7 +3,7 @@
  * Source of truth for values: docs/design/tokens.json. Rules: docs/design/identity.html.
  * Every design page (mobile, citizen web, admin) links this file. The web apps copy these
  * variables into their Tailwind theme; the mobile app mirrors them in src/theme/tokens.ts.
- * Light theme only for now. Fonts: load Readex Pro, IBM Plex Sans Arabic and Aref Ruqaa from Google Fonts.
+ * Light theme only: no dark mode, no gradients. Fonts: load Readex Pro, IBM Plex Sans Arabic and Aref Ruqaa from Google Fonts.
  */
 :root {
   /* Flag palette */
@@ -20,6 +20,10 @@
   --ftc-paper: #F8F6F2;
   --ftc-surface: #FFFFFF;
   --ftc-line: #E6E1D8;
+  --ftc-on-ink: #F2EFEA;           /* text on ink: admin sidebar, docbar, code */
+  --ftc-on-ink-muted: #B3B3B3;
+  --ftc-icon-muted: #C9D1D4;        /* placeholder icon on a photo-less thumbnail */
+  --ftc-map-ground: #F1EEE8;        /* static map illustration ground */
   /* Status language (chips, pins, timelines) */
   --ftc-status-received: #3D4A50;   --ftc-status-received-bg: #E6EAEC;
   --ftc-status-assigned: #1E4F87;   --ftc-status-assigned-bg: #DCE8F6;
@@ -107,7 +111,8 @@ img, svg { display: block; }
   display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border-radius: var(--ftc-radius-pill);
   background: var(--ftc-surface); border: 1px solid var(--ftc-line); color: var(--ftc-ink); font: 500 14px/1 var(--ftc-font-sans);
 }
-.ftc-filter[aria-pressed="true"], .ftc-filter.is-active { background: var(--ftc-ink); border-color: var(--ftc-ink); color: var(--ftc-paper); }
+/* Selected = red with on-red text, same as the app's Chip (apps/mobile/src/components/ui/Chip.tsx). */
+.ftc-filter[aria-pressed="true"], .ftc-filter.is-active { background: var(--ftc-red); border-color: var(--ftc-red); color: var(--ftc-on-red); font-weight: 600; }
 
 /* Forms */
 .ftc-field { display: flex; flex-direction: column; gap: 6px; }
@@ -167,13 +172,13 @@ img, svg { display: block; }
 .ftc-web-topbar__inner { max-width: var(--ftc-web-max); margin: 0 auto; height: 68px; padding: 0 var(--ftc-space-6); display: flex; align-items: center; gap: var(--ftc-space-6); }
 .ftc-web-main { max-width: var(--ftc-web-max); margin: 0 auto; padding: var(--ftc-space-8) var(--ftc-space-6); }
 .ftc-admin { display: grid; grid-template-columns: var(--ftc-admin-sidebar) 1fr; min-height: 100vh; }
-.ftc-admin-sidebar { background: var(--ftc-ink); color: #F2EFEA; padding: 20px 14px; display: flex; flex-direction: column; gap: 4px; }
-.ftc-admin-sidebar a { height: 44px; border-radius: var(--ftc-radius-md); padding: 0 12px; display: flex; align-items: center; gap: 10px; color: #F2EFEA; font: 500 14px/1 var(--ftc-font-sans); }
+.ftc-admin-sidebar { background: var(--ftc-ink); color: var(--ftc-on-ink); padding: 20px 14px; display: flex; flex-direction: column; gap: 4px; }
+.ftc-admin-sidebar a { height: 44px; border-radius: var(--ftc-radius-md); padding: 0 12px; display: flex; align-items: center; gap: 10px; color: var(--ftc-on-ink); font: 500 14px/1 var(--ftc-font-sans); }
 .ftc-admin-sidebar a[aria-current="page"] { background: var(--ftc-gold); color: var(--ftc-ink); font-weight: 700; }
 .ftc-admin-main { padding: var(--ftc-space-6) var(--ftc-space-8); min-width: 0; }
 
 /* Design-pack page chrome (not part of the product UI) */
-.ftc-docbar { background: var(--ftc-ink); color: #F2EFEA; font: 500 13px/1 var(--ftc-font-sans); padding: 10px 16px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.ftc-docbar { background: var(--ftc-ink); color: var(--ftc-on-ink); font: 500 13px/1 var(--ftc-font-sans); padding: 10px 16px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
 .ftc-docbar a { color: var(--ftc-gold); }
 
 @media (max-width: 760px) {

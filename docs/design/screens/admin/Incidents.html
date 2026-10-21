@@ -11,15 +11,15 @@
 <style>
 .ftc-admin-sidebar .brand{display:flex;align-items:center;gap:10px;padding:0 8px 18px}
 .ftc-admin-sidebar .brand b{display:block;font:700 16px/22px var(--ftc-font-display)}
-.ftc-admin-sidebar .brand small{display:block;font-size:12px;line-height:18px;color:#B3B3B3}
-.ftc-admin-sidebar a:hover:not([aria-current]){background:rgba(255,255,255,.08);color:#F2EFEA}
+.ftc-admin-sidebar .brand small{display:block;font-size:12px;line-height:18px;color:var(--ftc-on-ink-muted)}
+.ftc-admin-sidebar a:hover:not([aria-current]){background:rgba(255,255,255,.08);color:var(--ftc-on-ink)}
 .ftc-admin-sidebar a .lbl{flex:1}
-.ftc-admin-sidebar a .count{font-size:12px;color:#B3B3B3}
+.ftc-admin-sidebar a .count{font-size:12px;color:var(--ftc-on-ink-muted)}
 .ftc-admin-sidebar a[aria-current="page"] .count{color:var(--ftc-ink);font-weight:700}
-.ftc-admin-sidebar .sb-user{margin-top:auto;border-top:1px solid #333;padding:14px 4px 0;display:flex;align-items:center;gap:10px}
+.ftc-admin-sidebar .sb-user{margin-top:auto;border-top:1px solid rgba(255,255,255,.12);padding:14px 4px 0;display:flex;align-items:center;gap:10px}
 .ftc-admin-sidebar .sb-user .who{flex:1;min-width:0}
 .ftc-admin-sidebar .sb-user b{display:block;font:600 14px/20px var(--ftc-font-sans)}
-.ftc-admin-sidebar .sb-user small{display:block;font-size:12px;line-height:16px;color:#B3B3B3}
+.ftc-admin-sidebar .sb-user small{display:block;font-size:12px;line-height:16px;color:var(--ftc-on-ink-muted)}
 .ftc-admin-sidebar .sb-user a.out{width:36px;height:36px;padding:0;justify-content:center;flex:none}
 .avatar{width:36px;height:36px;border-radius:50%;background:var(--ftc-gold);color:var(--ftc-ink);display:inline-flex;align-items:center;justify-content:center;font:700 15px/1 var(--ftc-font-display);flex:none}
 .page{display:flex;flex-direction:column;gap:20px}
@@ -135,14 +135,6 @@
               <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: #DCE8F6; color: #1E4F87; font-size: 12px; font-weight: 600;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #1E4F87;"></span>اتحوّل</span></td>
               <td style="padding: 12px 16px 12px 8px; border-bottom: 1px solid #E6E1D8;">شركة مياه الشرب<span style="display: block; font-size: 12px; color: #5A5A5A;">جهة خارجية · ١٢٥</span></td>
             </tr>
-            <tr style="background: #FBE4E7;">
-              <td style="padding: 12px 16px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; width: 40px; height: 28px; border-radius: 8px; background: #A50E25; color: #FFFFFF; align-items: center; justify-content: center; font-weight: 700;">84</span></td>
-              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: block; font-weight: 600;">حفرة في الطريق</span><span style="font-size: 12px; color: #5A5A5A;">INC-0041 · شارع عباس العقاد</span></td>
-              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;">7</td>
-              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;">1 يوم / 3 أيام</td>
-              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: #FAF0D2; color: #7A5A00; font-size: 12px; font-weight: 600;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #7A5A00;"></span>جاري التنفيذ</span></td>
-              <td style="padding: 12px 16px 12px 8px; border-bottom: 1px solid #E6E1D8;">صيانة الطرق</td>
-            </tr>
             <tr>
               <td style="padding: 12px 16px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; width: 40px; height: 28px; border-radius: 8px; background: #FAF0D2; color: #7A5A00; align-items: center; justify-content: center; font-weight: 700;">71</span></td>
               <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: block; font-weight: 600;">عمود إنارة واقع</span><span style="font-size: 12px; color: #5A5A5A;">INC-0037 · شارع الطيران</span></td>
@@ -150,6 +142,14 @@
               <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8; color: #8E0A20; font-weight: 600;">2 يوم / 2 يوم · متأخر</td>
               <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: #E6EAEC; color: #3D4A50; font-size: 12px; font-weight: 600;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #3D4A50;"></span>وصل</span></td>
               <td style="padding: 12px 16px 12px 8px; border-bottom: 1px solid #E6E1D8;">إنارة الحي</td>
+            </tr>
+            <tr style="background: #FBE4E7;">
+              <td style="padding: 12px 16px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; width: 40px; height: 28px; border-radius: 8px; background: #FAF0D2; color: #7A5A00; align-items: center; justify-content: center; font-weight: 700;">66</span></td>
+              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: block; font-weight: 600;">حفرة في الطريق</span><span style="font-size: 12px; color: #5A5A5A;">INC-0041 · شارع عباس العقاد</span></td>
+              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;">7</td>
+              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;">3 س / 5 أيام</td>
+              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: #FAF0D2; color: #7A5A00; font-size: 12px; font-weight: 600;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #7A5A00;"></span>جاري التنفيذ</span></td>
+              <td style="padding: 12px 16px 12px 8px; border-bottom: 1px solid #E6E1D8;">صيانة الطرق</td>
             </tr>
             <tr>
               <td style="padding: 12px 16px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; width: 40px; height: 28px; border-radius: 8px; background: #E6EAEC; color: #3D4A50; align-items: center; justify-content: center; font-weight: 700;">58</span></td>
@@ -181,7 +181,7 @@
 
       <aside aria-label="تفاصيل البلاغ" style="flex: 1 1 340px; min-width: 0; max-width: 100%; background: #FFFFFF; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 1px 2px rgba(22,22,22,.06), 0 4px 16px rgba(22,22,22,.06);">
         <div style="display: flex; gap: 12px; align-items: center;">
-          <span aria-hidden="true" style="width: 64px; height: 64px; border-radius: 8px; background: #5A6870; flex-shrink: 0; position: relative; overflow: hidden;"><span style="position: absolute; right: 10px; top: 22px; width: 44px; height: 20px; border-radius: 999px; background: #161616;"></span></span>
+          <span aria-hidden="true" style="width: 64px; height: 64px; border-radius: 8px; background: #3D4A50; flex-shrink: 0; position: relative; overflow: hidden;"><span style="position: absolute; right: 10px; top: 22px; width: 44px; height: 20px; border-radius: 999px; background: #161616;"></span></span>
           <span style="flex: 1; display: flex; flex-direction: column;"><span style="font-family: 'Readex Pro', sans-serif; font-size: 18px; line-height: 26px; font-weight: 700;">حفرة في الطريق</span><span style="font-size: 12px; line-height: 18px; color: #5A5A5A;">INC-0041 · عباس العقاد · 7 بلاغات مربوطة</span></span>
         </div>
 
@@ -195,14 +195,14 @@
         <div style="display: flex; flex-direction: column; gap: 10px;">
           <div style="display: flex; align-items: baseline; justify-content: space-between;">
             <span style="font-size: 14px; font-weight: 600;">سبب الأولوية</span>
-            <span style="font-family: 'Readex Pro', sans-serif; font-size: 28px; line-height: 32px; font-weight: 700; color: #A50E25;">84<span style="font-size: 14px; color: #5A5A5A; font-weight: 500;"> / 100</span></span>
+            <span style="font-family: 'Readex Pro', sans-serif; font-size: 28px; line-height: 32px; font-weight: 700; color: #7A5A00;">66<span style="font-size: 14px; color: #5A5A5A; font-weight: 500;"> / 100</span></span>
           </div>
           <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; line-height: 20px;">
-            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">الخطورة: عالية</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 100%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: left; font-weight: 600;">+30</span></div>
-            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">قريب من مدرسة</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 67%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: left; font-weight: 600;">+20</span></div>
-            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">7 مواطنين بلّغوا</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 50%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: left; font-weight: 600;">+15</span></div>
-            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">عدالة توزيع الخدمة</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 33%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: left; font-weight: 600;">+10</span></div>
-            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">مفتوح 1 من 3 أيام</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 30%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: left; font-weight: 600;">+9</span></div>
+            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">الخطورة: عالية</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 70%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: end; font-weight: 600;">+28</span></div>
+            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">قريب من مدرسة</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 100%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: end; font-weight: 600;">+20</span></div>
+            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">7 مواطنين بلّغوا</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 90%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: end; font-weight: 600;">+18</span></div>
+            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">مفتوح 3 س من 5 أيام</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 0%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: end; font-weight: 600;">+0</span></div>
+            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">منطقة محتاجة اهتمام</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 0%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: end; font-weight: 600;">+0</span></div>
           </div>
         </div>
 
