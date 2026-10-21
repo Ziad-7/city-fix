@@ -1,6 +1,6 @@
-# Role brief — Citizen web portal
+# Role brief — Citizen website / client portal (Member 2)
 
-**Owner:** _[name]_ · **Folder:** `apps/web` · **Branch:** `feat/citizen-web` · **Can start now:** yes, on mock data
+**Owner:** _[member name]_ · **Folder:** `apps/web` · **Branch prefix:** `feat/web-…` (e.g. `feat/web-report-form`) · **Starts:** now, on mock data
 
 ## Your mission
 
@@ -122,3 +122,10 @@ Already in their brief; check with them:
 - Small PRs into `main` with "how to test" and screenshots next to the matching mockup.
 - Add an entry to [`docs/progress-log.md`](../progress-log.md) when a step lands.
 - Claude reviews your PRs for design match, contract match and the business rules above.
+
+## 10. Who you work with
+
+- **Member 1 (mobile, Abood + Claude):** the source of the design, copy and shared logic. If a shared file needs a change, it changes in the mobile app first.
+- **Member 3 (admin web):** the other Next.js app. Agree one Tailwind theme, one icon set and the same component names so both websites stay identical in look.
+- **Member 4 (API & DB):** CORS for your origins, the browser upload flow (`/uploads/sign`), the demo account, the deployed URL.
+- **Member 5 (AI):** `/triage` (AI suggestion card) and `/ai/transcribe` (mic button), including how they behave when the model is slow.

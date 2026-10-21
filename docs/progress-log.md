@@ -2,6 +2,14 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-21 — Team roles: 5 members, one brief each
+
+**Done**
+- [`team/README.md`](team/README.md) rewritten as the single page for who does what: the 5 roles with owners, folders and branch prefixes; what each role delivers and doesn't; owners of shared things (contract, design, shared code, schema, demo data, deploys, CI); hand-offs; a 7-day plan per member; review rules; first-hour checklist.
+- Briefs: [admin web](team/admin-web.md) (new, 8 pages matching `design/screens/admin/`), [citizen website](team/citizen-web-portal.md) (updated), [API & database](team/api-database.md) (was backend-database; AI and optimizer moved out, staff login, admin endpoints and backend DevOps added), [AI & smart features](team/ai-features.md) (new: triage + fallback, budget optimizer, voice transcription, photo blur, duplicate help, insights, evaluation).
+- API contract: proposed staff login, admin list/update endpoints, merge, similar, insights, `/ai/transcribe`, `source`/`emergency` on triage.
+- Root README team table, CONTRIBUTING branch prefixes per role, PR template, CODEOWNERS template.
+
 ## 2026-10-21 — Design pack: identity guide + screens for every surface (branch `design/identity-and-screens`)
 
 **Done** (three Sonnet 5.5 implementers in parallel, reviewed and fixed by Opus 5.5 — [review](reviews/2026-10-21-design-pack-review.md))
