@@ -10,6 +10,11 @@ from app.models import (
     IncidentFollower, ActivityLog, BudgetPlan, IncidentStatusEnum, WorkOrderStatusEnum,
     AISuggestion, Profile
 )
+from app.schemas import (
+    PatchIncidentRequest, CreateWorkOrderRequest, PatchWorkOrderRequest,
+    PatchServiceRequestRequest, BudgetOptimizeRequest, BudgetCommitRequest,
+    TriageConfirmRequest, MergeIncidentRequest
+)
 from app.logic.serialize import admin_incident, work_order, admin_service_request, incident_public
 from app.logic.dashboard import build_dashboard
 from app.logic.budget import optimize_budget
@@ -22,30 +27,8 @@ from app.helpers import iso_z, now_utc
 from app.seed import TEAMS, seed_db
 
 router = APIRouter(prefix="/admin", tags=["admin"])
-
-
-# ============================================================================
-# Auth endpoints
-# ============================================================================
-
-@router.get("/auth/me")
-async def get_me(payload: dict = Depends(current_user), db: Session = Depends(get_db)):
-    """Get current staff/admin user info."""
-    # Get the user from JWT
-    user_id = payload.get("sub")
-    profile = db.query(Profile).filter_by(id=user_id).first()
-
-    if not profile or profile.role not in ("staff", "admin"):
-        raise HTTPException(status_code=401, detail="لازم تسجّل دخول")
-
-    return {
-        "userId": user_id,
-        "name": profile.name,
-        "title": profile.prefs.get("title") if profile.prefs else None,
-        "role": profile.role,
-        "department": payload.get("department"),
-        "district": profile.district,
-    }
+# Separate router for non-prefixed routes (e.g., /incidents/{id})
+top_level_router = APIRouter(tags=["incidents"])
 
 
 # ============================================================================
@@ -189,19 +172,13 @@ async def get_incident(
     return admin_incident(db, incident)
 
 
-@router.patch("/incidents/{incident_id}")
-async def patch_incident(
+async def _patch_incident_impl(
     incident_id: str,
-    update: dict,
-    payload: dict = Depends(require_staff),
-    db: Session = Depends(get_db)
+    update: PatchIncidentRequest,
+    payload: dict,
+    db: Session
 ):
-    """
-    Update incident.
-    - status, severity, categoryId, department, note
-    - note is REQUIRED when status changes (400 if missing)
-    - Staff can only patch their own department (403)
-    """
+    """Implementation shared by /incidents/{id} and /admin/incidents/{id}."""
     incident = db.query(Incident).filter_by(id=incident_id).first()
     if not incident:
         raise HTTPException(status_code=404, detail="مش موجود")
@@ -212,23 +189,29 @@ async def patch_incident(
         if incident.department_id != staff_dept:
             raise HTTPException(status_code=403, detail="مش مسموح")
 
+    # Validate enum fields
+    if update.status and update.status not in ("received", "triaged", "assigned", "in_progress", "resolved"):
+        raise HTTPException(status_code=422, detail="البيانات مش مكتملة")
+    if update.severity and update.severity not in ("low", "medium", "high", "critical"):
+        raise HTTPException(status_code=422, detail="البيانات مش مكتملة")
+
     # If status is changing, note is required
-    if "status" in update and update["status"] != incident.status:
-        if "note" not in update or not update["note"]:
+    if update.status and update.status != incident.status:
+        if not update.note:
             raise HTTPException(status_code=400, detail="اكتب رسالة للمواطنين")
 
     # Apply updates
-    if "status" in update:
-        new_status = update["status"]
-        note = update.get("note", "")
+    if update.status:
+        new_status = update.status
+        note = update.note or ""
         actor = payload.get("sub", "staff")
         change_incident_status(db, incident, new_status, note, actor)
 
-    if "severity" in update:
-        incident.severity = update["severity"]
+    if update.severity:
+        incident.severity = update.severity
 
-    if "categoryId" in update:
-        incident.category_id = update["categoryId"]
+    if update.category_id:
+        incident.category_id = update.category_id
         # Recompute priority
         category = db.query(Category).filter_by(id=incident.category_id).first()
         days_open = max(0, int((now_utc() - incident.created_at).days))
@@ -243,17 +226,17 @@ async def patch_incident(
         incident.priority_score = priority["score"]
         incident.priority_factors = priority["factors"]
 
-    if "department" in update:
-        incident.department_id = update["department"]
+    if update.department:
+        incident.department_id = update.department
 
     # A3: note-only PATCH appends timeline entry with current status
-    if "note" in update and "status" not in update:
+    if update.note and not update.status:
         actor = payload.get("sub", "staff")
         activity = ActivityLog(
             entity_type="incident",
             entity_id=incident.id,
             status=incident.status,
-            note=update["note"],
+            note=update.note,
             actor=actor,
             kind="status_change",
             at=now_utc(),
@@ -262,6 +245,29 @@ async def patch_incident(
 
     db.commit()
     return admin_incident(db, incident)
+
+
+@router.patch("/incidents/{incident_id}")
+async def patch_incident(
+    incident_id: str,
+    update: PatchIncidentRequest,
+    payload: dict = Depends(require_staff),
+    db: Session = Depends(get_db)
+):
+    """Update incident (admin route)."""
+    return await _patch_incident_impl(incident_id, update, payload, db)
+
+
+# C2: Top-level /incidents/{id} route
+@top_level_router.patch("/incidents/{incident_id}")
+async def patch_incident_top_level(
+    incident_id: str,
+    update: PatchIncidentRequest,
+    payload: dict = Depends(require_staff),
+    db: Session = Depends(get_db)
+):
+    """Update incident (top-level route)."""
+    return await _patch_incident_impl(incident_id, update, payload, db)
 
 
 @router.get("/incidents/{incident_id}/similar")
@@ -282,7 +288,7 @@ async def get_similar_incidents(
 @router.post("/incidents/{incident_id}/merge")
 async def merge_incidents(
     incident_id: str,
-    data: dict,
+    data: MergeIncidentRequest,
     payload: dict = Depends(require_staff),
     db: Session = Depends(get_db)
 ):
@@ -291,7 +297,7 @@ async def merge_incidents(
     if not source:
         raise HTTPException(status_code=404, detail="مش موجود")
 
-    target_id = data.get("intoIncidentId")
+    target_id = data.into_incident_id
     target = db.query(Incident).filter_by(id=target_id).first()
     if not target:
         raise HTTPException(status_code=404, detail="مش موجود")
@@ -326,7 +332,7 @@ async def merge_incidents(
 @router.post("/incidents/{incident_id}/triage/confirm")
 async def confirm_triage(
     incident_id: str,
-    data: dict,
+    data: TriageConfirmRequest,
     payload: dict = Depends(require_staff),
     db: Session = Depends(get_db)
 ):
@@ -335,12 +341,18 @@ async def confirm_triage(
     if not incident:
         raise HTTPException(status_code=404, detail="مش موجود")
 
-    # Update incident with triage data
-    if "categoryId" in data:
-        incident.category_id = data["categoryId"]
+    # Validate enum fields
+    if data.category_id and not db.query(Category).filter_by(id=data.category_id).first():
+        raise HTTPException(status_code=422, detail="البيانات مش مكتملة")
+    if data.severity and data.severity not in ("low", "medium", "high", "critical"):
+        raise HTTPException(status_code=422, detail="البيانات مش مكتملة")
 
-    if "severity" in data:
-        incident.severity = data["severity"]
+    # Update incident with triage data
+    if data.category_id:
+        incident.category_id = data.category_id
+
+    if data.severity:
+        incident.severity = data.severity
 
     # Mark triage as confirmed in AI suggestions
     first_report = db.query(Report).filter_by(incident_id=incident_id).first()
@@ -414,7 +426,7 @@ async def get_work_order(
 
 @router.post("/work-orders")
 async def create_work_order(
-    data: dict,
+    data: CreateWorkOrderRequest,
     payload: dict = Depends(require_staff),
     db: Session = Depends(get_db)
 ):
@@ -423,8 +435,12 @@ async def create_work_order(
     409 if incident already has a work order.
     Moves incident to 'assigned' (or 'open' if no team).
     """
-    incident_id = data.get("incidentId")
-    sr_id = data.get("serviceRequestId")
+    incident_id = data.incident_id
+    sr_id = data.service_request_id
+
+    # Validate required field
+    if not data.department:
+        raise HTTPException(status_code=422, detail="البيانات مش مكتملة")
 
     # Check for existing work order
     if incident_id:
@@ -441,12 +457,12 @@ async def create_work_order(
             if incident.department_id != staff_dept:
                 raise HTTPException(status_code=403, detail="مش مسموح")
 
-    dept_id = data.get("department")
-    team = data.get("team")
-    team_size = data.get("teamSize")
-    supervisor = data.get("supervisor")
-    due_at = data.get("dueAt")
-    tasks = data.get("tasks", [])
+    dept_id = data.department
+    team = data.team
+    team_size = data.team_size
+    supervisor = data.supervisor
+    due_at = data.due_at
+    tasks = data.tasks or []
 
     # Create work order
     wo_id = next_id(db, "WO")
@@ -462,7 +478,7 @@ async def create_work_order(
         supervisor=supervisor,
         status=wo_status,
         due_at=datetime.fromisoformat(due_at) if due_at else None,
-        estimated_cost_egp=data.get("estimatedCostEgp"),
+        estimated_cost_egp=data.estimated_cost_egp,
         tasks=[{"label": t, "done": False} for t in tasks] if tasks else [],
     )
     db.add(wo)
@@ -502,7 +518,7 @@ async def create_work_order(
 @router.patch("/work-orders/{wo_id}")
 async def patch_work_order(
     wo_id: str,
-    data: dict,
+    data: PatchWorkOrderRequest,
     payload: dict = Depends(require_staff),
     db: Session = Depends(get_db)
 ):
@@ -521,15 +537,19 @@ async def patch_work_order(
         if wo.department_id != staff_dept:
             raise HTTPException(status_code=403, detail="مش مسموح")
 
+    # Validate enum field
+    if data.status and data.status not in ("open", "assigned", "in_progress", "done"):
+        raise HTTPException(status_code=422, detail="البيانات مش مكتملة")
+
     # If status is changing to in_progress/done, note is required
-    if "status" in data and data["status"] in ("in_progress", "done"):
-        if "note" not in data or not data["note"]:
+    if data.status and data.status in ("in_progress", "done"):
+        if not data.note:
             raise HTTPException(status_code=400, detail="اكتب رسالة")
 
     # Apply updates
-    if "status" in data:
-        new_status = data["status"]
-        note = data.get("note", "")
+    if data.status:
+        new_status = data.status
+        note = data.note or ""
         actor = payload.get("sub", "staff")
         change_work_order_status(db, wo, new_status, note, actor)
 
@@ -540,20 +560,20 @@ async def patch_work_order(
                 incident_status = "in_progress" if new_status == "in_progress" else "resolved"
                 change_incident_status(db, incident, incident_status, note, actor)
 
-    if "team" in data:
-        wo.team = data["team"]
+    if data.team is not None:
+        wo.team = data.team
 
-    if "teamSize" in data:
-        wo.team_size = data["teamSize"]
+    if data.team_size is not None:
+        wo.team_size = data.team_size
 
-    if "supervisor" in data:
-        wo.supervisor = data["supervisor"]
+    if data.supervisor is not None:
+        wo.supervisor = data.supervisor
 
-    if "dueAt" in data:
-        wo.due_at = datetime.fromisoformat(data["dueAt"]) if data["dueAt"] else None
+    if data.due_at is not None:
+        wo.due_at = datetime.fromisoformat(data.due_at) if data.due_at else None
 
-    if "tasks" in data:
-        wo.tasks = data["tasks"]
+    if data.tasks is not None:
+        wo.tasks = data.tasks
 
     db.commit()
     return work_order(db, wo)
@@ -596,7 +616,7 @@ async def list_service_requests(
 @router.patch("/service-requests/{sr_id}")
 async def patch_service_request(
     sr_id: str,
-    data: dict,
+    data: PatchServiceRequestRequest,
     payload: dict = Depends(require_staff),
     db: Session = Depends(get_db)
 ):
@@ -609,35 +629,39 @@ async def patch_service_request(
     if not sr:
         raise HTTPException(status_code=404, detail="مش موجود")
 
+    # Validate enum fields
+    if data.status and data.status not in ("pending", "scheduled", "completed", "resolved", "closed"):
+        raise HTTPException(status_code=422, detail="البيانات مش مكتملة")
+
     # If status is changing, note is required
-    if "status" in data and data["status"] != sr.status:
-        if "note" not in data or not data["note"]:
+    if data.status and data.status != sr.status:
+        if not data.note:
             raise HTTPException(status_code=400, detail="اكتب رسالة")
 
     # Apply updates
-    if "status" in data:
-        new_status = data["status"]
-        note = data.get("note", "")
+    if data.status:
+        new_status = data.status
+        note = data.note or ""
         actor = payload.get("sub", "staff")
         change_service_request_status(db, sr, new_status, note, actor)
 
-    if "day" in data:
-        sr.details["day"] = data["day"]
+    if data.day is not None:
+        sr.details["day"] = data.day
 
-    if "slot" in data:
-        sr.details["slot"] = data["slot"]
+    if data.slot is not None:
+        sr.details["slot"] = data.slot
 
-    if "assignee" in data:
-        sr.details["assignee"] = data["assignee"]
+    if data.assignee is not None:
+        sr.details["assignee"] = data.assignee
 
     # A3: note-only PATCH
-    if "note" in data and "status" not in data:
+    if data.note and not data.status:
         actor = payload.get("sub", "staff")
         activity = ActivityLog(
             entity_type="service_request",
             entity_id=sr.id,
             status=sr.status,
-            note=data["note"],
+            note=data.note,
             actor=actor,
             kind="status_change",
             at=now_utc(),
@@ -654,18 +678,21 @@ async def patch_service_request(
 
 @router.post("/budget/optimize")
 async def optimize_budget_endpoint(
-    data: dict,
+    data: BudgetOptimizeRequest,
     payload: dict = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
-    """Optimize budget using 0/1 knapsack DP. Admin only."""
-    budget_egp = data.get("budgetEgp", 300000)
-    incident_ids = data.get("incidentIds")
+    """Optimize budget using 0/1 knapsack DP. Admin only. C4: budgetEgp required > 0."""
+    # C4: Validate budgetEgp > 0
+    if data.budget_egp <= 0:
+        raise HTTPException(status_code=422, detail="البيانات مش مكتملة")
+
+    budget_egp = data.budget_egp
+    incident_ids = data.incident_ids
 
     plan = optimize_budget(db, budget_egp, incident_ids)
 
     # Save plan
-    from app.logic.ids import next_id
     plan_id = next_id(db, "BP")
     db_plan = BudgetPlan(
         id=plan_id,
@@ -683,12 +710,12 @@ async def optimize_budget_endpoint(
 
 @router.post("/budget/commit")
 async def commit_budget(
-    data: dict,
+    data: BudgetCommitRequest,
     payload: dict = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
     """Create work orders for selected incidents. Admin only."""
-    incident_ids = data.get("incidentIds", [])
+    incident_ids = data.incident_ids or []
 
     created_wos = []
     for inc_id in incident_ids:
@@ -697,7 +724,6 @@ async def commit_budget(
             continue
 
         # Create work order
-        from app.logic.ids import next_id
         wo_id = next_id(db, "WO")
         dept_id = incident.department_id or "utilities"
 

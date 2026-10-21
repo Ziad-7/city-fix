@@ -74,6 +74,7 @@ async def health_check() -> HealthResponse:
 
 app.include_router(auth.router)
 app.include_router(admin.router)
+app.include_router(admin.top_level_router)
 
 
 # ============================================================================

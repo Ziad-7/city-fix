@@ -213,7 +213,7 @@ def admin_incident(db: Session, incident: Incident) -> dict:
 
 
 def work_order(db: Session, wo: WorkOrder) -> dict:
-    """Serialize work order with updates and overdue status."""
+    """Serialize work order with updates and overdue status (C3)."""
     now = now_utc()
     is_overdue = False
     if wo.status in ("open", "assigned", "in_progress") and wo.due_at:
@@ -224,15 +224,46 @@ def work_order(db: Session, wo: WorkOrder) -> dict:
 
     updates = work_order_updates(db, wo.id)
 
+    # C3: Get department Arabic name and external/hotline
+    dept = db.query(Department).filter_by(id=wo.department_id).first()
+    dept_name = dept.name_ar if dept else wo.department_id
+    external = bool(dept.external_hotline) if dept else False
+    external_hotline = dept.external_hotline if dept else None
+
+    # C3: title = linked incident title (or service request: "رفع مخلفات كبيرة"/"صيانة أشجار" + " · " + address)
+    title = ""
+    address = ""
+    priority_score = None
+    followers = None
+
+    if wo.incident_id:
+        incident = db.query(Incident).filter_by(id=wo.incident_id).first()
+        if incident:
+            title = incident.title
+            address = incident.address
+            priority_score = incident.priority_score
+            followers = incident.followers_count if hasattr(incident, 'followers_count') else 0
+    elif wo.service_request_id:
+        sr = db.query(ServiceRequest).filter_by(id=wo.service_request_id).first()
+        if sr:
+            # Map service type to Arabic name
+            service_type_map = {
+                "bulky_waste": "رفع مخلفات كبيرة",
+                "tree_maintenance": "صيانة أشجار",
+            }
+            sr_type = service_type_map.get(sr.service_type, sr.service_type)
+            title = f"{sr_type} · {sr.address}"
+            address = sr.address
+
     result = {
         "id": wo.id,
         "incidentId": wo.incident_id,
         "serviceRequestId": wo.service_request_id,
-        "title": wo.incident_id or wo.service_request_id,  # Use incident/service request id as title
-        "address": "",  # Will be populated from incident/SR if needed
-        "department": wo.department_id,
-        "external": wo.department_id.startswith("water") or wo.department_id.startswith("electricity") or wo.department_id == "sewage",
-        "externalHotline": None,  # Will be set if external
+        "title": title,
+        "address": address,
+        "department": dept_name,
+        "external": external,
+        "externalHotline": external_hotline,
         "team": wo.team,
         "teamSize": wo.team_size,
         "supervisor": wo.supervisor,
@@ -240,15 +271,15 @@ def work_order(db: Session, wo: WorkOrder) -> dict:
         "dueAt": iso_z(wo.due_at) if wo.due_at else None,
         "overdue": is_overdue,
         "estimatedCostEgp": wo.estimated_cost_egp,
-        "priorityScore": None,  # Would be from linked incident
-        "followers": None,  # Would be from linked incident
+        "priorityScore": priority_score,
+        "followers": followers,
         "tasks": wo.tasks or [],
         "updates": updates,
         "createdAt": iso_z(wo.created_at),
         "updatedAt": iso_z(wo.updated_at),
         "resolvedAt": iso_z(wo.resolved_at) if wo.resolved_at else None,
     }
-    # Remove None values
+    # C1: Remove None values
     return {k: v for k, v in result.items() if v is not None}
 
 

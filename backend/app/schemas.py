@@ -319,6 +319,83 @@ class Insights(CamelCaseModel):
     overdue_departments: List[str]
 
 
+# ============================================================================
+# Request Body Models
+# ============================================================================
+
+
+class PatchIncidentRequest(CamelCaseModel):
+    """Patch incident request body."""
+
+    status: Optional[str] = None
+    severity: Optional[str] = None
+    category_id: Optional[str] = None
+    department: Optional[str] = None
+    note: Optional[str] = None
+
+
+class CreateWorkOrderRequest(CamelCaseModel):
+    """Create work order request body."""
+
+    incident_id: Optional[str] = None
+    service_request_id: Optional[str] = None
+    department: str  # Required
+    team: Optional[str] = None
+    team_size: Optional[int] = None
+    supervisor: Optional[str] = None
+    due_at: Optional[str] = None
+    tasks: Optional[List[str]] = None
+    estimated_cost_egp: Optional[int] = None
+
+
+class PatchWorkOrderRequest(CamelCaseModel):
+    """Patch work order request body."""
+
+    status: Optional[str] = None
+    note: Optional[str] = None
+    team: Optional[str] = None
+    team_size: Optional[int] = None
+    supervisor: Optional[str] = None
+    due_at: Optional[str] = None
+    tasks: Optional[List[dict]] = None
+
+
+class PatchServiceRequestRequest(CamelCaseModel):
+    """Patch service request request body."""
+
+    status: Optional[str] = None
+    note: Optional[str] = None
+    day: Optional[str] = None
+    slot: Optional[str] = None
+    assignee: Optional[str] = None
+
+
+class BudgetOptimizeRequest(CamelCaseModel):
+    """Budget optimize request body."""
+
+    budget_egp: int  # Required, > 0
+    incident_ids: Optional[List[str]] = None
+
+
+class BudgetCommitRequest(CamelCaseModel):
+    """Budget commit request body."""
+
+    incident_ids: Optional[List[str]] = None  # List of incident IDs to commit
+
+
+class TriageConfirmRequest(CamelCaseModel):
+    """Triage confirm request body."""
+
+    category_id: Optional[str] = None
+    severity: Optional[str] = None
+
+
+class MergeIncidentRequest(CamelCaseModel):
+    """Merge incident request body."""
+
+    into_incident_id: str  # ID of target incident
+
+
 class HealthResponse(BaseModel):
     """Health check response."""
 

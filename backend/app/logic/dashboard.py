@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from app.models import (
     Incident, ActivityLog, WorkOrder, Department, Category,
-    IncidentStatusEnum
+    IncidentStatusEnum, ServiceRequest
 )
 from app.helpers import iso_z, now_utc
 
@@ -20,6 +20,7 @@ def build_dashboard(db: Session, range_days: str, staff_department: str = None) 
         DashboardStats dict with metrics and lists
     """
     now = now_utc()
+    open_statuses = {"received", "triaged", "assigned", "in_progress"}
 
     # Parse range
     if range_days == "today":
@@ -31,25 +32,21 @@ def build_dashboard(db: Session, range_days: str, staff_department: str = None) 
     else:
         since = now - timedelta(days=30)
 
-    # Get all incidents (open and closed)
+    # Load categories and departments once per request
+    categories = {c.id: c for c in db.query(Category).all()}
+    departments = {d.id: d for d in db.query(Department).all()}
+
+    # Get all incidents
     all_incidents = db.query(Incident).all()
     if staff_department:
         all_incidents = [i for i in all_incidents if i.department_id == staff_department]
 
-    # Filter incidents for this range
-    open_statuses = {"received", "triaged", "assigned", "in_progress"}
-    incidents_in_range = [
-        i for i in all_incidents
-        if i.created_at.replace(tzinfo=timezone.utc) >= since
-    ]
-    open_in_range = [i for i in incidents_in_range if i.status in open_statuses]
-
-    # Count open (all time)
+    # C1: open = CURRENT open count (all open incidents, never range-filtered)
     open_all = [i for i in all_incidents if i.status in open_statuses]
     open_count = len(open_all)
 
-    # Count resolved within the selected range
-    resolved_in_range = []
+    # Get resolved incidents in window
+    resolved_in_window = []
     for activity in db.query(ActivityLog).filter(
         ActivityLog.entity_type == "incident",
         ActivityLog.status == "resolved",
@@ -58,59 +55,36 @@ def build_dashboard(db: Session, range_days: str, staff_department: str = None) 
         if at.tzinfo is None:
             at = at.replace(tzinfo=timezone.utc)
         if at >= since:
-            resolved_in_range.append(activity.entity_id)
+            resolved_in_window.append(activity.entity_id)
+    unique_resolved_in_window = set(resolved_in_window)
 
-    unique_resolved = set(resolved_in_range)
-    resolved_count = len(unique_resolved)
+    # Get incidents created in window
+    created_in_window = [
+        i for i in all_incidents
+        if i.created_at.replace(tzinfo=timezone.utc) >= since
+    ]
 
-    # Count overdue (open incidents past their deadline)
-    overdue_count = 0
-    overdue_list = []
-    for incident in open_all:
-        category = db.query(Category).filter_by(id=incident.category_id).first()
-        if not category:
-            continue
-        created_at = incident.created_at
-        if created_at.tzinfo is None:
-            created_at = created_at.replace(tzinfo=timezone.utc)
-        deadline = created_at + timedelta(days=category.target_days)
-        if now > deadline:
-            overdue_count += 1
-            hours_late = int((now - deadline).total_seconds() / 3600)
-            overdue_list.append({
-                "incidentId": incident.id,
-                "title": incident.title,
-                "department": incident.department_id or "",
-                "address": incident.address,
-                "priorityScore": incident.priority_score,
-                "dueAt": iso_z(deadline),
-                "hoursLate": hours_late,
-                "external": False,
-            })
+    # C1: openDelta = (created in window) - (resolved in window)
+    open_delta = len(created_in_window) - len(unique_resolved_in_window)
 
-    # Sort overdue list by priority desc, take top 5
-    overdue_list.sort(key=lambda x: x["priorityScore"], reverse=True)
-    overdue_list = overdue_list[:5]
+    # C1: resolvedThisWeek = resolved within window
+    resolved_this_week = len(unique_resolved_in_window)
 
-    # Compute open delta and resolved delta (change from previous period)
-    # For simplicity: compare with double the range
+    # Compute previous window for deltas
     if range_days == "today":
         prev_since = now.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
+        prev_until = now.replace(hour=0, minute=0, second=0, microsecond=0)
     elif range_days == "7d":
         prev_since = now - timedelta(days=14)
+        prev_until = now - timedelta(days=7)
     elif range_days == "30d":
         prev_since = now - timedelta(days=60)
+        prev_until = now - timedelta(days=30)
     else:
         prev_since = now - timedelta(days=60)
+        prev_until = now - timedelta(days=30)
 
-    prev_open = [
-        i for i in all_incidents
-        if i.created_at.replace(tzinfo=timezone.utc) >= prev_since
-        and i.created_at.replace(tzinfo=timezone.utc) < since
-        and i.status in open_statuses
-    ]
-    open_delta = len(open_in_range) - len(prev_open)
-
+    # Get previous window resolved count
     prev_resolved = []
     for activity in db.query(ActivityLog).filter(
         ActivityLog.entity_type == "incident",
@@ -119,21 +93,24 @@ def build_dashboard(db: Session, range_days: str, staff_department: str = None) 
         at = activity.at
         if at.tzinfo is None:
             at = at.replace(tzinfo=timezone.utc)
-        if prev_since <= at < since:
+        if prev_until <= at < since:
             prev_resolved.append(activity.entity_id)
-    resolved_delta = resolved_count - len(set(prev_resolved))
+    prev_resolved_count = len(set(prev_resolved))
 
-    # Average resolution days
-    resolved_incidents = [
-        i for i in all_incidents
-        if i.status == "resolved"
-    ]
-    avg_resolution_days = 0
-    avg_resolution_delta_days = 0
-    if resolved_incidents:
+    # C1: resolvedDelta = current window - previous window
+    resolved_delta = resolved_this_week - prev_resolved_count
+
+    # C1: avgResolutionDays from incidents resolved in window
+    avg_resolution_days = 0.0
+    resolved_incidents_in_window = []
+    for inc_id in unique_resolved_in_window:
+        incident = db.query(Incident).filter_by(id=inc_id).first()
+        if incident:
+            resolved_incidents_in_window.append(incident)
+
+    if resolved_incidents_in_window:
         total_days = 0
-        for incident in resolved_incidents:
-            # Find when it was resolved
+        for incident in resolved_incidents_in_window:
             resolved_activity = db.query(ActivityLog).filter(
                 ActivityLog.entity_type == "incident",
                 ActivityLog.entity_id == incident.id,
@@ -146,9 +123,80 @@ def build_dashboard(db: Session, range_days: str, staff_department: str = None) 
                     created = created.replace(tzinfo=timezone.utc)
                 if resolved.tzinfo is None:
                     resolved = resolved.replace(tzinfo=timezone.utc)
-                days = (resolved - created).days
+                days = (resolved - created).total_seconds() / 86400
                 total_days += days
-        avg_resolution_days = int(total_days / len(resolved_incidents)) if resolved_incidents else 0
+        avg_resolution_days = round(total_days / len(resolved_incidents_in_window), 1)
+
+    # C1: avgResolutionDeltaDays from previous window
+    avg_resolution_delta_days = 0.0
+    prev_resolved_incidents = []
+    for inc_id in set(prev_resolved):
+        incident = db.query(Incident).filter_by(id=inc_id).first()
+        if incident:
+            prev_resolved_incidents.append(incident)
+
+    if prev_resolved_incidents:
+        total_days = 0
+        for incident in prev_resolved_incidents:
+            resolved_activity = db.query(ActivityLog).filter(
+                ActivityLog.entity_type == "incident",
+                ActivityLog.entity_id == incident.id,
+                ActivityLog.status == "resolved",
+            ).first()
+            if resolved_activity:
+                created = incident.created_at
+                resolved = resolved_activity.at
+                if created.tzinfo is None:
+                    created = created.replace(tzinfo=timezone.utc)
+                if resolved.tzinfo is None:
+                    resolved = resolved.replace(tzinfo=timezone.utc)
+                days = (resolved - created).total_seconds() / 86400
+                total_days += days
+        prev_avg_resolution_days = round(total_days / len(prev_resolved_incidents), 1)
+        avg_resolution_delta_days = round(avg_resolution_days - prev_avg_resolution_days, 1)
+
+    # Count overdue (open incidents past their deadline or due within 12h)
+    overdue_count = 0
+    overdue_list = []
+    for incident in open_all:
+        category = categories.get(incident.category_id)
+        if not category:
+            continue
+        created_at = incident.created_at
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+        due_at = created_at + timedelta(days=category.target_days)
+
+        # C1: overdue OR due within 12h
+        hours_until_due = (due_at - now).total_seconds() / 3600
+        hours_late = round((now - due_at).total_seconds() / 3600)
+        is_overdue = hours_until_due <= 12
+
+        if is_overdue:
+            overdue_count += 1
+            # C1: hoursLate = round((now - dueAt) hours), negative = remaining
+            dept = departments.get(incident.department_id)
+            overdue_list.append({
+                "incidentId": incident.id,
+                "title": incident.title,
+                "department": dept.name_ar if dept else "",
+                "address": incident.address,
+                "priorityScore": incident.priority_score,
+                "dueAt": iso_z(due_at),
+                "hoursLate": hours_late,
+                "external": bool(dept.external_hotline) if dept else False,
+                "externalHotline": dept.external_hotline if dept else None,
+            })
+
+    # Sort overdue list by priority desc, take top 5
+    overdue_list.sort(key=lambda x: x["priorityScore"], reverse=True)
+    overdue_list = overdue_list[:5]
+
+    # Remove None externalHotline values
+    overdue_list = [
+        {k: v for k, v in item.items() if v is not None}
+        for item in overdue_list
+    ]
 
     # By category breakdown (open only)
     by_category = {}
@@ -161,41 +209,45 @@ def build_dashboard(db: Session, range_days: str, staff_department: str = None) 
         for cat_id, count in sorted(by_category.items(), key=lambda x: x[1], reverse=True)
     ]
 
-    # By status (open statuses + resolved)
+    # C1: byStatus = open statuses (current) + "resolved" = resolved within window
     by_status = {}
-    for incident in all_incidents:
+    for incident in open_all:
         status = incident.status
-        if status in open_statuses or status == "resolved":
-            by_status[status] = by_status.get(status, 0) + 1
+        by_status[status] = by_status.get(status, 0) + 1
+    # Add resolved within window
+    by_status["resolved"] = resolved_this_week
 
     by_status_list = [
         {"status": status, "count": count}
         for status, count in by_status.items()
     ]
 
-    # Departments workload
+    # Departments workload (filter by staff_department if provided)
     departments_list = []
-    depts = db.query(Department).all()
-    for dept in depts:
+    for dept in departments.values():
+        if staff_department and dept.id != staff_department:
+            continue
+
         dept_incidents = [i for i in all_incidents if i.department_id == dept.id]
         dept_open = [i for i in dept_incidents if i.status in open_statuses]
         dept_overdue = 0
         for incident in dept_open:
-            category = db.query(Category).filter_by(id=incident.category_id).first()
+            category = categories.get(incident.category_id)
             if category:
                 created_at = incident.created_at
                 if created_at.tzinfo is None:
                     created_at = created_at.replace(tzinfo=timezone.utc)
                 deadline = created_at + timedelta(days=category.target_days)
-                if now > deadline:
+                hours_until = (deadline - now).total_seconds() / 3600
+                if hours_until <= 12:
                     dept_overdue += 1
 
-        # Avg resolution for this department
-        dept_resolved = [i for i in dept_incidents if i.status == "resolved"]
-        dept_avg_res_days = 0
-        if dept_resolved:
-            total = 0
-            for incident in dept_resolved:
+        # Avg resolution for this department (from window)
+        dept_resolved_in_window = [i for i in dept_incidents if i.id in unique_resolved_in_window]
+        dept_avg_res_days = 0.0
+        if dept_resolved_in_window:
+            total = 0.0
+            for incident in dept_resolved_in_window:
                 resolved_activity = db.query(ActivityLog).filter(
                     ActivityLog.entity_type == "incident",
                     ActivityLog.entity_id == incident.id,
@@ -208,27 +260,30 @@ def build_dashboard(db: Session, range_days: str, staff_department: str = None) 
                         created = created.replace(tzinfo=timezone.utc)
                     if resolved.tzinfo is None:
                         resolved = resolved.replace(tzinfo=timezone.utc)
-                    days = (resolved - created).days
+                    days = (resolved - created).total_seconds() / 86400
                     total += days
-            dept_avg_res_days = int(total / len(dept_resolved))
+            dept_avg_res_days = round(total / len(dept_resolved_in_window), 1)
 
         # Load percentage (open incidents vs work orders)
         dept_load_pct = 0
         if dept_open:
-            dept_work_orders = [w for w in db.query(WorkOrder).filter_by(department_id=dept.id).all()
-                               if w.status in ("open", "assigned", "in_progress")]
+            dept_work_orders = db.query(WorkOrder).filter_by(department_id=dept.id).all()
+            dept_work_orders = [w for w in dept_work_orders if w.status in ("open", "assigned", "in_progress")]
             dept_load_pct = min(100, int(len(dept_work_orders) * 100 / len(dept_open)))
 
         if len(dept_open) > 0 or dept_overdue > 0:
-            departments_list.append({
+            dept_dict = {
                 "department": dept.name_ar,
-                "external": bool(dept.external_hotline),
-                "externalHotline": dept.external_hotline,
                 "open": len(dept_open),
                 "overdue": dept_overdue,
                 "avgResolutionDays": dept_avg_res_days,
                 "loadPct": dept_load_pct,
-            })
+            }
+            # C1: Omit None everywhere
+            if dept.external_hotline:
+                dept_dict["external"] = True
+                dept_dict["externalHotline"] = dept.external_hotline
+            departments_list.append(dept_dict)
 
     # Activity feed (latest 8 activities)
     activities = db.query(ActivityLog).order_by(ActivityLog.at.desc()).limit(8).all()
@@ -243,20 +298,28 @@ def build_dashboard(db: Session, range_days: str, staff_department: str = None) 
         for activity in activities
     ]
 
-    # Nav counts
+    # C1: nav.serviceRequestsOpen = count of service requests not resolved/closed
+    service_requests_open = db.query(ServiceRequest).filter(
+        ServiceRequest.status.notin_(["resolved", "closed"])
+    ).all()
+    if staff_department:
+        service_requests_open = [
+            sr for sr in service_requests_open
+            if sr.details.get("department") == staff_department
+        ]
     nav = {
-        "incidentsOpen": len(open_all),
-        "serviceRequestsOpen": 0,  # Would need to query ServiceRequest
+        "incidentsOpen": open_count,
+        "serviceRequestsOpen": len(service_requests_open),
     }
 
     return {
-        "open": len(open_in_range),
+        "open": open_count,
         "openDelta": open_delta,
         "overdue": overdue_count,
-        "resolvedThisWeek": resolved_count,
+        "resolvedThisWeek": resolved_this_week,
         "resolvedDelta": resolved_delta,
         "avgResolutionDays": avg_resolution_days,
-        "avgResolutionDeltaDays": 0,  # Simplified
+        "avgResolutionDeltaDays": avg_resolution_delta_days,
         "byCategory": by_category_list,
         "byStatus": by_status_list,
         "overdueList": overdue_list,
