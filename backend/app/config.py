@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     # Seed the database on startup if it's empty
     seed_on_start: bool = True
 
+    # CORS origins (comma-separated)
+    cors_origins: str = "http://localhost:3000,http://localhost:3001"
+
+    # CORS origin regex pattern (allow any localhost port)
+    cors_origin_regex: str = r"^http://(localhost|127\.0\.0\.1)(:\d+)?$"
+
     # API version
     version: str = "0.1.0"
 

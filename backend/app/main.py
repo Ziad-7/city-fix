@@ -8,7 +8,7 @@ from app.config import settings
 from app.db import init_db, SessionLocal
 from app.models import Base
 from app.schemas import HealthResponse
-from app.routers import auth
+from app.routers import auth, admin
 from app.seed import seed_db
 
 
@@ -42,14 +42,15 @@ app = FastAPI(
 )
 
 # CORS middleware for web clients
+cors_origins = [
+    "http://localhost:8081",  # mobile (expo)
+    "http://127.0.0.1:8081",
+] + settings.cors_origins.split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # citizen web
-        "http://localhost:3001",  # admin web
-        "http://localhost:8081",  # mobile (expo)
-        "http://127.0.0.1:8081",
-    ],
+    allow_origins=cors_origins,
+    allow_origin_regex=settings.cors_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -72,6 +73,7 @@ async def health_check() -> HealthResponse:
 # ============================================================================
 
 app.include_router(auth.router)
+app.include_router(admin.router)
 
 
 # ============================================================================

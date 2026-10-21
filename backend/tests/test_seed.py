@@ -13,9 +13,9 @@ class TestSeedIncidents:
     """Tests for seeded incidents."""
 
     def test_total_incident_count(self, db: Session):
-        """Should have exactly 32 incidents."""
+        """Should have exactly 34 incidents."""
         incidents = db.query(Incident).all()
-        assert len(incidents) == 32, f"Expected 32 incidents, got {len(incidents)}"
+        assert len(incidents) == 34, f"Expected 34 incidents, got {len(incidents)}"
 
     def test_ten_mobile_incidents_present(self, db: Session):
         """All 10 mobile seed incidents (INC-501 to INC-510) should be present."""
@@ -24,8 +24,8 @@ class TestSeedIncidents:
             assert incident is not None, f"INC-{n} not found"
 
     def test_additional_incidents_present(self, db: Session):
-        """Additional incidents (INC-511 to INC-532) should be present."""
-        for n in range(511, 533):
+        """Additional incidents (INC-511 to INC-534) should be present."""
+        for n in range(511, 535):
             incident = db.query(Incident).filter_by(id=f"INC-{n}").first()
             assert incident is not None, f"INC-{n} not found"
 

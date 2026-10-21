@@ -200,11 +200,13 @@ def seed_db(db: Session) -> None:
         (525, "water_pipe_burst", "تسرب كبير من الماسورة", "شارع الماء، مدينة نصر", 30.0629, 31.3275, "assigned", "critical", 6, 5, 4, None, "WO-331"),  # critical
         (526, "open_manhole", "بالوعة قديمة بدون تغطية", "شارع القديم، مدينة نصر", 30.0480, 31.3355, "received", "high", 9, 3, 2, None, None),
         (527, "garbage", "نفايات متراكمة في الزقاق", "الزقاق القديم، مدينة نصر", 30.0535, 31.3218, "triaged", "medium", 12, 2, 2, None, None),
-        (528, "pothole", "حفرة جديدة ظهرت", "شارع جديد، مدينة نصر", 30.0610, 31.3340, "resolved", "medium", 300, 3, 2, None, None),  # 7-14d ago
+        (528, "pothole", "حفرة جديدة ظهرت", "شارع جديد، مدينة نصر", 30.0610, 31.3340, "resolved", "medium", 192, 3, 2, None, None),  # 8d ago (outside 7d window)
         (529, "exposed_wire", "سلك مكشوف خطير جداً", "شارع الخطر، مدينة نصر", 30.0515, 31.3290, "assigned", "critical", 3, 6, 5, None, "WO-332"),  # critical
         (530, "sewage_overflow", "مياه ملوثة في الشارع", "شارع الصرف، مدينة نصر", 30.0578, 31.3218, "in_progress", "high", 24, 4, 3, None, "WO-333"),
         (531, "road_obstruction", "مواد بناء تسد الطريق", "شارع البناء الجديد، مدينة نصر", 30.0492, 31.3338, "received", "medium", 7, 2, 1, None, None),
         (532, "other", "حاجة تانية في الشارع", "شارع متنوع، مدينة نصر", 30.0635, 31.3255, "closed", "low", 240, 2, 1, None, None),
+        (533, "garbage", "نفايات في الزقاق الجديد", "زقاق البستان، مدينة نصر", 30.0515, 31.3295, "resolved", "low", 72, 5, 3, None, None),  # 3d ago (within 7d)
+        (534, "streetlight_out", "عمود نور مطفي آخر", "شارع النيل الجديد، مدينة نصر", 30.0555, 31.3215, "resolved", "low", 120, 8, 4, None, None),  # 5d ago (within 7d)
     ]
 
     for row in incidents_data:
@@ -230,8 +232,8 @@ def seed_db(db: Session) -> None:
         up_to = status_order.index(status) if status in status_order else 0
         for i, st in enumerate(status_order[:up_to + 1]):
             # For resolved incidents, use specific resolution times instead of proportional
-            if st == "resolved" and n in [503, 508, 523, 528]:
-                # INC-503: 6h ago, INC-508: 1d ago, INC-523: 10d ago, INC-528: 8d ago
+            if st == "resolved" and n in [503, 508, 523, 528, 533, 534]:
+                # INC-503: 6h ago, INC-508: 1d ago, INC-523: 10d ago, INC-528: 8d ago, INC-533: 3d ago, INC-534: 5d ago
                 if n == 503:
                     at = now - timedelta(hours=6)
                 elif n == 508:
@@ -240,6 +242,10 @@ def seed_db(db: Session) -> None:
                     at = now - timedelta(days=10)
                 elif n == 528:
                     at = now - timedelta(days=8)
+                elif n == 533:
+                    at = now - timedelta(days=3)
+                elif n == 534:
+                    at = now - timedelta(days=5)
             else:
                 at = created + timedelta(seconds=(now - created).total_seconds() * i / max(1, up_to))
             entry = incident_timeline_entry(st, cat.label_ar, severity, dept.name_ar, at)
