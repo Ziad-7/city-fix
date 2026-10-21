@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { Icon } from '@/components/Icon';
+import { LocationPicker } from './LocationPicker';
 import { AppText, Button, TextField } from '@/components/ui';
 import { getCategory } from '@/domain/categories';
 import { STATUS_LABEL_AR, type AlreadyReported, type DuplicateMatch, type Place } from '@/domain/types';
@@ -21,52 +21,15 @@ export function StepBar({ step }: { step: 1 | 2 | 3 }) {
   );
 }
 
-/** Voice-note row. Recording is a stub: it says "قريبًا" and sends the citizen to the text box. */
-export function VoiceRow({ highlight }: { highlight?: boolean }) {
-  const [notice, setNotice] = useState(!!highlight);
-  return (
-    <View style={{ gap: 6 }}>
-      <Pressable
-        testID="voice-note"
-        accessibilityRole="button"
-        accessibilityLabel="سجّل فويس نوت"
-        accessibilityHint="الميزة دي قريبًا"
-        onPress={() => setNotice(true)}
-        style={styles.voice}
-      >
-        <View style={styles.micDisc}>
-          <Icon name="mic" size={20} color={colors.onRed} />
-        </View>
-        <AppText variant="smallStrong" style={{ flex: 1 }}>سجّل فويس نوت</AppText>
-        <View style={styles.soon}>
-          <AppText variant="caption" color={colors.goldDeep} style={{ fontFamily: fonts.sans600 }}>قريبًا</AppText>
-        </View>
-      </Pressable>
-      {notice ? (
-        <AppText accessibilityLiveRegion="polite" variant="caption" color={colors.goldDeep}>
-          تسجيل الصوت قريبًا. دلوقتي اكتب وصف المشكلة بالعامية وإحنا نفهمها.
-        </AppText>
-      ) : null}
-    </View>
-  );
-}
-
-/** Static map placeholder (no react-native-maps here): roads, a pin, the address line and "تعديل". */
+/** Map pin picker (native) or static preview (web), the address line and "تعديل". */
 export function LocationCard({
-  place, state, error, onEditAddress, onRetry,
-}: { place: Place; state: LocationState; error?: string; onEditAddress: (a: string) => void; onRetry: () => void }) {
+  place, state, error, onEditAddress, onRetry, onMove,
+}: { place: Place; state: LocationState; error?: string; onEditAddress: (a: string) => void; onRetry: () => void; onMove: (lat: number, lng: number) => void }) {
   const [editing, setEditing] = useState(false);
   return (
     <View style={{ gap: 8 }}>
       <View style={styles.locCard}>
-        <Svg accessibilityLabel="خريطة: موقع البلاغ" width="100%" height={132} viewBox="0 0 356 132" preserveAspectRatio="xMidYMid slice" style={{ backgroundColor: colors.mapGround }}>
-          <Path d="M0 44h356M0 98h356M88 0v132M210 0v132M300 0v132" stroke="#FFFFFF" strokeWidth={10} />
-          <Path d="M0 70h356" stroke="#FFFFFF" strokeWidth={16} />
-          <Rect x={226} y={8} width={60} height={26} rx={6} fill={colors.statusResolvedBg} />
-          <Circle cx={178} cy={70} r={34} fill={colors.gold} fillOpacity={0.14} stroke={colors.gold} strokeDasharray="4 4" />
-          <Path d="M178 38c-9 0-16 7-16 16 0 12 16 24 16 24s16-12 16-24c0-9-7-16-16-16z" fill={colors.red} />
-          <Circle cx={178} cy={54} r={6} fill={colors.surface} />
-        </Svg>
+        <LocationPicker lat={place.lat} lng={place.lng} onMove={onMove} />
         {state === 'locating' ? (
           <View style={styles.locating}>
             <ActivityIndicator color={colors.red} />
@@ -81,6 +44,8 @@ export function LocationCard({
           </Pressable>
         </View>
       </View>
+
+      <Button testID="use-my-location" label="استخدم موقعي" icon="locate" variant="secondary" size="sm" loading={state === 'locating'} onPress={onRetry} />
 
       {state === 'fallback' ? (
         <View style={styles.fallback}>
@@ -155,10 +120,7 @@ const styles = StyleSheet.create({
   ownIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.statusResolvedBg, alignItems: 'center', justifyContent: 'center' },
   stepBar: { flexDirection: 'row', gap: 6, paddingHorizontal: 16, paddingBottom: 14 },
   seg: { flex: 1, height: 4, borderRadius: 2 },
-  voice: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 10, paddingVertical: 8, minHeight: 56 },
-  micDisc: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.red, alignItems: 'center', justifyContent: 'center' },
-  soon: { height: 24, paddingHorizontal: 10, borderRadius: radius.pill, backgroundColor: colors.goldSoft, justifyContent: 'center' },
-  locCard: { backgroundColor: colors.surface, borderRadius: radius.md, overflow: 'hidden', borderWidth: 1, borderColor: colors.line },
+  locCard: { backgroundColor: colors.surface, borderRadius: radius.lg, overflow: 'hidden', borderWidth: 1, borderColor: colors.line },
   locating: { position: 'absolute', top: 8, start: 8, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.surface, paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
   addressRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingStart: 12, paddingEnd: 4, minHeight: 52 },
   edit: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },

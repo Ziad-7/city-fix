@@ -1,11 +1,13 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { AiSuggestion, CategoryPicker, CategoryRow, type TriageState } from '@/components/report/AiSuggestion';
 import { useReportLocation } from '@/components/report/location';
 import { PhotoSlots, type PhotoPair } from '@/components/report/PhotoSlots';
-import { AlreadyReportedNote, DuplicatePanel, LocationCard, StepBar, VoiceRow } from '@/components/report/ReportParts';
+import { AlreadyReportedNote, DuplicatePanel, LocationCard, StepBar } from '@/components/report/ReportParts';
+import { VoiceNote, type VoiceStatus } from '@/components/report/VoiceNote';
+import { appendTranscript } from '@/components/report/voice';
 import { validateReportForm, type ReportFormErrors } from '@/components/report/validation';
 import { AppText, Button, Screen, ScreenHeader, TextField, ToggleRow } from '@/components/ui';
 import { CATEGORIES } from '@/domain/categories';
@@ -13,7 +15,7 @@ import { DEFAULT_PLACE, findDistrict } from '@/domain/locations';
 import type { CategoryId, TriageSuggestion } from '@/domain/types';
 import { pickDuplicateView } from '@/logic/duplicates';
 import { services } from '@/services';
-import { useReports, useSession } from '@/store';
+import { uploadAndTranscribeVoiceNote, useReports, useSession } from '@/store';
 import { colors } from '@/theme/tokens';
 
 const isCategoryId = (v: string | undefined): v is CategoryId => !!v && CATEGORIES.some((c) => c.id === v);
@@ -32,10 +34,13 @@ export default function NewReportScreen() {
     const d = findDistrict(governorate, district);
     return d ? { lat: d.lat, lng: d.lng } : { lat: DEFAULT_PLACE.lat, lng: DEFAULT_PLACE.lng };
   }, [governorate, district]);
-  const { place, state: locState, locate, setAddress, setLandmark } = useReportLocation(fallbackCenter);
+  const { place, state: locState, locate, moveTo, setAddress, setLandmark } = useReportLocation(fallbackCenter);
 
   const [photos, setPhotos] = useState<PhotoPair>([null, null]);
   const [description, setDescription] = useState('');
+  const [voicePath, setVoicePath] = useState<string | null>(null);
+  const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('none');
+  const voiceTicket = useRef(0);
   const [blurFaces, setBlurFaces] = useState(true);
   const [anonymous, setAnonymous] = useState(false);
   const [manualCategory, setManualCategory] = useState<CategoryId | null>(null);
@@ -90,6 +95,28 @@ export default function NewReportScreen() {
   const dupView = pickDuplicateView(triage, categoryId);
   const duplicate = dupView.kind === 'join' && dupView.match.incidentId !== dismissedDup ? dupView.match : null;
 
+  // Upload + transcribe a fresh recording; the transcript lands in the description (appended, still editable).
+  const onVoiceRecorded = useCallback(async (localUri: string) => {
+    const ticket = ++voiceTicket.current;
+    setVoicePath(null);
+    setVoiceStatus('transcribing');
+    const { path, text } = await uploadAndTranscribeVoiceNote(localUri);
+    if (ticket !== voiceTicket.current) return; // deleted or re-recorded meanwhile
+    setVoicePath(path);
+    if (text) {
+      setDescription((d) => appendTranscript(d, text));
+      setErrors((e) => ({ ...e, description: undefined }));
+      setVoiceStatus('done');
+    } else {
+      setVoiceStatus('failed');
+    }
+  }, []);
+  const onVoiceRemoved = useCallback(() => {
+    voiceTicket.current += 1;
+    setVoicePath(null);
+    setVoiceStatus('none');
+  }, []);
+
   const submit = useCallback(
     async (linkTo?: string) => {
       if (submitting) return;
@@ -112,6 +139,7 @@ export default function NewReportScreen() {
           categoryId: values.categoryId as CategoryId,
           description: values.description,
           photoUris,
+          voiceNoteUri: voicePath ?? undefined,
           location: values.location,
           anonymous,
           blurFaces,
@@ -126,7 +154,7 @@ export default function NewReportScreen() {
         setSubmitting(null);
       }
     },
-    [submitting, categoryId, trimmed, photoUris, place, anonymous, blurFaces, submitReport, triage, governorate, district],
+    [submitting, categoryId, trimmed, photoUris, voicePath, place, anonymous, blurFaces, submitReport, triage, governorate, district],
   );
 
   const pickCategory = (id: CategoryId) => {
@@ -186,7 +214,7 @@ export default function NewReportScreen() {
 
         <View style={{ gap: 8 }}>
           <AppText variant="label">وصف المشكلة</AppText>
-          <VoiceRow highlight={params.voice === '1'} />
+          <VoiceNote highlight={params.voice === '1'} status={voiceStatus} onRecorded={onVoiceRecorded} onRemoved={onVoiceRemoved} />
           <TextField
             testID="description-input"
             value={description}
@@ -203,7 +231,7 @@ export default function NewReportScreen() {
 
         <View style={{ gap: 8 }}>
           <AppText variant="label">المكان</AppText>
-          <LocationCard place={place} state={locState} error={errors.address} onEditAddress={setAddress} onRetry={locate} />
+          <LocationCard place={place} state={locState} error={errors.address} onEditAddress={setAddress} onRetry={locate} onMove={moveTo} />
           <TextField testID="landmark-input" label="علامة مميزة (اختياري)" value={place.landmark ?? ''} onChangeText={setLandmark} placeholder="مثلًا: قدام مدرسة النصر الإعدادية" />
         </View>
 
