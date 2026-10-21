@@ -58,8 +58,10 @@ now adds keep rules through `expo-build-properties`. See the [crash analysis](..
 - `mock` (default): everything is local. Data is seeded on first run and persisted in AsyncStorage (`ftc.mock.db.v1`).
 - `api`: `fetch` against `EXPO_PUBLIC_API_URL`, following [`docs/api-contract.md`](../../docs/api-contract.md)
   (`/auth/*`, `/reports`, `/incidents`, `/incidents/{id}/follow`, `/service-requests`, `/map/incidents`, `/triage`).
-  Not tested against a real backend yet. The bearer token is saved with the session (AsyncStorage for now; move it to
-  `expo-secure-store` when a dev build is used), restored on app start, and a `401` signs the user out with a notice.
+  Not tested against a real backend yet. The bearer token is saved in `expo-secure-store` on native (key `ftc.token`; web keeps it in
+  AsyncStorage), restored on app start, and a `401` signs the user out with a notice. Photos are resized (1600 px, JPEG 0.7)
+  and uploaded through `POST /uploads/sign` + `PUT`; a report that can't be sent (offline / server down) is queued in
+  `useOutbox` (AsyncStorage `ftc.outbox.v1`) and flushed when the connection returns.
   Errors show the contract's `{ "detail" }` or a friendly Arabic line, never "HTTP 500".
 
 Screens only talk to the store hooks, so switching modes needs no screen changes.

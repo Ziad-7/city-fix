@@ -15,7 +15,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { colors } from '@/theme/tokens';
-import { refreshAll, useIsSignedIn, useSessionHydrated } from '@/store';
+import { OutboxToast } from '@/components/OutboxToast';
+import { refreshAll, useIsSignedIn, useOutboxSync, useSessionHydrated } from '@/store';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -42,6 +43,8 @@ export default function RootLayout() {
     if (ready && signedIn) void refreshAll();
   }, [ready, signedIn]);
 
+  useOutboxSync(ready && signedIn);
+
   if (!ready) return null;
 
   return (
@@ -61,6 +64,7 @@ export default function RootLayout() {
           <Stack.Screen name="services/bulky-waste" />
         </Stack.Protected>
       </Stack>
+      <OutboxToast />
     </View>
   );
 }

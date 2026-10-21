@@ -135,7 +135,7 @@ export default function NewReportScreen() {
 
       setSubmitting(linkTo ? 'join' : 'send');
       try {
-        await submitReport({
+        const res = await submitReport({
           categoryId: values.categoryId as CategoryId,
           description: values.description,
           photoUris,
@@ -148,7 +148,7 @@ export default function NewReportScreen() {
           district,
           linkToIncidentId: linkTo,
         });
-        router.replace('/report/success');
+        router.replace(res.queued ? { pathname: '/report/success', params: { queued: '1' } } : '/report/success');
       } catch (e) {
         setSubmitError(e instanceof Error && e.message ? e.message : 'معرفناش نبعت البلاغ، جرّب تاني.');
         setSubmitting(null);

@@ -2,9 +2,16 @@ import { useMemo } from 'react';
 import { create } from 'zustand';
 import type { Incident, NewReportInput, Report } from '@/domain/types';
 import { services } from '@/services';
+import { classifyFailure } from '@/services/media';
+import { isOffline } from '@/services/network';
+import { sendReport } from '@/services/sendReport';
+import { useOutbox, type OutboxItem } from './useOutbox';
 import { useSession } from './useSession';
 
 type LoadStatus = 'idle' | 'loading' | 'ready' | 'error';
+
+/** `queued`: saved on the phone (offline or the server was unreachable); it is sent when the network is back. */
+export type SubmitResult = ({ queued?: false } & { report: Report; incident: Incident }) | { queued: true; item: OutboxItem };
 
 type ReportsState = {
   status: LoadStatus;
@@ -18,7 +25,11 @@ type ReportsState = {
   /** Result of the latest submitReport, read by the success screen. */
   lastSubmitted: { report: Report; incident: Incident } | null;
   refresh: () => Promise<void>;
-  submitReport: (input: NewReportInput) => Promise<{ report: Report; incident: Incident }>;
+  submitReport: (input: NewReportInput) => Promise<SubmitResult>;
+  /** Adds a report the server accepted (also used by the offline queue when it delivers one). */
+  ingestSubmitted: (res: { report: Report; incident: Incident }, opts?: { last?: boolean }) => void;
+  /** Deep link / uncached id: fetches one report and its incident. Resolves false when it does not exist. */
+  loadReport: (id: string) => Promise<boolean>;
   /** "أنا كمان" */
   followIncident: (incidentId: string) => Promise<void>;
   /** Dev only: advance an incident to its next status. */
@@ -60,15 +71,42 @@ export const useReports = create<ReportsState>((set, get) => ({
     }
   },
 
-  async submitReport(input) {
-    const res = await services.incidents.submitReport(uid(), input);
+  ingestSubmitted(res, opts) {
     set((s) => ({
-      reports: [res.report, ...s.reports],
+      reports: s.reports.some((r) => r.id === res.report.id) ? s.reports : [res.report, ...s.reports],
       incidents: upsertIncident(s.incidents, res.incident),
       followingIds: addId(s.followingIds, res.incident.id),
-      lastSubmitted: res,
+      ...(opts?.last === false ? {} : { lastSubmitted: res }),
     }));
-    return res;
+  },
+
+  async submitReport(input) {
+    const userId = uid();
+    const queue = (original: NewReportInput): SubmitResult => ({ queued: true, item: useOutbox.getState().enqueue(userId, original) });
+    if (await isOffline()) return queue(input);
+    let toSend = input;
+    try {
+      const res = await sendReport(userId, input, (prepared) => {
+        toSend = prepared;
+      });
+      get().ingestSubmitted(res);
+      return { queued: false, ...res };
+    } catch (e) {
+      // No connection / server down: keep the report on the phone instead of losing it. A 4xx (validation) is shown.
+      if (classifyFailure(e) === 'retry') return queue(toSend);
+      throw e;
+    }
+  },
+
+  async loadReport(id) {
+    const report = await services.incidents.getReport(id);
+    if (!report) return false;
+    const incident = await services.incidents.getIncident(report.incidentId).catch(() => null);
+    set((s) => ({
+      reports: s.reports.some((r) => r.id === report.id) ? s.reports.map((r) => (r.id === report.id ? report : r)) : [report, ...s.reports].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+      incidents: incident ? upsertIncident(s.incidents, incident) : s.incidents,
+    }));
+    return true;
   },
 
   async followIncident(incidentId) {

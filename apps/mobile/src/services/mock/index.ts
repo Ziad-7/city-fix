@@ -4,6 +4,7 @@ import { createMockIncidentService } from './incident-service';
 import { createMockServiceRequestService } from './service-request-service';
 import { createMockTranscriptionService } from './transcription-service';
 import { createMockTriageService } from './triage-service';
+import { createMockUploadService } from './upload-service';
 
 export { MOCK_OTP } from './auth-service';
 export { resetMockDb } from './db';
@@ -14,8 +15,7 @@ export function createMockServices(): Services {
     incidents: createMockIncidentService(),
     serviceRequests: createMockServiceRequestService(),
     triage: createMockTriageService(),
-    // Placeholder: replaced in Phase D (uploads: D2).
-    uploads: { upload: async (uri) => uri },
+    uploads: createMockUploadService(),
     transcription: createMockTranscriptionService(),
   };
 }

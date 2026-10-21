@@ -1,6 +1,7 @@
 import type { Incident, MapPin, Report, ServiceRequest, Session, TriageSuggestion } from '@/domain/types';
 import type { Services } from '../interfaces';
 import { http, setApiToken } from './http';
+import { createUploadService } from './uploads';
 
 /**
  * Real backend (FastAPI), following docs/api-contract.md.
@@ -52,8 +53,8 @@ export function createApiServices(): Services {
         return { ...res, duplicates: res.duplicates ?? [], alreadyReported: res.alreadyReported ?? [] };
       },
     },
-    // Placeholders: replaced in Phase D (uploads: D2, transcription: D1).
-    uploads: { upload: () => Promise.reject(new Error('رفع الملفات لسه مش متاح')) },
+    uploads: createUploadService(),
+    // POST /ai/transcribe (proposed, member 5) with the uploaded voice-note path.
     transcription: { transcribe: (path) => http('POST', '/ai/transcribe', { path }) },
   };
 }
