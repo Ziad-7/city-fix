@@ -2,6 +2,18 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-21 — Mobile developer handoff: preview and APK investigation
+
+**Done**
+- Added the [Expo Go and APK handoff](mobile/2026-10-21-expo-go-and-apk-handoff.md): SDK 57 changes and rationale, temporary cloud Metro/tunnel setup, verification evidence, and Android Studio/Logcat reproduction steps.
+- Updated the mobile README's SDK version and linked the handoff.
+
+**How to test**
+- Documentation: confirm links, version numbers and PR #6 references match the current repository.
+
+**Known issues**
+- The original standalone APK still needs a crash trace and a verified fix. Expo Go preview success does not establish release-APK correctness.
+
 ## 2026-10-21 — Android Expo Go SDK 57 compatibility
 
 **Done**

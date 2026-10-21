@@ -1,21 +1,24 @@
 # FixTheCity: citizen mobile app
 
 Arabic-first (RTL) Expo React Native app for reporting city problems in Egypt and booking city services.
-Expo SDK 58, React Native 0.88, Expo Router, TypeScript, zustand, zod.
+Expo SDK 57, React Native 0.86.3, Expo Router, TypeScript, zustand, zod.
+
+Mobile developer: read the [Expo Go compatibility and APK crash handoff](../../docs/mobile/2026-10-21-expo-go-and-apk-handoff.md)
+for what changed, why SDK 57 is pinned, what was tested, and the remaining Android startup-crash investigation.
 
 ## Run it
 
 ```bash
 cd apps/mobile
-npm install
+npm ci
 npx expo start          # then scan the QR code with Expo Go (Android or iOS)
 npx expo start --web    # quick visual check in a browser (maps show a list on web)
 ```
 
 The layout is right-to-left on every phone, whatever its system language: the root layout sets
 `direction: 'rtl'` (Expo Go ignores the `expo-localization` `forcesRTL` plugin, so we don't rely on it alone).
-React Native's docs tag `direction` as iOS-only, but in RN 0.88 (Fabric) it is a shared view prop: Yoga resolves it
-and Android applies it to views and text (see the comment in `src/app/_layout.tsx`). Still confirm on an Android phone.
+The app uses the root view's `direction: 'rtl'` style for native layout. Recheck RTL screens on Android and iOS
+after SDK changes; the successful Android preview launch does not establish that every RTL screen is correct.
 Native system UI (alerts, the back-swipe gesture) still follows the phone's language in Expo Go; a development
 build with `forcesRTL` fixes that too. The web preview also sets `dir="rtl"` on the page.
 
