@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
+import { medalTitle, useTr } from '@/i18n';
 import { colors } from '@/theme/tokens';
 import { AppText } from '../ui/AppText';
 
@@ -16,14 +17,15 @@ export function MedalIcon({ size = 56 }: { size?: number }) {
   );
 }
 
-/** Medal + "لقب جديد" label + title in Ruqaa, on gold-soft. */
-export function Medal({ title, caption = 'لقب جديد' }: { title: string; caption?: string }) {
+/** Medal + "New title" label + title in Ruqaa (display font in English), on gold-soft. */
+export function Medal({ title, caption }: { title: string; caption?: string }) {
+  const tr = useTr();
   return (
     <View style={styles.row}>
       <MedalIcon />
       <View style={styles.text}>
-        <AppText variant="caption" color={colors.goldDeep}>{caption}</AppText>
-        <AppText variant="sloganSm" color={colors.goldDeep}>{title}</AppText>
+        <AppText variant="caption" color={colors.goldDeep}>{caption ?? tr('لقب جديد', 'New title')}</AppText>
+        <AppText variant="sloganSm" color={colors.goldDeep}>{medalTitle(title)}</AppText>
       </View>
     </View>
   );

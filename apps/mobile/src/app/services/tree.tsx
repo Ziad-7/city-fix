@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
+import { itemLabel, slotLabel, useTr, FREE_SERVICE_LABEL_EN } from '@/i18n';
 import { useReportLocation } from '@/components/report/location';
 import { pickFromGallery, takePhoto } from '@/components/report/photo';
 import { LocationCard } from '@/components/report/ReportParts';
@@ -18,6 +19,7 @@ import { colors, radius } from '@/theme/tokens';
 
 /** Tree maintenance booking (free, from the district gardens department): work type, photo, place, day + slot, note. */
 export default function TreeMaintenanceScreen() {
+  const tr = useTr();
   const governorate = useSession((s) => s.governorate);
   const district = useSession((s) => s.district);
   const dataSaver = useSession((s) => s.prefs.dataSaver);
@@ -71,7 +73,7 @@ export default function TreeMaintenanceScreen() {
       const req = await bookService(input);
       router.replace(`/requests/${req.id}`);
     } catch (e) {
-      setSubmitError(e instanceof Error ? e.message : 'معرفناش نحجز الميعاد، جرّب تاني');
+      setSubmitError(e instanceof Error ? e.message : tr('معرفناش نحجز الميعاد، جرّب تاني', 'We couldn’t book your slot. Please try again.'));
       setBusy(false);
     }
   };
@@ -79,29 +81,29 @@ export default function TreeMaintenanceScreen() {
   return (
     <Screen
       avoidKeyboard
-      header={<ScreenHeader title="تقليم أو إزالة شجرة" />}
+      header={<ScreenHeader title={tr('تقليم أو إزالة شجرة', 'Tree trimming or removal')} />}
       gap={20}
       contentStyle={styles.content}
       footer={
         <View style={styles.footer}>
           {submitError ? <AppText variant="caption" color={colors.urgent} center accessibilityLiveRegion="polite">{submitError}</AppText> : null}
-          <Button label="احجز الميعاد" onPress={submit} loading={busy} testID="tree-submit" />
+          <Button label={tr('احجز الميعاد', 'Book a slot')} onPress={submit} loading={busy} testID="tree-submit" />
         </View>
       }
     >
-      <AppText variant="small" color={colors.inkMuted}>إدارة الحدائق بتبعت فريق خلال ٥ أيام من الميعاد المختار.</AppText>
+      <AppText variant="small" color={colors.inkMuted}>{tr('إدارة الحدائق بتبعت فريق خلال ٥ أيام من الميعاد المختار.', 'The Parks Department sends a team within 5 days of your chosen day.')}</AppText>
 
       <Card background={colors.statusResolvedBg} padding={12} style={styles.free}>
         <Icon name="check" size={18} color={colors.statusResolved} strokeWidth={2.5} />
-        <AppText variant="smallStrong" color={colors.statusResolved} style={styles.flex} testID="tree-free">{FREE_SERVICE_LABEL}</AppText>
+        <AppText variant="smallStrong" color={colors.statusResolved} style={styles.flex} testID="tree-free">{tr(FREE_SERVICE_LABEL, FREE_SERVICE_LABEL_EN)}</AppText>
       </Card>
 
-      <FormSection title="الشغل المطلوب" error={errors.workType}>
+      <FormSection title={tr('الشغل المطلوب', 'Work needed')} error={errors.workType}>
         <View style={gridStyles.wrap}>
           {TREE_WORK_TYPES.map((w) => (
             <View key={w} style={gridStyles.half}>
               <ChoiceChip
-                label={w}
+                label={itemLabel(w)}
                 selected={workType === w}
                 onPress={() => {
                   setWorkType(w);
@@ -114,37 +116,37 @@ export default function TreeMaintenanceScreen() {
         </View>
       </FormSection>
 
-      <FormSection title="صورة الشجرة (اختياري)">
+      <FormSection title={tr('صورة الشجرة (اختياري)', 'Photo of the tree (optional)')}>
         {photo ? (
           <View style={styles.photoBox}>
-            <Image source={{ uri: photo }} accessibilityLabel="صورة الشجرة" style={StyleSheet.absoluteFill} resizeMode="cover" />
-            <Pressable accessibilityRole="button" accessibilityLabel="امسح الصورة" onPress={() => setPhoto(null)} hitSlop={10} style={styles.remove}>
+            <Image source={{ uri: photo }} accessibilityLabel={tr('صورة الشجرة', 'Photo of the tree')} style={StyleSheet.absoluteFill} resizeMode="cover" />
+            <Pressable accessibilityRole="button" accessibilityLabel={tr('امسح الصورة', 'Remove photo')} onPress={() => setPhoto(null)} hitSlop={10} style={styles.remove}>
               <Icon name="x" size={16} color={colors.onRed} strokeWidth={2.5} />
             </Pressable>
           </View>
         ) : (
           <View style={gridStyles.wrap}>
             <View style={gridStyles.half}>
-              <Button label="صوّر" icon="camera" variant="secondary" onPress={() => void addPhoto('camera')} testID="tree-photo-camera" />
+              <Button label={tr('صوّر', 'Take a photo')} icon="camera" variant="secondary" onPress={() => void addPhoto('camera')} testID="tree-photo-camera" />
             </View>
             <View style={gridStyles.half}>
-              <Button label="من المعرض" icon="image" variant="secondary" onPress={() => void addPhoto('gallery')} testID="tree-photo-gallery" />
+              <Button label={tr('من المعرض', 'From gallery')} icon="image" variant="secondary" onPress={() => void addPhoto('gallery')} testID="tree-photo-gallery" />
             </View>
           </View>
         )}
         {photoProblem ? (
           <AppText variant="caption" color={colors.goldDeep} accessibilityRole="alert">
-            مقدرناش نفتح الكاميرا. اختار صورة من المعرض أو كمّل من غير صورة.
+            {tr('مقدرناش نفتح الكاميرا. اختار صورة من المعرض أو كمّل من غير صورة.', 'We couldn’t open the camera. Pick a photo from your gallery, or continue without one.')}
           </AppText>
         ) : null}
       </FormSection>
 
-      <FormSection title="المكان">
+      <FormSection title={tr('المكان', 'Location')}>
         <LocationCard place={place} state={locState} error={errors.address} onEditAddress={setAddress} onRetry={locate} onMove={moveTo} />
-        <TextField label="علامة مميزة (اختياري)" value={place.landmark ?? ''} onChangeText={setLandmark} placeholder="مثلًا: قدام الجنينة جنب المدرسة" testID="landmark-input" />
+        <TextField label={tr('علامة مميزة (اختياري)', 'Landmark (optional)')} value={place.landmark ?? ''} onChangeText={setLandmark} placeholder={tr('مثلًا: قدام الجنينة جنب المدرسة', 'e.g. In front of the park, next to the school')} testID="landmark-input" />
       </FormSection>
 
-      <FormSection title="اختار الميعاد" hint="الخدمة من الأحد للخميس" error={errors.day}>
+      <FormSection title={tr('اختار الميعاد', 'Pick a time')} hint={tr('الخدمة من الأحد للخميس', 'Available Sunday to Thursday')} error={errors.day}>
         <View style={gridStyles.wrap}>
           {days.map((d) => (
             <DayTile key={d} day={d} selected={day === d} onPress={() => setDay(d)} />
@@ -153,14 +155,14 @@ export default function TreeMaintenanceScreen() {
         <View style={gridStyles.wrap}>
           {SLOTS.map((s) => (
             <View key={s.id} style={gridStyles.half}>
-              <ChoiceChip label={s.labelAr} selected={slot === s.id} onPress={() => setSlot(s.id)} testID={`slot-${s.id}`} />
+              <ChoiceChip label={slotLabel(s)} selected={slot === s.id} onPress={() => setSlot(s.id)} testID={`slot-${s.id}`} />
             </View>
           ))}
         </View>
       </FormSection>
 
-      <FormSection title="ملاحظة (اختياري)">
-        <TextField value={note} onChangeText={setNote} multiline rows={3} placeholder="مثلًا: الفرع قريب من أسلاك الكهربا" testID="tree-note" />
+      <FormSection title={tr('ملاحظة (اختياري)', 'Note (optional)')}>
+        <TextField value={note} onChangeText={setNote} multiline rows={3} placeholder={tr('مثلًا: الفرع قريب من أسلاك الكهربا', 'e.g. The branch is close to power lines')} testID="tree-note" />
       </FormSection>
     </Screen>
   );

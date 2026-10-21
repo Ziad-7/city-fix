@@ -4,16 +4,24 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { EmergencyRow } from '@/components';
 import { Icon } from '@/components/Icon';
 import { StatsCard } from '@/components/profile';
-import { AppText, Button, Card, Screen, ScreenHeader, SelectField, TextField, ToggleRow, confirmAction } from '@/components/ui';
+import { AppText, Button, Card, ChoiceChip, Screen, ScreenHeader, SelectField, TextField, ToggleRow, confirmAction } from '@/components/ui';
+import { setLang, placeName, useLang, useTr, type Lang } from '@/i18n';
 import { GOVERNORATES, findGovernorate } from '@/domain/locations';
 import { isOpenStatus } from '@/domain/types';
 import { ensureNotificationPermission, setupOsNotifications } from '@/notifications/os';
 import { signOutAll, usePrefs, useReports, useSession } from '@/store';
 import { colors, fonts } from '@/theme/tokens';
-import { isolateLtr, maskPhone, toArabicDigits } from '@/utils/digits';
+import { isolateLtr, localDigits, maskPhone } from '@/utils/digits';
 
-/** حسابي: name, phone, area, preferences, stats, language, emergency numbers, sign out. */
+/** Account (حسابي): name, phone, area, preferences, stats, language, emergency numbers, sign out. */
+const LANGUAGES: { id: Lang; label: string }[] = [
+  { id: 'ar', label: 'العربية' },
+  { id: 'en', label: 'English' },
+];
+
 export default function ProfileScreen() {
+  const tr = useTr();
+  const lang = useLang();
   const { phone, name, governorate, district, prefs, setArea, setPrefs, setName } = useSession();
   const largeText = usePrefs((s) => s.largeText);
   const setLargeText = usePrefs((s) => s.setLargeText);
@@ -68,27 +76,27 @@ export default function ProfileScreen() {
   };
 
   return (
-    <Screen edges={['top']} header={<ScreenHeader title="حسابي" hideBack />} gap={14} contentStyle={styles.content}>
+    <Screen edges={['top']} header={<ScreenHeader title={tr('حسابي', 'Account')} hideBack />} gap={14} contentStyle={styles.content}>
       <Card rounded="lg" padding={16} style={styles.profileCard}>
         <View style={styles.identity}>
-          <View style={styles.avatar} accessibilityRole="image" accessibilityLabel="صورة الحساب">
+          <View style={styles.avatar} accessibilityRole="image" accessibilityLabel={tr('صورة الحساب', 'Profile picture')}>
             {initial ? <AppText style={styles.avatarText}>{initial}</AppText> : <Icon name="user" size={30} color={colors.red} />}
           </View>
           <View style={styles.identityText}>
-            <AppText variant="bodyStrong" numberOfLines={1}>{name?.trim() || 'مواطن'}</AppText>
-            {masked ? <AppText variant="small" color={colors.inkMuted} style={styles.phone}>{masked}</AppText> : null}
+            <AppText variant="bodyStrong" numberOfLines={1}>{name?.trim() || tr('مواطن', 'Citizen')}</AppText>
+            {masked ? <AppText variant="small" color={colors.inkMuted}>{masked}</AppText> : null}
           </View>
         </View>
-        <TextField label="اسمك" value={draft} onChangeText={(t) => { setDraft(t); setSaved(false); }} placeholder="اكتب اسمك (اختياري)" maxLength={40} testID="name-input" />
-        {dirty ? <Button label="حفظ الاسم" size="sm" onPress={saveName} testID="save-name" /> : null}
-        {saved && !dirty ? <AppText variant="caption" color={colors.statusResolved} accessibilityLiveRegion="polite">اتحفظ الاسم</AppText> : null}
+        <TextField label={tr('اسمك', 'Your name')} value={draft} onChangeText={(t) => { setDraft(t); setSaved(false); }} placeholder={tr('اكتب اسمك (اختياري)', 'Your name (optional)')} maxLength={40} testID="name-input" />
+        {dirty ? <Button label={tr('حفظ الاسم', 'Save name')} size="sm" onPress={saveName} testID="save-name" /> : null}
+        {saved && !dirty ? <AppText variant="caption" color={colors.statusResolved} accessibilityLiveRegion="polite">{tr('اتحفظ الاسم', 'Name saved')}</AppText> : null}
       </Card>
 
       <Card rounded="lg" padding={16} style={styles.section}>
-        <AppText style={styles.heading} accessibilityRole="header">منطقتك</AppText>
+        <AppText style={styles.heading} accessibilityRole="header">{tr('منطقتك', 'Your area')}</AppText>
         <View style={styles.selects}>
-          <SelectField label="المحافظة" value={governorate} options={GOVERNORATES.map((g) => ({ value: g.nameAr, label: g.nameAr }))} onChange={changeGovernorate} testID="select-governorate" />
-          <SelectField label="الحي" value={district} options={districts.map((d) => ({ value: d.nameAr, label: d.nameAr }))} onChange={(d) => setArea(governorate, d)} testID="select-district" />
+          <SelectField label={tr('المحافظة', 'Governorate')} value={governorate} options={GOVERNORATES.map((g) => ({ value: g.nameAr, label: placeName(g.nameAr) }))} onChange={changeGovernorate} testID="select-governorate" />
+          <SelectField label={tr('الحي', 'District')} value={district} options={districts.map((d) => ({ value: d.nameAr, label: placeName(d.nameAr) }))} onChange={(d) => setArea(governorate, d)} testID="select-district" />
         </View>
       </Card>
 
@@ -96,8 +104,8 @@ export default function ProfileScreen() {
         <ToggleRow
           bare
           icon="whatsapp"
-          title="تحديثات واتساب"
-          subtitle={masked ? `على رقم ${masked} — ولو مفيش نت هتوصلك SMS` : 'ولو مفيش نت هتوصلك SMS'}
+          title={tr('تحديثات واتساب', 'WhatsApp updates')}
+          subtitle={masked ? tr(`على رقم ${masked} — ولو مفيش نت هتوصلك SMS`, `To ${masked} — and if there’s no internet, we’ll send an SMS`) : tr('ولو مفيش نت هتوصلك SMS', 'And if there’s no internet, we’ll send an SMS')}
           value={prefs.whatsappUpdates}
           onValueChange={(v) => setPrefs({ whatsappUpdates: v })}
           testID="pref-whatsapp"
@@ -105,22 +113,22 @@ export default function ProfileScreen() {
         <ToggleRow
           bare
           icon="bell"
-          title="إشعارات التطبيق"
-          subtitle="تنبيه على موبايلك لما حالة بلاغ أو طلب تتغيّر"
+          title={tr('إشعارات التطبيق', 'App notifications')}
+          subtitle={tr('تنبيه على موبايلك لما حالة بلاغ أو طلب تتغيّر', 'An alert on your phone when a report or request changes status')}
           value={appNotifications}
           onValueChange={(v) => void toggleNotifications(v)}
           testID="pref-notifications"
         />
         {notifDenied ? (
           <AppText variant="caption" color={colors.goldDeep} accessibilityLiveRegion="polite">
-            الإذن مش متاح. هتلاقي التحديثات في مركز الإشعارات جوه التطبيق، وتقدر تسمح بالتنبيهات من إعدادات الموبايل.
+            {tr('الإذن مش متاح. هتلاقي التحديثات في مركز الإشعارات جوه التطبيق، وتقدر تسمح بالتنبيهات من إعدادات الموبايل.', 'Permission isn’t available. You’ll find updates in the notification centre inside the app, and you can allow alerts in your phone’s settings.')}
           </AppText>
         ) : null}
         <ToggleRow
           bare
           icon="wifi"
-          title="توفير البيانات"
-          subtitle="صور أخف، والخريطة بتتحمّل لما تطلبها"
+          title={tr('توفير البيانات', 'Data saver')}
+          subtitle={tr('صور أخف، والخريطة بتتحمّل لما تطلبها', 'Lighter photos, and the map loads only when you ask')}
           value={prefs.dataSaver}
           onValueChange={(v) => setPrefs({ dataSaver: v })}
           testID="pref-datasaver"
@@ -128,8 +136,8 @@ export default function ProfileScreen() {
         <ToggleRow
           bare
           icon="search"
-          title="خط أكبر"
-          subtitle="يكبّر الكلام في التطبيق كله"
+          title={tr('خط أكبر', 'Larger text')}
+          subtitle={tr('يكبّر الكلام في التطبيق كله', 'Makes text bigger across the whole app')}
           value={largeText}
           onValueChange={setLargeText}
           testID="pref-largetext"
@@ -139,27 +147,33 @@ export default function ProfileScreen() {
       <StatsCard reports={stats.reports} fixed={stats.fixed} />
 
       <Card rounded="lg" padding={16} style={styles.section}>
-        <View style={styles.langRow} accessible accessibilityLabel="اللغة: English، قريبًا">
+        <View style={styles.langRow}>
           <Icon name="info" size={20} color={colors.inkMuted} />
-          <AppText variant="smallStrong" style={styles.flex}>اللغة</AppText>
-          <AppText variant="small" color={colors.inkMuted}>English — قريبًا</AppText>
+          <AppText variant="smallStrong" style={styles.flex} accessibilityRole="header">{tr('اللغة', 'Language')}</AppText>
+        </View>
+        <View style={styles.langChoices} accessibilityRole="radiogroup">
+          {LANGUAGES.map((l) => (
+            <View key={l.id} style={styles.flex}>
+              <ChoiceChip label={l.label} radio selected={lang === l.id} onPress={() => setLang(l.id)} testID={`lang-${l.id}`} />
+            </View>
+          ))}
         </View>
       </Card>
 
       <View style={styles.section}>
-        <AppText style={styles.heading} accessibilityRole="header">أرقام الطوارئ</AppText>
+        <AppText style={styles.heading} accessibilityRole="header">{tr('أرقام الطوارئ', 'Emergency numbers')}</AppText>
         <EmergencyRow />
       </View>
 
       <Button
-        label="خروج"
+        label={tr('خروج', 'Sign out')}
         variant="secondary"
         icon="x"
-        onPress={() => confirmAction('تسجيل الخروج', 'هتخرج من حسابك على الجهاز ده. تقدر تدخل تاني برقم موبايلك.', 'خروج', () => void signOutAll())}
+        onPress={() => confirmAction(tr('تسجيل الخروج', 'Sign out'), tr('هتخرج من حسابك على الجهاز ده. تقدر تدخل تاني برقم موبايلك.', 'You’ll be signed out on this device. You can sign back in with your mobile number.'), tr('خروج', 'Sign out'), () => void signOutAll())}
         testID="sign-out"
       />
       <View style={styles.version}>
-        <AppText variant="caption" color={colors.inkMuted} center>CityFix · النسخة {toArabicDigits(version)}</AppText>
+        <AppText variant="caption" color={colors.inkMuted} center>{tr('CityFix · النسخة', 'CityFix · Version')} {localDigits(version)}</AppText>
       </View>
     </Screen>
   );
@@ -176,7 +190,7 @@ const styles = StyleSheet.create({
   section: { gap: 12 },
   heading: { fontFamily: fonts.display600, fontSize: 16, lineHeight: 24, color: colors.ink },
   selects: { flexDirection: 'row', gap: 10 },
-  langRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44 },
-  phone: { textAlign: 'right' },
+  langRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 32 },
+  langChoices: { flexDirection: 'row', gap: 8 },
   version: { paddingVertical: 4 },
 });

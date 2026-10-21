@@ -1,3 +1,4 @@
+import { setLang } from '@/i18n';
 import { paymentLabel } from '../requests/labels';
 import { validateTreeBooking, type TreeFormValues } from './tree';
 
@@ -34,5 +35,14 @@ describe('validateTreeBooking', () => {
   it('shows "مجانية" when there is no payment', () => {
     expect(paymentLabel(undefined)).toBe('مجانية');
     expect(paymentLabel('cash')).toBe('كاش مع العامل');
+  });
+});
+
+describe('validateTreeBooking messages', () => {
+  afterEach(() => setLang('ar'));
+  it('are Arabic by default and English after a switch', () => {
+    expect(validateTreeBooking({ ...valid, workType: '' }).errors.workType).toBe('اختار نوع الشغل');
+    setLang('en');
+    expect(validateTreeBooking({ ...valid, workType: '' }).errors.workType).toBe('Pick the type of work');
   });
 });

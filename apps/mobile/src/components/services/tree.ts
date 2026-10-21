@@ -1,3 +1,4 @@
+import { tr } from '@/i18n';
 import { placeSchema, treeBookingSchema } from '@/domain/schemas';
 import type { NewServiceRequestInput, Place, SlotId } from '@/domain/types';
 
@@ -19,11 +20,11 @@ export function validateTreeBooking(v: TreeFormValues): { errors: TreeFormErrors
   if (!parsed.success) {
     for (const issue of parsed.error.issues) {
       const key = issue.path[0] === 'workType' ? 'workType' : 'day';
-      errors[key] ??= issue.message;
+      errors[key] ??= key === 'workType' ? tr('اختار نوع الشغل', 'Pick the type of work') : tr('اختار اليوم', 'Pick a day');
     }
   }
   const place = placeSchema.safeParse({ ...v.place, address: v.place.address.trim(), landmark: v.place.landmark?.trim() || undefined });
-  if (!place.success) errors.address = 'اكتب العنوان';
+  if (!place.success) errors.address = tr('اكتب العنوان', 'Enter the address');
   if (!parsed.success || !place.success) return { errors, input: null };
   return {
     errors,
