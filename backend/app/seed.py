@@ -44,7 +44,8 @@ TEAMS = [
 def seed_db(db: Session) -> None:
     """Seed database with demo data."""
     now = now_utc()
-    report_counter = [1043]  # Use list to allow modification in loop
+    # Report IDs: FTC-1042 for INC-501 i=0 (demo), then start from FTC-1043 onwards
+    report_id_counter = [1043]
 
     # ========================================================================
     # Departments
@@ -173,12 +174,12 @@ def seed_db(db: Session) -> None:
         # From mobile seed (INC-501..510)
         (501, "pothole", "حفرة في شارع عباس العقاد", "شارع عباس العقاد، مدينة نصر", 30.0562, 31.3305, "in_progress", "high", 2, 7, 7, "مدرسة النصر الإعدادية", "WO-318"),
         (502, "open_manhole", "بالوعة مفتوحة في شارع حسن المأمون", "شارع حسن المأمون، مدينة نصر", 30.0575, 31.329, "assigned", "critical", 30, 12, 12, None, "WO-321"),
-        (503, "streetlight_out", "عمود نور مطفي في شارع مكرم عبيد", "شارع مكرم عبيد، مدينة نصر", 30.054, 31.3335, "resolved", "low", 168, 2, 2, None, None),  # 7d ago
+        (503, "streetlight_out", "عمود نور مطفي في شارع مكرم عبيد", "شارع مكرم عبيد، مدينة نصر", 30.054, 31.3335, "resolved", "low", 54, 2, 2, None, None),
         (504, "garbage", "زبالة متراكمة في شارع الطيران", "شارع الطيران، مدينة نصر", 30.059, 31.335, "received", "medium", 5, 3, 3, None, None),
         (505, "sewage_overflow", "طفح مجاري قدام عمارة ١٢", "شارع الحجاز، مدينة نصر", 30.052, 31.327, "assigned", "high", 40, 5, 4, None, "WO-324"),
         (506, "water_pipe_burst", "كسر ماسورة مياه في شارع الثورة", "شارع الثورة، مدينة نصر", 30.061, 31.331, "in_progress", "high", 20, 9, 6, None, "WO-326"),
         (507, "exposed_wire", "سلك كهربا مكشوف جنب الحديقة", "شارع يوسف عباس، مدينة نصر", 30.055, 31.338, "received", "critical", 1, 1, 1, "حديقة الأطفال", None),
-        (508, "fallen_tree", "شجرة مايلة على الرصيف", "شارع مصطفى النحاس، مدينة نصر", 30.05, 31.333, "resolved", "medium", 120, 4, 3, None, None),  # 5d ago
+        (508, "fallen_tree", "شجرة مايلة على الرصيف", "شارع مصطفى النحاس، مدينة نصر", 30.05, 31.333, "resolved", "medium", 100, 4, 3, None, None),
         (509, "broken_sidewalk", "رصيف مكسور قدام المستشفى", "شارع أحمد فخري، مدينة نصر", 30.058, 31.326, "assigned", "medium", 72, 6, 5, "مستشفى المبرة", None),
         (510, "stray_dogs", "كلاب ضالة جنب المدرسة", "شارع عمر بن الخطاب، مدينة نصر", 30.053, 31.33, "triaged", "medium", 12, 3, 2, "مدرسة الشهيد محمود", None),
         # Additional incidents for completeness (INC-511..532: 22 more)
@@ -194,16 +195,16 @@ def seed_db(db: Session) -> None:
         (520, "broken_sidewalk", "رصيف محطوم بالقرب من السوق", "سوق مدينة نصر، مدينة نصر", 30.0545, 31.3340, "triaged", "low", 10, 2, 2, None, None),
         (521, "pothole", "حفرة عميقة في الشارع الرئيسي", "الشارع الرئيسي، مدينة نصر", 30.0588, 31.3298, "assigned", "medium", 60, 4, 3, None, "WO-329"),  # ~2.5d overdue
         (522, "stray_dogs", "كلاب شرسة في المنطقة", "حديقة مدينة نصر، مدينة نصر", 30.0523, 31.3310, "received", "medium", 2, 1, 1, None, None),
-        (523, "fallen_tree", "شجرة سقطت على السور", "شارع الشجرة، مدينة نصر", 30.0598, 31.3365, "resolved", "low", 144, 2, 1, None, None),  # 6d ago
+        (523, "fallen_tree", "شجرة سقطت على السور", "شارع الشجرة، مدينة نصر", 30.0598, 31.3365, "resolved", "low", 260, 2, 1, None, None),  # 7-14d ago
         (524, "streetlight_out", "عدة أعمدة نور مطفأة", "شارع الإنارة، مدينة نصر", 30.0509, 31.3245, "in_progress", "low", 36, 3, 2, None, "WO-330"),
         (525, "water_pipe_burst", "تسرب كبير من الماسورة", "شارع الماء، مدينة نصر", 30.0629, 31.3275, "assigned", "critical", 6, 5, 4, None, "WO-331"),  # critical
         (526, "open_manhole", "بالوعة قديمة بدون تغطية", "شارع القديم، مدينة نصر", 30.0480, 31.3355, "received", "high", 9, 3, 2, None, None),
         (527, "garbage", "نفايات متراكمة في الزقاق", "الزقاق القديم، مدينة نصر", 30.0535, 31.3218, "triaged", "medium", 12, 2, 2, None, None),
-        (528, "pothole", "حفرة جديدة ظهرت", "شارع جديد، مدينة نصر", 30.0610, 31.3340, "resolved", "medium", 96, 3, 2, None, None),  # 4d ago
+        (528, "pothole", "حفرة جديدة ظهرت", "شارع جديد، مدينة نصر", 30.0610, 31.3340, "resolved", "medium", 300, 3, 2, None, None),  # 7-14d ago
         (529, "exposed_wire", "سلك مكشوف خطير جداً", "شارع الخطر، مدينة نصر", 30.0515, 31.3290, "assigned", "critical", 3, 6, 5, None, "WO-332"),  # critical
         (530, "sewage_overflow", "مياه ملوثة في الشارع", "شارع الصرف، مدينة نصر", 30.0578, 31.3218, "in_progress", "high", 24, 4, 3, None, "WO-333"),
         (531, "road_obstruction", "مواد بناء تسد الطريق", "شارع البناء الجديد، مدينة نصر", 30.0492, 31.3338, "received", "medium", 7, 2, 1, None, None),
-        (532, "fallen_tree", "شجرة ضخمة واقعة", "شارع الحديقة الكبيرة، مدينة نصر", 30.0635, 31.3255, "closed", "medium", 240, 2, 1, None, None),  # 10d, closed
+        (532, "other", "حاجة تانية في الشارع", "شارع متنوع، مدينة نصر", 30.0635, 31.3255, "closed", "low", 240, 2, 1, None, None),
     ]
 
     for row in incidents_data:
@@ -271,19 +272,27 @@ def seed_db(db: Session) -> None:
         # Add linked reports (with some anonymous)
         for i in range(reporters):
             if n == 501 and i == 0:
-                report_seq = 1042  # Demo report
+                report_seq = 1042  # Demo report FTC-1042 → citizen-001
                 is_anonymous = False
             else:
-                report_seq = report_counter[0]
-                report_counter[0] += 1
-                # Make some reports anonymous (about 1 in 3)
-                is_anonymous = (report_seq % 3 == 0)
+                report_seq = report_id_counter[0]
+                report_id_counter[0] += 1
+                # Make some reports anonymous (about 1 in 4)
+                is_anonymous = (report_seq % 4 == 0)
 
             # Use anonymous profile for anonymous reports
             if is_anonymous:
                 reporter_id = anonymous_citizen.id
+            elif n == 501 and i == 0:
+                reporter_id = demo_citizen.id  # FTC-1042 is by demo citizen
             else:
-                reporter_id = demo_citizen.id if n == 501 and i == 0 else f"citizen-{n}-{i}"
+                # Create/reuse citizen profiles (pool of ~15)
+                reporter_id = f"citizen-{((n - 501) * reporters + i) % 15}"
+                citizen = db.query(Profile).filter_by(id=reporter_id).first()
+                if not citizen:
+                    citizen = Profile(id=reporter_id, role="citizen")
+                    db.add(citizen)
+                    db.flush()  # Ensure profile is saved before report references it
 
             report = Report(
                 id=f"FTC-{report_seq:04d}",
@@ -304,30 +313,29 @@ def seed_db(db: Session) -> None:
     db.flush()
 
     # ========================================================================
-    # Work Orders (~14 with all 4 statuses)
+    # Work Orders (15 with all 4 statuses, every done WO linked to resolved incident)
     # ========================================================================
     # Format: (wo_id, incident_id, dept_name, team, team_size, supervisor, status, due_at, cost)
     work_orders_data = [
         # Status: in_progress (5)
-        ("WO-318", "INC-501", "صيانة الطرق", "فريق الطرق 1", 4, "م. هشام عادل", "in_progress", now - timedelta(days=1), 4500),
-        ("WO-324", "INC-505", "الصرف الصحي", "فريق الصرف 2", 5, "خالد حسن", "in_progress", now, 6000),
+        ("WO-318", "INC-501", "صيانة الطرق", "فريق الطرق 3", 6, "م. هشام عادل", "in_progress", now - timedelta(days=1), 4500),
         ("WO-326", "INC-506", "شركة مياه الشرب", None, None, "بلّغنا الشركة · الخط الساخن 125", "in_progress", now - timedelta(hours=12), 7500),
         ("WO-327", "INC-515", "الصرف الصحي", "فريق الصرف 1", 5, "محمد سالم", "in_progress", now - timedelta(hours=6), 1800),
         ("WO-330", "INC-524", "إنارة الحي", "فريق الإنارة 2", 3, "سامي علي", "in_progress", now - timedelta(hours=8), 900),
-        # Status: assigned (4)
+        ("WO-333", "INC-530", "الصرف الصحي", "فريق الصرف 2", 5, "خالد حسن", "in_progress", now - timedelta(hours=4), 6000),
+        # Status: assigned (5)
         ("WO-321", "INC-502", "الصرف الصحي", "فريق الصرف 1", 5, "محمد سالم", "assigned", now + timedelta(days=1), 1800),
+        ("WO-324", "INC-505", "الصرف الصحي", "فريق الصرف 2", 5, "خالد حسن", "assigned", now, 6000),
         ("WO-328", "INC-518", "الصرف الصحي", "فريق الصرف 2", 5, "خالد حسن", "assigned", now + timedelta(days=2), 6000),
         ("WO-329", "INC-521", "صيانة الطرق", "فريق الطرق 2", 4, "علي حسين", "assigned", now - timedelta(hours=10), 4500),
         ("WO-331", "INC-525", "شركة مياه الشرب", None, None, "الخط الساخن 125", "assigned", now + timedelta(hours=6), 7500),
-        # Status: open (2)
-        ("WO-335", None, "صيانة الطرق", "فريق الطرق 3", 6, "فاطمة محمود", "open", now + timedelta(days=3), 3500),
-        ("WO-336", None, "هيئة النظافة والتجميل", "فريق النظافة 2", 5, "نور أحمد", "open", now + timedelta(days=2), 2000),
-        # Status: done (4)
+        # Status: open (2 with incidents assigned)
+        ("WO-335", "INC-531", "صيانة الطرق", "فريق الطرق 3", 6, "فاطمة محمود", "open", now + timedelta(days=3), 3500),
+        ("WO-336", "INC-527", "هيئة النظافة والتجميل", "فريق النظافة 2", 5, "نور أحمد", "open", now + timedelta(days=2), 2000),
+        # Status: done (3 linked to resolved incidents)
         ("WO-310", "INC-503", "إنارة الحي", "فريق الإنارة 1", 3, "صالح محمد", "done", now - timedelta(days=3), 900),
         ("WO-311", "INC-508", "حدائق الحي", "فريق الحدائق 1", 4, "أمينة علي", "done", now - timedelta(days=5), 2200),
         ("WO-312", "INC-528", "صيانة الطرق", "فريق الطرق 1", 4, "م. هشام عادل", "done", now - timedelta(days=6), 4500),
-        ("WO-332", "INC-529", "شركة الكهرباء", None, None, "الخط الساخن 121", "done", now - timedelta(days=2), 2500),
-        ("WO-333", "INC-530", "الصرف الصحي", "فريق الصرف 1", 5, "محمد سالم", "in_progress", now - timedelta(hours=4), 6000),
     ]
 
     for idx, wo_data in enumerate(work_orders_data):
@@ -478,46 +486,75 @@ def seed_db(db: Session) -> None:
     db.flush()
 
     # ========================================================================
-    # AI Suggestions (triage for received incidents)
+    # AI Suggestions (triage for received + first 2 triaged incidents)
     # ========================================================================
-    ai_suggestions_counter = [1]  # Counter for AI suggestion IDs
+    ai_suggestion_counter = [1]
+
+    # Get received and triaged incidents
     received_incidents = db.query(Incident).filter_by(status="received").all()
+    triaged_incidents = db.query(Incident).filter_by(status="triaged").all()
 
-    for incident in received_incidents[:len(received_incidents)]:  # All received incidents
-        # For first 2 received, create confirmed triage; for others, unconfirmed
-        is_confirmed = ai_suggestions_counter[0] <= 2
+    # All received get confirmed=False; first 2 triaged get confirmed=True
+    triaged_to_confirm = triaged_incidents[:2]
 
-        # Get category and confidence
+    for incident in received_incidents:
+        # Get first linked report for this incident
+        first_report = db.query(Report).filter_by(incident_id=incident.id).order_by(Report.created_at).first()
+
         actual_cat = incident.category_id
-        confidence = 0.85 if is_confirmed else 0.72
-
-        # Build options with actual category first
         category = db.query(Category).filter_by(id=actual_cat).first()
-        options = [
-            {"categoryId": actual_cat, "confidence": confidence},
-        ]
 
-        # Add 1-2 alternative categories
+        # Build options: actual category + 2 plausible alternatives
+        options = [{"categoryId": actual_cat, "confidence": 0.82}]
         other_cats = db.query(Category).filter(Category.id != actual_cat).limit(2).all()
-        for other_cat in other_cats:
-            alt_conf = round((confidence - 0.1) / len(other_cats), 2)
-            options.append({"categoryId": other_cat.id, "confidence": alt_conf})
+        confidences = [0.11, 0.05]
+        for alt_cat, conf in zip(other_cats, confidences):
+            options.append({"categoryId": alt_cat.id, "confidence": conf})
 
         ai_suggestion = AISuggestion(
-            id=f"AS-{ai_suggestions_counter[0]:04d}",
-            report_id=None,  # For now, link to incident via first report
+            id=f"AS-{ai_suggestion_counter[0]:04d}",
+            report_id=first_report.id if first_report else None,
             kind="triage",
             payload={
                 "options": options,
                 "severity": incident.severity,
                 "summary": f"تصنيف آلي: {category.label_ar}",
                 "source": "fallback",
+                "confirmed": False,
             },
             model="fallback",
             created_at=incident.created_at + timedelta(minutes=5),
-            accepted=is_confirmed,
         )
         db.add(ai_suggestion)
-        ai_suggestions_counter[0] += 1
+        ai_suggestion_counter[0] += 1
+
+    for incident in triaged_to_confirm:
+        first_report = db.query(Report).filter_by(incident_id=incident.id).order_by(Report.created_at).first()
+
+        actual_cat = incident.category_id
+        category = db.query(Category).filter_by(id=actual_cat).first()
+
+        options = [{"categoryId": actual_cat, "confidence": 0.85}]
+        other_cats = db.query(Category).filter(Category.id != actual_cat).limit(2).all()
+        confidences = [0.10, 0.05]
+        for alt_cat, conf in zip(other_cats, confidences):
+            options.append({"categoryId": alt_cat.id, "confidence": conf})
+
+        ai_suggestion = AISuggestion(
+            id=f"AS-{ai_suggestion_counter[0]:04d}",
+            report_id=first_report.id if first_report else None,
+            kind="triage",
+            payload={
+                "options": options,
+                "severity": incident.severity,
+                "summary": f"تصنيف آلي مؤكد: {category.label_ar}",
+                "source": "fallback",
+                "confirmed": True,
+            },
+            model="fallback",
+            created_at=incident.created_at + timedelta(minutes=10),
+        )
+        db.add(ai_suggestion)
+        ai_suggestion_counter[0] += 1
 
     db.commit()
