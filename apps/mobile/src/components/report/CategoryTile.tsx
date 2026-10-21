@@ -2,30 +2,33 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { AppText } from '@/components/ui';
 import type { Category } from '@/domain/types';
+import { labelOfCategory, useTr } from '@/i18n';
 import { colors, fonts, radius } from '@/theme/tokens';
 
 /** Category grid tile: icon disc, name, and the red "خطر" tag for life-threatening categories. */
 export function CategoryTile({ category, onPress, selected }: { category: Category; onPress: () => void; selected?: boolean }) {
+  const tr = useTr();
+  const label = labelOfCategory(category);
   const neutral = category.id === 'other';
   const disc = neutral ? { bg: colors.statusReceivedBg, fg: colors.statusReceived } : { bg: colors.redSoft, fg: category.danger ? colors.redDeep : colors.red };
   return (
     <Pressable
       testID={`category-${category.id}`}
       accessibilityRole="button"
-      accessibilityLabel={category.danger ? `${category.labelAr}، خطر` : category.labelAr}
+      accessibilityLabel={category.danger ? `${label}${tr('، خطر', ' — danger')}` : label}
       accessibilityState={{ selected: !!selected }}
       onPress={onPress}
       style={({ pressed }) => [styles.tile, selected ? styles.tileOn : styles.tileOff, pressed ? { opacity: 0.85 } : null]}
     >
       {category.danger ? (
         <View style={styles.tag}>
-          <AppText color={colors.onRed} style={styles.tagText}>خطر</AppText>
+          <AppText color={colors.onRed} style={styles.tagText}>{tr('خطر', 'Danger')}</AppText>
         </View>
       ) : null}
       <View style={[styles.disc, { backgroundColor: disc.bg }]}>
         <Icon name={category.icon} size={22} color={disc.fg} />
       </View>
-      <AppText center style={styles.label}>{category.labelAr}</AppText>
+      <AppText center style={styles.label}>{label}</AppText>
     </Pressable>
   );
 }

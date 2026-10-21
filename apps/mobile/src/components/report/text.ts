@@ -1,4 +1,6 @@
+import { getLang } from '@/i18n';
 import { toArabicDigits } from '@/utils/digits';
+import { formatDistanceAr } from '@/utils/geo';
 
 /** "بلاغ كمان" / "بلاغين كمان" / "٧ بلاغات كمان" for the remaining-reports line. */
 export function moreReportsAr(n: number): string {
@@ -23,4 +25,32 @@ export function neighboursAr(n: number): string {
   if (n === 2) return 'جارين قالوا أنا كمان';
   if (n <= 10) return `${toArabicDigits(n)} جيران قالوا أنا كمان`;
   return `${toArabicDigits(n)} جار قالوا أنا كمان`;
+}
+
+// ---- Current-language versions (use these in UI; the *Ar ones above are the Arabic wording) ----
+
+/** "1 more report" / "7 more reports" (Arabic: see moreReportsAr). */
+export function moreReports(n: number): string {
+  if (getLang() !== 'en') return moreReportsAr(n);
+  return n === 1 ? '1 more report' : `${n} more reports`;
+}
+
+/** "Reported by 6 people" */
+export function reportedBy(n: number): string {
+  if (getLang() !== 'en') return reportedByAr(n);
+  return n <= 1 ? 'Reported by 1 person' : `Reported by ${n} people`;
+}
+
+/** "12 neighbours said Me too" */
+export function neighbours(n: number): string {
+  if (getLang() !== 'en') return neighboursAr(n);
+  if (n <= 0) return 'Be the first to say Me too';
+  return n === 1 ? '1 neighbour said Me too' : `${n} neighbours said Me too`;
+}
+
+/** "40 m" / "1.2 km" in English, "٤٠ متر" / "١٫٢ كم" in Arabic. */
+export function distanceLabel(m: number): string {
+  if (getLang() !== 'en') return formatDistanceAr(m);
+  if (m < 1000) return `${Math.max(5, Math.round(m / 5) * 5)} m`;
+  return `${(m / 1000).toFixed(1)} km`;
 }

@@ -1,5 +1,6 @@
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { tr } from '@/i18n';
 import { DEFAULT_PLACE } from '@/domain/locations';
 import type { LatLng, Place } from '@/domain/types';
 import { addressAfterMove, formatAddress } from './address';
@@ -24,7 +25,7 @@ async function geocode(lat: number, lng: number): Promise<string> {
 }
 
 async function addressFor(lat: number, lng: number): Promise<string> {
-  return (await geocode(lat, lng)) || 'موقعك الحالي';
+  return (await geocode(lat, lng)) || tr('موقعك الحالي', 'Your current location');
 }
 
 /**

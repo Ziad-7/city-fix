@@ -1,6 +1,7 @@
 import { CATEGORIES, getCategory } from '@/domain/categories';
 import type { CategoryId, Severity, TriageOption, TriageSuggestion } from '@/domain/types';
 import { SEVERITY_LABEL_AR } from '@/domain/types';
+import { categoryLabel, departmentLabel, severityLabel, tr } from '@/i18n';
 
 /** Normalise Arabic for matching: strip diacritics/tatweel, unify alef/yaa/taa-marbuta. */
 export function normalizeAr(s: string): string {
@@ -65,7 +66,7 @@ export type TriageInput = {
 
 /**
  * Deterministic stand-in for the AI classifier. Returns the top-3 categories with
- * confidences that sum to <= 1, a severity and a one-line Arabic summary.
+ * confidences that sum to <= 1, a severity and a one-line summary in the current language (Arabic or English; the keyword matching stays Arabic).
  * `duplicates` is left empty here; the TriageService fills it from open incidents.
  */
 export function triageMock(input: TriageInput): TriageSuggestion {
@@ -93,6 +94,9 @@ export function triageMock(input: TriageInput): TriageSuggestion {
   const emergency = detectEmergency(input.description);
   if (emergency) severity = 'critical';
 
-  const summary = `الغالب إنها "${top.labelAr}" — ${SEVERITY_LABEL_AR[severity]}، وهتروح لـ${top.department}.`;
+  const summary = tr(
+    `الغالب إنها "${top.labelAr}" — ${SEVERITY_LABEL_AR[severity]}، وهتروح لـ${top.department}.`,
+    `Most likely "${categoryLabel(top.id, top.labelAr)}" — ${severityLabel(severity, SEVERITY_LABEL_AR[severity])}. It will go to ${departmentLabel(top.department)}.`,
+  );
   return { options, severity, summary, duplicates: [], source: 'fallback', emergency };
 }

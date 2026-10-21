@@ -4,8 +4,9 @@ import { Icon } from '@/components/Icon';
 import { AppText, ProgressBar } from '@/components/ui';
 import { CATEGORIES, getCategory } from '@/domain/categories';
 import { SEVERITY_LABEL_AR, type CategoryId, type TriageSuggestion } from '@/domain/types';
+import { labelOfCategory, severityLabel, useIsRTL, useTr } from '@/i18n';
 import { colors, fonts, radius } from '@/theme/tokens';
-import { toArabicDigits } from '@/utils/digits';
+import { localDigits } from '@/utils/digits';
 import { CategoryTile } from './CategoryTile';
 import { Grid3 } from './Grid3';
 
@@ -22,16 +23,17 @@ type Props = {
 
 /** "اقتراح الذكاء الاصطناعي": severity chip, summary line, top-3 radio options with confidence bars. */
 export function AiSuggestion({ state, suggestion, selected, onSelect, onPickOther, onRetry }: Props) {
+  const tr = useTr();
   if (state === 'idle') return null;
 
   if (state === 'error') {
     return (
       <View accessibilityRole="alert" style={styles.card}>
-        <AppText variant="smallStrong" color={colors.urgentDeep}>معرفناش نحلّل البلاغ دلوقتي</AppText>
-        <AppText variant="small">تقدر تختار التصنيف بنفسك وتكمّل.</AppText>
+        <AppText variant="smallStrong" color={colors.urgentDeep}>{tr('معرفناش نحلّل البلاغ دلوقتي', "We couldn't analyse your report right now")}</AppText>
+        <AppText variant="small">{tr('تقدر تختار التصنيف بنفسك وتكمّل.', 'You can pick the type yourself and continue.')}</AppText>
         <View style={styles.links}>
-          <LinkButton label="جرّب تاني" onPress={onRetry} />
-          <LinkButton label="اختار التصنيف بنفسك" onPress={onPickOther} />
+          <LinkButton label={tr('جرّب تاني', 'Try again')} onPress={onRetry} />
+          <LinkButton label={tr('اختار التصنيف بنفسك', 'Choose the type yourself')} onPress={onPickOther} />
         </View>
       </View>
     );
@@ -39,26 +41,26 @@ export function AiSuggestion({ state, suggestion, selected, onSelect, onPickOthe
 
   if (!suggestion) {
     return (
-      <View accessibilityLabel="بنحلّل البلاغ" style={[styles.card, styles.loadingRow]}>
+      <View accessibilityLabel={tr('بنحلّل البلاغ', 'Analysing your report')} style={[styles.card, styles.loadingRow]}>
         <ActivityIndicator color={colors.red} />
-        <AppText variant="smallStrong" color={colors.redDeep}>الذكاء الاصطناعي بيحلّل بلاغك...</AppText>
+        <AppText variant="smallStrong" color={colors.redDeep}>{tr('الذكاء الاصطناعي بيحلّل بلاغك...', 'AI is analysing your report...')}</AppText>
       </View>
     );
   }
 
   const critical = suggestion.severity === 'critical';
   return (
-    <View testID="ai-suggestion" accessibilityLabel="اقتراح الذكاء الاصطناعي" style={styles.card}>
+    <View testID="ai-suggestion" accessibilityLabel={tr('اقتراح الذكاء الاصطناعي', 'AI suggestion')} style={styles.card}>
       {suggestion.emergency ? <EmergencyAlert /> : null}
       <View style={styles.head}>
         <View style={styles.title}>
           <Icon name="sparkles" size={18} color={colors.redDeep} />
-          <AppText color={colors.redDeep} style={styles.titleText}>اقتراح الذكاء الاصطناعي</AppText>
+          <AppText color={colors.redDeep} style={styles.titleText}>{tr('اقتراح الذكاء الاصطناعي', 'AI suggestion')}</AppText>
         </View>
         <View style={[styles.sev, critical ? { backgroundColor: colors.urgent } : null]}>
           <View style={[styles.sevDot, { backgroundColor: critical ? colors.onRed : colors.redDeep }]} />
           <AppText variant="caption" color={critical ? colors.onRed : colors.redDeep} style={{ fontFamily: fonts.sans600 }}>
-            {SEVERITY_LABEL_AR[suggestion.severity]}
+            {severityLabel(suggestion.severity, SEVERITY_LABEL_AR[suggestion.severity])}
           </AppText>
         </View>
       </View>
@@ -66,7 +68,7 @@ export function AiSuggestion({ state, suggestion, selected, onSelect, onPickOthe
       <AppText variant="small">{suggestion.summary}</AppText>
 
       <View accessibilityRole="radiogroup" style={styles.options}>
-        <AppText variant="caption" color={colors.inkMuted}>اختار التصنيف الصح</AppText>
+        <AppText variant="caption" color={colors.inkMuted}>{tr('اختار التصنيف الصح', 'Choose the right type')}</AppText>
         {suggestion.options.map((o) => {
           const on = o.categoryId === selected;
           const pct = Math.round(o.confidence * 100);
@@ -76,7 +78,7 @@ export function AiSuggestion({ state, suggestion, selected, onSelect, onPickOthe
               testID={`ai-option-${o.categoryId}`}
               accessibilityRole="radio"
               accessibilityState={{ checked: on }}
-              accessibilityLabel={`${getCategory(o.categoryId).labelAr}، ${toArabicDigits(pct)} في المية`}
+              accessibilityLabel={tr(`${getCategory(o.categoryId).labelAr}، ${localDigits(pct)} في المية`, `${labelOfCategory(getCategory(o.categoryId))}, ${pct} percent`)}
               onPress={() => onSelect(o.categoryId)}
               style={[styles.option, on ? styles.optionOn : styles.optionOff]}
             >
@@ -84,8 +86,8 @@ export function AiSuggestion({ state, suggestion, selected, onSelect, onPickOthe
                 <View style={[styles.radio, on ? { borderColor: colors.red } : { borderColor: colors.inkMuted }]}>
                   {on ? <View style={styles.radioDot} /> : null}
                 </View>
-                <AppText style={[styles.optionLabel, { fontFamily: on ? fonts.sans600 : fonts.sans500 }]}>{getCategory(o.categoryId).labelAr}</AppText>
-                <AppText style={{ fontFamily: on ? fonts.sans700 : fonts.sans600, fontSize: 13 }} color={on ? colors.red : colors.inkMuted}>{toArabicDigits(pct)}٪</AppText>
+                <AppText style={[styles.optionLabel, { fontFamily: on ? fonts.sans600 : fonts.sans500 }]}>{labelOfCategory(getCategory(o.categoryId))}</AppText>
+                <AppText style={{ fontFamily: on ? fonts.sans700 : fonts.sans600, fontSize: 13 }} color={on ? colors.red : colors.inkMuted}>{localDigits(pct)}{tr('٪', '%')}</AppText>
               </View>
               <ProgressBar value={o.confidence} height={6} color={on ? colors.red : colors.inkMuted} trackColor={on ? colors.redSoft : colors.statusReceivedBg} />
             </Pressable>
@@ -93,7 +95,7 @@ export function AiSuggestion({ state, suggestion, selected, onSelect, onPickOthe
         })}
       </View>
 
-      <LinkButton testID="ai-pick-other" label="مش صح؟ اختار التصنيف بنفسك" onPress={onPickOther} />
+      <LinkButton testID="ai-pick-other" label={tr('مش صح؟ اختار التصنيف بنفسك', 'Not right? Choose the type yourself')} onPress={onPickOther} />
     </View>
   );
 }
@@ -106,14 +108,15 @@ function LinkButton({ label, onPress, testID }: { label: string; onPress: () => 
   );
 }
 
-/** Compact "النوع" row used before the AI has anything to say (no photo or description yet). */
+/** Compact "type" row used before the AI has anything to say (no photo or description yet). */
 export function CategoryRow({ selected, onPress }: { selected: CategoryId | null; onPress: () => void }) {
+  const tr = useTr();
   const cat = selected ? getCategory(selected) : null;
   return (
     <Pressable
       testID="category-row"
       accessibilityRole="button"
-      accessibilityLabel={cat ? `النوع: ${cat.labelAr}. غيّر النوع` : 'اختار نوع المشكلة'}
+      accessibilityLabel={cat ? tr(`النوع: ${cat.labelAr}. غيّر النوع`, `Type: ${labelOfCategory(cat)}. Change the type`) : tr('اختار نوع المشكلة', 'Choose the type of problem')}
       onPress={onPress}
       style={styles.catRow}
     >
@@ -121,24 +124,26 @@ export function CategoryRow({ selected, onPress }: { selected: CategoryId | null
         <Icon name={cat ? cat.icon : 'search'} size={20} color={colors.red} />
       </View>
       <View style={{ flex: 1 }}>
-        <AppText variant="caption" color={colors.inkMuted}>نوع المشكلة</AppText>
-        <AppText variant="smallStrong">{cat ? cat.labelAr : 'النوع لسه مش متحدد'}</AppText>
+        <AppText variant="caption" color={colors.inkMuted}>{tr('نوع المشكلة', 'Type of problem')}</AppText>
+        <AppText variant="smallStrong">{cat ? labelOfCategory(cat) : tr('النوع لسه مش متحدد', 'No type chosen yet')}</AppText>
       </View>
-      <AppText variant="smallStrong" color={colors.red}>{cat ? 'غيّر' : 'اختار'}</AppText>
+      <AppText variant="smallStrong" color={colors.red}>{cat ? tr('غيّر', 'Change') : tr('اختار', 'Choose')}</AppText>
     </Pressable>
   );
 }
 
 /** Bottom sheet with every category, for "مش صح؟ اختار التصنيف بنفسك". */
 export function CategoryPicker({ visible, selected, onClose, onSelect }: { visible: boolean; selected: CategoryId | null; onClose: () => void; onSelect: (id: CategoryId) => void }) {
+  const tr = useTr();
+  const rtl = useIsRTL();
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <Pressable accessibilityRole="button" accessibilityLabel="إغلاق" style={StyleSheet.absoluteFill} onPress={onClose} />
+      <View style={[styles.backdrop, { direction: rtl ? 'rtl' : 'ltr' }]}>
+        <Pressable accessibilityRole="button" accessibilityLabel={tr('إغلاق', 'Close')} style={StyleSheet.absoluteFill} onPress={onClose} />
         <View style={styles.sheet}>
           <View style={styles.sheetHead}>
-            <AppText accessibilityRole="header" variant="h3" style={{ flex: 1 }}>اختار نوع المشكلة</AppText>
-            <Pressable accessibilityRole="button" accessibilityLabel="إغلاق" onPress={onClose} style={styles.close}>
+            <AppText accessibilityRole="header" variant="h3" style={{ flex: 1 }}>{tr('اختار نوع المشكلة', 'Choose the type of problem')}</AppText>
+            <Pressable accessibilityRole="button" accessibilityLabel={tr('إغلاق', 'Close')} onPress={onClose} style={styles.close}>
               <Icon name="x" size={20} />
             </Pressable>
           </View>
@@ -176,7 +181,7 @@ const styles = StyleSheet.create({
   links: { flexDirection: 'row', gap: 16, flexWrap: 'wrap' },
   catRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, padding: 12, minHeight: 60 },
   catDisc: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.redSoft, alignItems: 'center', justifyContent: 'center' },
-  backdrop: { flex: 1, direction: 'rtl', justifyContent: 'flex-end', backgroundColor: 'rgba(22,22,22,0.45)' },
+  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(22,22,22,0.45)' },
   sheet: { maxHeight: '80%', backgroundColor: colors.paper, borderTopStartRadius: 28, borderTopEndRadius: 28, paddingTop: 16 },
   sheetHead: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 8 },
   close: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },

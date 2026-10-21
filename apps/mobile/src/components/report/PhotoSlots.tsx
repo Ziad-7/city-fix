@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { AppText, Button } from '@/components/ui';
+import { useTr } from '@/i18n';
 import { colors, fonts, radius } from '@/theme/tokens';
 import { pickFromGallery, takePhoto, type PhotoResult } from './photo';
 
@@ -14,10 +15,11 @@ type Props = {
   quality: number;
 };
 
-const SLOT_LABEL = ['صورة ١ · قريبة', 'صورة ٢ · أوسع'] as const;
 
 /** Main close-up photo (2/3 width) + a second "wider view" slot. Tap = camera, long-press or the small link = gallery. */
 export function PhotoSlots({ photos, onChange, quality }: Props) {
+  const tr = useTr();
+  const slotLabel = [tr('صورة ١ · قريبة', 'Photo 1 · Close-up'), tr('صورة ٢ · أوسع', 'Photo 2 · Wider')] as const;
   const [problem, setProblem] = useState<'denied' | 'failed' | null>(null);
   const [problemSlot, setProblemSlot] = useState<0 | 1>(0);
 
@@ -45,13 +47,13 @@ export function PhotoSlots({ photos, onChange, quality }: Props) {
       <View style={styles.row}>
         <View style={styles.main}>
           {photos[0] ? (
-            <Filled uri={photos[0]} label={SLOT_LABEL[0]} onRemove={() => set(0, null)} onRetake={() => camera(0)} />
+            <Filled uri={photos[0]} label={slotLabel[0]} onRemove={() => set(0, null)} onRetake={() => camera(0)} />
           ) : (
             <Pressable
               testID="photo-main"
               accessibilityRole="button"
-              accessibilityLabel="صوّر المشكلة بالكاميرا"
-              accessibilityHint="اضغط مطوّلًا لاختيار صورة من المعرض"
+              accessibilityLabel={tr('صوّر المشكلة بالكاميرا', 'Take a photo of the problem')}
+              accessibilityHint={tr('اضغط مطوّلًا لاختيار صورة من المعرض', 'Press and hold to choose a photo from your gallery')}
               onPress={() => camera(0)}
               onLongPress={() => gallery(0)}
               style={styles.emptyMain}
@@ -59,10 +61,10 @@ export function PhotoSlots({ photos, onChange, quality }: Props) {
               <View style={styles.cameraDisc}>
                 <Icon name="camera" size={26} color={colors.onRed} />
               </View>
-              <AppText variant="smallStrong">صوّر المشكلة</AppText>
-              <Pressable accessibilityRole="button" accessibilityLabel="اختار صورة من المعرض" onPress={() => gallery(0)} hitSlop={8} style={styles.galleryLink}>
+              <AppText variant="smallStrong">{tr('صوّر المشكلة', 'Photograph the problem')}</AppText>
+              <Pressable accessibilityRole="button" accessibilityLabel={tr('اختار صورة من المعرض', 'Choose a photo from your gallery')} onPress={() => gallery(0)} hitSlop={8} style={styles.galleryLink}>
                 <Icon name="image" size={16} color={colors.red} />
-                <AppText variant="caption" color={colors.red} style={{ fontFamily: fonts.sans600 }}>أو من المعرض</AppText>
+                <AppText variant="caption" color={colors.red} style={{ fontFamily: fonts.sans600 }}>{tr('أو من المعرض', 'or from gallery')}</AppText>
               </Pressable>
             </Pressable>
           )}
@@ -70,19 +72,19 @@ export function PhotoSlots({ photos, onChange, quality }: Props) {
 
         <View style={styles.side}>
           {photos[1] ? (
-            <Filled uri={photos[1]} label={SLOT_LABEL[1]} compact onRemove={() => set(1, null)} onRetake={() => camera(1)} />
+            <Filled uri={photos[1]} label={slotLabel[1]} compact onRemove={() => set(1, null)} onRetake={() => camera(1)} />
           ) : (
             <Pressable
               testID="photo-wide"
               accessibilityRole="button"
-              accessibilityLabel="صورة أوسع للمكان"
-              accessibilityHint="اضغط مطوّلًا لاختيار صورة من المعرض"
+              accessibilityLabel={tr('صورة أوسع للمكان', 'A wider photo of the place')}
+              accessibilityHint={tr('اضغط مطوّلًا لاختيار صورة من المعرض', 'Press and hold to choose a photo from your gallery')}
               onPress={() => camera(1)}
               onLongPress={() => gallery(1)}
               style={styles.emptySide}
             >
               <Icon name="plus" size={22} color={colors.red} />
-              <AppText variant="caption" color={colors.red} center style={{ fontFamily: fonts.sans600 }}>صورة أوسع للمكان</AppText>
+              <AppText variant="caption" color={colors.red} center style={{ fontFamily: fonts.sans600 }}>{tr('صورة أوسع للمكان', 'A wider photo of the place')}</AppText>
             </Pressable>
           )}
         </View>
@@ -92,10 +94,10 @@ export function PhotoSlots({ photos, onChange, quality }: Props) {
         <View accessibilityRole="alert" style={styles.problem}>
           <AppText variant="small" color={colors.goldDeep}>
             {problem === 'denied'
-              ? 'محتاجين إذن الكاميرا عشان نصوّر من هنا. ممكن تسمح بيه من إعدادات الموبايل، أو تختار صورة من المعرض.'
-              : 'مقدرناش نفتح الكاميرا على الجهاز ده. اختار صورة من المعرض، أو كمّل بوصف المشكلة.'}
+              ? tr('محتاجين إذن الكاميرا عشان نصوّر من هنا. ممكن تسمح بيه من إعدادات الموبايل، أو تختار صورة من المعرض.', 'We need camera permission to take photos here. You can allow it in your phone settings, or choose a photo from your gallery.')
+              : tr('مقدرناش نفتح الكاميرا على الجهاز ده. اختار صورة من المعرض، أو كمّل بوصف المشكلة.', "We couldn't open the camera on this device. Choose a photo from your gallery, or just describe the problem.")}
           </AppText>
-          <Button label="اختار من المعرض" icon="image" size="sm" variant="secondary" onPress={() => gallery(problemSlot)} />
+          <Button label={tr('اختار من المعرض', 'Choose from gallery')} icon="image" size="sm" variant="secondary" onPress={() => gallery(problemSlot)} />
         </View>
       ) : null}
     </View>
@@ -103,14 +105,15 @@ export function PhotoSlots({ photos, onChange, quality }: Props) {
 }
 
 function Filled({ uri, label, compact, onRemove, onRetake }: { uri: string; label: string; compact?: boolean; onRemove: () => void; onRetake: () => void }) {
+  const tr = useTr();
   return (
     <View style={styles.filled}>
       <Image source={{ uri }} accessibilityLabel={label} style={StyleSheet.absoluteFill} resizeMode="cover" />
-      <Pressable accessibilityRole="button" accessibilityLabel={`صوّر ${label} تاني`} onPress={onRetake} style={StyleSheet.absoluteFill} />
+      <Pressable accessibilityRole="button" accessibilityLabel={tr(`صوّر ${label} تاني`, `Retake ${label}`)} onPress={onRetake} style={StyleSheet.absoluteFill} />
       <View pointerEvents="none" style={styles.badge}>
-        <AppText color={colors.onRed} style={styles.badgeText} numberOfLines={1}>{compact ? 'صورة ٢' : label}</AppText>
+        <AppText color={colors.onRed} style={styles.badgeText} numberOfLines={1}>{compact ? tr('صورة ٢', 'Photo 2') : label}</AppText>
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel={`امسح ${label}`} onPress={onRemove} hitSlop={10} style={styles.remove}>
+      <Pressable accessibilityRole="button" accessibilityLabel={tr(`امسح ${label}`, `Remove ${label}`)} onPress={onRemove} hitSlop={10} style={styles.remove}>
         <Icon name="x" size={16} color={colors.onRed} strokeWidth={2.5} />
       </Pressable>
     </View>
