@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Share, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import {
@@ -45,8 +45,30 @@ export default function RequestDetailScreen() {
     return buildTimelineSteps(item.request.timeline, 'service', item.status);
   }, [item]);
 
-  const failed = !item && (reportsStatus === 'error' || servicesStatus === 'error');
-  const loading = !item && (reportsStatus === 'idle' || reportsStatus === 'loading' || servicesStatus === 'idle' || servicesStatus === 'loading');
+  // Not in the cached lists (deep link, notification, list still loading): fetch it by id once the lists settled.
+  const loadReport = useReports((s) => s.loadReport);
+  const loadRequest = useServiceRequests((s) => s.loadRequest);
+  const [fetchState, setFetchState] = useState<'idle' | 'loading' | 'missing' | 'error'>('idle');
+  const [fetchTry, setFetchTry] = useState(0);
+  const listsSettled = reportsStatus !== 'idle' && reportsStatus !== 'loading' && servicesStatus !== 'idle' && servicesStatus !== 'loading';
+  const missing = !item && !!id;
+  useEffect(() => {
+    if (!missing || !listsSettled) return;
+    let cancelled = false;
+    (id.startsWith('SRV-') ? loadRequest(id) : loadReport(id))
+      .then((found) => {
+        if (!cancelled) setFetchState(found ? 'idle' : 'missing');
+      })
+      .catch(() => {
+        if (!cancelled) setFetchState('error');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [missing, listsSettled, id, fetchTry, loadReport, loadRequest]);
+
+  const failed = !item && fetchState === 'error';
+  const loading = !item && fetchState !== 'missing' && fetchState !== 'error';
 
   if (!item) {
     return (
@@ -54,7 +76,11 @@ export default function RequestDetailScreen() {
         {loading ? (
           <StateMessage loading title="بنجيب التفاصيل…" />
         ) : failed ? (
-          <StateMessage tone="error" icon="wifi" title="مقدرناش نحمّل الطلب" body="اتأكد من النت وجرّب تاني" actionLabel="جرّب تاني" onAction={() => void refreshAll()} />
+          <StateMessage tone="error" icon="wifi" title="مقدرناش نحمّل الطلب" body="اتأكد من النت وجرّب تاني" actionLabel="جرّب تاني" onAction={() => {
+              setFetchState('loading');
+              setFetchTry((n) => n + 1);
+              void refreshAll();
+            }} />
         ) : (
           <StateMessage
             icon="search"

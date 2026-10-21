@@ -1,4 +1,4 @@
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
 import { BackHandler, Pressable, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +13,7 @@ import { isolateLtr, toArabicDigits } from '@/utils/digits';
 
 export default function SuccessScreen() {
   const insets = useSafeAreaInsets();
+  const { queued } = useLocalSearchParams<{ queued?: string }>();
   const last = useReports((s) => s.lastSubmitted);
   const reportCount = useReports((s) => s.reports.length);
   const whatsapp = useSession((s) => s.prefs.whatsappUpdates);
@@ -27,6 +28,7 @@ export default function SuccessScreen() {
     return () => sub.remove();
   }, []);
 
+  if (queued === '1') return <QueuedSuccess topInset={insets.top} />;
   if (!last) return <Redirect href="/" />;
 
   const { report, incident } = last;
@@ -126,6 +128,49 @@ export default function SuccessScreen() {
             </View>
           ) : null}
         </View>
+      </View>
+    </Screen>
+  );
+}
+
+/** Offline variant: the report is saved on the phone and goes out when the network is back. */
+function QueuedSuccess({ topInset }: { topInset: number }) {
+  const steps = ['هنبعته لوحدنا أول ما النت يرجع، من غير ما تعمل حاجة', 'هتلاقيه في طلباتي بعلامة "مستني النت"', 'بعد ما يتبعت هتوصلك رسالة برقم البلاغ'];
+  return (
+    <Screen
+      edges={['bottom']}
+      padded={false}
+      footer={
+        <View style={styles.footer}>
+          <Button testID="open-requests" label="شوف طلباتي" onPress={() => {
+            router.dismissAll();
+            router.push('/requests');
+          }} />
+          <Pressable testID="go-home" accessibilityRole="link" onPress={() => router.dismissAll()} style={styles.home}>
+            <AppText variant="smallStrong" color={colors.red}>الرئيسية</AppText>
+          </Pressable>
+        </View>
+      }
+    >
+      <View style={[styles.hero, { paddingTop: topInset + 24, minHeight: 330 + topInset }]}>
+        <View style={styles.logoDisc}>
+          <LogoMark size={72} />
+        </View>
+        <AppText accessibilityRole="header" color={colors.onRed} style={styles.title}>تسلم إيدك!</AppText>
+        <AppText color={colors.redSoft} center style={styles.sub}>بلاغك اتحفظ على الموبايل وهيتبعت أول ما النت يرجع</AppText>
+      </View>
+      <View style={styles.body}>
+        <Card rounded="lg" padding={16} style={{ gap: 10 }} accessibilityLabel="اللي جاي">
+          <AppText accessibilityRole="header" style={styles.cardTitle}>اللي جاي</AppText>
+          {steps.map((s, i) => (
+            <View key={s} style={styles.step}>
+              <View style={styles.stepNum}>
+                <AppText color={colors.redDeep} style={{ fontFamily: fonts.sans700, fontSize: 13, lineHeight: 20 }}>{toArabicDigits(i + 1)}</AppText>
+              </View>
+              <AppText variant="small" style={{ flex: 1 }}>{s}</AppText>
+            </View>
+          ))}
+        </Card>
       </View>
     </Screen>
   );

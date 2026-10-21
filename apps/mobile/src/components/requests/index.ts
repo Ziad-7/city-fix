@@ -1,4 +1,5 @@
 export { RequestCard } from './RequestCard';
+export { QueuedCard } from './QueuedCard';
 export { RequestThumb } from './RequestThumb';
 export { TimelineCard } from './TimelineCard';
 export { InfoTiles, type InfoTile } from './InfoTiles';
