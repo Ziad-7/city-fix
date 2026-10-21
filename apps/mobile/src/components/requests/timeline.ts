@@ -29,7 +29,7 @@ const futureReport = (): FutureLabels => ({
 });
 
 const futureService = (): FutureLabels => ({
-  triaged: { title: tr('مراجعة الطلب', 'Request review') },
+  triaged: { title: tr('مراجعة الطلب', 'Request reviewed') },
   assigned: { title: tr('تحديد الفريق والميعاد', 'Team and time set') },
   in_progress: { title: tr('العربية في الطريق', 'The truck is on the way') },
   resolved: {

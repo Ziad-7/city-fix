@@ -18,7 +18,7 @@ import type { VoiceNoteProps } from './VoiceNote.types';
 
 type Phase = 'idle' | 'recording' | 'recorded';
 
-const deniedMsg = () => trNow('مفيش إذن للميكروفون. تقدر تكتب وصف المشكلة بنفسك، أو تفعّل الإذن من إعدادات الموبايل.', 'No microphone permission. You can type the description yourself, or allow it in your phone settings.');
+const deniedMsg = () => trNow('مفيش إذن للميكروفون. تقدر تكتب وصف المشكلة بنفسك، أو تفعّل الإذن من إعدادات الموبايل.', 'Microphone access is off. You can type the description yourself, or allow the microphone in your phone settings.');
 const failedRecordMsg = () => trNow('مقدرناش نسجّل دلوقتي، جرّب تاني أو اكتب الوصف بنفسك.', "We couldn't record right now. Try again, or type the description yourself.");
 
 /** WhatsApp-style voice note: tap to record (live timer, stop), then play / delete / re-record. */

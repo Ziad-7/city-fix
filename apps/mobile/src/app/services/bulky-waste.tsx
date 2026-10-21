@@ -42,7 +42,7 @@ export default function BulkyWasteScreen() {
     if (!parsed.success) {
       for (const issue of parsed.error.issues) {
         const key = issue.path[0] === 'items' ? 'items' : 'day';
-        next[key] ??= key === 'items' ? tr('اختار حاجة واحدة على الأقل', 'Pick at least one item') : tr('اختار اليوم', 'Pick a day');
+        next[key] ??= key === 'items' ? tr('اختار حاجة واحدة على الأقل', 'Choose at least one item') : tr('اختار اليوم', 'Choose a day');
       }
     }
     const center = findDistrict(governorate, district) ?? DEFAULT_PLACE;

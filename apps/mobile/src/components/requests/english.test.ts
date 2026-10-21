@@ -11,7 +11,7 @@ describe('requests in English', () => {
     expect(followersLine(0)).toBe('No one is following this report yet');
     expect(followersLine(1)).toBe('1 person is following this report');
     expect(followersLine(12)).toBe('12 people are following this report');
-    expect(slotLabel('morning')).toBe('9 AM – 12 PM');
+    expect(slotLabel('morning')).toBe('9\u00a0AM – 12\u00a0PM');
     expect(paymentLabel('instapay')).toBe('InstaPay');
     expect(paymentLabel(undefined)).toBe('Free');
   });

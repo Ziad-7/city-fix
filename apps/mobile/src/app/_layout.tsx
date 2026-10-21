@@ -59,6 +59,11 @@ export default function RootLayout() {
     };
   }, [ready, signedIn]);
 
+  // The Android notification channel has a visible name: rename it when the language changes.
+  useEffect(() => {
+    if (ready && signedIn) void setupOsNotifications();
+  }, [ready, signedIn, lang]);
+
   if (!ready) return null;
 
   return (

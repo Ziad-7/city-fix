@@ -20,7 +20,7 @@ export function ServiceDetailsCard({ request }: { request: ServiceRequest }) {
     { label: tr('اليوم', 'Day'), value: dayText(details.day) },
     { label: tr('الفترة', 'Time slot'), value: slotLabel(details.slot) },
     { label: tr('طريقة الدفع', 'Payment'), value: paymentLabel(details.payment) },
-    { label: tr('الرسوم', 'Fee'), value: free ? tr(FREE_SERVICE_LABEL, FREE_SERVICE_LABEL_EN) : tr(FEE_LABEL, FEE_LABEL_EN) },
+    { label: tr('الرسوم', 'Fee'), value: free ? tr(FREE_SERVICE_LABEL, FREE_SERVICE_LABEL_EN) : tr(FEE_LABEL, FEE_LABEL_EN.charAt(0).toUpperCase() + FEE_LABEL_EN.slice(1)) },
     { label: tr('العنوان', 'Address'), value: [location.address, location.landmark].filter(Boolean).join(' · ') },
     ...(details.note ? [{ label: tr('ملاحظة', 'Note'), value: details.note }] : []),
   ];

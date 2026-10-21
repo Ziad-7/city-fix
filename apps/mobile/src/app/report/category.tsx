@@ -12,7 +12,7 @@ import { colors, fonts, radius } from '@/theme/tokens';
 export default function CategoryScreen() {
   const tr = useTr();
   return (
-    <Screen header={<ScreenHeader title={tr('إيه نوع المشكلة؟', 'What type of problem is it?')} step={tr('خطوة ١ من ٣', 'Step 1 of 3')} />} gap={16} contentStyle={{ paddingTop: 4 }}>
+    <Screen header={<ScreenHeader title={tr('إيه نوع المشكلة؟', 'What’s the problem?')} step={tr('خطوة ١ من ٣', 'Step 1 of 3')} />} gap={16} contentStyle={{ paddingTop: 4 }}>
       <EmergencyBox />
 
       <View accessibilityLabel={tr('أنواع المشاكل', 'Problem types')}>
@@ -35,7 +35,7 @@ export default function CategoryScreen() {
         </View>
         <View style={{ flex: 1 }}>
           <AppText color={colors.onRed} style={styles.voiceTitle}>{tr('مش عارف تختار؟ قولها بصوتك', 'Not sure which? Tell us with your voice')}</AppText>
-          <AppText variant="caption" color={colors.redSoft}>{tr('ابعت فويس نوت بالعامية، وإحنا نفهم المشكلة ونصنّفها', 'Send a voice note in your own words, and we’ll understand the problem and sort it out')}</AppText>
+          <AppText variant="caption" color={colors.redSoft}>{tr('ابعت فويس نوت بالعامية، وإحنا نفهم المشكلة ونصنّفها', 'Send a voice note in your own words, and we’ll work out what the problem is')}</AppText>
         </View>
       </Pressable>
 

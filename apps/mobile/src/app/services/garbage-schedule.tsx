@@ -69,7 +69,7 @@ export default function GarbageScheduleScreen() {
             <View style={styles.next} accessible accessibilityLabel={`${tr('الجاية', 'Next pickup')}: ${next.label}`}>
               <AppText variant="caption" color={colors.redSoft}>{tr('الجاية', 'Next pickup')}</AppText>
               <AppText color={colors.onRed} style={styles.nextLabel}>{next.label}</AppText>
-              <AppText variant="small" color={colors.onRed}>{`${tr('العربية بتعدّي', 'The truck comes')} ${windowLabel(schedule.window)}`}</AppText>
+              <AppText variant="small" color={colors.onRed}>{tr(`العربية بتعدّي ${windowLabel(schedule.window)}`, `Pickup time: ${windowLabel(schedule.window)}`)}</AppText>
             </View>
           ) : null}
 

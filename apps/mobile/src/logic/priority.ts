@@ -76,7 +76,7 @@ export function priorityReason(p: Priority, reporters: number, sensitivePlace?: 
     if (sensitivePlace) parts.push('near a school or hospital');
     if (reporters > 1) parts.push(`${reporters} reports`);
     if (highSeverity) parts.push('high risk');
-    return parts.length ? `${label}: ${parts.join(' + ')}` : label;
+    return parts.length ? `${label}: ${parts.join(', ')}` : label;
   }
   const label = PRIORITY_LABEL_AR[level];
   if (level === 'low') return label;

@@ -6,7 +6,8 @@ import { isolateLtr, isValidEgyptPhone } from '@/utils/digits';
 const msg = (ar: string, en: string) => ({ error: () => tr(ar, en) });
 
 export const phoneSchema = z.string().refine(isValidEgyptPhone, {
-  error: () => tr('رقم الموبايل مش صح، اكتب ١١ رقم زي ', "That phone number doesn't look right. Enter 11 digits, like ") + isolateLtr('010 1234 5678'),
+  // English keeps the example number on one line (no-break spaces); the Arabic text is unchanged.
+  error: () => tr('رقم الموبايل مش صح، اكتب ١١ رقم زي ', "That phone number doesn't look right. Enter 11 digits, like ") + isolateLtr(tr('010 1234 5678', '010 1234 5678')),
 });
 
 export const otpSchema = z.string().regex(/^\d{6}$/, msg('الكود ٦ أرقام', 'The code is 6 digits'));

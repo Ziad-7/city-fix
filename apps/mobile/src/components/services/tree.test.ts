@@ -43,6 +43,6 @@ describe('validateTreeBooking messages', () => {
   it('are Arabic by default and English after a switch', () => {
     expect(validateTreeBooking({ ...valid, workType: '' }).errors.workType).toBe('اختار نوع الشغل');
     setLang('en');
-    expect(validateTreeBooking({ ...valid, workType: '' }).errors.workType).toBe('Pick the type of work');
+    expect(validateTreeBooking({ ...valid, workType: '' }).errors.workType).toBe('Choose the type of work');
   });
 });

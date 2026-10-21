@@ -130,7 +130,8 @@ export const ITEM_EN: Record<string, string> = {
   'رش / مكافحة آفات': 'Spraying / pest control',
 };
 
-export const SLOT_EN: Record<SlotId, string> = { morning: '9 AM – 12 PM', afternoon: '2 PM – 5 PM' };
+/** No-break spaces keep "9 AM" together when a row wraps. */
+export const SLOT_EN: Record<SlotId, string> = { morning: '9\u00a0AM – 12\u00a0PM', afternoon: '2\u00a0PM – 5\u00a0PM' };
 
 export const PAYMENT_EN: Record<PaymentMethod, string> = {
   cash: 'Cash to the worker',
@@ -139,7 +140,7 @@ export const PAYMENT_EN: Record<PaymentMethod, string> = {
   wallet: 'Mobile wallet',
 };
 
-export const FEE_LABEL_EN = '[as per the district’s rates]';
+export const FEE_LABEL_EN = 'as per the district’s rates';
 export const FREE_SERVICE_LABEL_EN = 'Free service from the Parks Department';
 
 export const MEDAL_EN: Record<string, string> = { 'جدع الشارع': 'Street Hero', 'جدع الحي': 'Neighbourhood Hero' };

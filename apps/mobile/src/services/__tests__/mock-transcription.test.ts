@@ -1,5 +1,6 @@
 import { uploadAndTranscribeVoiceNote } from '@/store/actions';
-import { MOCK_TRANSCRIPTS, MOCK_TRANSCRIPT_CONFIDENCE, createMockTranscriptionService } from '../mock/transcription-service';
+import { usePrefs } from '@/store/usePrefs';
+import { MOCK_TRANSCRIPTS, MOCK_TRANSCRIPTS_EN, MOCK_TRANSCRIPT_CONFIDENCE, createMockTranscriptionService } from '../mock/transcription-service';
 
 describe('mock TranscriptionService', () => {
   it('rotates through realistic Egyptian Arabic sentences', async () => {
@@ -14,6 +15,15 @@ describe('mock TranscriptionService', () => {
     const r = await createMockTranscriptionService().transcribe('x.m4a');
     expect(r.text.length).toBeGreaterThan(10);
     expect(r.confidence).toBe(MOCK_TRANSCRIPT_CONFIDENCE);
+  });
+  it('answers in English when the app is in English', async () => {
+    usePrefs.setState({ lang: 'en' });
+    try {
+      expect(MOCK_TRANSCRIPTS_EN).toHaveLength(MOCK_TRANSCRIPTS.length);
+      expect((await createMockTranscriptionService().transcribe('x.m4a')).text).toBe(MOCK_TRANSCRIPTS_EN[0]);
+    } finally {
+      usePrefs.setState({ lang: 'ar' });
+    }
   });
 });
 

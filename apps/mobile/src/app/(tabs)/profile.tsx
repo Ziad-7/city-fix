@@ -121,7 +121,7 @@ export default function ProfileScreen() {
         />
         {notifDenied ? (
           <AppText variant="caption" color={colors.goldDeep} accessibilityLiveRegion="polite">
-            {tr('الإذن مش متاح. هتلاقي التحديثات في مركز الإشعارات جوه التطبيق، وتقدر تسمح بالتنبيهات من إعدادات الموبايل.', 'Permission isn’t available. You’ll find updates in the notification centre inside the app, and you can allow alerts in your phone’s settings.')}
+            {tr('الإذن مش متاح. هتلاقي التحديثات في مركز الإشعارات جوه التطبيق، وتقدر تسمح بالتنبيهات من إعدادات الموبايل.', 'Notifications are turned off for CityFix. You’ll still see updates in the app’s notification centre, and you can turn alerts on in your phone settings.')}
           </AppText>
         ) : null}
         <ToggleRow

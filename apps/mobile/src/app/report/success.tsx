@@ -39,10 +39,11 @@ export default function SuccessScreen() {
   const medal = medalFor(reportCount);
   const n = localDigits(reportCount);
   const titleStyle = [styles.title, lang === 'en' ? styles.titleEn : null];
+  const sentReports = reportCount === 1 ? 'You’ve sent 1 report' : `You’ve sent ${reportCount} reports`;
 
   const steps = [
     tr('موظف الحي هيراجعه خلال ٢٤ ساعة', 'A district officer will review it within 24 hours'),
-    tr(`هيتحوّل للجهة المسؤولة: ${incident.department}`, `It will go to the responsible department: ${departmentLabel(incident.department)}`),
+    tr(`هيتحوّل للجهة المسؤولة: ${incident.department}`, `Then it goes to the team in charge: ${departmentLabel(incident.department)}`),
     whatsapp ? tr('هنبعتلك على واتساب في كل خطوة', 'We’ll message you on WhatsApp at every step') : tr('هنبعتلك رسالة SMS في كل خطوة', 'We’ll text you at every step'),
   ];
 
@@ -83,11 +84,11 @@ export default function SuccessScreen() {
         <AppText accessibilityRole="header" color={colors.onRed} style={titleStyle}>{tr('تسلم إيدك!', 'Thank you!')}</AppText>
         {joined ? (
           <AppText color={colors.redSoft} center style={styles.sub}>
-            {tr('اتضمّيت للبلاغ الموجود، رقمه ', 'You joined the existing report, number ')}<AppText color={colors.onRed} style={styles.strong}>{isolateLtr(`#${incident.linkedReportIds[0]}`)}</AppText>{tr('. ده بيرفع أولويته.', '. This raises its priority.')}
+            {tr('اتضمّيت للبلاغ الموجود، رقمه ', 'You joined the existing report ')}<AppText color={colors.onRed} style={styles.strong}>{isolateLtr(`#${incident.linkedReportIds[0]}`)}</AppText>{tr('. ده بيرفع أولويته.', '. This raises its priority.')}
           </AppText>
         ) : (
           <AppText color={colors.redSoft} center style={styles.sub}>
-            {tr('بلاغك وصل، ورقمه ', 'We got your report. Its number is ')}<AppText color={colors.onRed} style={styles.strong}>{isolateLtr(`#${report.id}`)}</AppText>
+            {tr('بلاغك وصل، ورقمه ', 'We got your report. Report number: ')}<AppText color={colors.onRed} style={styles.strong}>{isolateLtr(`#${report.id}`)}</AppText>
           </AppText>
         )}
       </View>
@@ -115,8 +116,8 @@ export default function SuccessScreen() {
           </View>
           <AppText variant="small">
             {medal.next
-              ? tr(`ده بلاغك رقم ${n}. ${moreReports(medal.remaining)} وتاخد لقب `, `This is your report number ${n}. ${moreReports(medal.remaining)} to earn the title `)
-              : tr(`ده بلاغك رقم ${n}. ده أعلى لقب، شكرًا على مشاركتك في تصليح مدينتك.`, `This is your report number ${n}. That’s the highest title. Thanks for helping fix your city.`)}
+              ? tr(`ده بلاغك رقم ${n}. ${moreReports(medal.remaining)} وتاخد لقب `, `${sentReports}. ${moreReports(medal.remaining)} to earn the title `)
+              : tr(`ده بلاغك رقم ${n}. ده أعلى لقب، شكرًا على مشاركتك في تصليح مدينتك.`, `${sentReports}. That’s the highest title. Thanks for helping fix your city.`)}
             {medal.next ? <AppText variant="smallStrong">{medalTitle(medal.next.title)}</AppText> : null}
             {medal.next ? '.' : null}
           </AppText>
@@ -146,7 +147,7 @@ function QueuedSuccess({ topInset }: { topInset: number }) {
   const lang = useLang();
   const titleStyle = [styles.title, lang === 'en' ? styles.titleEn : null];
   const steps = [
-    tr('هيتبعت لوحده أول ما النت يرجع، من غير أي خطوة تانية', 'It will send by itself when you’re back online. Nothing else to do'),
+    tr('هيتبعت لوحده أول ما النت يرجع، من غير أي خطوة تانية', 'It’ll be sent automatically when you’re back online. Nothing else to do'),
     tr('هتلاقيه في طلباتي بعلامة "مستني النت"', 'You’ll find it in My requests, marked "Waiting for internet"'),
     tr('بعد ما يتبعت هتوصلك رسالة برقم البلاغ', 'Once it’s sent, you’ll get a message with the report number'),
   ];

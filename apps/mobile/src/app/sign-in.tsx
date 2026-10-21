@@ -84,7 +84,11 @@ export default function SignInScreen() {
     setLargeText(next);
     showSoon(next ? tr('اتفعّل الخط الأكبر. تقدر تقفله من حسابي.', 'Larger text is on. You can turn it off in Account.') : tr('رجعنا للخط العادي.', 'Back to normal text.'));
   };
-  const switchLang = () => setLang(lang === 'en' ? 'ar' : 'en');
+  // A validation message was written in the old language: drop it rather than show it in the wrong one.
+  const switchLang = () => {
+    setError(null);
+    setLang(lang === 'en' ? 'ar' : 'en');
+  };
 
   // The 6th digit submits the code: the number pad has no return key.
   const onCodeChange = (t: string) => {

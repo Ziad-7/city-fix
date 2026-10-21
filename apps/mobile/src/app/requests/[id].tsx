@@ -78,7 +78,7 @@ export default function RequestDetailScreen() {
 
   if (!item) {
     return (
-      <Screen header={<ScreenHeader title={tr('متابعة الطلب', 'Follow your request')} />}>
+      <Screen header={<ScreenHeader title={tr('متابعة الطلب', 'Track your request')} />}>
         {loading ? (
           <StateMessage loading title={tr('بنجيب التفاصيل…', 'Loading the details…')} />
         ) : failed ? (
@@ -105,7 +105,7 @@ export default function RequestDetailScreen() {
   const category = isReport ? getCategory(item.categoryId) : null;
   const catalog = isReport ? null : SERVICES.find((s) => s.serviceType === item.request.serviceType);
   const followers = incident?.followers ?? 0;
-  const headerTitle = isReport ? tr('متابعة البلاغ', 'Follow your report') : tr('متابعة الطلب', 'Follow your request');
+  const headerTitle = isReport ? tr('متابعة البلاغ', 'Track your report') : tr('متابعة الطلب', 'Track your request');
 
   const share = async () => {
     const message = isReport
@@ -143,7 +143,7 @@ export default function RequestDetailScreen() {
   const tiles: InfoTile[] = isReport
     ? [
         {
-          label: tr('الجهة المسؤولة', 'Responsible body'),
+          label: tr('الجهة المسؤولة', 'Handled by'),
           value: `${departmentLabel(incident?.department ?? category?.department ?? '')} · ${tr(`حي ${district}`, placeName(district))}`,
         },
         isOpenStatus(item.status)
@@ -154,7 +154,7 @@ export default function RequestDetailScreen() {
           : { label: tr('اتصلّح', 'Fixed on'), value: formatDate(incident?.updatedAt ?? item.createdAt) },
       ]
     : [
-        { label: tr('الجهة المسؤولة', 'Responsible body'), value: `${tr('خدمات الحي', 'District Services')} · ${tr(`حي ${district}`, placeName(district))}` },
+        { label: tr('الجهة المسؤولة', 'Handled by'), value: `${tr('خدمات الحي', 'District Services')} · ${tr(`حي ${district}`, placeName(district))}` },
         { label: tr('الميعاد', 'Scheduled'), value: dayText(item.request.details.day) },
       ];
 

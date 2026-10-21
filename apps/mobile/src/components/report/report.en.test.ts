@@ -1,5 +1,5 @@
 import { newReportSchema, phoneSchema } from '@/domain/schemas';
-import { triageMock } from '@/logic/triage-mock';
+import { detectEmergency, triageMock } from '@/logic/triage-mock';
 import { usePrefs } from '@/store/usePrefs';
 import { addressAfterMove, formatAddress } from './address';
 import { distanceLabel, moreReports, neighbours, reportedBy } from './text';
@@ -41,5 +41,16 @@ describe('report helpers in English', () => {
     expect(t.summary).toMatch(/^Most likely "Pothole/);
     usePrefs.setState({ lang: 'ar' });
     expect(triageMock({ description: 'فيه حفرة كبيرة' }).summary).toMatch(/^الغالب/);
+  });
+  it('classifies descriptions typed in English', () => {
+    expect(triageMock({ description: 'Big pothole in front of the school, cars fall in every day' }).options[0].categoryId).toBe('pothole');
+    expect(triageMock({ description: 'Stray dogs chasing kids' }).options[0].categoryId).toBe('stray_dogs');
+    // "tree" must not fire on "street"
+    expect(triageMock({ description: 'Garbage piling up on our street' }).options[0].categoryId).toBe('garbage');
+  });
+  it('spots emergencies typed in English (the hotline safety net)', () => {
+    expect(detectEmergency('I can smell gas in the stairwell')).toBe(true);
+    expect(detectEmergency('A wall collapsed and someone is injured')).toBe(true);
+    expect(detectEmergency('Pothole near the school')).toBe(false);
   });
 });

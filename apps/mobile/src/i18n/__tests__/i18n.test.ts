@@ -51,9 +51,10 @@ describe('i18n', () => {
     setLang('en');
     expect(remainingLine(2, 'جدع الشارع')).toBe('2 more reports to earn Street Hero');
     const p = { score: 78, factors: [{ key: 'severity', label: '', points: 40, max: 40 }] };
-    expect(priorityReason(p, 7, 'مدرسة')).toBe('High priority: near a school or hospital + 7 reports + high risk');
+    expect(priorityReason(p, 7, 'مدرسة')).toBe('High priority: near a school or hospital, 7 reports, high risk');
     expect(scheduleSummary({ days: ['sun', 'tue'], window: '٨ م – ١١ م' })).toBe('Sunday, Tuesday · 8 PM – 11 PM');
     const thu = new Date(2026, 9, 22); // Thursday
     expect(nextCollection(['thu'], thu)?.label).toBe('Today, Thursday');
+    expect(nextCollection(['sat'], thu)?.label).toBe('Saturday');
   });
 });

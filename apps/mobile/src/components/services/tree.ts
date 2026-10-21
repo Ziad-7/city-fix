@@ -20,7 +20,7 @@ export function validateTreeBooking(v: TreeFormValues): { errors: TreeFormErrors
   if (!parsed.success) {
     for (const issue of parsed.error.issues) {
       const key = issue.path[0] === 'workType' ? 'workType' : 'day';
-      errors[key] ??= key === 'workType' ? tr('اختار نوع الشغل', 'Pick the type of work') : tr('اختار اليوم', 'Pick a day');
+      errors[key] ??= key === 'workType' ? tr('اختار نوع الشغل', 'Choose the type of work') : tr('اختار اليوم', 'Choose a day');
     }
   }
   const place = placeSchema.safeParse({ ...v.place, address: v.place.address.trim(), landmark: v.place.landmark?.trim() || undefined });

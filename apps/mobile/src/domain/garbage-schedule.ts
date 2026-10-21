@@ -77,7 +77,8 @@ export function nextCollection(days: WeekdayCode[], from: Date = new Date()): Ne
 const nextLabelAr = (name: string, offset: number): string =>
   offset === 0 ? `النهارده ${name}` : offset === 1 ? `بكرة ${name}` : offset === 2 ? `بعد بكرة ${name}` : `${name} الجاي`;
 const nextLabelEn = (code: WeekdayCode, offset: number): string =>
-  offset === 0 ? `Today, ${WEEKDAY_EN[code]}` : offset === 1 ? `Tomorrow, ${WEEKDAY_EN[code]}` : `Next ${WEEKDAY_EN[code]}`;
+  // "Next Tuesday" is ambiguous in English when Tuesday is only two days away: the weekday alone is clearer.
+  offset === 0 ? `Today, ${WEEKDAY_EN[code]}` : offset === 1 ? `Tomorrow, ${WEEKDAY_EN[code]}` : WEEKDAY_EN[code];
 
 /** Weekday name in the current language. */
 export const weekdayLabel = (code: WeekdayCode): string => (usePrefs.getState().lang === 'en' ? WEEKDAY_EN[code] : WEEKDAY_NAME_AR[code]);

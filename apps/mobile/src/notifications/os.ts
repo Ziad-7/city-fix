@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import type { AppNotification } from '@/domain/types';
-import { tr } from '@/i18n';
+import { getLang, tr, type Lang } from '@/i18n';
 import { colors } from '@/theme/tokens';
 
 export const UPDATES_CHANNEL = 'updates';
@@ -14,17 +14,28 @@ const load = (): NotificationsModule =>
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   require('expo-notifications') as NotificationsModule;
 let ready = false;
+/** Language the Android channel name was last written in: the channel is renamed after a language switch. */
+let channelLang: Lang | null = null;
 
-/** Foreground handler (show the banner) and the Android channel. Safe to call repeatedly; no-op on web. */
+/**
+ * Foreground handler (show the banner) and the Android channel. Safe to call repeatedly; no-op on web.
+ * Calling it again after a language switch renames the channel (Android keeps the user's channel settings).
+ */
 export async function setupOsNotifications(): Promise<void> {
-  if (!supported || ready) return;
-  ready = true;
+  if (!supported) return;
+  const lang = getLang();
+  const renameChannel = Platform.OS === 'android' && channelLang !== lang;
+  if (ready && !renameChannel) return;
   try {
     const Notifications = load();
-    Notifications.setNotificationHandler({
-      handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }),
-    });
-    if (Platform.OS === 'android') {
+    if (!ready) {
+      ready = true;
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }),
+      });
+    }
+    if (renameChannel) {
+      channelLang = lang;
       await Notifications.setNotificationChannelAsync(UPDATES_CHANNEL, {
         name: tr('تحديثات البلاغات والطلبات', 'Report and request updates'),
         description: tr('لما حالة بلاغ أو طلب بتوعك تتغيّر', 'When one of your reports or requests changes status'),

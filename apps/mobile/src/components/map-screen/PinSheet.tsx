@@ -58,9 +58,9 @@ export function PinSheet({ incident, distanceM, following, followBusy, myReportI
 
       {expanded && !myReportId ? (
         <View style={styles.details}>
-          <Row label={tr('الجهة المسؤولة', 'Responsible body')} value={departmentLabel(incident.department)} />
+          <Row label={tr('الجهة المسؤولة', 'Handled by')} value={departmentLabel(incident.department)} />
           <Row label={tr('الأولوية', 'Priority')} value={priorityReason(incident.priority, incident.linkedReportIds.length, incident.sensitivePlace)} />
-          <Row label={tr('المكان', 'Place')} value={incident.location.address} />
+          <Row label={tr('المكان', 'Location')} value={incident.location.address} />
           <Row label={tr('آخر تحديث', 'Last update')} value={relativeTime(incident.updatedAt)} />
         </View>
       ) : null}

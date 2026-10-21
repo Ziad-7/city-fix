@@ -1,3 +1,4 @@
+import { getLang } from '@/i18n';
 import type { TranscriptionService } from '../interfaces';
 import { delay } from './db';
 
@@ -10,6 +11,15 @@ export const MOCK_TRANSCRIPTS = [
   'ماسورة المية مكسورة والمية بتطلع في الشارع من الصبح',
 ];
 
+/** The same sentences in English: like the rest of the mock backend, it answers in the app language. */
+export const MOCK_TRANSCRIPTS_EN = [
+  'There’s a big pothole in front of the school and cars fall into it every day',
+  'Garbage has been piling up next to the building for a week and it smells bad',
+  'The streetlight on our street has been out for several nights and it’s dark',
+  'There’s an open manhole in the middle of the street and someone could fall in',
+  'A water pipe burst and water has been running into the street since morning',
+];
+
 export const MOCK_TRANSCRIPT_CONFIDENCE = 0.8;
 
 export function createMockTranscriptionService(): TranscriptionService {
@@ -17,7 +27,8 @@ export function createMockTranscriptionService(): TranscriptionService {
   return {
     async transcribe() {
       await delay(1200);
-      const text = MOCK_TRANSCRIPTS[next % MOCK_TRANSCRIPTS.length];
+      const list = getLang() === 'en' ? MOCK_TRANSCRIPTS_EN : MOCK_TRANSCRIPTS;
+      const text = list[next % list.length];
       next += 1;
       return { text, confidence: MOCK_TRANSCRIPT_CONFIDENCE };
     },
