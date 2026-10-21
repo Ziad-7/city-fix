@@ -2,6 +2,19 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-21 — Android Expo Go SDK 57 compatibility
+
+**Done**
+- Aligned Expo, React Native, Router, native modules and test dependencies with SDK 57 to match Expo Go 57.0.9 on the user's Android phone.
+- Updated the custom tab bar to use SDK 57's navigation API. The user confirmed the preview opens successfully.
+
+**How to test**
+- In `apps/mobile`, run `npm ci`, `npm run typecheck`, `npm run lint`, and `npm test -- --runInBand` (89 tests pass).
+- Start Expo and open the project in Expo Go supporting SDK 57. Demo verification code: `123456`.
+
+**Known issues**
+- Cloud previews need an active Expo tunnel; the development server and tunnel are temporary runtime processes.
+
 ## 2026-10-21 — Phase C: review and fixes (branch `feat/mobile-citizen-app`, draft PR #1)
 
 **Done**
