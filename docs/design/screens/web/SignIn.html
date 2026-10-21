@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FixTheCity — تسجيل الدخول</title>
+<link rel="icon" href="../../assets/fixthecity-mark.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Aref+Ruqaa:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../css/fixthecity.css">
+<style>
+html{scroll-behavior:smooth}
+button{font-family:inherit}
+.flip{transform:scaleX(-1)}
+.w-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* top bar */
+.w-top{gap:20px}
+.w-logo img{height:40px;width:auto}
+.w-nav{display:flex;gap:4px;margin-inline-start:8px}
+.w-nav a{display:inline-flex;align-items:center;height:40px;padding:0 14px;border-radius:999px;font:600 15px/1 var(--ftc-font-sans);color:var(--ftc-ink)}
+.w-nav a:hover{background:var(--ftc-paper)}
+.w-nav a[aria-current=page]{background:var(--ftc-red-soft);color:var(--ftc-red-deep)}
+.w-actions{margin-inline-start:auto;display:flex;align-items:center;gap:12px}
+.w-iconbtn{position:relative;width:44px;height:44px;border-radius:50%;border:1px solid var(--ftc-line);background:var(--ftc-surface);color:var(--ftc-ink);display:flex;align-items:center;justify-content:center}
+.w-iconbtn:hover{color:var(--ftc-red)}
+.w-dot{position:absolute;top:9px;inset-inline-end:11px;width:9px;height:9px;border-radius:50%;background:var(--ftc-gold);border:2px solid #fff}
+.w-account{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px 0 6px;border:1px solid var(--ftc-line);border-radius:999px;color:var(--ftc-ink);font:600 14px/1 var(--ftc-font-sans);background:var(--ftc-surface)}
+.w-account[aria-current=page]{border-color:var(--ftc-red);color:var(--ftc-red-deep)}
+.w-avatar{width:32px;height:32px;border-radius:50%;background:var(--ftc-red-soft);color:var(--ftc-red);display:inline-flex;align-items:center;justify-content:center}
+.w-tabbar{display:none}
+/* generic */
+.w-page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px}
+.w-h1{font:700 28px/38px var(--ftc-font-display);margin:0}
+.w-h2{font:600 20px/30px var(--ftc-font-display);margin:0}
+.w-h3{font:600 16px/24px var(--ftc-font-display);margin:0}
+.w-sub{color:var(--ftc-ink-muted);font-size:14px;line-height:22px;margin:2px 0 0}
+.w-back{display:inline-flex;align-items:center;gap:6px;font:600 14px/1 var(--ftc-font-sans);color:var(--ftc-red);margin-bottom:10px}
+.w-sec{margin-top:36px}
+.w-sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
+.w-sec-head a{font:600 14px/1 var(--ftc-font-sans)}
+.w-step{font:500 13px/1 var(--ftc-font-sans);color:var(--ftc-ink-muted)}
+.w-stepbar{display:flex;gap:6px;margin-bottom:24px}
+.w-stepbar span{flex:1;height:4px;border-radius:2px;background:var(--ftc-line)}
+.w-stepbar span.on{background:var(--ftc-red)}
+.w-stack{display:flex;flex-direction:column;gap:16px}
+.w-row{display:flex;align-items:center;gap:12px}
+.w-grow{flex:1;min-width:0}
+.w-t{font:600 15px/24px var(--ftc-font-sans);display:block}
+.w-m{font:400 12px/18px var(--ftc-font-sans);color:var(--ftc-ink-muted);display:block}
+.w-card-link{color:var(--ftc-ink)}
+.w-card-link:hover{color:var(--ftc-ink)}
+.ftc-card{border-radius:var(--ftc-radius-md)}
+.w-lgcard{border-radius:var(--ftc-radius-lg);padding:24px}
+.w-foot{max-width:var(--ftc-web-max);margin:16px auto 0;padding:24px;border-top:1px solid var(--ftc-line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font:400 13px/20px var(--ftc-font-sans);color:var(--ftc-ink-muted)}
+.w-annot{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;background:var(--ftc-gold-soft);color:var(--ftc-gold-deep);font:600 12px/1 var(--ftc-font-sans);margin-bottom:8px}
+/* thumbs */
+.w-thumb{width:52px;height:52px;border-radius:8px;background:var(--ftc-status-received);color:#C9D1D4;display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden}
+.w-thumb svg.art{width:100%;height:100%}
+/* request / nearby rows */
+.w-rowcard{display:flex;align-items:center;gap:12px;padding:12px;background:var(--ftc-surface);border-radius:var(--ftc-radius-md);box-shadow:var(--ftc-shadow-card);color:var(--ftc-ink)}
+a.w-rowcard:hover{color:var(--ftc-ink);box-shadow:0 1px 2px rgba(22,22,22,.08),0 6px 20px rgba(22,22,22,.10)}
+.w-follow{height:40px;padding:0 14px;border-radius:999px;border:1.5px solid var(--ftc-red);background:var(--ftc-surface);color:var(--ftc-red);font:700 13px/1 var(--ftc-font-sans);white-space:nowrap;cursor:pointer}
+.w-follow:hover{background:var(--ftc-red-soft)}
+.w-followed{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 12px;border-radius:999px;background:var(--ftc-status-resolved-bg);color:var(--ftc-status-resolved);font:700 13px/1 var(--ftc-font-sans);white-space:nowrap}
+/* emergency */
+.w-sos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.w-sos a{height:64px;border-radius:var(--ftc-radius-sm);background:var(--ftc-urgent-soft);color:var(--ftc-urgent-deep);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.w-sos a.gas{background:var(--ftc-gold-soft);color:var(--ftc-gold-deep)}
+.w-sos b{font:700 22px/26px var(--ftc-font-display)}
+.w-sos span{font:600 13px/18px var(--ftc-font-sans)}
+.w-sos a:hover{outline:2px solid currentColor}
+/* choice, toggles */
+.w-choice{display:flex;align-items:center;gap:10px;min-height:48px;padding:6px 14px;border:1.5px solid var(--ftc-line);border-radius:var(--ftc-radius-md);background:var(--ftc-surface);font:500 15px/22px var(--ftc-font-sans);cursor:pointer;color:var(--ftc-ink);user-select:none}
+.w-choice .mk{width:20px;height:20px;border-radius:50%;border:2px solid var(--ftc-ink-muted);flex:none;display:inline-flex;align-items:center;justify-content:center;color:#fff}
+.w-choice.chk .mk{border-radius:6px}
+.w-choice .mk svg{opacity:0}
+.w-choice.is-on{border-color:var(--ftc-red);background:var(--ftc-red-soft);font-weight:600}
+.w-choice.is-on .mk{background:var(--ftc-red);border-color:var(--ftc-red)}
+.w-choice.is-on .mk svg{opacity:1}
+.w-choice:not(.chk) .mk::after{content:"";width:8px;height:8px;border-radius:50%;background:#fff;opacity:0}
+.w-choice:not(.chk).is-on .mk::after{opacity:1}
+.w-trow{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--ftc-surface);border:1px solid var(--ftc-line);border-radius:var(--ftc-radius-md)}
+.card-trow{border:0;padding:0;background:transparent}
+.w-trow .ftc-icon-well{width:40px;height:40px}
+.ftc-toggle{border:0;padding:0;cursor:pointer;display:block}
+.w-sel{position:relative}
+.w-sel select{appearance:none;-webkit-appearance:none;padding-inline-end:40px;font:400 16px/26px var(--ftc-font-sans)}
+.w-sel svg{position:absolute;inset-inline-end:14px;top:50%;margin-top:-9px;pointer-events:none;color:var(--ftc-ink-muted)}
+.w-btnrow{display:flex;gap:10px;flex-wrap:wrap}
+.ftc-btn svg{flex:none}
+.ftc-btn--secondary.w-neutral{border:1px solid var(--ftc-line);color:var(--ftc-ink)}
+.w-link{background:none;border:0;padding:0;color:var(--ftc-red);font:600 14px/22px var(--ftc-font-sans);cursor:pointer}
+.w-pills{display:flex;gap:8px;flex-wrap:wrap}
+.ftc-filter{cursor:pointer;font-family:var(--ftc-font-sans)}
+.w-notice-ic{flex:none;margin-top:2px}
+@media (max-width:760px){
+  .w-nav,.w-cta,.w-account__t{display:none}
+  .w-top{gap:8px}
+  .w-account{padding:0 6px}
+  .w-account{border:0;display:none}
+  .w-tabbar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;position:sticky;bottom:0;z-index:20;padding:0;height:76px}
+  .w-tabbar a{font-size:11px;line-height:16px;font-weight:500}
+  .w-tabbar a[aria-current=page]{font-weight:600}
+  .w-fab{width:60px;height:60px;margin-top:-34px;justify-self:center}
+  .w-h1{font-size:24px;line-height:34px}
+  .w-sec{margin-top:24px}
+  .w-lgcard{padding:16px}
+  .w-sos{gap:6px}
+  .w-sos a{height:56px}
+  .w-sos b{font-size:18px;line-height:22px}
+  .w-foot{padding:16px}
+  .w-page-head{flex-wrap:wrap}
+}
+
+body{background:var(--ftc-paper)}
+.s-split{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);min-height:calc(100vh - 38px)}
+.s-hero{background:var(--ftc-red);color:#fff;position:sticky;top:0;height:calc(100vh - 38px);min-height:560px;overflow:hidden;padding:48px 56px;display:flex;flex-direction:column;gap:24px}
+.s-pill{display:inline-flex;align-items:center;gap:10px;height:48px;padding:0 20px 0 14px;border-radius:999px;background:#fff;align-self:flex-start;color:var(--ftc-red);font:700 18px/1 var(--ftc-font-display)}
+.s-pill img{width:32px;height:32px}
+.s-hero .ftc-slogan{font-size:48px;line-height:72px;margin:24px 0 0;max-width:420px;position:relative}
+.s-hero p{margin:0;color:var(--ftc-red-soft);font:400 16px/28px var(--ftc-font-sans);max-width:380px;position:relative}
+.s-sky{position:absolute;inset-inline:0;bottom:0;width:100%;height:auto}
+.s-formside{padding:56px 40px;display:flex;flex-direction:column;align-items:center;gap:20px}
+.s-form{width:100%;max-width:480px;display:flex;flex-direction:column;gap:16px}
+.s-card{width:100%;max-width:480px}
+.s-card .w-stack{gap:18px}
+.s-head h1{font:700 26px/36px var(--ftc-font-display);margin:0}
+.s-head p{margin:4px 0 0;color:var(--ftc-ink-muted);font-size:14px;line-height:22px}
+.s-phone{display:flex;align-items:stretch;border:1px solid var(--ftc-line);border-radius:var(--ftc-radius-sm);background:#fff;overflow:hidden;min-height:56px}
+.s-phone:focus-within{outline:3px solid var(--ftc-gold);outline-offset:2px}
+.s-cc{display:flex;align-items:center;gap:8px;padding:0 14px;border-inline-end:1px solid var(--ftc-line);font:600 16px/1 var(--ftc-font-sans);direction:ltr}
+.w-flag{display:inline-flex;flex-direction:column;width:22px;height:15px;border-radius:2px;overflow:hidden;border:1px solid var(--ftc-line)}
+.w-flag i{flex:1;display:block}
+.s-phone input{border:0;outline:0;flex:1;min-width:0;padding:0 14px;font:500 20px/28px var(--ftc-font-display);direction:ltr;text-align:right;background:transparent;color:var(--ftc-ink);letter-spacing:.5px}
+.s-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.s-privacy{display:flex;gap:10px;align-items:flex-start;background:var(--ftc-surface);border-radius:var(--ftc-radius-md);padding:12px 14px;font-size:13px;line-height:21px;box-shadow:var(--ftc-shadow-card)}
+.s-privacy svg{color:var(--ftc-red);flex:none;margin-top:2px}
+.s-links{display:flex;gap:16px;justify-content:center;font:600 14px/22px var(--ftc-font-sans)}
+.s-links i{color:var(--ftc-line);font-style:normal}
+.s-otp{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;direction:ltr}
+.s-otp input{width:100%;height:60px;text-align:center;border:1.5px solid var(--ftc-line);border-radius:var(--ftc-radius-sm);font:600 26px/1 var(--ftc-font-display);background:#fff;color:var(--ftc-ink)}
+.s-otp input.f{border-color:var(--ftc-red)}
+.s-hint{display:flex;align-items:center;gap:8px}
+.s-mobhero{display:none}
+@media (max-width:900px){.s-hero{padding:40px 32px}.s-hero .ftc-slogan{font-size:36px;line-height:56px}}
+@media (max-width:760px){
+ .s-split{display:block}
+ .s-hero{position:relative;height:auto;min-height:300px;padding:24px 20px 150px;border-bottom-left-radius:28px;border-bottom-right-radius:28px;gap:12px}
+ .s-hero .ftc-slogan{font-size:28px;line-height:46px;margin:0}
+ .s-hero p{display:none}
+ .s-pill{height:40px;font-size:15px}.s-pill img{width:26px;height:26px}
+ .s-formside{padding:20px 16px 32px}
+}
+</style>
+</head>
+<body>
+<div class="ftc-docbar"><a href="../../index.html">FixTheCity design</a><span>Citizen website · SignIn</span></div>
+<div class="s-split">
+  <section class="s-hero" aria-label="فيكس ذا سيتي">
+    <span class="s-pill"><img src="../../assets/fixthecity-mark.svg" alt="">فيكس ذا سيتي</span>
+    <h2 class="ftc-slogan">مدينتك أحلى لما نصلّحها سوا</h2>
+    <p>بلّغ.. وإحنا نتابع لحد ما تتصلّح. صوّر المشكلة، ونوصّلها للجهة المسؤولة، ونبعتلك كل خطوة.</p>
+    <img class="s-sky" src="../../assets/cairo-skyline.svg" alt="">
+  </section>
+  <main class="s-formside">
+    <div class="s-form">
+      <div class="ftc-card ftc-card--lg s-card" id="step-phone">
+        <div class="w-stack">
+          <div class="s-head"><span class="w-step">خطوة ١ من ٢</span><h1>أهلًا بيك</h1><p>ادخل برقم موبايلك عشان تبلّغ وتتابع طلباتك.</p></div>
+          <div class="ftc-field">
+            <label class="ftc-label" for="phone">رقم موبايلك</label>
+            <div class="s-phone"><span class="s-cc"><span class="w-flag" aria-hidden="true"><i style="background:#C8102E"></i><i style="background:#fff"></i><i style="background:#161616"></i></span>+20</span><input id="phone" type="tel" inputmode="numeric" dir="ltr" placeholder="010 1234 5678" value="010 1234 5678" autocomplete="tel-national"></div>
+            <span class="ftc-help">فودافون، أورانج، اتصالات، أو WE — هنبعتلك كود من ٦ أرقام.</span>
+          </div>
+          <div class="ftc-field">
+            <span class="ftc-label" id="ch-l">ابعتلي الكود على</span>
+            <div class="s-pair" role="radiogroup" aria-labelledby="ch-l" data-choice="single">
+              <div class="w-choice is-on" role="radio" aria-checked="true" tabindex="0"><span class="mk"></span>رسالة SMS</div>
+              <div class="w-choice" role="radio" aria-checked="false" tabindex="0"><span class="mk"></span>واتساب</div>
+            </div>
+          </div>
+          <div class="s-pair">
+            <div class="ftc-field"><label class="ftc-label" for="gov">المحافظة</label><div class="w-sel"><select class="ftc-select" id="gov"><option>القاهرة</option><option>الجيزة</option><option>الإسكندرية</option></select><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div>
+            <div class="ftc-field"><label class="ftc-label" for="dist">الحي</label><div class="w-sel"><select class="ftc-select" id="dist"><option>مدينة نصر أول</option><option>مدينة نصر ثان</option><option>مصر الجديدة</option><option>المعادي</option></select><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div>
+          </div>
+          <div class="s-privacy"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg><span>رقمك مش هيظهر لحد. بنستخدمه بس عشان نبعتلك تحديثات بلاغك، وتقدر تبلّغ من غير اسم.</span></div>
+          <div class="w-trow"><span class="ftc-icon-well"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.6a10 10 0 0 1 14 0"/><path d="M8.5 16.1a5 5 0 0 1 7 0"/><path d="M12 20h.01"/></svg></span><span class="w-grow"><span class="w-t">توفير باقة النت</span><span class="w-m">صور أخف، والخريطة بتحمّل بس لما تفتحها</span></span><button class="ftc-toggle is-on" role="switch" aria-checked="true" aria-label="توفير باقة النت"></button></div>
+          <a class="ftc-btn ftc-btn--primary ftc-btn--block" href="Home.html" style="height:52px">ابعتلي الكود</a>
+          <div class="s-links"><a href="#">English</a><i>|</i><a href="#">خط أكبر</a></div>
+        </div>
+      </div>
+      <div>
+        <span class="w-annot">الخطوة الجاية — بعد «ابعتلي الكود»</span>
+        <div class="ftc-card ftc-card--lg s-card" id="step-code">
+          <div class="w-stack">
+            <div class="s-head"><span class="w-step">خطوة ٢ من ٢</span><h1>اكتب الكود</h1><p>بعتنا كود من ٦ أرقام على رسالة SMS للرقم <bdi dir="ltr">010 •••• 5678</bdi>.</p></div>
+            <div class="ftc-field">
+              <span class="ftc-label" id="otp-l">الكود</span>
+              <div class="s-otp" role="group" aria-labelledby="otp-l">
+                <input class="f" inputmode="numeric" maxlength="1" aria-label="الرقم ١" value="١"><input class="f" inputmode="numeric" maxlength="1" aria-label="الرقم ٢" value="٢"><input class="f" inputmode="numeric" maxlength="1" aria-label="الرقم ٣" value="٣"><input inputmode="numeric" maxlength="1" aria-label="الرقم ٤" placeholder="·"><input inputmode="numeric" maxlength="1" aria-label="الرقم ٥" placeholder="·"><input inputmode="numeric" maxlength="1" aria-label="الرقم ٦" placeholder="·">
+              </div>
+            </div>
+            <div class="ftc-notice s-hint"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>الكود التجريبي: <b>١٢٣٤٥٦</b></span></div>
+            <a class="ftc-btn ftc-btn--primary ftc-btn--block" href="Home.html" style="height:52px">دخول</a>
+            <div class="s-links"><a href="#">غيّر الرقم</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+document.addEventListener('click',function(e){
+  var t=e.target.closest('.ftc-toggle');
+  if(t){var on=t.classList.toggle('is-on');t.setAttribute('aria-checked',on);return;}
+  var c=e.target.closest('.w-choice');
+  if(c){var g=c.closest('[data-choice]');if(!g)return;
+    if(g.dataset.choice==='multi'){c.classList.toggle('is-on');}
+    else{g.querySelectorAll('.w-choice').forEach(function(x){x.classList.remove('is-on');});c.classList.add('is-on');}
+    return;}
+  var f=e.target.closest('.ftc-filter');
+  if(f){var p=f.closest('[data-pills]');if(!p)return;
+    p.querySelectorAll('.ftc-filter').forEach(function(x){x.classList.remove('is-active');x.setAttribute('aria-pressed','false');});
+    f.classList.add('is-active');f.setAttribute('aria-pressed','true');}
+});
+</script>
+</body>
+</html>

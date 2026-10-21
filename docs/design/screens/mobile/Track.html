@@ -2,23 +2,20 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FixTheCity — متابعة البلاغ</title>
-<script src="./support.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;family=Readex+Pro:wght@500;600;700&amp;family=Aref+Ruqaa:wght@700&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../css/fixthecity.css">
 </head>
 <body>
-<x-dc>
-<helmet>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;family=Readex+Pro:wght@500;600;700&amp;display=swap" rel="stylesheet">
-<style>
-body{margin:0}
-a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
-</style>
-</helmet>
+<div class="ftc-docbar"><a href="../../index.html">FixTheCity design</a><span>Mobile app · Track</span></div>
+<div style="width:390px;margin:24px auto;box-shadow:var(--ftc-shadow-float);overflow:hidden">
 <div dir="rtl" style="width: 390px; height: 1140px; box-sizing: border-box; background: #F8F6F2; color: #161616; font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif; display: flex; flex-direction: column;">
 
   <header style="display: flex; align-items: center; gap: 8px; padding: 16px 12px 8px;">
-    <a href="Main.dc.html" aria-label="رجوع" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: #161616;"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg></a>
+    <a href="Main.html" aria-label="رجوع" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: #161616;"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg></a>
     <h1 style="margin: 0; flex: 1; font-family: 'Readex Pro', sans-serif; font-size: 20px; line-height: 30px; font-weight: 700;">متابعة البلاغ</h1>
     <button aria-label="مشاركة" style="width: 44px; height: 44px; border-radius: 999px; border: 0; background: transparent; color: #161616; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer;"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 13.5l6.8 4"></path><path d="M15.4 6.5l-6.8 4"></path></svg></button>
   </header>
@@ -26,10 +23,10 @@ a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
   <main style="flex: 1; padding: 0 16px 16px; display: flex; flex-direction: column; gap: 14px;">
     <section style="background: #FFFFFF; border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 1px 2px rgba(22,22,22,.06), 0 4px 16px rgba(22,22,22,.06);">
       <div style="display: flex; gap: 12px; align-items: flex-start;">
-        <span aria-hidden="true" style="width: 72px; height: 72px; border-radius: 8px; background: #5A6870; flex-shrink: 0; position: relative; overflow: hidden;"><span style="position: absolute; right: 12px; top: 26px; width: 48px; height: 22px; border-radius: 999px; background: #161616;"></span></span>
+        <span aria-hidden="true" style="width: 72px; height: 72px; border-radius: 8px; background: #3D4A50; flex-shrink: 0; position: relative; overflow: hidden;"><span style="position: absolute; right: 12px; top: 26px; width: 48px; height: 22px; border-radius: 999px; background: #161616;"></span></span>
         <span style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
           <span style="font-family: 'Readex Pro', sans-serif; font-size: 18px; line-height: 26px; font-weight: 700;">حفرة في شارع عباس العقاد</span>
-          <span style="font-size: 12px; line-height: 18px; color: #5A5A5A;">#FTC-1042 · اتبلّغ النهارده ١٠:١٢ ص</span>
+          <span style="font-size: 12px; line-height: 18px; color: #5A5A5A;"><bdi dir="ltr">#FTC-1042</bdi> · اتبلّغ النهارده ١٠:١٢ ص</span>
           <span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: #FAF0D2; color: #7A5A00; font-size: 12px; font-weight: 600;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #7A5A00;"></span>جاري التنفيذ</span>
         </span>
       </div>
@@ -44,7 +41,7 @@ a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
         </div>
       </div>
       <div style="display: flex; align-items: center; gap: 10px; background: #FBE4E7; border-radius: 8px; padding: 10px;">
-        <span style="font-family: 'Readex Pro', sans-serif; font-size: 22px; line-height: 28px; font-weight: 700; color: #8E0A20;">٨٤</span>
+        <span style="font-family: 'Readex Pro', sans-serif; font-size: 22px; line-height: 28px; font-weight: 700; color: #8E0A20;">٦٦</span>
         <span style="font-size: 13px; line-height: 20px; color: #161616;"><strong style="font-weight: 600;">أولوية عالية</strong> — قريب من مدرسة، و٧ مواطنين بلّغوا عنها</span>
       </div>
     </section>
@@ -78,7 +75,7 @@ a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
     <section aria-label="التحديثات" style="background: #FFFFFF; border-radius: 22px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 1px 2px rgba(22,22,22,.06), 0 4px 16px rgba(22,22,22,.06);">
       <label style="display: flex; align-items: center; gap: 12px;">
         <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C8102E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"></path></svg>
-        <span style="flex: 1; display: flex; flex-direction: column;"><span style="font-size: 14px; line-height: 22px; font-weight: 600;">ابعتلي التحديثات على واتساب</span><span style="font-size: 12px; line-height: 18px; color: #5A5A5A;">على رقم ‎010 •••• 5678 — ولو مفيش نت هتوصلك SMS</span></span>
+        <span style="flex: 1; display: flex; flex-direction: column;"><span style="font-size: 14px; line-height: 22px; font-weight: 600;">ابعتلي التحديثات على واتساب</span><span style="font-size: 12px; line-height: 18px; color: #5A5A5A;">على رقم <bdi dir="ltr">010 •••• 5678</bdi> — ولو مفيش نت هتوصلك SMS</span></span>
         <input type="checkbox" checked role="switch" aria-label="ابعتلي التحديثات على واتساب" style="width: 22px; height: 22px; accent-color: #C8102E; margin: 0;">
       </label>
       <button style="height: 48px; border-radius: 14px; border: 1.5px solid #C8102E; background: #FFFFFF; color: #C8102E; font-family: inherit; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">
@@ -93,11 +90,6 @@ a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
     </div>
   </main>
 </div>
-</x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1140}}'>
-class Component extends DCLogic {
-  renderVals() { return {}; }
-}
-</script>
+</div>
 </body>
 </html>

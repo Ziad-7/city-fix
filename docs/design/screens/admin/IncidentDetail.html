@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FixTheCity — مركز القيادة: تفاصيل البلاغ INC-0042</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;family=Readex+Pro:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../css/fixthecity.css">
+<style>
+.ftc-admin-sidebar .brand{display:flex;align-items:center;gap:10px;padding:0 8px 18px}
+.ftc-admin-sidebar .brand b{display:block;font:700 16px/22px var(--ftc-font-display)}
+.ftc-admin-sidebar .brand small{display:block;font-size:12px;line-height:18px;color:var(--ftc-on-ink-muted)}
+.ftc-admin-sidebar a:hover:not([aria-current]){background:rgba(255,255,255,.08);color:var(--ftc-on-ink)}
+.ftc-admin-sidebar a .lbl{flex:1}
+.ftc-admin-sidebar a .count{font-size:12px;color:var(--ftc-on-ink-muted)}
+.ftc-admin-sidebar a[aria-current="page"] .count{color:var(--ftc-ink);font-weight:700}
+.ftc-admin-sidebar .sb-user{margin-top:auto;border-top:1px solid rgba(255,255,255,.12);padding:14px 4px 0;display:flex;align-items:center;gap:10px}
+.ftc-admin-sidebar .sb-user .who{flex:1;min-width:0}
+.ftc-admin-sidebar .sb-user b{display:block;font:600 14px/20px var(--ftc-font-sans)}
+.ftc-admin-sidebar .sb-user small{display:block;font-size:12px;line-height:16px;color:var(--ftc-on-ink-muted)}
+.ftc-admin-sidebar .sb-user a.out{width:36px;height:36px;padding:0;justify-content:center;flex:none}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--ftc-gold);color:var(--ftc-ink);display:inline-flex;align-items:center;justify-content:center;font:700 15px/1 var(--ftc-font-display);flex:none}
+.page{display:flex;flex-direction:column;gap:20px}
+.page-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.page-head .grow{flex:1 1 260px;min-width:0}
+.page-head h1{margin:0;font:700 26px/36px var(--ftc-font-display)}
+.page-head p{margin:0;font-size:14px;line-height:22px;color:var(--ftc-ink-muted)}
+.search{height:44px;flex:0 1 280px;min-width:200px;border-radius:var(--ftc-radius-md);background:var(--ftc-surface);border:1px solid var(--ftc-line);display:flex;align-items:center;gap:8px;padding:0 12px;color:var(--ftc-ink-muted)}
+.search input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:400 14px/22px var(--ftc-font-sans);color:var(--ftc-ink)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{display:flex;flex-direction:column;gap:4px}
+.kpi .l{font-size:13px;line-height:20px;color:var(--ftc-ink-muted)}
+.kpi .d{font-size:12px;line-height:18px;font-weight:600}
+.d--bad{color:var(--ftc-urgent-deep)}.d--good{color:var(--ftc-status-resolved)}.d--mute{color:var(--ftc-ink-muted);font-weight:400!important}
+.sec-title{margin:0;font:600 17px/26px var(--ftc-font-display);display:flex;align-items:center;gap:8px}
+.sec-sub{margin:0;font-size:12px;line-height:18px;color:var(--ftc-ink-muted)}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.score{display:inline-flex;width:40px;height:28px;border-radius:8px;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex:none}
+.score--urgent{background:var(--ftc-urgent);color:#fff}
+.score--high{background:var(--ftc-gold-soft);color:var(--ftc-gold-deep)}
+.score--low{background:var(--ftc-status-received-bg);color:var(--ftc-status-received)}
+.tablewrap{overflow-x:auto}
+.mini{font-size:12px;line-height:18px;color:var(--ftc-ink-muted)}
+.strong{font-weight:600}
+.row-between{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.stack{display:flex;flex-direction:column}
+.g8{gap:8px}.g12{gap:12px}.g16{gap:16px}
+.link{color:var(--ftc-red);font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ftc-filter{cursor:pointer;font-family:inherit}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px}
+.ftc-btn--sm.ftc-btn--secondary{border-width:1.5px}
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){
+  .ftc-admin-main{padding:16px}
+  .ftc-admin-sidebar{flex-direction:row;flex-wrap:wrap;padding:12px;gap:6px}
+  .ftc-admin-sidebar .brand{width:100%;padding:0 4px 6px}
+  .ftc-admin-sidebar > a{flex:1 1 calc(50% - 6px);min-width:140px}
+  .ftc-admin-sidebar .sb-user{width:100%;margin-top:6px}
+  .page-head h1{font-size:22px;line-height:30px}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+.crumbs{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ftc-ink-muted)}
+.crumbs a{font-weight:600}
+.title-row{display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px}
+.title-row h1{margin:0;font:700 26px/36px var(--ftc-font-display)}
+.meta{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:6px;font-size:14px;line-height:22px;color:var(--ftc-ink-muted)}
+.meta span{display:inline-flex;align-items:center;gap:6px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.photos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.photo{margin:0;border-radius:var(--ftc-radius-sm);overflow:hidden;background:var(--ftc-status-received);position:relative}
+.photo svg{width:100%;height:auto}
+.photo figcaption{position:absolute;inset-inline-start:8px;bottom:8px;background:rgba(22,22,22,.78);color:#fff;font-size:12px;line-height:18px;padding:2px 8px;border-radius:999px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:stretch}
+.ai{background:var(--ftc-red-soft);border-radius:var(--ftc-radius-md);padding:16px;display:flex;flex-direction:column;gap:12px;color:var(--ftc-ink)}
+.ai .lab{display:inline-flex;align-items:center;gap:6px;color:var(--ftc-red-deep);font:700 12px/18px var(--ftc-font-sans)}
+.ai .opt{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:4px 10px;align-items:center;font-size:14px}
+.ai .opt .ftc-bar{grid-column:1/-1;background:#fff}
+.ai .opt .pct{text-align:end;font-weight:700;font-variant-numeric:tabular-nums}
+.ai .opt.top .nm{font-weight:700}
+.score-big{display:flex;align-items:baseline;gap:8px}
+.score-big b{font:700 44px/48px var(--ftc-font-display);color:var(--ftc-urgent)}
+.score-big span{color:var(--ftc-ink-muted);font-weight:500}
+.factors{display:flex;flex-direction:column;gap:14px;margin-top:14px}
+.factor{display:grid;grid-template-columns:minmax(150px,230px) minmax(0,1fr) 64px;gap:4px 14px;align-items:center}
+.factor .nm{font-size:14px;font-weight:600;line-height:22px}
+.factor .pts{text-align:end;font-weight:700;font-variant-numeric:tabular-nums;font-size:14px}
+.factor .pts small{font-weight:400;color:var(--ftc-ink-muted)}
+.factor .why{grid-column:1/-1;font-size:12px;line-height:18px;color:var(--ftc-ink-muted);margin-top:-2px}
+.factor .ftc-bar{height:10px}
+.reason{margin-top:14px}
+.tl-item b{font-weight:600}
+.tl-item .who{font-size:12px;color:var(--ftc-ink-muted)}
+.ftc-timeline li{padding-bottom:18px}
+.ftc-timeline li.is-pending::after{background:var(--ftc-surface);border:2px solid var(--ftc-line);width:14px;height:14px}
+.ftc-timeline .ai-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--ftc-red-deep);background:var(--ftc-red-soft);border-radius:999px;padding:0 8px;line-height:18px;margin-inline-start:6px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:10px 16px;font-size:14px;line-height:22px;margin:0}
+.kv dt{color:var(--ftc-ink-muted)}
+.kv dd{margin:0;font-weight:600}
+.side-form{display:flex;flex-direction:column;gap:12px}
+.side-form .ftc-input,.side-form .ftc-select{min-height:44px;font-size:14px}
+.side-form .ftc-textarea{min-height:92px;font-size:14px;line-height:22px}
+.chk{display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:20px}
+.chk input{width:18px;height:18px;accent-color:var(--ftc-red);margin:1px 0 0}
+.mapsnip{border-radius:var(--ftc-radius-sm);overflow:hidden;border:1px solid var(--ftc-line)}
+.mapsnip svg{width:100%;height:auto}
+.dup{border:1.5px dashed var(--ftc-gold);background:var(--ftc-gold-soft);border-radius:var(--ftc-radius-md);padding:14px;display:flex;flex-direction:column;gap:10px;color:var(--ftc-gold-deep)}
+.dup .lab{display:inline-flex;align-items:center;gap:6px;font:700 12px/18px var(--ftc-font-sans)}
+.dup .box{background:#fff;border-radius:var(--ftc-radius-sm);padding:10px 12px;color:var(--ftc-ink);font-size:14px;line-height:22px}
+.dup .box a{font-weight:700}
+.btn-split{display:flex;gap:8px}
+.btn-split .ftc-btn{flex:1;padding:0 10px}
+@media (max-width:1200px){.layout{grid-template-columns:minmax(0,1fr)}.two{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:760px){.title-row h1{font-size:22px;line-height:32px}.factor{grid-template-columns:minmax(0,1fr) 56px}.factor .ftc-bar{grid-column:1/-1;order:3}.factor .why{order:4}.photos{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div class="ftc-docbar"><a href="../../index.html">FixTheCity design</a><span>Command Center · IncidentDetail</span></div>
+<div class="ftc-admin">
+<nav class="ftc-admin-sidebar" aria-label="قائمة مركز القيادة">
+<div class="brand"><img src="../../assets/fixthecity-mark.svg" alt="" width="34" height="34"><span><b>FixTheCity</b><small>القاهرة · حي مدينة نصر أول</small></span></div>
+<a href="Overview.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="lbl">نظرة عامة</span></a>
+<a href="Incidents.html" aria-current="page"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span class="lbl">البلاغات</span><span class="count">128</span></a>
+<a href="Map.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15"/><path d="M15 6v15"/></svg><span class="lbl">الخريطة</span></a>
+<a href="ServiceRequests.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg><span class="lbl">طلبات الخدمات</span><span class="count">34</span></a>
+<a href="WorkOrders.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.6-.6-.6-2.6z"/></svg><span class="lbl">أوامر الشغل</span></a>
+<a href="Budget.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg><span class="lbl">الميزانية</span></a>
+<div class="sb-user"><span class="avatar" aria-hidden="true">س</span><span class="who"><b>سارة محمود</b><small>مشرفة فرز · حي مدينة نصر</small></span><a class="out" href="Login.html" aria-label="تسجيل الخروج" title="تسجيل الخروج"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></a></div>
+</nav>
+<main class="ftc-admin-main">
+<div class="page">
+<nav class="crumbs" aria-label="مسار الصفحة"><a href="Incidents.html">البلاغات</a><span aria-hidden="true">/</span><span class="num">INC-0042</span></nav>
+
+<header class="title-row">
+  <div style="flex:1 1 420px;min-width:0">
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px"><span class="ftc-chip ftc-chip--critical">خطر</span><span class="ftc-chip ftc-chip--received">وصل</span><span class="ftc-tag-danger">أولوية عاجلة · 93</span></div>
+    <h1>بالوعة مفتوحة قدام مدرسة النصر الإعدادية</h1>
+    <div class="meta">
+      <span class="num"><b>INC-0042</b></span>
+      <span><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>شارع يوسف عباس، الحي السابع، مدينة نصر</span>
+      <span><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>مفتوح من أمس 15:20 · الميعاد النهارده 15:20 (باقي 5 س)</span>
+      <span><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>7 مواطنين بلّغوا</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="col">
+    <section class="ftc-card" aria-labelledby="h-ph">
+      <div class="card-head"><div><h2 class="sec-title" id="h-ph"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>الصور (3 من 7 بلاغات)</h2></div></div>
+      <div class="photos"><figure class="photo"><svg viewBox="0 0 320 240" role="img" aria-label="صورة 1 من 3" xmlns="http://www.w3.org/2000/svg"><defs><filter id="b1" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7"/></filter></defs><rect width="320" height="240" fill="#3D4A50"/><rect y="132" width="320" height="108" fill="#5A5A5A"/><ellipse cx="160" cy="150" rx="118" ry="52" fill="#161616"/><ellipse cx="160" cy="142" rx="118" ry="52" fill="none" stroke="#C9D1D4" stroke-width="8"/><ellipse cx="160" cy="156" rx="76" ry="26" fill="#3D4A50" fill-opacity=".6"/><path d="M262 214l30 18" stroke="#C9D1D4" stroke-width="6" stroke-linecap="round"/></svg><figcaption>مواطن · 20 أكتوبر 15:20</figcaption></figure><figure class="photo"><svg viewBox="0 0 320 240" role="img" aria-label="صورة 2 من 3" xmlns="http://www.w3.org/2000/svg"><defs><filter id="b2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7"/></filter></defs><rect width="320" height="240" fill="#3D4A50"/><rect y="132" width="320" height="108" fill="#5A5A5A"/><g stroke="#C9D1D4" stroke-width="3"><path d="M0 112h320"/><path d="M24 112V70M64 112V70M104 112V70M144 112V70M184 112V70M224 112V70M264 112V70M304 112V70"/></g><rect x="170" y="18" width="130" height="58" fill="#E6EAEC"/><rect x="186" y="34" width="22" height="22" fill="#3D4A50"/><rect x="226" y="34" width="22" height="22" fill="#3D4A50"/><rect x="266" y="34" width="22" height="22" fill="#3D4A50"/><ellipse cx="150" cy="196" rx="64" ry="20" fill="#161616"/><ellipse cx="150" cy="190" rx="64" ry="20" fill="none" stroke="#C9D1D4" stroke-width="4"/><g filter="url(#b2)"><circle cx="60" cy="116" r="17" fill="#E6E1D8"/><rect x="42" y="132" width="36" height="52" rx="14" fill="#1E4F87"/></g></svg><figcaption>بلاغ بدون اسم · 20 أكتوبر 17:05</figcaption></figure><figure class="photo"><svg viewBox="0 0 320 240" role="img" aria-label="صورة 3 من 3" xmlns="http://www.w3.org/2000/svg"><defs><filter id="b3" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7"/></filter></defs><rect width="320" height="240" fill="#3D4A50"/><rect y="132" width="320" height="108" fill="#5A5A5A"/><ellipse cx="190" cy="176" rx="82" ry="30" fill="#161616"/><ellipse cx="190" cy="170" rx="82" ry="30" fill="none" stroke="#C9D1D4" stroke-width="5"/><path d="M30 132l26-46 26 46z" fill="#D4A20B"/><path d="M56 104v14M56 124h.01" stroke="#161616" stroke-width="4" stroke-linecap="round"/><g filter="url(#b3)"><circle cx="270" cy="98" r="15" fill="#E6E1D8"/><rect x="254" y="112" width="32" height="40" rx="12" fill="#A50E25"/></g></svg><figcaption>مواطن · 21 أكتوبر 07:42</figcaption></figure></div>
+      <div class="ftc-notice" style="margin-top:12px"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><path d="M2 2l20 20"/></svg><span>الوجوه وأرقام العربيات اتغطّت تلقائيًا قبل النشر للمواطنين. الصور الأصلية ظاهرة للمشرفين بس.</span></div>
+    </section>
+
+    <div class="two">
+      <section class="ai" aria-labelledby="h-ai">
+        <span class="lab" id="h-ai"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8z"/></svg>اقتراح الذكاء الاصطناعي</span>
+        <div class="stack g12">
+          <div class="opt top"><span class="nm">بالوعة مفتوحة · خطورة حرجة</span><span class="pct">94%</span><span class="ftc-bar" role="img" aria-label="ثقة 94%"><span style="width:94%"></span></span></div>
+          <div class="opt"><span class="nm">حفرة أو مطب عشوائي</span><span class="pct">4%</span><span class="ftc-bar" role="img" aria-label="4%"><span style="width:4%"></span></span></div>
+          <div class="opt"><span class="nm">رصيف مكسور</span><span class="pct">2%</span><span class="ftc-bar" role="img" aria-label="2%"><span style="width:2%"></span></span></div>
+        </div>
+        <p class="small" style="margin:0">فتحة صرف من غير غطا قدام بوابة مدرسة. الجهة المسؤولة: الصرف الصحي.</p>
+        <p class="mini" style="margin:0;color:var(--ftc-red-deep)">ده اقتراح بس. القرار ليك.</p>
+        <div class="btn-split"><button class="ftc-btn ftc-btn--primary ftc-btn--sm" type="button">أكّد التصنيف</button><button class="ftc-btn ftc-btn--secondary ftc-btn--sm" type="button">غيّر التصنيف</button></div>
+      </section>
+      <section class="ftc-card" aria-labelledby="h-det">
+        <div class="card-head"><h2 class="sec-title" id="h-det">تفاصيل</h2></div>
+        <dl class="kv">
+          <dt>النوع</dt><dd>بالوعة مفتوحة</dd>
+          <dt>الجهة</dt><dd>الصرف الصحي (الحي)</dd>
+          <dt>هدف الاستجابة</dt><dd>يوم عمل</dd>
+          <dt>تكلفة تقديرية</dt><dd class="num">1,800 جنيه</dd>
+          <dt>المعلم القريب</dt><dd>مدرسة النصر الإعدادية · 40 م</dd>
+          <dt>آخر مراجعة</dt><dd>محدّش راجعه لسه</dd>
+        </dl>
+      </section>
+    </div>
+
+    <section class="ftc-card" aria-labelledby="h-pr">
+      <div class="card-head"><div><h2 class="sec-title" id="h-pr">سبب الأولوية</h2><p class="sec-sub">الحساب ثابت وبيتعرض بالكامل. مفيش حاجة مخفية.</p></div></div>
+      <div class="score-big" aria-label="الأولوية 93 من 100"><b class="num">93</b><span>/ 100</span><span class="ftc-tag-danger" style="margin-inline-start:8px">أولوية عاجلة</span></div>
+      <div class="ftc-notice ftc-notice--danger reason" style="align-items:center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span>أولوية عاجلة: قريب من مدرسة + 7 بلاغات + خطورة حرجة</span></div>
+      <div class="factors"><div class="factor"><span class="nm">خطورة المشكلة</span><span class="ftc-bar" role="img" aria-label="40 من 40"><span style="width:100%"></span></span><span class="pts">+40 <small>/ 40</small></span><span class="why">فتحة صرف من غير غطا في طريق الأطفال: خطورة حرجة (بتتحسب 40 من 40).</span></div><div class="factor"><span class="nm">قريب من مدرسة أو مستشفى</span><span class="ftc-bar" role="img" aria-label="20 من 20"><span style="width:100%"></span></span><span class="pts">+20 <small>/ 20</small></span><span class="why">على بعد 40 م من مدرسة النصر الإعدادية.</span></div><div class="factor"><span class="nm">عدد المواطنين اللي بلّغوا</span><span class="ftc-bar" role="img" aria-label="18 من 20"><span style="width:90%"></span></span><span class="pts">+18 <small>/ 20</small></span><span class="why">7 مواطنين بلّغوا: (7 − 1) × 3 = 18، والحد الأقصى 20.</span></div><div class="factor"><span class="nm">مدة الانتظار مقارنة بالمستهدف</span><span class="ftc-bar" role="img" aria-label="10 من 15"><span style="width:67%"></span></span><span class="pts">+10 <small>/ 15</small></span><span class="why">مفتوح من 19 ساعة والمستهدف يوم واحد. النسبة 1.0 تساوي 10 نقاط.</span></div><div class="factor"><span class="nm">منطقة محتاجة اهتمام أكتر</span><span class="ftc-bar" role="img" aria-label="5 من 5"><span style="width:100%"></span></span><span class="pts">+5 <small>/ 5</small></span><span class="why">الشارع في نطاق خدمة أقل من المتوسط حسب بيانات الحي.</span></div></div>
+    </section>
+
+    <section class="ftc-card" aria-labelledby="h-rep" style="padding-bottom:8px">
+      <div class="card-head"><div><h2 class="sec-title" id="h-rep">البلاغات المربوطة (7)</h2><p class="sec-sub">بنعرض "مواطن" أو "بلاغ بدون اسم". الأسماء وأرقام التليفونات مش ظاهرة في لوحة الحي.</p></div></div>
+      <div class="tablewrap"><table class="ftc-table" style="min-width:680px"><thead><tr><th>البلاغ</th><th>المُبلِّغ</th><th>الوقت</th><th>من</th><th>الوصف</th><th>صور</th><th></th></tr></thead><tbody><tr><td class="num strong" style="white-space:nowrap">FTC-1090</td><td>مواطن</td><td class="num" style="white-space:nowrap">20 أكتوبر 15:20</td><td>تطبيق</td><td>فيه بالوعة من غير غطا قدام باب المدرسة</td><td class="num">2</td><td><span class=mini>الأقدم</span></td></tr><tr><td class="num strong" style="white-space:nowrap">FTC-1091</td><td>مواطن</td><td class="num" style="white-space:nowrap">20 أكتوبر 15:48</td><td>موقع</td><td>الأولاد بيعدّوا من جنبها وقت الانصراف</td><td class="num">1</td><td></td></tr><tr><td class="num strong" style="white-space:nowrap">FTC-1092</td><td>بلاغ بدون اسم</td><td class="num" style="white-space:nowrap">20 أكتوبر 17:05</td><td>تطبيق</td><td>الحفرة عميقة ومفيش أي علامة تحذير</td><td class="num">3</td><td></td></tr><tr><td class="num strong" style="white-space:nowrap">FTC-1093</td><td>مواطن</td><td class="num" style="white-space:nowrap">20 أكتوبر 19:30</td><td>تطبيق</td><td>الدنيا بتضلّم والمكان خطر على العربيات كمان</td><td class="num">1</td><td></td></tr><tr><td class="num strong" style="white-space:nowrap">FTC-1094</td><td>مواطن</td><td class="num" style="white-space:nowrap">21 أكتوبر 07:42</td><td>تطبيق</td><td>لسه مفتوحة، والمدرسة بتفتح الساعة 8</td><td class="num">2</td><td></td></tr><tr><td class="num strong" style="white-space:nowrap">FTC-1095</td><td>بلاغ بدون اسم</td><td class="num" style="white-space:nowrap">21 أكتوبر 08:31</td><td>موقع</td><td>حد حط كرسي جنبها بس مش كفاية</td><td class="num">1</td><td></td></tr><tr><td class="num strong" style="white-space:nowrap">FTC-1096</td><td>مواطن</td><td class="num" style="white-space:nowrap">21 أكتوبر 09:48</td><td>تطبيق</td><td>من فضلكم الحقوها قبل ما حد يقع</td><td class="num">0</td><td><span class=ftc-tag-danger>الأحدث</span></td></tr></tbody></table></div>
+    </section>
+
+    <section class="ftc-card" aria-labelledby="h-tl">
+      <div class="card-head"><div><h2 class="sec-title" id="h-tl">السجل الكامل</h2><p class="sec-sub">الرسائل اللي بتتكتب هنا بتظهر للمواطنين في التتبع.</p></div></div>
+      <ol class="ftc-timeline"><li class="is-done"><div class="tl-item"><b>وصل</b><div class="who">النظام · <span class="num">20 أكتوبر 15:20</span></div><div class="small">وصل أول بلاغ من مواطن (FTC-1090) واتفتح البلاغ INC-0042.</div></div></li><li class="is-done"><div class="tl-item"><b>اقتراح التصنيف</b> <span class=ai-tag><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8z"/></svg>اقتراح</span><div class="who">الذكاء الاصطناعي · <span class="num">20 أكتوبر 15:21</span></div><div class="small">بالوعة مفتوحة · ثقة 94% · خطورة حرجة. في انتظار تأكيدك.</div></div></li><li class="is-done"><div class="tl-item"><b>اتصنّف</b><div class="who">النظام · <span class="num">20 أكتوبر 15:35</span></div><div class="small">اتحوّل لقسم الصرف الصحي · الأولوية 65 (بلاغ واحد، قريب من مدرسة).</div></div></li><li class="is-done"><div class="tl-item"><b>ارتفعت الأولوية</b><div class="who">النظام · <span class="num">21 أكتوبر 00:00</span></div><div class="small">بدأ يوم جديد: +10 على مدة الانتظار · 4 بلاغات · الأولوية 84.</div></div></li><li class="is-done"><div class="tl-item"><b>وصل البلاغ 5</b><div class="who">النظام · <span class="num">21 أكتوبر 07:42</span></div><div class="small">الأولوية 87 · ظهر في أول قائمة الفرز.</div></div></li><li class="is-done"><div class="tl-item"><b>وصل البلاغ 7</b><div class="who">النظام · <span class="num">21 أكتوبر 09:48</span></div><div class="small">الأولوية اتحسبت 93 (عاجلة) · الميعاد المتوقع النهارده 15:20.</div></div></li><li class="is-current"><div class="tl-item"><b>في انتظار أمر شغل</b><div class="who">سارة محمود · <span class="num">دلوقتي</span></div><div class="small">اختار الفريق وأنشئ أمر الشغل عشان المواطنين يشوفوا إن الشغل بدأ.</div></div></li><li class="is-pending"><div class="tl-item"><b>جاري التنفيذ</b><div class="who">لسه</div></div></li><li class="is-pending"><div class="tl-item"><b>اتصلّح</b><div class="who">لسه</div></div></li></ol>
+    </section>
+  </div>
+
+  <aside class="col" aria-label="إجراءات">
+    <section class="ftc-card" aria-labelledby="h-st">
+      <div class="card-head"><h2 class="sec-title" id="h-st">غيّر الحالة</h2><span class="ftc-chip ftc-chip--received">وصل</span></div>
+      <form class="side-form" onsubmit="return false">
+        <div class="ftc-field"><label class="ftc-label" for="st">الحالة الجديدة</label>
+          <select class="ftc-select" id="st"><option>وصل</option><option selected>اتحوّل</option><option>جاري التنفيذ</option><option>اتصلّح</option></select></div>
+        <div class="ftc-field"><label class="ftc-label" for="note">رسالة للمواطنين</label>
+          <textarea class="ftc-textarea" id="note">فريق الصرف الصحي في الطريق لتغطية البالوعة. متوقع نخلص النهارده.</textarea>
+          <span class="ftc-help">بتظهر في تتبع البلاغ. اكتبها قصيرة وفيها اللي هيحصل بعد كده.</span></div>
+        <label class="chk"><input type="checkbox" checked><span>ابعتها للـ 7 مواطنين على واتساب (أو SMS)</span></label>
+        <button class="ftc-btn ftc-btn--primary ftc-btn--block" type="submit">حدّث الحالة وابلّغ المواطنين</button>
+      </form>
+    </section>
+
+    <section class="ftc-card" aria-labelledby="h-wo">
+      <div class="card-head"><div><h2 class="sec-title" id="h-wo"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.6-.6-.6-2.6z"/></svg>أمر الشغل</h2><p class="sec-sub">لسه مفيش أمر شغل للبلاغ ده</p></div></div>
+      <form class="side-form" onsubmit="return false">
+        <div class="ftc-field"><label class="ftc-label" for="dep">الجهة</label>
+          <select class="ftc-select" id="dep"><option selected>الصرف الصحي (الحي)</option><option>صيانة الطرق</option><option>إنارة الحي</option></select></div>
+        <div class="ftc-field"><label class="ftc-label" for="as">الفريق المسؤول</label>
+          <select class="ftc-select" id="as"><option selected>فريق الصرف 2 · 4 أفراد · متاح</option><option>فريق الصرف 1 · في موقع تاني</option></select></div>
+        <div class="ftc-field"><label class="ftc-label" for="due">ميعاد التسليم</label>
+          <input class="ftc-input" id="due" type="text" value="الأربعاء 21 أكتوبر · 15:20" readonly>
+          <span class="ftc-help">محسوب من هدف الاستجابة للنوع ده: يوم عمل.</span></div>
+        <button class="ftc-btn ftc-btn--primary ftc-btn--block" type="submit">أنشئ أمر شغل WO-319</button>
+      </form>
+    </section>
+
+    <section class="ftc-card" aria-labelledby="h-mp">
+      <div class="card-head"><h2 class="sec-title" id="h-mp">الموقع</h2><a class="link" href="Map.html">الخريطة <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></a></div>
+      <div class="mapsnip"><svg role="img" aria-label="موقع البلاغ على الخريطة قدام مدرسة النصر الإعدادية" viewBox="480 170 340 235" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="1000" height="640" fill="#F1EEE8"/><rect x="7" y="7" width="148" height="88" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="7" y="125" width="148" height="68.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="7" y="216.5" width="148" height="68.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="7" y="315" width="148" height="73.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="7" y="411.5" width="148" height="73.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="7" y="515" width="148" height="58.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="7" y="596.5" width="148" height="36.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="185" y="7" width="103.5" height="88" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="185" y="125" width="103.5" height="68.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="185" y="216.5" width="103.5" height="68.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="185" y="315" width="103.5" height="73.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="185" y="411.5" width="103.5" height="73.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="185" y="596.5" width="103.5" height="36.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="311.5" y="7" width="93.5" height="88" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="311.5" y="125" width="93.5" height="68.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="311.5" y="216.5" width="93.5" height="68.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="311.5" y="315" width="93.5" height="73.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="311.5" y="411.5" width="93.5" height="73.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="311.5" y="515" width="93.5" height="58.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="311.5" y="596.5" width="93.5" height="36.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="435" y="7" width="93.5" height="88" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="435" y="125" width="93.5" height="68.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="435" y="216.5" width="93.5" height="68.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="435" y="411.5" width="93.5" height="73.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="435" y="515" width="93.5" height="58.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="435" y="596.5" width="93.5" height="36.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="551.5" y="7" width="83.5" height="88" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="551.5" y="125" width="83.5" height="68.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="551.5" y="216.5" width="83.5" height="68.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="551.5" y="411.5" width="83.5" height="73.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="551.5" y="515" width="83.5" height="58.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="551.5" y="596.5" width="83.5" height="36.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="665" y="7" width="83.5" height="88" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="665" y="125" width="83.5" height="68.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="665" y="315" width="83.5" height="73.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="665" y="411.5" width="83.5" height="73.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="665" y="515" width="83.5" height="58.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="665" y="596.5" width="83.5" height="36.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="771.5" y="7" width="73.5" height="88" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="771.5" y="125" width="73.5" height="68.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="771.5" y="216.5" width="73.5" height="68.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="771.5" y="315" width="73.5" height="73.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="771.5" y="411.5" width="73.5" height="73.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="771.5" y="515" width="73.5" height="58.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="771.5" y="596.5" width="73.5" height="36.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="875" y="7" width="118" height="88" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="875" y="125" width="118" height="68.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="875" y="216.5" width="118" height="68.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="875" y="315" width="118" height="73.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="875" y="411.5" width="118" height="73.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="875" y="515" width="118" height="58.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="875" y="596.5" width="118" height="36.5" rx="5" fill="#E6E1D8" fill-opacity=".7"/><rect x="436" y="316" width="198" height="72" rx="8" fill="#DCF1E1"/><rect x="186" y="516" width="106" height="62" rx="8" fill="#DCF1E1"/><rect x="664" y="219" width="86" height="70" rx="5" fill="#fff" stroke="#161616" stroke-width="1.5"/><path d="M170 0V640" stroke="#E6E1D8" stroke-width="19" fill="none"/><path d="M650 0V640" stroke="#E6E1D8" stroke-width="19" fill="none"/><path d="M420 0V640" stroke="#E6E1D8" stroke-width="19" fill="none"/><path d="M860 0V640" stroke="#E6E1D8" stroke-width="19" fill="none"/><path d="M0 300H1000" stroke="#E6E1D8" stroke-width="19" fill="none"/><path d="M0 500H1000" stroke="#E6E1D8" stroke-width="19" fill="none"/><path d="M0 110H1000" stroke="#E6E1D8" stroke-width="19" fill="none"/><path d="M760 0V640" stroke="#E6E1D8" stroke-width="12" fill="none"/><path d="M540 0V640" stroke="#E6E1D8" stroke-width="12" fill="none"/><path d="M300 0V640" stroke="#E6E1D8" stroke-width="12" fill="none"/><path d="M0 400H1000" stroke="#E6E1D8" stroke-width="12" fill="none"/><path d="M0 585H1000" stroke="#E6E1D8" stroke-width="12" fill="none"/><path d="M0 205H1000" stroke="#E6E1D8" stroke-width="12" fill="none"/><path d="M300 585L420 500" stroke="#E6E1D8" stroke-width="12" fill="none"/><path d="M540 0L650 110" stroke="#E6E1D8" stroke-width="12" fill="none"/><path d="M170 0V640" stroke="#fff" stroke-width="16" fill="none"/><path d="M650 0V640" stroke="#fff" stroke-width="16" fill="none"/><path d="M420 0V640" stroke="#fff" stroke-width="16" fill="none"/><path d="M860 0V640" stroke="#fff" stroke-width="16" fill="none"/><path d="M0 300H1000" stroke="#fff" stroke-width="16" fill="none"/><path d="M0 500H1000" stroke="#fff" stroke-width="16" fill="none"/><path d="M0 110H1000" stroke="#fff" stroke-width="16" fill="none"/><path d="M760 0V640" stroke="#fff" stroke-width="9" fill="none"/><path d="M540 0V640" stroke="#fff" stroke-width="9" fill="none"/><path d="M300 0V640" stroke="#fff" stroke-width="9" fill="none"/><path d="M0 400H1000" stroke="#fff" stroke-width="9" fill="none"/><path d="M0 585H1000" stroke="#fff" stroke-width="9" fill="none"/><path d="M0 205H1000" stroke="#fff" stroke-width="9" fill="none"/><path d="M300 585L420 500" stroke="#fff" stroke-width="9" fill="none"/><path d="M540 0L650 110" stroke="#fff" stroke-width="9" fill="none"/><text x="330" y="114.5" text-anchor="middle" font-family="IBM Plex Sans Arabic, sans-serif" font-size="12" fill="#5A5A5A" font-weight="500" stroke="#fff" stroke-width="3" paint-order="stroke">شارع الطيران</text><text x="560" y="304.5" text-anchor="middle" font-family="IBM Plex Sans Arabic, sans-serif" font-size="12" fill="#5A5A5A" font-weight="500" stroke="#fff" stroke-width="3" paint-order="stroke">شارع عباس العقاد</text><text x="330" y="504.5" text-anchor="middle" font-family="IBM Plex Sans Arabic, sans-serif" font-size="12" fill="#5A5A5A" font-weight="500" stroke="#fff" stroke-width="3" paint-order="stroke">شارع مصطفى النحاس</text><text transform="translate(174 440) rotate(-90)" text-anchor="middle" font-family="IBM Plex Sans Arabic, sans-serif" font-size="12" fill="#5A5A5A" font-weight="500" stroke="#fff" stroke-width="3" paint-order="stroke">شارع حسن المأمون</text><text transform="translate(424 450) rotate(-90)" text-anchor="middle" font-family="IBM Plex Sans Arabic, sans-serif" font-size="12" fill="#5A5A5A" font-weight="500" stroke="#fff" stroke-width="3" paint-order="stroke">شارع مكرم عبيد</text><text transform="translate(654 560) rotate(-90)" text-anchor="middle" font-family="IBM Plex Sans Arabic, sans-serif" font-size="12" fill="#5A5A5A" font-weight="500" stroke="#fff" stroke-width="3" paint-order="stroke">شارع يوسف عباس</text><text transform="translate(864 450) rotate(-90)" text-anchor="middle" font-family="IBM Plex Sans Arabic, sans-serif" font-size="12" fill="#5A5A5A" font-weight="500" stroke="#fff" stroke-width="3" paint-order="stroke">شارع ذاكر حسين</text><text x="535" y="357" text-anchor="middle" font-family="IBM Plex Sans Arabic, sans-serif" font-size="12" fill="#5A5A5A" font-weight="500" fill="#1F6B33">حديقة الحي</text><text x="707" y="249" text-anchor="middle" font-family="IBM Plex Sans Arabic, sans-serif" font-size="12" fill="#5A5A5A" font-weight="500" fill="#161616" font-weight="600">مدرسة النصر</text><text x="707" y="266" text-anchor="middle" font-family="IBM Plex Sans Arabic, sans-serif" font-size="12" fill="#5A5A5A" font-weight="500" fill="#161616" font-weight="600">الإعدادية</text><circle cx="660" cy="300" r="70" fill="#A50E25" fill-opacity=".08" stroke="#A50E25" stroke-dasharray="5 5" stroke-width="1.5"/><g class="pin" data-status="critical"><circle cx="660" cy="276.0" r="28.8" fill="#FBE4E7"/><g transform="translate(634.4 252.0) scale(0.8)"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#A50E25" stroke="#fff" stroke-width="3"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><g transform="translate(23.6 18.1) scale(.7)" fill="none" stroke="#A50E25" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v7"/><path d="M12 17.5h.01"/></g></g></g><g class="pin" opacity=".85"><circle cx="618" cy="334" r="0"/></g><g class="pin" data-status="received"><g transform="translate(590.8 302.0) scale(0.6)"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#3D4A50" stroke="#fff" stroke-width="3"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><g transform="translate(23.6 18.1) scale(.7)" fill="none" stroke="#3D4A50" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2" fill="#3D4A50" stroke="none"/></g></g></g><g class="pin" data-status="received"><g transform="translate(732.4 271.0) scale(0.55)"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#3D4A50" stroke="#fff" stroke-width="3"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><g transform="translate(23.6 18.1) scale(.7)" fill="none" stroke="#3D4A50" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2" fill="#3D4A50" stroke="none"/></g></g></g></svg></div>
+      <p class="mini" style="margin:8px 0 0">الدايرة المنقّطة = نطاق 250 م لكشف التكرار. الدبوس الرمادي = بلاغات قريبة.</p>
+    </section>
+
+    <section class="dup" aria-labelledby="h-dup">
+      <span class="lab" id="h-dup"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>اقتراح دمج · محتاج موافقتك</span>
+      <div class="box"><a href="Incidents.html">INC-0040</a> · بالوعة مفتوحة<br><span class="mini">على بعد 40 م · 3 مواطنين بيتابعوه · وصل من 3 ساعات · نفس النوع</span></div>
+      <p class="small" style="margin:0">الذكاء الاصطناعي شايف إنهم نفس المشكلة. الدمج بيضم المتابعين للبلاغ الأقدم وبيجمّع الأولوية.</p>
+      <div class="btn-split"><button class="ftc-btn ftc-btn--primary ftc-btn--sm" type="button"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>ادمجهم</button><button class="ftc-btn ftc-btn--secondary ftc-btn--sm" type="button">مش نفس المشكلة</button></div>
+      <p class="mini" style="margin:0;color:var(--ftc-gold-deep)">مفيش دمج تلقائي أبدًا. أي دمج بيتسجّل باسمك.</p>
+    </section>
+  </aside>
+</div>
+</div>
+</main>
+</div>
+</body>
+</html>

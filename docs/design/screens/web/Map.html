@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FixTheCity — الخريطة</title>
+<link rel="icon" href="../../assets/fixthecity-mark.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Aref+Ruqaa:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../css/fixthecity.css">
+<style>
+html{scroll-behavior:smooth}
+button{font-family:inherit}
+.flip{transform:scaleX(-1)}
+.w-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* top bar */
+.w-top{gap:20px}
+.w-logo img{height:40px;width:auto}
+.w-nav{display:flex;gap:4px;margin-inline-start:8px}
+.w-nav a{display:inline-flex;align-items:center;height:40px;padding:0 14px;border-radius:999px;font:600 15px/1 var(--ftc-font-sans);color:var(--ftc-ink)}
+.w-nav a:hover{background:var(--ftc-paper)}
+.w-nav a[aria-current=page]{background:var(--ftc-red-soft);color:var(--ftc-red-deep)}
+.w-actions{margin-inline-start:auto;display:flex;align-items:center;gap:12px}
+.w-iconbtn{position:relative;width:44px;height:44px;border-radius:50%;border:1px solid var(--ftc-line);background:var(--ftc-surface);color:var(--ftc-ink);display:flex;align-items:center;justify-content:center}
+.w-iconbtn:hover{color:var(--ftc-red)}
+.w-dot{position:absolute;top:9px;inset-inline-end:11px;width:9px;height:9px;border-radius:50%;background:var(--ftc-gold);border:2px solid #fff}
+.w-account{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px 0 6px;border:1px solid var(--ftc-line);border-radius:999px;color:var(--ftc-ink);font:600 14px/1 var(--ftc-font-sans);background:var(--ftc-surface)}
+.w-account[aria-current=page]{border-color:var(--ftc-red);color:var(--ftc-red-deep)}
+.w-avatar{width:32px;height:32px;border-radius:50%;background:var(--ftc-red-soft);color:var(--ftc-red);display:inline-flex;align-items:center;justify-content:center}
+.w-tabbar{display:none}
+/* generic */
+.w-page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px}
+.w-h1{font:700 28px/38px var(--ftc-font-display);margin:0}
+.w-h2{font:600 20px/30px var(--ftc-font-display);margin:0}
+.w-h3{font:600 16px/24px var(--ftc-font-display);margin:0}
+.w-sub{color:var(--ftc-ink-muted);font-size:14px;line-height:22px;margin:2px 0 0}
+.w-back{display:inline-flex;align-items:center;gap:6px;font:600 14px/1 var(--ftc-font-sans);color:var(--ftc-red);margin-bottom:10px}
+.w-sec{margin-top:36px}
+.w-sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
+.w-sec-head a{font:600 14px/1 var(--ftc-font-sans)}
+.w-step{font:500 13px/1 var(--ftc-font-sans);color:var(--ftc-ink-muted)}
+.w-stepbar{display:flex;gap:6px;margin-bottom:24px}
+.w-stepbar span{flex:1;height:4px;border-radius:2px;background:var(--ftc-line)}
+.w-stepbar span.on{background:var(--ftc-red)}
+.w-stack{display:flex;flex-direction:column;gap:16px}
+.w-row{display:flex;align-items:center;gap:12px}
+.w-grow{flex:1;min-width:0}
+.w-t{font:600 15px/24px var(--ftc-font-sans);display:block}
+.w-m{font:400 12px/18px var(--ftc-font-sans);color:var(--ftc-ink-muted);display:block}
+.w-card-link{color:var(--ftc-ink)}
+.w-card-link:hover{color:var(--ftc-ink)}
+.ftc-card{border-radius:var(--ftc-radius-md)}
+.w-lgcard{border-radius:var(--ftc-radius-lg);padding:24px}
+.w-foot{max-width:var(--ftc-web-max);margin:16px auto 0;padding:24px;border-top:1px solid var(--ftc-line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font:400 13px/20px var(--ftc-font-sans);color:var(--ftc-ink-muted)}
+.w-annot{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;background:var(--ftc-gold-soft);color:var(--ftc-gold-deep);font:600 12px/1 var(--ftc-font-sans);margin-bottom:8px}
+/* thumbs */
+.w-thumb{width:52px;height:52px;border-radius:8px;background:var(--ftc-status-received);color:#C9D1D4;display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden}
+.w-thumb svg.art{width:100%;height:100%}
+/* request / nearby rows */
+.w-rowcard{display:flex;align-items:center;gap:12px;padding:12px;background:var(--ftc-surface);border-radius:var(--ftc-radius-md);box-shadow:var(--ftc-shadow-card);color:var(--ftc-ink)}
+a.w-rowcard:hover{color:var(--ftc-ink);box-shadow:0 1px 2px rgba(22,22,22,.08),0 6px 20px rgba(22,22,22,.10)}
+.w-follow{height:40px;padding:0 14px;border-radius:999px;border:1.5px solid var(--ftc-red);background:var(--ftc-surface);color:var(--ftc-red);font:700 13px/1 var(--ftc-font-sans);white-space:nowrap;cursor:pointer}
+.w-follow:hover{background:var(--ftc-red-soft)}
+.w-followed{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 12px;border-radius:999px;background:var(--ftc-status-resolved-bg);color:var(--ftc-status-resolved);font:700 13px/1 var(--ftc-font-sans);white-space:nowrap}
+/* emergency */
+.w-sos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.w-sos a{height:64px;border-radius:var(--ftc-radius-sm);background:var(--ftc-urgent-soft);color:var(--ftc-urgent-deep);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.w-sos a.gas{background:var(--ftc-gold-soft);color:var(--ftc-gold-deep)}
+.w-sos b{font:700 22px/26px var(--ftc-font-display)}
+.w-sos span{font:600 13px/18px var(--ftc-font-sans)}
+.w-sos a:hover{outline:2px solid currentColor}
+/* choice, toggles */
+.w-choice{display:flex;align-items:center;gap:10px;min-height:48px;padding:6px 14px;border:1.5px solid var(--ftc-line);border-radius:var(--ftc-radius-md);background:var(--ftc-surface);font:500 15px/22px var(--ftc-font-sans);cursor:pointer;color:var(--ftc-ink);user-select:none}
+.w-choice .mk{width:20px;height:20px;border-radius:50%;border:2px solid var(--ftc-ink-muted);flex:none;display:inline-flex;align-items:center;justify-content:center;color:#fff}
+.w-choice.chk .mk{border-radius:6px}
+.w-choice .mk svg{opacity:0}
+.w-choice.is-on{border-color:var(--ftc-red);background:var(--ftc-red-soft);font-weight:600}
+.w-choice.is-on .mk{background:var(--ftc-red);border-color:var(--ftc-red)}
+.w-choice.is-on .mk svg{opacity:1}
+.w-choice:not(.chk) .mk::after{content:"";width:8px;height:8px;border-radius:50%;background:#fff;opacity:0}
+.w-choice:not(.chk).is-on .mk::after{opacity:1}
+.w-trow{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--ftc-surface);border:1px solid var(--ftc-line);border-radius:var(--ftc-radius-md)}
+.card-trow{border:0;padding:0;background:transparent}
+.w-trow .ftc-icon-well{width:40px;height:40px}
+.ftc-toggle{border:0;padding:0;cursor:pointer;display:block}
+.w-sel{position:relative}
+.w-sel select{appearance:none;-webkit-appearance:none;padding-inline-end:40px;font:400 16px/26px var(--ftc-font-sans)}
+.w-sel svg{position:absolute;inset-inline-end:14px;top:50%;margin-top:-9px;pointer-events:none;color:var(--ftc-ink-muted)}
+.w-btnrow{display:flex;gap:10px;flex-wrap:wrap}
+.ftc-btn svg{flex:none}
+.ftc-btn--secondary.w-neutral{border:1px solid var(--ftc-line);color:var(--ftc-ink)}
+.w-link{background:none;border:0;padding:0;color:var(--ftc-red);font:600 14px/22px var(--ftc-font-sans);cursor:pointer}
+.w-pills{display:flex;gap:8px;flex-wrap:wrap}
+.ftc-filter{cursor:pointer;font-family:var(--ftc-font-sans)}
+.w-notice-ic{flex:none;margin-top:2px}
+@media (max-width:760px){
+  .w-nav,.w-cta,.w-account__t{display:none}
+  .w-top{gap:8px}
+  .w-account{padding:0 6px}
+  .w-account{border:0;display:none}
+  .w-tabbar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;position:sticky;bottom:0;z-index:20;padding:0;height:76px}
+  .w-tabbar a{font-size:11px;line-height:16px;font-weight:500}
+  .w-tabbar a[aria-current=page]{font-weight:600}
+  .w-fab{width:60px;height:60px;margin-top:-34px;justify-self:center}
+  .w-h1{font-size:24px;line-height:34px}
+  .w-sec{margin-top:24px}
+  .w-lgcard{padding:16px}
+  .w-sos{gap:6px}
+  .w-sos a{height:56px}
+  .w-sos b{font-size:18px;line-height:22px}
+  .w-foot{padding:16px}
+  .w-page-head{flex-wrap:wrap}
+}
+
+.m-wrap{display:grid;grid-template-columns:360px minmax(0,1fr);height:calc(100vh - 106px);min-height:680px}
+.m-side{background:var(--ftc-surface);border-inline-end:1px solid var(--ftc-line);display:flex;flex-direction:column;min-height:0}
+.m-side__h{padding:20px 20px 12px;display:flex;flex-direction:column;gap:12px}
+.m-side__h h1{font:700 24px/34px var(--ftc-font-display);margin:0}
+.m-side__h p{margin:0;font-size:13px;color:var(--ftc-ink-muted)}
+.m-filters{padding:0 20px 14px;display:flex;flex-direction:column;gap:12px;border-bottom:1px solid var(--ftc-line)}
+.m-filters .ftc-filter{height:34px;padding:0 12px;font-size:13px}
+.m-list{overflow:auto;flex:1;padding:12px;display:flex;flex-direction:column;gap:6px}
+.m-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:var(--ftc-radius-sm);color:var(--ftc-ink);cursor:pointer;border:1.5px solid transparent}
+.m-item:hover{background:var(--ftc-paper);color:var(--ftc-ink)}
+.m-item.is-sel{background:var(--ftc-red-soft);border-color:var(--ftc-red)}
+.m-item .pn{flex:none;width:30px;height:34px}
+.m-item .w-t{font-size:14px;line-height:22px}
+.m-item .ftc-chip{height:22px;font-size:11px;padding:0 8px}
+.m-legend{display:flex;gap:12px;flex-wrap:wrap;padding:0;font:500 12px/18px var(--ftc-font-sans);color:var(--ftc-ink-muted)}
+.m-legend span{display:inline-flex;align-items:center;gap:6px}
+.m-legend i{display:inline-block;width:10px;height:10px;border-radius:50%}
+.m-stage{position:relative;overflow:hidden;background:#F1EEE8}
+.m-stage svg.citymap{position:absolute;inset:0;width:100%;height:100%}
+.m-zoom{position:absolute;top:16px;inset-inline-start:16px;display:flex;flex-direction:column;gap:8px}
+.m-zoom button,.m-loc{width:44px;height:44px;border-radius:12px;border:1px solid var(--ftc-line);background:#fff;color:var(--ftc-ink);box-shadow:var(--ftc-shadow-card);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.m-loc{position:absolute;bottom:16px;inset-inline-start:16px}
+.m-note{position:absolute;bottom:16px;inset-inline-end:16px;background:#fff;border-radius:999px;padding:0 14px;font:500 12px/30px var(--ftc-font-sans);color:var(--ftc-ink-muted);box-shadow:var(--ftc-shadow-card)}
+.m-top{position:absolute;top:16px;inset-inline-end:16px;inset-inline-start:76px;display:flex;gap:10px}
+.m-top .search{position:relative;flex:1;max-width:420px}
+.m-top .search svg{position:absolute;inset-inline-start:14px;top:50%;margin-top:-10px;color:var(--ftc-ink-muted)}
+.m-top .search input{padding-inline-start:44px;box-shadow:var(--ftc-shadow-card);border-radius:12px;min-height:48px}
+.m-card{position:absolute;bottom:72px;inset-inline-end:24px;width:380px;max-width:calc(100% - 32px);background:#fff;border-radius:var(--ftc-radius-lg);box-shadow:var(--ftc-shadow-float);padding:18px;display:flex;flex-direction:column;gap:12px;z-index:3}
+.m-card__top{display:flex;gap:12px;align-items:flex-start}
+.m-card__top h2{font:600 17px/26px var(--ftc-font-sans);margin:0;flex:1}
+.m-card .x{width:36px;height:36px;border-radius:50%;border:0;background:var(--ftc-paper);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ftc-ink)}
+.m-card .meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font:400 12px/18px var(--ftc-font-sans);color:var(--ftc-ink-muted)}
+.m-card dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px;line-height:20px}
+.m-card dt{color:var(--ftc-ink-muted)}.m-card dd{margin:0;font-weight:600}
+.m-card .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.m-card .btns .ftc-btn{height:44px}
+.m-sheetbtn{display:none}
+@media (max-width:900px){.m-wrap{grid-template-columns:300px minmax(0,1fr)}}
+@media (max-width:760px){
+ .m-wrap{display:flex;flex-direction:column;height:auto;min-height:0}
+ .m-side{border-inline-end:0;order:2}
+ .m-side__h{padding:12px 16px 8px}.m-side__h h1{font-size:20px;line-height:30px}
+ .m-side__h p,.m-legend{display:none}
+ .m-filters{padding:0 16px 12px}
+ .m-list{max-height:none;overflow:visible;padding:8px 12px 16px}
+ .m-stage{order:1;height:480px}
+ .m-top{inset-inline-start:16px}
+ .m-zoom{top:76px}
+ .m-card{inset-inline:12px;bottom:12px;width:auto;max-width:none;padding:14px}
+ .m-loc{bottom:auto;top:76px;inset-inline-start:auto;inset-inline-end:16px}
+ .m-note{display:none}
+}
+</style>
+</head>
+<body>
+<div class="ftc-docbar"><a href="../../index.html">FixTheCity design</a><span>Citizen website · Map</span></div>
+<header class="ftc-web-topbar">
+  <div class="ftc-web-topbar__inner w-top">
+    <a class="w-logo" href="Home.html" aria-label="فيكس ذا سيتي"><img src="../../assets/fixthecity-lockup-ar.svg" alt="فيكس ذا سيتي" height="40"></a>
+    <nav class="w-nav" aria-label="التنقل الرئيسي"><a href="Home.html">الرئيسية</a><a href="Map.html" aria-current="page">الخريطة</a><a href="Requests.html">طلباتي</a><a href="Services.html">الخدمات</a></nav>
+    <div class="w-actions">
+      <a class="ftc-btn ftc-btn--gold ftc-btn--sm w-cta" href="Category.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>بلّغ عن مشكلة</a>
+      <a class="w-iconbtn" href="#" aria-label="الإشعارات"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="w-dot"></span></a>
+      <a class="w-account" href="Profile.html"><span class="w-avatar"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span class="w-account__t">حسابي</span></a>
+    </div>
+  </div>
+</header>
+<div class="m-wrap">
+  <aside class="m-side" aria-label="فلاتر الخريطة">
+    <div class="m-side__h"><h1>الخريطة</h1><p>١٠ بلاغات حوالين مدينة نصر</p></div>
+    <div class="m-filters">
+      <div class="ftc-field"><span class="ftc-label" id="stl">الحالة</span><div class="w-pills" data-pills role="group" aria-labelledby="stl"><button type="button" class="ftc-filter is-active" aria-pressed="true">الكل</button><button type="button" class="ftc-filter" aria-pressed="false">وصل</button><button type="button" class="ftc-filter" aria-pressed="false">اتحوّل</button><button type="button" class="ftc-filter" aria-pressed="false">جاري التنفيذ</button><button type="button" class="ftc-filter" aria-pressed="false">اتصلّح</button></div></div>
+      <div class="ftc-field"><label class="ftc-label" for="cat">نوع المشكلة</label><div class="w-sel"><select class="ftc-select" id="cat"><option>كل الأنواع</option><option>حفرة أو مطب عشوائي</option><option>بالوعة مفتوحة</option><option>طفح مجاري</option><option>كسر ماسورة مياه</option><option>زبالة متراكمة</option><option>عمود نور مطفي</option><option>سلك كهربا مكشوف</option></select><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div>
+      <div class="m-legend" aria-label="دليل ألوان الدبابيس"><span><i style="background:#3D4A50"></i>وصل</span><span><i style="background:#1E4F87"></i>اتحوّل</span><span><i style="background:#7A5A00"></i>جاري التنفيذ</span><span><i style="background:#1F6B33"></i>اتصلّح</span><span><i style="background:#A50E25"></i>خطر</span></div>
+    </div>
+    <div class="m-list" role="list"><div class="m-item" data-id="INC-0041" role="button" tabindex="0"><svg class="pn" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#7A5A00"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><circle cx="32" cy="26.5" r="5" fill="#7A5A00"/></svg><span class="w-grow"><span class="w-t">حفرة في شارع عباس العقاد</span><span class="ftc-chip ftc-chip--progress">جاري التنفيذ</span></span></div><div class="m-item is-sel" data-id="INC-0042" role="button" tabindex="0"><svg class="pn" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#A50E25"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><circle cx="32" cy="26.5" r="5" fill="#A50E25"/></svg><span class="w-grow"><span class="w-t">بالوعة مفتوحة في شارع حسن المأمون</span><span class="ftc-chip ftc-chip--assigned">اتحوّل</span><span class="ftc-tag-danger" style="margin-inline-start:4px;height:22px">خطر</span></span></div><div class="m-item" data-id="INC-0043" role="button" tabindex="0"><svg class="pn" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#1F6B33"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><circle cx="32" cy="26.5" r="5" fill="#1F6B33"/></svg><span class="w-grow"><span class="w-t">عمود نور مطفي في شارع مكرم عبيد</span><span class="ftc-chip ftc-chip--resolved">اتصلّح</span></span></div><div class="m-item" data-id="INC-0044" role="button" tabindex="0"><svg class="pn" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#3D4A50"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><circle cx="32" cy="26.5" r="5" fill="#3D4A50"/></svg><span class="w-grow"><span class="w-t">زبالة متراكمة في شارع الطيران</span><span class="ftc-chip ftc-chip--received">وصل</span></span></div><div class="m-item" data-id="INC-0045" role="button" tabindex="0"><svg class="pn" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#1E4F87"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><circle cx="32" cy="26.5" r="5" fill="#1E4F87"/></svg><span class="w-grow"><span class="w-t">طفح مجاري قدام عمارة ١٢</span><span class="ftc-chip ftc-chip--assigned">اتحوّل</span></span></div><div class="m-item" data-id="INC-0046" role="button" tabindex="0"><svg class="pn" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#7A5A00"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><circle cx="32" cy="26.5" r="5" fill="#7A5A00"/></svg><span class="w-grow"><span class="w-t">كسر ماسورة مياه في شارع الثورة</span><span class="ftc-chip ftc-chip--progress">جاري التنفيذ</span></span></div><div class="m-item" data-id="INC-0047" role="button" tabindex="0"><svg class="pn" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#A50E25"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><circle cx="32" cy="26.5" r="5" fill="#A50E25"/></svg><span class="w-grow"><span class="w-t">سلك كهربا مكشوف جنب الحديقة</span><span class="ftc-chip ftc-chip--received">وصل</span><span class="ftc-tag-danger" style="margin-inline-start:4px;height:22px">خطر</span></span></div><div class="m-item" data-id="INC-0048" role="button" tabindex="0"><svg class="pn" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#1F6B33"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><circle cx="32" cy="26.5" r="5" fill="#1F6B33"/></svg><span class="w-grow"><span class="w-t">شجرة مايلة على الرصيف</span><span class="ftc-chip ftc-chip--resolved">اتصلّح</span></span></div><div class="m-item" data-id="INC-0049" role="button" tabindex="0"><svg class="pn" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#1E4F87"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><circle cx="32" cy="26.5" r="5" fill="#1E4F87"/></svg><span class="w-grow"><span class="w-t">رصيف مكسور قدام المستشفى</span><span class="ftc-chip ftc-chip--assigned">اتحوّل</span></span></div><div class="m-item" data-id="INC-0050" role="button" tabindex="0"><svg class="pn" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#3D4A50"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><circle cx="32" cy="26.5" r="5" fill="#3D4A50"/></svg><span class="w-grow"><span class="w-t">كلاب ضالة جنب المدرسة</span><span class="ftc-chip ftc-chip--received">وصل</span></span></div></div>
+  </aside>
+  <section class="m-stage" aria-label="خريطة المدينة">
+    <svg class="citymap" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid slice" role="img" aria-label="خريطة توضيحية لمدينة نصر" xmlns="http://www.w3.org/2000/svg"><rect width="1000" height="620" fill="#F1EEE8"/><rect x="520" y="110" width="110" height="90" rx="10" fill="#DCF1E1"/><rect x="740" y="360" width="130" height="80" rx="10" fill="#DCF1E1"/><rect x="20" y="340" width="90" height="100" rx="10" fill="#DCF1E1"/><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M0 210 H1000" stroke="#E6E1D8" stroke-width="12"/><path d="M0 450 H1000" stroke="#E6E1D8" stroke-width="12"/><path d="M0 560 H1000" stroke="#E6E1D8" stroke-width="12"/><path d="M120 0 V620" stroke="#E6E1D8" stroke-width="12"/><path d="M300 0 V620" stroke="#E6E1D8" stroke-width="12"/><path d="M650 0 V620" stroke="#E6E1D8" stroke-width="12"/><path d="M820 0 V620" stroke="#E6E1D8" stroke-width="12"/><path d="M940 0 V620" stroke="#E6E1D8" stroke-width="12"/><path d="M200 0 Q380 300 260 620" stroke="#E6E1D8" stroke-width="12"/><path d="M560 0 Q700 260 1000 330" stroke="#E6E1D8" stroke-width="12"/><path d="M0 330 H1000" stroke="#E6E1D8" stroke-width="22"/><path d="M470 0 V620" stroke="#E6E1D8" stroke-width="22"/><path d="M0 520 L1000 180" stroke="#E6E1D8" stroke-width="22"/><path d="M0 90 H1000" stroke="#E6E1D8" stroke-width="22"/><path d="M0 210 H1000" stroke="#fff" stroke-width="9"/><path d="M0 450 H1000" stroke="#fff" stroke-width="9"/><path d="M0 560 H1000" stroke="#fff" stroke-width="9"/><path d="M120 0 V620" stroke="#fff" stroke-width="9"/><path d="M300 0 V620" stroke="#fff" stroke-width="9"/><path d="M650 0 V620" stroke="#fff" stroke-width="9"/><path d="M820 0 V620" stroke="#fff" stroke-width="9"/><path d="M940 0 V620" stroke="#fff" stroke-width="9"/><path d="M200 0 Q380 300 260 620" stroke="#fff" stroke-width="9"/><path d="M560 0 Q700 260 1000 330" stroke="#fff" stroke-width="9"/><path d="M0 330 H1000" stroke="#fff" stroke-width="18"/><path d="M470 0 V620" stroke="#fff" stroke-width="18"/><path d="M0 520 L1000 180" stroke="#fff" stroke-width="18"/><path d="M0 90 H1000" stroke="#fff" stroke-width="18"/></g><g font-family="IBM Plex Sans Arabic,system-ui,sans-serif" font-size="14" font-weight="500" fill="#5A5A5A" direction="rtl" text-anchor="middle"><text x="760" y="84">شارع عباس العقاد</text><text x="230" y="324">شارع الطيران</text><text x="760" y="324">شارع الثورة</text><text x="230" y="204">شارع حسن المأمون</text><text x="860" y="554">شارع مكرم عبيد</text><text x="560" y="445">شارع الحجاز</text></g><g transform="translate(419.1 82.4) scale(0.56)"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#7A5A00" stroke="#fff" stroke-width="3"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><path d="M32 19v8l5.5 3.5" fill="none" stroke="#7A5A00" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></g><g transform="translate(670.1 160.4) scale(0.56)"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#3D4A50" stroke="#fff" stroke-width="3"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><circle cx="32" cy="26.5" r="5" fill="#3D4A50"/></g><g transform="translate(107.1 198.4) scale(0.56)"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#1E4F87" stroke="#fff" stroke-width="3"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><path d="M25 26.5h13M33 20.5l-6 6 6 6" fill="none" stroke="#1E4F87" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></g><ellipse cx="312" cy="252" rx="29.7" ry="10.5" fill="#D4A20B" fill-opacity=".35"/><ellipse cx="312" cy="252" rx="19.2" ry="7.0" fill="none" stroke="#D4A20B" stroke-width="2.5"/><g transform="translate(286.4 204.0) scale(0.8)"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#A50E25" stroke="#fff" stroke-width="3"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><path d="M32 19v9" stroke="#A50E25" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="34" r="2.4" fill="#A50E25"/></g><g transform="translate(388.1 268.4) scale(0.56)"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#7A5A00" stroke="#fff" stroke-width="3"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><path d="M32 19v8l5.5 3.5" fill="none" stroke="#7A5A00" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></g><g transform="translate(857.1 315.4) scale(0.56)"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#A50E25" stroke="#fff" stroke-width="3"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><path d="M32 19v9" stroke="#A50E25" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="34" r="2.4" fill="#A50E25"/></g><g transform="translate(576.1 353.4) scale(0.56)"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#1F6B33" stroke="#fff" stroke-width="3"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><path d="M26 26.8l4.4 4.4 8-8.6" fill="none" stroke="#1F6B33" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></g><g transform="translate(357.1 392.4) scale(0.56)"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#3D4A50" stroke="#fff" stroke-width="3"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><circle cx="32" cy="26.5" r="5" fill="#3D4A50"/></g><g transform="translate(169.1 431.4) scale(0.56)"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#1E4F87" stroke="#fff" stroke-width="3"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><path d="M25 26.5h13M33 20.5l-6 6 6 6" fill="none" stroke="#1E4F87" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></g><g transform="translate(544.1 508.4) scale(0.56)"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#1F6B33" stroke="#fff" stroke-width="3"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><path d="M26 26.8l4.4 4.4 8-8.6" fill="none" stroke="#1F6B33" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></g><circle cx="520" cy="318" r="22" fill="#1E4F87" fill-opacity=".18"/><circle cx="520" cy="318" r="9" fill="#1E4F87" stroke="#fff" stroke-width="3"/></svg>
+    <div class="m-top"><div class="search"><label class="w-sr" for="ms">ابحث عن شارع</label><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input class="ftc-input" id="ms" type="search" placeholder="ابحث عن شارع أو مكان"></div></div>
+    <div class="m-zoom"><button type="button" aria-label="تكبير"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button><button type="button" aria-label="تصغير"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button></div>
+    <button class="m-loc" type="button" aria-label="موقعي"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M2 12h3"/><path d="M19 12h3"/><path d="M12 2v3"/><path d="M12 19v3"/></svg></button>
+    <span class="m-note">رسم توضيحي — الموقع بيستخدم خرائط OpenStreetMap</span>
+    <article class="m-card" aria-label="تفاصيل البلاغ" data-incident="INC-0042">
+      <div class="m-card__top"><span class="ftc-icon-well ftc-icon-well--danger" style="width:44px;height:44px"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M7 9h10"/><path d="M6 12h12"/><path d="M7 15h10"/></svg></span><h2>بالوعة مفتوحة في شارع حسن المأمون</h2><button class="x" type="button" aria-label="إغلاق"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button></div>
+      <div class="meta"><span class="ftc-chip ftc-chip--critical">خطر</span><span class="ftc-chip ftc-chip--assigned">اتحوّل</span><span>١٢ متابع</span><span>٢٠٠ م من منطقتك</span></div>
+      <dl><dt>الجهة المسؤولة</dt><dd>الصرف الصحي</dd><dt>الأولوية</dt><dd>أولوية عالية: خطر على المارة + ١٢ بلاغ</dd><dt>المكان</dt><dd>شارع حسن المأمون، مدينة نصر</dd><dt>آخر تحديث</dt><dd>من ساعتين</dd></dl>
+      <div class="btns"><button class="ftc-btn ftc-btn--primary" type="button">أنا كمان</button><a class="ftc-btn ftc-btn--secondary" href="Track.html">التفاصيل</a></div>
+    </article>
+  </section>
+</div>
+<nav class="ftc-tabbar w-tabbar" aria-label="التنقل الرئيسي">
+  <a href="Home.html"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>الرئيسية</a>
+  <a href="Map.html" aria-current="page"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15"/><path d="M15 6v15"/></svg>الخريطة</a>
+  <a class="ftc-fab w-fab" href="Category.html" aria-label="بلّغ عن مشكلة"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></a>
+  <a href="Requests.html"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>طلباتي</a>
+  <a href="Profile.html"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>حسابي</a>
+</nav>
+<script>
+document.addEventListener('click',function(e){
+  var t=e.target.closest('.ftc-toggle');
+  if(t){var on=t.classList.toggle('is-on');t.setAttribute('aria-checked',on);return;}
+  var c=e.target.closest('.w-choice');
+  if(c){var g=c.closest('[data-choice]');if(!g)return;
+    if(g.dataset.choice==='multi'){c.classList.toggle('is-on');}
+    else{g.querySelectorAll('.w-choice').forEach(function(x){x.classList.remove('is-on');});c.classList.add('is-on');}
+    return;}
+  var f=e.target.closest('.ftc-filter');
+  if(f){var p=f.closest('[data-pills]');if(!p)return;
+    p.querySelectorAll('.ftc-filter').forEach(function(x){x.classList.remove('is-active');x.setAttribute('aria-pressed','false');});
+    f.classList.add('is-active');f.setAttribute('aria-pressed','true');}
+});
+</script>
+</body>
+</html>

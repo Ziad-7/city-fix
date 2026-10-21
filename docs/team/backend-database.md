@@ -79,7 +79,7 @@ Readable IDs: use a Postgres sequence per table and format in the API (`FTC-` + 
 | 7 | Uploads: `POST /uploads/sign` → Supabase Storage signed upload URL; signed read URLs in responses | Photos stored |
 | 8 | Triage stub: `POST /triage` with the keyword classifier (port `apps/mobile/src/logic/triage-mock.ts`) + DB duplicates — the CityBrain owner replaces the classifier later | AI-ready endpoint |
 | 9 | Admin: `GET /admin/dashboard`, `PATCH /incidents/{id}` (writes a timeline note), `POST/PATCH /admin/work-orders` | Admin web can start wiring |
-| 10 | Tests + CI (`.github/workflows/backend-ci.yml`: ruff, pytest) + deploy + CORS for the admin web origin | Deployed URL in the README |
+| 10 | Tests + CI (`.github/workflows/backend-ci.yml`: ruff, pytest) + deploy + CORS for the admin web and citizen web origins (`localhost:3000`, Vercel domains) | Deployed URL in the README |
 
 ## How to check your work against the app
 
@@ -90,7 +90,7 @@ Readable IDs: use a Postgres sequence per table and format in the API (`FTC-` + 
 ## Rules
 
 - `docs/api-contract.md` is the contract. If you need a change (e.g. the upload flow), open a PR editing that file and tell the mobile owner — don't change shapes silently.
-- Secrets live in env vars only (`DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET`, `OTP_MODE`). Never commit `.env`. The service-role key never goes to the mobile or web app.
+- Secrets live in env vars only (`DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET`, `OTP_MODE`). Never commit `.env`. The service-role key never goes to the mobile app, the citizen website or the admin web app.
 - Every status change goes through one function that also writes `activity_log` — that's what keeps citizen and admin views consistent.
 - Small PRs into `main` with "how to test" steps; add an entry to `docs/progress-log.md` when a step lands.
 
@@ -99,4 +99,5 @@ Readable IDs: use a Postgres sequence per table and format in the API (`FTC-` + 
 - **To the CityBrain (AI) owner:** `POST /triage` with a stable request/response and the duplicates query; they swap in the model behind it.
 - **To the optimizer owner:** `incidents` with `estimated_cost_egp` and `priority_score`; they add `POST /admin/budget/optimize`.
 - **To the admin web owner:** the admin endpoints, an admin demo account, and the deployed URL.
+- **To the citizen web owner:** CORS for their origins, `/uploads/sign` working from the browser, the same demo account, and the deployed URL. Same endpoints and shapes as mobile; no web-only routes.
 - **To mobile:** the deployed URL and confirmation that every endpoint in the contract answers with the documented shape.

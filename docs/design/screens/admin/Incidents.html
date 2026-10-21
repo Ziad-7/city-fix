@@ -2,34 +2,82 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FixTheCity — مركز القيادة: البلاغات</title>
-<script src="./support.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;family=Readex+Pro:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../css/fixthecity.css">
+<style>
+.ftc-admin-sidebar .brand{display:flex;align-items:center;gap:10px;padding:0 8px 18px}
+.ftc-admin-sidebar .brand b{display:block;font:700 16px/22px var(--ftc-font-display)}
+.ftc-admin-sidebar .brand small{display:block;font-size:12px;line-height:18px;color:var(--ftc-on-ink-muted)}
+.ftc-admin-sidebar a:hover:not([aria-current]){background:rgba(255,255,255,.08);color:var(--ftc-on-ink)}
+.ftc-admin-sidebar a .lbl{flex:1}
+.ftc-admin-sidebar a .count{font-size:12px;color:var(--ftc-on-ink-muted)}
+.ftc-admin-sidebar a[aria-current="page"] .count{color:var(--ftc-ink);font-weight:700}
+.ftc-admin-sidebar .sb-user{margin-top:auto;border-top:1px solid rgba(255,255,255,.12);padding:14px 4px 0;display:flex;align-items:center;gap:10px}
+.ftc-admin-sidebar .sb-user .who{flex:1;min-width:0}
+.ftc-admin-sidebar .sb-user b{display:block;font:600 14px/20px var(--ftc-font-sans)}
+.ftc-admin-sidebar .sb-user small{display:block;font-size:12px;line-height:16px;color:var(--ftc-on-ink-muted)}
+.ftc-admin-sidebar .sb-user a.out{width:36px;height:36px;padding:0;justify-content:center;flex:none}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--ftc-gold);color:var(--ftc-ink);display:inline-flex;align-items:center;justify-content:center;font:700 15px/1 var(--ftc-font-display);flex:none}
+.page{display:flex;flex-direction:column;gap:20px}
+.page-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.page-head .grow{flex:1 1 260px;min-width:0}
+.page-head h1{margin:0;font:700 26px/36px var(--ftc-font-display)}
+.page-head p{margin:0;font-size:14px;line-height:22px;color:var(--ftc-ink-muted)}
+.search{height:44px;flex:0 1 280px;min-width:200px;border-radius:var(--ftc-radius-md);background:var(--ftc-surface);border:1px solid var(--ftc-line);display:flex;align-items:center;gap:8px;padding:0 12px;color:var(--ftc-ink-muted)}
+.search input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:400 14px/22px var(--ftc-font-sans);color:var(--ftc-ink)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{display:flex;flex-direction:column;gap:4px}
+.kpi .l{font-size:13px;line-height:20px;color:var(--ftc-ink-muted)}
+.kpi .d{font-size:12px;line-height:18px;font-weight:600}
+.d--bad{color:var(--ftc-urgent-deep)}.d--good{color:var(--ftc-status-resolved)}.d--mute{color:var(--ftc-ink-muted);font-weight:400!important}
+.sec-title{margin:0;font:600 17px/26px var(--ftc-font-display);display:flex;align-items:center;gap:8px}
+.sec-sub{margin:0;font-size:12px;line-height:18px;color:var(--ftc-ink-muted)}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.score{display:inline-flex;width:40px;height:28px;border-radius:8px;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex:none}
+.score--urgent{background:var(--ftc-urgent);color:#fff}
+.score--high{background:var(--ftc-gold-soft);color:var(--ftc-gold-deep)}
+.score--low{background:var(--ftc-status-received-bg);color:var(--ftc-status-received)}
+.tablewrap{overflow-x:auto}
+.mini{font-size:12px;line-height:18px;color:var(--ftc-ink-muted)}
+.strong{font-weight:600}
+.row-between{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.stack{display:flex;flex-direction:column}
+.g8{gap:8px}.g12{gap:12px}.g16{gap:16px}
+.link{color:var(--ftc-red);font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ftc-filter{cursor:pointer;font-family:inherit}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px}
+.ftc-btn--sm.ftc-btn--secondary{border-width:1.5px}
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){
+  .ftc-admin-main{padding:16px}
+  .ftc-admin-sidebar{flex-direction:row;flex-wrap:wrap;padding:12px;gap:6px}
+  .ftc-admin-sidebar .brand{width:100%;padding:0 4px 6px}
+  .ftc-admin-sidebar > a{flex:1 1 calc(50% - 6px);min-width:140px}
+  .ftc-admin-sidebar .sb-user{width:100%;margin-top:6px}
+  .page-head h1{font-size:22px;line-height:30px}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+</style>
 </head>
 <body>
-<x-dc>
-<helmet>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;family=Readex+Pro:wght@500;600;700&amp;display=swap" rel="stylesheet">
-<style>
-body{margin:0}
-a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
-</style>
-</helmet>
-<div dir="rtl" style="min-height: 960px; box-sizing: border-box; background: #F8F6F2; color: #161616; font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif; display: flex; flex-wrap: wrap; align-items: stretch;">
-
-  <nav aria-label="قائمة مركز القيادة" style="flex: 1 1 232px; max-width: 100%; box-sizing: border-box; background: #161616; color: #F2EFEA; padding: 20px 14px; display: flex; flex-direction: column; gap: 4px;">
-    <div style="display: flex; align-items: center; gap: 10px; padding: 0 8px 18px;">
-      <img src="../assets/fixthecity-mark.svg" alt="" style="width: 34px; height: 34px;">
-      <span style="display: flex; flex-direction: column;"><span style="font-family: 'Readex Pro', sans-serif; font-size: 16px; line-height: 22px; font-weight: 700;">FixTheCity</span><span style="font-size: 12px; line-height: 18px; color: #B3B3B3;">القاهرة · حي مدينة نصر أول</span></span>
-    </div>
-    <a href="#" style="height: 44px; border-radius: 14px; padding: 0 12px; display: flex; align-items: center; gap: 10px; color: #F2EFEA; font-size: 14px; font-weight: 500;"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>نظرة عامة</a>
-    <a href="Admin.dc.html" aria-current="page" style="height: 44px; border-radius: 14px; padding: 0 12px; display: flex; align-items: center; gap: 10px; background: #D4A20B; color: #161616; font-size: 14px; font-weight: 700;"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg><span style="flex: 1;">البلاغات</span><span style="font-size: 12px; font-weight: 700;">128</span></a>
-    <a href="#" style="height: 44px; border-radius: 14px; padding: 0 12px; display: flex; align-items: center; gap: 10px; color: #F2EFEA; font-size: 14px; font-weight: 500;"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg><span style="flex: 1;">طلبات الخدمات</span><span style="font-size: 12px; color: #B3B3B3;">34</span></a>
-    <a href="#" style="height: 44px; border-radius: 14px; padding: 0 12px; display: flex; align-items: center; gap: 10px; color: #F2EFEA; font-size: 14px; font-weight: 500;"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.6-.6-.6-2.6z"></path></svg>أوامر الشغل</a>
-    <a href="#" style="height: 44px; border-radius: 14px; padding: 0 12px; display: flex; align-items: center; gap: 10px; color: #F2EFEA; font-size: 14px; font-weight: 500;"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"></path><path d="M9 3v15"></path><path d="M15 6v15"></path></svg>خريطة المدينة</a>
-    <a href="Budget.dc.html" style="height: 44px; border-radius: 14px; padding: 0 12px; display: flex; align-items: center; gap: 10px; color: #F2EFEA; font-size: 14px; font-weight: 500;"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2.5"></circle></svg>ميزانية الإصلاحات</a>
-  </nav>
-
+<div class="ftc-docbar"><a href="../../index.html">FixTheCity design</a><span>Command Center · Incidents</span></div>
+<div class="ftc-admin">
+<nav class="ftc-admin-sidebar" aria-label="قائمة مركز القيادة">
+<div class="brand"><img src="../../assets/fixthecity-mark.svg" alt="" width="34" height="34"><span><b>FixTheCity</b><small>القاهرة · حي مدينة نصر أول</small></span></div>
+<a href="Overview.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="lbl">نظرة عامة</span></a>
+<a href="Incidents.html" aria-current="page"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span class="lbl">البلاغات</span><span class="count">128</span></a>
+<a href="Map.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15"/><path d="M15 6v15"/></svg><span class="lbl">الخريطة</span></a>
+<a href="ServiceRequests.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg><span class="lbl">طلبات الخدمات</span><span class="count">34</span></a>
+<a href="WorkOrders.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.6-.6-.6-2.6z"/></svg><span class="lbl">أوامر الشغل</span></a>
+<a href="Budget.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg><span class="lbl">الميزانية</span></a>
+<div class="sb-user"><span class="avatar" aria-hidden="true">س</span><span class="who"><b>سارة محمود</b><small>مشرفة فرز · حي مدينة نصر</small></span><a class="out" href="Login.html" aria-label="تسجيل الخروج" title="تسجيل الخروج"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></a></div>
+</nav>
+<main class="ftc-admin-main" style="padding:0">
   <div style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 24px 28px 32px; display: flex; flex-direction: column; gap: 20px;">
     <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px;">
       <div style="flex: 1 1 240px;">
@@ -72,32 +120,40 @@ a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
           </thead>
           <tbody>
             <tr>
+              <td style="padding: 12px 16px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; width: 40px; height: 28px; border-radius: 8px; background: #A50E25; color: #FFFFFF; align-items: center; justify-content: center; font-weight: 700;">93</span></td>
+              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><a href="IncidentDetail.html" style="display: block; font-weight: 600; color: #161616;">بالوعة مفتوحة قدام مدرسة <span class="ftc-tag-danger">خطر</span></a><span style="font-size: 12px; color: #5A5A5A;">INC-0042 · شارع يوسف عباس</span></td>
+              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;">7</td>
+              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;">19 س / 1 يوم</td>
+              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: #E6EAEC; color: #3D4A50; font-size: 12px; font-weight: 600;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #3D4A50;"></span>وصل</span></td>
+              <td style="padding: 12px 16px 12px 8px; border-bottom: 1px solid #E6E1D8;">الصرف الصحي</td>
+            </tr>
+            <tr>
               <td style="padding: 12px 16px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; width: 40px; height: 28px; border-radius: 8px; background: #A50E25; color: #FFFFFF; align-items: center; justify-content: center; font-weight: 700;">92</span></td>
-              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: block; font-weight: 600;">كسر ماسورة مياه</span><span style="font-size: 12px; color: #5A5A5A;">#FTC-1051 · شارع مكرم عبيد</span></td>
+              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: block; font-weight: 600;">كسر ماسورة مياه</span><span style="font-size: 12px; color: #5A5A5A;">INC-0051 · شارع مكرم عبيد</span></td>
               <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;">11</td>
               <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;">5 س / 12 س</td>
               <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: #DCE8F6; color: #1E4F87; font-size: 12px; font-weight: 600;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #1E4F87;"></span>اتحوّل</span></td>
               <td style="padding: 12px 16px 12px 8px; border-bottom: 1px solid #E6E1D8;">شركة مياه الشرب<span style="display: block; font-size: 12px; color: #5A5A5A;">جهة خارجية · ١٢٥</span></td>
             </tr>
-            <tr style="background: #FBE4E7;">
-              <td style="padding: 12px 16px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; width: 40px; height: 28px; border-radius: 8px; background: #A50E25; color: #FFFFFF; align-items: center; justify-content: center; font-weight: 700;">84</span></td>
-              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: block; font-weight: 600;">حفرة في الطريق</span><span style="font-size: 12px; color: #5A5A5A;">#FTC-1042 · شارع عباس العقاد</span></td>
-              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;">7</td>
-              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;">1 يوم / 3 أيام</td>
-              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: #FAF0D2; color: #7A5A00; font-size: 12px; font-weight: 600;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #7A5A00;"></span>جاري التنفيذ</span></td>
-              <td style="padding: 12px 16px 12px 8px; border-bottom: 1px solid #E6E1D8;">صيانة الطرق</td>
-            </tr>
             <tr>
               <td style="padding: 12px 16px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; width: 40px; height: 28px; border-radius: 8px; background: #FAF0D2; color: #7A5A00; align-items: center; justify-content: center; font-weight: 700;">71</span></td>
-              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: block; font-weight: 600;">عمود إنارة واقع</span><span style="font-size: 12px; color: #5A5A5A;">#FTC-1037 · شارع الطيران</span></td>
+              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: block; font-weight: 600;">عمود إنارة واقع</span><span style="font-size: 12px; color: #5A5A5A;">INC-0037 · شارع الطيران</span></td>
               <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;">3</td>
               <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8; color: #8E0A20; font-weight: 600;">2 يوم / 2 يوم · متأخر</td>
               <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: #E6EAEC; color: #3D4A50; font-size: 12px; font-weight: 600;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #3D4A50;"></span>وصل</span></td>
               <td style="padding: 12px 16px 12px 8px; border-bottom: 1px solid #E6E1D8;">إنارة الحي</td>
             </tr>
+            <tr style="background: #FBE4E7;">
+              <td style="padding: 12px 16px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; width: 40px; height: 28px; border-radius: 8px; background: #FAF0D2; color: #7A5A00; align-items: center; justify-content: center; font-weight: 700;">66</span></td>
+              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: block; font-weight: 600;">حفرة في الطريق</span><span style="font-size: 12px; color: #5A5A5A;">INC-0041 · شارع عباس العقاد</span></td>
+              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;">7</td>
+              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;">3 س / 5 أيام</td>
+              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: #FAF0D2; color: #7A5A00; font-size: 12px; font-weight: 600;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #7A5A00;"></span>جاري التنفيذ</span></td>
+              <td style="padding: 12px 16px 12px 8px; border-bottom: 1px solid #E6E1D8;">صيانة الطرق</td>
+            </tr>
             <tr>
               <td style="padding: 12px 16px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; width: 40px; height: 28px; border-radius: 8px; background: #E6EAEC; color: #3D4A50; align-items: center; justify-content: center; font-weight: 700;">58</span></td>
-              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: block; font-weight: 600;">تراكم قمامة</span><span style="font-size: 12px; color: #5A5A5A;">#FTC-1029 · الحي السابع</span></td>
+              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: block; font-weight: 600;">تراكم قمامة</span><span style="font-size: 12px; color: #5A5A5A;">INC-0029 · الحي السابع</span></td>
               <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;">5</td>
               <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;">10 س / 24 س</td>
               <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: #DCE8F6; color: #1E4F87; font-size: 12px; font-weight: 600;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #1E4F87;"></span>اتحوّل</span></td>
@@ -105,7 +161,7 @@ a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
             </tr>
             <tr>
               <td style="padding: 12px 16px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; width: 40px; height: 28px; border-radius: 8px; background: #E6EAEC; color: #3D4A50; align-items: center; justify-content: center; font-weight: 700;">46</span></td>
-              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: block; font-weight: 600;">شجرة مايلة على الرصيف</span><span style="font-size: 12px; color: #5A5A5A;">#FTC-1018 · شارع الطيران</span></td>
+              <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: block; font-weight: 600;">شجرة مايلة على الرصيف</span><span style="font-size: 12px; color: #5A5A5A;">INC-0018 · شارع الطيران</span></td>
               <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;">2</td>
               <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;">3 أيام / 5 أيام</td>
               <td style="padding: 12px 8px; border-bottom: 1px solid #E6E1D8;"><span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: #E6EAEC; color: #3D4A50; font-size: 12px; font-weight: 600;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #3D4A50;"></span>وصل</span></td>
@@ -113,7 +169,7 @@ a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
             </tr>
             <tr>
               <td style="padding: 12px 16px;"><span style="display: inline-flex; width: 40px; height: 28px; border-radius: 8px; background: #E6EAEC; color: #3D4A50; align-items: center; justify-content: center; font-weight: 700;">33</span></td>
-              <td style="padding: 12px 8px;"><span style="display: block; font-weight: 600;">كسر في الرصيف</span><span style="font-size: 12px; color: #5A5A5A;">#FTC-1003 · ذاكر حسين</span></td>
+              <td style="padding: 12px 8px;"><span style="display: block; font-weight: 600;">كسر في الرصيف</span><span style="font-size: 12px; color: #5A5A5A;">INC-0003 · ذاكر حسين</span></td>
               <td style="padding: 12px 8px;">1</td>
               <td style="padding: 12px 8px;">4 أيام / 7 أيام</td>
               <td style="padding: 12px 8px;"><span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: #E6EAEC; color: #3D4A50; font-size: 12px; font-weight: 600;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #3D4A50;"></span>وصل</span></td>
@@ -125,8 +181,8 @@ a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
 
       <aside aria-label="تفاصيل البلاغ" style="flex: 1 1 340px; min-width: 0; max-width: 100%; background: #FFFFFF; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 1px 2px rgba(22,22,22,.06), 0 4px 16px rgba(22,22,22,.06);">
         <div style="display: flex; gap: 12px; align-items: center;">
-          <span aria-hidden="true" style="width: 64px; height: 64px; border-radius: 8px; background: #5A6870; flex-shrink: 0; position: relative; overflow: hidden;"><span style="position: absolute; right: 10px; top: 22px; width: 44px; height: 20px; border-radius: 999px; background: #161616;"></span></span>
-          <span style="flex: 1; display: flex; flex-direction: column;"><span style="font-family: 'Readex Pro', sans-serif; font-size: 18px; line-height: 26px; font-weight: 700;">حفرة في الطريق</span><span style="font-size: 12px; line-height: 18px; color: #5A5A5A;">#FTC-1042 · عباس العقاد · 7 بلاغات مربوطة</span></span>
+          <span aria-hidden="true" style="width: 64px; height: 64px; border-radius: 8px; background: #3D4A50; flex-shrink: 0; position: relative; overflow: hidden;"><span style="position: absolute; right: 10px; top: 22px; width: 44px; height: 20px; border-radius: 999px; background: #161616;"></span></span>
+          <span style="flex: 1; display: flex; flex-direction: column;"><span style="font-family: 'Readex Pro', sans-serif; font-size: 18px; line-height: 26px; font-weight: 700;">حفرة في الطريق</span><span style="font-size: 12px; line-height: 18px; color: #5A5A5A;">INC-0041 · عباس العقاد · 7 بلاغات مربوطة</span></span>
         </div>
 
         <div style="background: #FBE4E7; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 6px;">
@@ -139,14 +195,14 @@ a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
         <div style="display: flex; flex-direction: column; gap: 10px;">
           <div style="display: flex; align-items: baseline; justify-content: space-between;">
             <span style="font-size: 14px; font-weight: 600;">سبب الأولوية</span>
-            <span style="font-family: 'Readex Pro', sans-serif; font-size: 28px; line-height: 32px; font-weight: 700; color: #A50E25;">84<span style="font-size: 14px; color: #5A5A5A; font-weight: 500;"> / 100</span></span>
+            <span style="font-family: 'Readex Pro', sans-serif; font-size: 28px; line-height: 32px; font-weight: 700; color: #7A5A00;">66<span style="font-size: 14px; color: #5A5A5A; font-weight: 500;"> / 100</span></span>
           </div>
           <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; line-height: 20px;">
-            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">الخطورة: عالية</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 100%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: left; font-weight: 600;">+30</span></div>
-            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">قريب من مدرسة</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 67%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: left; font-weight: 600;">+20</span></div>
-            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">7 مواطنين بلّغوا</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 50%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: left; font-weight: 600;">+15</span></div>
-            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">عدالة توزيع الخدمة</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 33%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: left; font-weight: 600;">+10</span></div>
-            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">مفتوح 1 من 3 أيام</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 30%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: left; font-weight: 600;">+9</span></div>
+            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">الخطورة: عالية</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 70%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: end; font-weight: 600;">+28</span></div>
+            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">قريب من مدرسة</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 100%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: end; font-weight: 600;">+20</span></div>
+            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">7 مواطنين بلّغوا</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 90%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: end; font-weight: 600;">+18</span></div>
+            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">مفتوح 3 س من 5 أيام</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 0%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: end; font-weight: 600;">+0</span></div>
+            <div style="display: flex; align-items: center; gap: 8px;"><span style="flex: 0 0 130px;">منطقة محتاجة اهتمام</span><span aria-hidden="true" style="flex: 1; height: 8px; border-radius: 999px; background: #F8F6F2;"><span style="display: block; width: 0%; height: 8px; border-radius: 999px; background: #C8102E;"></span></span><span style="flex: 0 0 32px; text-align: end; font-weight: 600;">+0</span></div>
           </div>
         </div>
 
@@ -163,12 +219,7 @@ a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
       </aside>
     </div>
   </div>
+</main>
 </div>
-</x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
-class Component extends DCLogic {
-  renderVals() { return {}; }
-}
-</script>
 </body>
 </html>
