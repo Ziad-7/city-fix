@@ -1,4 +1,6 @@
-import { toArabicDigits } from '@/utils/digits';
+import { WEEKDAY_EN } from '@/i18n/labels';
+import { usePrefs } from '@/store/usePrefs';
+import { toArabicDigits, toWesternDigits } from '@/utils/digits';
 
 export type WeekdayCode = 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat';
 
@@ -66,18 +68,31 @@ export function nextCollection(days: WeekdayCode[], from: Date = new Date()): Ne
   for (let offset = 0; offset < 7; offset++) {
     const code = WEEKDAY_CODES[(today + offset) % 7];
     if (!days.includes(code)) continue;
-    const name = WEEKDAY_NAME_AR[code];
-    const label =
-      offset === 0 ? `النهارده ${name}` : offset === 1 ? `بكرة ${name}` : offset === 2 ? `بعد بكرة ${name}` : `${name} الجاي`;
+    const label = usePrefs.getState().lang === 'en' ? nextLabelEn(code, offset) : nextLabelAr(WEEKDAY_NAME_AR[code], offset);
     return { code, inDays: offset, label };
   }
   return null;
 }
 
-/** "الحد، التلات، الخميس · ٨ م – ١١ م" */
+const nextLabelAr = (name: string, offset: number): string =>
+  offset === 0 ? `النهارده ${name}` : offset === 1 ? `بكرة ${name}` : offset === 2 ? `بعد بكرة ${name}` : `${name} الجاي`;
+const nextLabelEn = (code: WeekdayCode, offset: number): string =>
+  offset === 0 ? `Today, ${WEEKDAY_EN[code]}` : offset === 1 ? `Tomorrow, ${WEEKDAY_EN[code]}` : `Next ${WEEKDAY_EN[code]}`;
+
+/** Weekday name in the current language. */
+export const weekdayLabel = (code: WeekdayCode): string => (usePrefs.getState().lang === 'en' ? WEEKDAY_EN[code] : WEEKDAY_NAME_AR[code]);
+
+/** Pickup window ("٨ م – ١١ م") in the current language ("8 PM – 11 PM"). */
+export function windowLabel(window: string): string {
+  if (usePrefs.getState().lang !== 'en') return window;
+  return toWesternDigits(window).replace(/ص/g, 'AM').replace(/م/g, 'PM');
+}
+
+/** "الحد، التلات، الخميس · ٨ م – ١١ م" / "Sunday, Tuesday, Thursday · 8 PM – 11 PM" */
 export function scheduleSummary(s: Pick<GarbageSchedule, 'days' | 'window'>): string {
   const ordered = WEEKDAY_CODES.filter((c) => s.days.includes(c));
-  return `${ordered.map((c) => WEEKDAY_NAME_AR[c]).join('، ')} · ${s.window}`;
+  const sep = usePrefs.getState().lang === 'en' ? ', ' : '، ';
+  return `${ordered.map(weekdayLabel).join(sep)} · ${windowLabel(s.window)}`;
 }
 
 /** Number of collections per week in Arabic-Indic digits, e.g. "٣ مرات في الأسبوع". */

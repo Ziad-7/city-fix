@@ -42,7 +42,7 @@
       [
         "expo-localization",
         {
-          "forcesRTL": true,
+          "supportsRTL": true,
           "supportedLocales": [
             "ar",
             "en"

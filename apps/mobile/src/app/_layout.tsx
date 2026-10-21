@@ -18,6 +18,7 @@ import { colors } from '@/theme/tokens';
 import { OutboxToast } from '@/components/OutboxToast';
 import { onNotificationTapped, setupOsNotifications } from '@/notifications/os';
 import { refreshAll, startNotificationSync, useIsSignedIn, useOutboxSync, useSessionHydrated } from '@/store';
+import { isRtlLang, useLang } from '@/i18n';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -27,14 +28,15 @@ export default function RootLayout() {
   const signedIn = useIsSignedIn();
   const ready = (fontsLoaded || !!fontError) && hydrated;
 
-  // Web preview only: on native, RTL comes from the root `direction: 'rtl'` style below (see README).
+  const lang = useLang();
+  // Web preview only: on native, the direction comes from the root `direction` style below (see README).
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      document.documentElement.dir = 'rtl';
-      document.documentElement.lang = 'ar';
+      document.documentElement.dir = isRtlLang(lang) ? 'rtl' : 'ltr';
+      document.documentElement.lang = lang;
       document.body.style.backgroundColor = colors.paper;
     }
-  }, []);
+  }, [lang]);
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => undefined);
@@ -60,7 +62,7 @@ export default function RootLayout() {
   if (!ready) return null;
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { direction: isRtlLang(lang) ? 'rtl' : 'ltr' }]}>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.paper } }}>
         <Stack.Protected guard={!signedIn}>
@@ -97,10 +99,10 @@ function useFonts() {
   });
 }
 
-// direction: 'rtl' lays the whole app out right-to-left even in Expo Go, which ignores the
+// direction ('rtl' for Arabic, 'ltr' for English, set on the root view) lays the whole app out even in Expo Go, which ignores the
 // expo-localization forcesRTL plugin. RN's docs tag the prop `@platform ios`, but on Android Fabric applies it too:
 // `direction` is in the shared view config, YogaStylableProps.cpp feeds it to Yoga, the resolved direction reaches
 // SurfaceMountingManager.updateLayout (View.setLayoutDirection) and ParagraphShadowNode (text alignment). On wide web windows keep the phone-sized column centred.
 const styles = StyleSheet.create({
-  root: { flex: 1, direction: 'rtl', backgroundColor: colors.paper, width: '100%', maxWidth: Platform.OS === 'web' ? 480 : undefined, alignSelf: 'center' },
+  root: { flex: 1, backgroundColor: colors.paper, width: '100%', maxWidth: Platform.OS === 'web' ? 480 : undefined, alignSelf: 'center' },
 });

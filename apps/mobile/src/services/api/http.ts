@@ -1,3 +1,4 @@
+import { getLang } from '@/i18n';
 let token: string | null = null;
 let onUnauthorized: (() => void) | null = null;
 
@@ -49,7 +50,7 @@ export async function http<T>(method: 'GET' | 'POST', path: string, body?: unkno
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        'Accept-Language': 'ar',
+        'Accept-Language': getLang(),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: body === undefined ? undefined : JSON.stringify(body),

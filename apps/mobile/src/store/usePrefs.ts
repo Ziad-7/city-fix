@@ -19,6 +19,9 @@ export function scaleTextStyle<T extends { fontSize?: number; lineHeight?: numbe
 }
 
 type PrefsState = {
+  /** App language: 'ar' (default, RTL) or 'en' (LTR). See src/i18n. */
+  lang: 'ar' | 'en';
+  setLang: (lang: 'ar' | 'en') => void;
   /** "خط أكبر": all AppText scaled by LARGE_TEXT_SCALE. */
   largeText: boolean;
   /** "إشعارات التطبيق": OS notifications for status changes. On by default. */
@@ -31,6 +34,8 @@ type PrefsState = {
 export const usePrefs = create<PrefsState>()(
   persist(
     (set) => ({
+      lang: 'ar',
+      setLang: (lang) => set({ lang }),
       largeText: false,
       appNotifications: true,
       setLargeText: (largeText) => set({ largeText }),
@@ -39,7 +44,7 @@ export const usePrefs = create<PrefsState>()(
     {
       name: 'ftc.prefs.v1',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (s) => ({ largeText: s.largeText, appNotifications: s.appNotifications }),
+      partialize: (s) => ({ lang: s.lang, largeText: s.largeText, appNotifications: s.appNotifications }),
     },
   ),
 );

@@ -1,8 +1,18 @@
+import { usePrefs } from '@/store/usePrefs';
+
 const AR = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
 
 /** Convert Western digits (and numbers) to Arabic-Indic digits. */
 export function toArabicDigits(value: string | number): string {
   return String(value).replace(/[0-9]/g, (d) => AR[Number(d)]);
+}
+
+/**
+ * Digits for display in the current language: Arabic-Indic in Arabic, Western in English.
+ * Use this in UI copy instead of toArabicDigits.
+ */
+export function localDigits(value: string | number): string {
+  return usePrefs.getState().lang === 'en' ? toWesternDigits(String(value)) : toArabicDigits(value);
 }
 
 /** Convert Arabic-Indic and Persian digits back to Western digits. */
