@@ -41,7 +41,7 @@ on:
       - 'apps/mobile/src/store/useReports.ts'
       - 'apps/mobile/src/store/useRequests.ts'
       - 'apps/mobile/src/store/useServiceRequests.ts'
-      - 'docs/design/css/fixthecity.css'
+      - 'docs/design/css/cityfix.css'
   pull_request:
     paths:
       - 'apps/web/**'
@@ -82,7 +82,7 @@ on:
       - 'apps/mobile/src/store/useReports.ts'
       - 'apps/mobile/src/store/useRequests.ts'
       - 'apps/mobile/src/store/useServiceRequests.ts'
-      - 'docs/design/css/fixthecity.css'
+      - 'docs/design/css/cityfix.css'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

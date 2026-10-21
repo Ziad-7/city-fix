@@ -107,7 +107,7 @@ Newest first. Each entry: what was done, how to test it, known issues.
 ## 2026-10-21 — Design pack: identity guide + screens for every surface (branch `design/identity-and-screens`)
 
 **Done** (three Sonnet 5.5 implementers in parallel, reviewed and fixed by Opus 5.5 — [review](reviews/2026-10-21-design-pack-review.md))
-- **Identity everyone follows:** [`design/identity.html`](design/identity.html) (logo, colours, type, spacing, icons, components, voice, Egypt rules, per-surface rules, accessibility, don'ts, CSS/Tailwind snippets) and the shared stylesheet [`design/css/fixthecity.css`](design/css/fixthecity.css). `tokens.json` stays the source of truth (now light-only, with six missing tokens added).
+- **Identity everyone follows:** [`design/identity.html`](design/identity.html) (logo, colours, type, spacing, icons, components, voice, Egypt rules, per-surface rules, accessibility, don'ts, CSS/Tailwind snippets) and the shared stylesheet [`design/css/fixthecity.css`](design/css/cityfix.css). `tokens.json` stays the source of truth (now light-only, with six missing tokens added).
 - **28 HTML screens:** `screens/mobile/` (10, incl. new Requests, Map, Profile), `screens/web/` (10 citizen website pages, desktop + phone layout), `screens/admin/` (8 Command Center pages: Login, Overview, Incidents, IncidentDetail, Map, ServiceRequests, WorkOrders, Budget). Old design-tool exports cleaned into plain HTML.
 - **Design hub:** [`design/index.html`](design/index.html) and [`design/README.md`](design/README.md) with online preview links for every screen.
 - Demo data aligned across surfaces (pothole FTC-1042 priority = 66 from `priority.ts`).

@@ -24,7 +24,7 @@ One workflow per folder. A workflow runs only when its own folder (or its own wo
 | Workflow | Guards | Also runs when | Checks |
 | --- | --- | --- | --- |
 | `mobile-ci.yml` | `apps/mobile/**` | | typecheck, lint, jest, `expo export --platform web` smoke build |
-| `web-ci.yml` | `apps/web/**` | the mobile files listed in `apps/web/scripts/check-shared.sh`, `docs/design/css/fixthecity.css` | `check:shared`, typecheck, lint, vitest, build, Playwright e2e |
+| `web-ci.yml` | `apps/web/**` | the mobile files listed in `apps/web/scripts/check-shared.sh`, `docs/design/css/cityfix.css` | `check:shared`, typecheck, lint, vitest, build, Playwright e2e |
 | `admin-web-ci.yml` | `apps/admin-web/**` | the six shared mobile files in `docs/team/admin-web.md` | `check:shared` (if present), typecheck, lint, test, build |
 | `backend-ci.yml` | `backend/**` | | `ruff check`, `ruff format --check`, `pytest` (Python 3.12, dummy env, no secrets; the paid AI eval is not run) |
 | `docs-ci.yml` | `docs/**`, `README.md`, `CONTRIBUTING.md`, `apps/*/README.md` | | `scripts/check-doc-links.mjs` (relative links in Markdown and `docs/design` HTML) |
