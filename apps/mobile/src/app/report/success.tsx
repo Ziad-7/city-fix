@@ -84,7 +84,7 @@ export default function SuccessScreen() {
         <AppText accessibilityRole="header" color={colors.onRed} style={titleStyle}>{tr('تسلم إيدك!', 'Thank you!')}</AppText>
         {joined ? (
           <AppText color={colors.redSoft} center style={styles.sub}>
-            {tr('اتضمّيت للبلاغ الموجود، رقمه ', 'You joined the existing report ')}<AppText color={colors.onRed} style={styles.strong}>{isolateLtr(`#${incident.linkedReportIds[0]}`)}</AppText>{tr('. ده بيرفع أولويته.', '. This raises its priority.')}
+            {tr('بلاغك اتضم للبلاغ الموجود، رقمه ', 'You joined the existing report ')}<AppText color={colors.onRed} style={styles.strong}>{isolateLtr(`#${incident.linkedReportIds[0]}`)}</AppText>{tr('. ده بيرفع أولويته.', '. This raises its priority.')}
           </AppText>
         ) : (
           <AppText color={colors.redSoft} center style={styles.sub}>

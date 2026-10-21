@@ -56,7 +56,7 @@ const ROWS: SeedRow[] = [
   { n: 507, categoryId: 'exposed_wire', title: 'سلك كهربا مكشوف جنب الحديقة', titleEn: 'Exposed electric wire next to the park', address: 'شارع يوسف عباس، مدينة نصر', addressEn: 'Youssef Abbas St, Nasr City', lat: 30.055, lng: 31.338, status: 'received', severity: 'critical', ageH: 1, followers: 1, reporters: 1, sensitivePlace: 'حديقة الأطفال' },
   { n: 508, categoryId: 'fallen_tree', title: 'شجرة مايلة على الرصيف', titleEn: 'Leaning tree on the sidewalk', address: 'شارع مصطفى النحاس، مدينة نصر', addressEn: 'Mostafa El Nahas St, Nasr City', lat: 30.05, lng: 31.333, status: 'resolved', severity: 'medium', ageH: 100, followers: 4, reporters: 3 },
   { n: 509, categoryId: 'broken_sidewalk', title: 'رصيف مكسور قدام المستشفى', titleEn: 'Broken sidewalk in front of the hospital', address: 'شارع أحمد فخري، مدينة نصر', addressEn: 'Ahmed Fakhry St, Nasr City', lat: 30.058, lng: 31.326, status: 'assigned', severity: 'medium', ageH: 72, followers: 6, reporters: 5, sensitivePlace: 'مستشفى المبرة' },
-  { n: 510, categoryId: 'stray_dogs', title: 'كلاب ضالة جنب المدرسة', titleEn: 'Stray dogs near the school', address: 'شارع الطيران، مدينة نصر', addressEn: 'El Tayaran St, Nasr City', lat: 30.053, lng: 31.33, status: 'triaged', severity: 'medium', ageH: 12, followers: 3, reporters: 2, sensitivePlace: 'مدرسة الشهيد محمود' },
+  { n: 510, categoryId: 'stray_dogs', title: 'كلاب ضالة جنب المدرسة', titleEn: 'Stray dogs near the school', address: 'شارع الطيران، مدينة نصر', addressEn: 'El Tayaran St, Nasr City', lat: 30.053, lng: 31.33, status: 'triaged', severity: 'medium', ageH: 12, followers: 3, reporters: 2, sensitivePlace: 'مدرسة الطيران الابتدائية' },
 ];
 
 function buildIncident(row: SeedRow, now: number): DbIncident {
