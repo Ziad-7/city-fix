@@ -26,16 +26,33 @@ export function MedalIcon({ size = 56 }: { size?: number }) {
   );
 }
 
-/** Map pin in a status colour (map list and Leaflet markers). */
-export function PinIcon({ color, className }: { color: string; className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 64 64" aria-hidden="true">
-      <path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill={color} />
-      <circle cx="32" cy="26.5" r="12.5" fill="#fff" />
-      <circle cx="32" cy="26.5" r="5" fill={color} />
-    </svg>
-  );
+/** What the pin's white disc shows, so a status is never colour only (same glyphs as docs/design/screens/web/Map.html). */
+export type PinGlyph = 'dot' | 'arrow' | 'clock' | 'check' | 'alert';
+
+/** Inner drawing of each glyph on the 64 x 64 pin (the disc is centred at 32 26.5). */
+const glyphMarkup = (glyph: PinGlyph, color: string): string => {
+  switch (glyph) {
+    case 'arrow':
+      return `<path d="M25 26.5h13M33 20.5l-6 6 6 6" fill="none" stroke="${color}" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+    case 'clock':
+      return `<path d="M32 19v8l5.5 3.5" fill="none" stroke="${color}" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+    case 'check':
+      return `<path d="M26 26.8l4.4 4.4 8-8.6" fill="none" stroke="${color}" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+    case 'alert':
+      return `<path d="M32 19v9" stroke="${color}" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="34" r="2.4" fill="${color}"/>`;
+    default:
+      return `<circle cx="32" cy="26.5" r="5" fill="${color}"/>`;
+  }
+};
+
+const pinBody = (color: string, glyph: PinGlyph) =>
+  `<path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="${color}"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/>${glyphMarkup(glyph, color)}`;
+
+/** Map pin in a status colour with its status glyph (map list). The markup is built here from fixed shapes and token colours. */
+export function PinIcon({ color, glyph = 'dot', className }: { color: string; glyph?: PinGlyph; className?: string }) {
+  return <svg className={className} viewBox="0 0 64 64" aria-hidden="true" dangerouslySetInnerHTML={{ __html: pinBody(color, glyph) }} />;
 }
 
-export const pinSvg = (color: string) =>
-  `<svg viewBox="0 0 64 64" width="34" height="38" aria-hidden="true"><path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="${color}"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><circle cx="32" cy="26.5" r="5" fill="${color}"/></svg>`;
+/** Same pin as an SVG string, for Leaflet markers. */
+export const pinSvg = (color: string, glyph: PinGlyph = 'dot') =>
+  `<svg viewBox="0 0 64 64" width="34" height="38" aria-hidden="true">${pinBody(color, glyph)}</svg>`;
