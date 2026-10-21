@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FixTheCity — طلباتي</title>
+<link rel="icon" href="../../assets/fixthecity-mark.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Aref+Ruqaa:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../css/fixthecity.css">
+<style>
+html{scroll-behavior:smooth}
+button{font-family:inherit}
+.flip{transform:scaleX(-1)}
+.w-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* top bar */
+.w-top{gap:20px}
+.w-logo img{height:40px;width:auto}
+.w-nav{display:flex;gap:4px;margin-inline-start:8px}
+.w-nav a{display:inline-flex;align-items:center;height:40px;padding:0 14px;border-radius:999px;font:600 15px/1 var(--ftc-font-sans);color:var(--ftc-ink)}
+.w-nav a:hover{background:var(--ftc-paper)}
+.w-nav a[aria-current=page]{background:var(--ftc-red-soft);color:var(--ftc-red-deep)}
+.w-actions{margin-inline-start:auto;display:flex;align-items:center;gap:12px}
+.w-iconbtn{position:relative;width:44px;height:44px;border-radius:50%;border:1px solid var(--ftc-line);background:var(--ftc-surface);color:var(--ftc-ink);display:flex;align-items:center;justify-content:center}
+.w-iconbtn:hover{color:var(--ftc-red)}
+.w-dot{position:absolute;top:9px;inset-inline-end:11px;width:9px;height:9px;border-radius:50%;background:var(--ftc-gold);border:2px solid #fff}
+.w-account{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px 0 6px;border:1px solid var(--ftc-line);border-radius:999px;color:var(--ftc-ink);font:600 14px/1 var(--ftc-font-sans);background:var(--ftc-surface)}
+.w-account[aria-current=page]{border-color:var(--ftc-red);color:var(--ftc-red-deep)}
+.w-avatar{width:32px;height:32px;border-radius:50%;background:var(--ftc-red-soft);color:var(--ftc-red);display:inline-flex;align-items:center;justify-content:center}
+.w-tabbar{display:none}
+/* generic */
+.w-page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px}
+.w-h1{font:700 28px/38px var(--ftc-font-display);margin:0}
+.w-h2{font:600 20px/30px var(--ftc-font-display);margin:0}
+.w-h3{font:600 16px/24px var(--ftc-font-display);margin:0}
+.w-sub{color:var(--ftc-ink-muted);font-size:14px;line-height:22px;margin:2px 0 0}
+.w-back{display:inline-flex;align-items:center;gap:6px;font:600 14px/1 var(--ftc-font-sans);color:var(--ftc-red);margin-bottom:10px}
+.w-sec{margin-top:36px}
+.w-sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
+.w-sec-head a{font:600 14px/1 var(--ftc-font-sans)}
+.w-step{font:500 13px/1 var(--ftc-font-sans);color:var(--ftc-ink-muted)}
+.w-stepbar{display:flex;gap:6px;margin-bottom:24px}
+.w-stepbar span{flex:1;height:4px;border-radius:2px;background:var(--ftc-line)}
+.w-stepbar span.on{background:var(--ftc-red)}
+.w-stack{display:flex;flex-direction:column;gap:16px}
+.w-row{display:flex;align-items:center;gap:12px}
+.w-grow{flex:1;min-width:0}
+.w-t{font:600 15px/24px var(--ftc-font-sans);display:block}
+.w-m{font:400 12px/18px var(--ftc-font-sans);color:var(--ftc-ink-muted);display:block}
+.w-card-link{color:var(--ftc-ink)}
+.w-card-link:hover{color:var(--ftc-ink)}
+.ftc-card{border-radius:var(--ftc-radius-md)}
+.w-lgcard{border-radius:var(--ftc-radius-lg);padding:24px}
+.w-foot{max-width:var(--ftc-web-max);margin:16px auto 0;padding:24px;border-top:1px solid var(--ftc-line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font:400 13px/20px var(--ftc-font-sans);color:var(--ftc-ink-muted)}
+.w-annot{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;background:var(--ftc-gold-soft);color:var(--ftc-gold-deep);font:600 12px/1 var(--ftc-font-sans);margin-bottom:8px}
+/* thumbs */
+.w-thumb{width:52px;height:52px;border-radius:8px;background:var(--ftc-status-received);color:#C9D1D4;display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden}
+.w-thumb svg.art{width:100%;height:100%}
+/* request / nearby rows */
+.w-rowcard{display:flex;align-items:center;gap:12px;padding:12px;background:var(--ftc-surface);border-radius:var(--ftc-radius-md);box-shadow:var(--ftc-shadow-card);color:var(--ftc-ink)}
+a.w-rowcard:hover{color:var(--ftc-ink);box-shadow:0 1px 2px rgba(22,22,22,.08),0 6px 20px rgba(22,22,22,.10)}
+.w-follow{height:40px;padding:0 14px;border-radius:999px;border:1.5px solid var(--ftc-red);background:var(--ftc-surface);color:var(--ftc-red);font:700 13px/1 var(--ftc-font-sans);white-space:nowrap;cursor:pointer}
+.w-follow:hover{background:var(--ftc-red-soft)}
+.w-followed{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 12px;border-radius:999px;background:var(--ftc-status-resolved-bg);color:var(--ftc-status-resolved);font:700 13px/1 var(--ftc-font-sans);white-space:nowrap}
+/* emergency */
+.w-sos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.w-sos a{height:64px;border-radius:var(--ftc-radius-sm);background:var(--ftc-urgent-soft);color:var(--ftc-urgent-deep);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.w-sos a.gas{background:var(--ftc-gold-soft);color:var(--ftc-gold-deep)}
+.w-sos b{font:700 22px/26px var(--ftc-font-display)}
+.w-sos span{font:600 13px/18px var(--ftc-font-sans)}
+.w-sos a:hover{outline:2px solid currentColor}
+/* choice, toggles */
+.w-choice{display:flex;align-items:center;gap:10px;min-height:48px;padding:6px 14px;border:1.5px solid var(--ftc-line);border-radius:var(--ftc-radius-md);background:var(--ftc-surface);font:500 15px/22px var(--ftc-font-sans);cursor:pointer;color:var(--ftc-ink);user-select:none}
+.w-choice .mk{width:20px;height:20px;border-radius:50%;border:2px solid var(--ftc-ink-muted);flex:none;display:inline-flex;align-items:center;justify-content:center;color:#fff}
+.w-choice.chk .mk{border-radius:6px}
+.w-choice .mk svg{opacity:0}
+.w-choice.is-on{border-color:var(--ftc-red);background:var(--ftc-red-soft);font-weight:600}
+.w-choice.is-on .mk{background:var(--ftc-red);border-color:var(--ftc-red)}
+.w-choice.is-on .mk svg{opacity:1}
+.w-choice:not(.chk) .mk::after{content:"";width:8px;height:8px;border-radius:50%;background:#fff;opacity:0}
+.w-choice:not(.chk).is-on .mk::after{opacity:1}
+.w-trow{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--ftc-surface);border:1px solid var(--ftc-line);border-radius:var(--ftc-radius-md)}
+.card-trow{border:0;padding:0;background:transparent}
+.w-trow .ftc-icon-well{width:40px;height:40px}
+.ftc-toggle{border:0;padding:0;cursor:pointer;display:block}
+.w-sel{position:relative}
+.w-sel select{appearance:none;-webkit-appearance:none;padding-inline-end:40px;font:400 16px/26px var(--ftc-font-sans)}
+.w-sel svg{position:absolute;inset-inline-end:14px;top:50%;margin-top:-9px;pointer-events:none;color:var(--ftc-ink-muted)}
+.w-btnrow{display:flex;gap:10px;flex-wrap:wrap}
+.ftc-btn svg{flex:none}
+.ftc-btn--secondary.w-neutral{border:1px solid var(--ftc-line);color:var(--ftc-ink)}
+.w-link{background:none;border:0;padding:0;color:var(--ftc-red);font:600 14px/22px var(--ftc-font-sans);cursor:pointer}
+.w-pills{display:flex;gap:8px;flex-wrap:wrap}
+.ftc-filter{cursor:pointer;font-family:var(--ftc-font-sans)}
+.w-notice-ic{flex:none;margin-top:2px}
+@media (max-width:760px){
+  .w-nav,.w-cta,.w-account__t{display:none}
+  .w-top{gap:8px}
+  .w-account{padding:0 6px}
+  .w-account{border:0;display:none}
+  .w-tabbar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;position:sticky;bottom:0;z-index:20;padding:0;height:76px}
+  .w-tabbar a{font-size:11px;line-height:16px;font-weight:500}
+  .w-tabbar a[aria-current=page]{font-weight:600}
+  .w-fab{width:60px;height:60px;margin-top:-34px;justify-self:center}
+  .w-h1{font-size:24px;line-height:34px}
+  .w-sec{margin-top:24px}
+  .w-lgcard{padding:16px}
+  .w-sos{gap:6px}
+  .w-sos a{height:56px}
+  .w-sos b{font-size:18px;line-height:22px}
+  .w-foot{padding:16px}
+  .w-page-head{flex-wrap:wrap}
+}
+
+.q-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
+.q-list{display:flex;flex-direction:column;gap:10px}
+.q-row{display:grid;grid-template-columns:auto minmax(0,1fr) 190px 130px auto;align-items:center;gap:16px;padding:12px 16px}
+.q-row .dep{font:400 13px/20px var(--ftc-font-sans);color:var(--ftc-ink-muted)}
+.q-row .dep b{display:block;font-weight:600;color:var(--ftc-ink);font-size:13px}
+.q-row .go{color:var(--ftc-ink-muted)}
+.q-kind{display:inline-flex;align-items:center;gap:4px;font:600 11px/18px var(--ftc-font-sans);color:var(--ftc-ink-muted);border:1px solid var(--ftc-line);border-radius:999px;padding:0 8px;margin-inline-start:6px;vertical-align:middle}
+.q-side{position:sticky;top:88px;display:flex;flex-direction:column;gap:16px}
+.q-stats{display:grid;grid-template-columns:1fr 1fr 1fr;text-align:center}
+.q-stats div + div{border-inline-start:1px solid var(--ftc-line)}
+.q-stats b{display:block;font:600 28px/34px var(--ftc-font-display);color:var(--ftc-red)}
+.q-stats span{font-size:12px;color:var(--ftc-ink-muted)}
+.q-tools{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:16px}
+@media (max-width:1000px){.q-grid{grid-template-columns:1fr}.q-side{position:static;order:-1}.q-row{grid-template-columns:auto minmax(0,1fr) auto}.q-row .dep,.q-row .go{display:none}}
+@media (max-width:760px){.q-row{padding:12px;gap:12px}.q-row > .stc{grid-column:auto}}
+</style>
+</head>
+<body>
+<div class="ftc-docbar"><a href="../../index.html">FixTheCity design</a><span>Citizen website · Requests</span></div>
+<header class="ftc-web-topbar">
+  <div class="ftc-web-topbar__inner w-top">
+    <a class="w-logo" href="Home.html" aria-label="فيكس ذا سيتي"><img src="../../assets/fixthecity-lockup-ar.svg" alt="فيكس ذا سيتي" height="40"></a>
+    <nav class="w-nav" aria-label="التنقل الرئيسي"><a href="Home.html">الرئيسية</a><a href="Map.html">الخريطة</a><a href="Requests.html" aria-current="page">طلباتي</a><a href="Services.html">الخدمات</a></nav>
+    <div class="w-actions">
+      <a class="ftc-btn ftc-btn--gold ftc-btn--sm w-cta" href="Category.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>بلّغ عن مشكلة</a>
+      <a class="w-iconbtn" href="#" aria-label="الإشعارات"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="w-dot"></span></a>
+      <a class="w-account" href="Profile.html"><span class="w-avatar"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span class="w-account__t">حسابي</span></a>
+    </div>
+  </div>
+</header>
+<main class="ftc-web-main">
+  <div class="w-page-head"><div><h1 class="w-h1">طلباتي</h1><p class="w-sub">البلاغات والخدمات اللي طلبتها، الأحدث فوق.</p></div><a class="ftc-btn ftc-btn--gold" href="Category.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>بلّغ عن مشكلة</a></div>
+  <div class="q-grid">
+    <section aria-label="قايمة الطلبات">
+      <div class="q-tools">
+        <div class="w-pills" data-pills role="group" aria-label="فلتر الطلبات">
+          <button type="button" class="ftc-filter is-active" aria-pressed="true">الكل</button><button type="button" class="ftc-filter" aria-pressed="false">بلاغات</button><button type="button" class="ftc-filter" aria-pressed="false">خدمات</button><button type="button" class="ftc-filter" aria-pressed="false">مفتوحة</button><button type="button" class="ftc-filter" aria-pressed="false">اتصلّحت</button>
+        </div>
+      </div>
+      <div class="q-list"><a class="w-rowcard q-row" href="Track.html"><span class="w-thumb" aria-hidden="true"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span><span class="w-grow"><span class="w-t">حفرة في شارع عباس العقاد</span><span class="w-m">#FTC-1042 · اتبلّغ النهارده</span></span><span class="dep"><b>صيانة الطرق</b>متوقع يخلص خلال ٣ أيام</span><span class="stc"><span class="ftc-chip ftc-chip--progress">جاري التنفيذ</span></span><span class="go"><svg class="flip" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span></a><a class="w-rowcard q-row" href="Track.html"><span class="w-thumb" aria-hidden="true"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span><span class="w-grow"><span class="w-t">حفرة قدام مدرسة النصر الإعدادية</span><span class="w-m">#FTC-1043 · اتبلّغ من دقايق</span></span><span class="dep"><b>صيانة الطرق</b>هنبلّغك أول ما يتحدد</span><span class="stc"><span class="ftc-chip ftc-chip--received">وصل</span></span><span class="go"><svg class="flip" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span></a><a class="w-rowcard q-row" href="Track.html"><span class="w-thumb" aria-hidden="true"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span><span class="w-grow"><span class="w-t">رفع مخلفات كبيرة<span class="q-kind">خدمة</span></span><span class="w-m">#SRV-2001 · اتحجز امبارح</span></span><span class="dep"><b>خدمات الحي</b>الميعاد: الخميس ٢٢ أكتوبر · ٩ ص – ١٢ ظ</span><span class="stc"><span class="ftc-chip ftc-chip--assigned">اتحوّل</span></span><span class="go"><svg class="flip" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span></a><a class="w-rowcard q-row" href="Track.html"><span class="w-thumb" aria-hidden="true"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span><span class="w-grow"><span class="w-t">عمود نور مطفي</span><span class="w-m">#FTC-0987 · من ٣ أيام</span></span><span class="dep"><b>إنارة الحي</b>اتصلّح امبارح</span><span class="stc"><span class="ftc-chip ftc-chip--resolved">اتصلّح</span></span><span class="go"><svg class="flip" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span></a></div>
+    </section>
+    <aside class="q-side" aria-label="ملخص">
+      <div class="ftc-card">
+        <h2 class="w-h3" style="margin-bottom:12px">ملخص طلباتك</h2>
+        <div class="q-stats"><div><b>٤</b><span>الكل</span></div><div><b>٣</b><span>مفتوحة</span></div><div><b>١</b><span>اتصلّحت</span></div></div>
+      </div>
+      <div class="ftc-card" style="background:var(--ftc-gold-soft);box-shadow:none">
+        <div class="w-row"><svg class="medal" viewBox="0 0 64 64" width="48" height="48" aria-hidden="true"><path d="M20 34 L12 60 L22 54 L28 62 L32 38 Z" fill="#C8102E"/><path d="M44 34 L52 60 L42 54 L36 62 L32 38 Z" fill="#161616"/><circle cx="32" cy="24" r="20" fill="#D4A20B"/><circle cx="32" cy="24" r="14.5" fill="none" stroke="#7A5A00" stroke-width="1.5"/><path d="M32 14.5l2.8 5.7 6.3.9-4.6 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2-4.6-4.4 6.3-.9z" fill="#161616"/></svg><span><span class="ftc-caption" style="color:var(--ftc-gold-deep);display:block">لقبك</span><span style="font:700 22px/32px var(--ftc-font-ruqaa);color:var(--ftc-gold-deep)">جدع الشارع</span></span></div>
+      </div>
+      <div class="ftc-notice ftc-notice--ai"><svg class="w-notice-ic" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg><span>بنبعتلك تحديث على واتساب في كل خطوة، ولو مفيش نت هتوصلك SMS.</span></div>
+    </aside>
+  </div>
+</main>
+<footer class="w-foot"><span>FixTheCity · النسخة ١٫٠</span><span>بلّغ.. وإحنا نتابع لحد ما تتصلّح</span></footer>
+<nav class="ftc-tabbar w-tabbar" aria-label="التنقل الرئيسي">
+  <a href="Home.html"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>الرئيسية</a>
+  <a href="Map.html"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15"/><path d="M15 6v15"/></svg>الخريطة</a>
+  <a class="ftc-fab w-fab" href="Category.html" aria-label="بلّغ عن مشكلة"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></a>
+  <a href="Requests.html" aria-current="page"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>طلباتي</a>
+  <a href="Profile.html"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>حسابي</a>
+</nav>
+<script>
+document.addEventListener('click',function(e){
+  var t=e.target.closest('.ftc-toggle');
+  if(t){var on=t.classList.toggle('is-on');t.setAttribute('aria-checked',on);return;}
+  var c=e.target.closest('.w-choice');
+  if(c){var g=c.closest('[data-choice]');if(!g)return;
+    if(g.dataset.choice==='multi'){c.classList.toggle('is-on');}
+    else{g.querySelectorAll('.w-choice').forEach(function(x){x.classList.remove('is-on');});c.classList.add('is-on');}
+    return;}
+  var f=e.target.closest('.ftc-filter');
+  if(f){var p=f.closest('[data-pills]');if(!p)return;
+    p.querySelectorAll('.ftc-filter').forEach(function(x){x.classList.remove('is-active');x.setAttribute('aria-pressed','false');});
+    f.classList.add('is-active');f.setAttribute('aria-pressed','true');}
+});
+</script>
+</body>
+</html>
