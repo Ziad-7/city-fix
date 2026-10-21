@@ -148,3 +148,11 @@ Every component in the design spec inventory under `src/components/ui/`, and a `
 ## Task 10 — E2E, CI, docs
 
 Playwright (`apps/admin-web/e2e/`) running against a real backend started from `backend/` (playwright `webServer` for both): login → open top incident → confirm AI → create work order → change status to in_progress with note → assert citizen `GET /incidents/{id}` (via API with citizen token) shows the note → budget plan within budget → commit. `.github/workflows/admin-web-ci.yml` (typecheck, lint, vitest, build) and `.github/workflows/backend-ci.yml` (pytest). Update `apps/admin-web/README.md`, `backend/README.md`, root README status rows, `docs/api-contract.md` (mark admin endpoints/shapes as implemented, add the admin shapes), `docs/progress-log.md` entry.
+
+## Amendments (from D1 design spec, binding for Tasks 3–9)
+
+- A1. `GET /admin/teams` → `{ name, department, size }[]` from the seeded teams constant.
+- A2. `GET /admin/incidents` with no `status` filter returns ALL incidents (open + resolved + closed); the Map page and queue filter client-side or via query.
+- A3. `PATCH /admin/service-requests/{id}` and `PATCH /incidents/{id}` with only `note` (no status) append a timeline entry with the current status and that note.
+- A4. Priority factor "why" texts are generated client-side (design spec `factorWhy`); backend unchanged.
+- A5. Photos stay placeholders (no photo URLs on `LinkedReport`).
