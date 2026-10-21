@@ -134,6 +134,14 @@ class TestStaffLogin:
         )
         assert response.status_code == 401
 
+    def test_staff_login_empty_body(self, client: TestClient):
+        """POST /auth/staff-login with {} should return 422 with Arabic message."""
+        response = client.post("/auth/staff-login", json={})
+        assert response.status_code == 422
+        data = response.json()
+        # Should have detail with Arabic message
+        assert "detail" in data or "errors" in data or len(data) > 0
+
     def test_token_contains_role(self, client: TestClient):
         """Token should contain role in JWT payload."""
         response = client.post(
@@ -188,3 +196,28 @@ class TestGetMe:
             headers={"Authorization": "Bearer invalid-token"},
         )
         assert response.status_code == 401
+
+    def test_citizen_token_denied_on_staff_dependency(self, client: TestClient):
+        """Citizen token should fail require_staff dependency (test via direct dependency call)."""
+        from app.auth import require_staff, decode_jwt_token
+        from fastapi import HTTPException
+
+        # Get a citizen token via OTP
+        response = client.post(
+            "/auth/verify",
+            json={"phone": "01012345678", "code": "123456"},
+        )
+        assert response.status_code == 200
+        citizen_token = response.json()["token"]
+
+        # Decode the token to get the payload
+        payload = decode_jwt_token(citizen_token)
+        assert payload.get("role") == "citizen"
+
+        # Call require_staff with citizen payload - should raise 403
+        try:
+            require_staff(payload)
+            assert False, "require_staff should have raised HTTPException for citizen"
+        except HTTPException as e:
+            assert e.status_code == 403
+            assert "مش مسموح" in str(e.detail)

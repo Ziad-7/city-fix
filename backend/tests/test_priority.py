@@ -70,6 +70,34 @@ class TestComputePriority:
         assert maxed["score"] <= 100
         assert all(f["points"] <= f["max"] for f in maxed["factors"])
 
+    def test_age_points_specific_values(self):
+        """Age factor should return specific points for given daysOpen/targetDays."""
+        # daysOpen 1, targetDays 4 → age points 3
+        result1 = compute_priority({
+            "severity": "medium",
+            "near_sensitive_place": False,
+            "reporters": 1,
+            "days_open": 1,
+            "target_days": 4,
+            "area_underserved": False,
+        })
+        age_factor1 = next((f for f in result1["factors"] if f["key"] == "age"), None)
+        assert age_factor1 is not None, "Age factor not found"
+        assert age_factor1["points"] == 3, f"Expected 3 age points for days_open=1, target_days=4, got {age_factor1['points']}"
+
+        # daysOpen 9, targetDays 20 → age points 5
+        result2 = compute_priority({
+            "severity": "medium",
+            "near_sensitive_place": False,
+            "reporters": 1,
+            "days_open": 9,
+            "target_days": 20,
+            "area_underserved": False,
+        })
+        age_factor2 = next((f for f in result2["factors"] if f["key"] == "age"), None)
+        assert age_factor2 is not None, "Age factor not found"
+        assert age_factor2["points"] == 5, f"Expected 5 age points for days_open=9, target_days=20, got {age_factor2['points']}"
+
     def test_priority_level_mapping(self):
         """Score should map correctly to priority level."""
         assert priority_level(90) == "critical"

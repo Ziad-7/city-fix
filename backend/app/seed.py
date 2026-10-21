@@ -183,8 +183,8 @@ def seed_db(db: Session) -> None:
         (509, "broken_sidewalk", "رصيف مكسور قدام المستشفى", "شارع أحمد فخري، مدينة نصر", 30.058, 31.326, "assigned", "medium", 72, 6, 5, "مستشفى المبرة", None),
         (510, "stray_dogs", "كلاب ضالة جنب المدرسة", "شارع عمر بن الخطاب، مدينة نصر", 30.053, 31.33, "triaged", "medium", 12, 3, 2, "مدرسة الشهيد محمود", None),
         # Additional incidents for completeness (INC-511..532: 22 more)
-        (511, "garbage", "زبالة في شارع النيل", "شارع النيل، مدينة نصر", 30.0501, 31.3201, "received", "low", 6, 2, 1, None, None),
-        (512, "pothole", "حفر في طريق مكرم عبيد", "طريق مكرم عبيد، مدينة نصر", 30.0571, 31.3381, "received", "medium", 3, 1, 1, None, None),
+        (511, "garbage", "زبالة في شارع النيل", "شارع النيل، مدينة نصر", 30.0501, 31.3201, "triaged", "low", 60, 2, 1, None, None),  # 2.5d overdue (target 2d)
+        (512, "pothole", "حفر في طريق مكرم عبيد", "طريق مكرم عبيد، مدينة نصر", 30.0571, 31.3381, "triaged", "medium", 150, 1, 1, None, None),  # 6.25d overdue (target 5d)
         (513, "streetlight_out", "إنارة مطفأة في شارع البطل أحمد", "شارع البطل أحمد، مدينة نصر", 30.0521, 31.3251, "triaged", "low", 18, 2, 2, None, None),
         (514, "water_pipe_burst", "تسريب مياه في شارع الرحاب", "شارع الرحاب، مدينة نصر", 30.0631, 31.3351, "assigned", "high", 8, 4, 3, None, None),
         (515, "open_manhole", "بالوعة بدون غطاء", "ميدان رابعة العدوية، مدينة نصر", 30.0481, 31.3321, "in_progress", "critical", 2, 8, 8, None, "WO-327"),
@@ -229,7 +229,19 @@ def seed_db(db: Session) -> None:
         status_order = ["received", "triaged", "assigned", "in_progress", "resolved", "closed"]
         up_to = status_order.index(status) if status in status_order else 0
         for i, st in enumerate(status_order[:up_to + 1]):
-            at = created + timedelta(seconds=(now - created).total_seconds() * i / max(1, up_to))
+            # For resolved incidents, use specific resolution times instead of proportional
+            if st == "resolved" and n in [503, 508, 523, 528]:
+                # INC-503: 6h ago, INC-508: 1d ago, INC-523: 10d ago, INC-528: 8d ago
+                if n == 503:
+                    at = now - timedelta(hours=6)
+                elif n == 508:
+                    at = now - timedelta(days=1)
+                elif n == 523:
+                    at = now - timedelta(days=10)
+                elif n == 528:
+                    at = now - timedelta(days=8)
+            else:
+                at = created + timedelta(seconds=(now - created).total_seconds() * i / max(1, up_to))
             entry = incident_timeline_entry(st, cat.label_ar, severity, dept.name_ar, at)
             timeline.append(entry)
 

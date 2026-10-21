@@ -119,7 +119,7 @@ class Incident(Base):
     work_order_id = Column(String(50), nullable=True)
     eta = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=utc_now)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
 
     # Indexes for common queries
     __table_args__ = (
@@ -196,7 +196,7 @@ class WorkOrder(Base):
     estimated_cost_egp = Column(Integer, nullable=True)
     tasks = Column(JSON, default=[])  # List of {label, done}
     created_at = Column(DateTime, default=utc_now)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
     resolved_at = Column(DateTime, nullable=True)
 
 
