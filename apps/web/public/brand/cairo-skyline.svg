@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 150" width="390" height="150">
+  <title>Cairo skyline on the Nile, in the colours of the flag</title>
+  <circle cx="320" cy="44" r="22" fill="#D4A20B"/>
+  <path d="M232 108 L272 62 L312 108 Z" fill="#D4A20B"/>
+  <path d="M290 108 L318 76 L346 108 Z" fill="#D4A20B" fill-opacity=".7"/>
+  <g fill="#FFFFFF" fill-opacity=".3">
+    <rect x="0" y="72" width="28" height="36"/>
+    <rect x="94" y="62" width="24" height="46"/>
+    <rect x="160" y="70" width="30" height="38"/>
+    <rect x="350" y="70" width="40" height="38"/>
+  </g>
+  <g fill="#FFFFFF">
+    <rect x="58" y="12" width="2" height="12"/>
+    <path d="M50 24 h18 l-3 13 h-12 z"/>
+    <path d="M54 37 h10 l-1.6 71 h-6.8 z"/>
+    <rect x="8" y="84" width="38" height="24"/>
+    <rect x="72" y="88" width="26" height="20"/>
+    <rect x="112" y="76" width="40" height="32"/>
+    <rect x="150" y="90" width="28" height="18"/>
+    <rect x="182" y="80" width="34" height="28"/>
+    <rect x="214" y="94" width="26" height="14"/>
+    <rect x="336" y="86" width="42" height="22"/>
+  </g>
+  <g fill="#C8102E">
+    <rect x="14" y="90" width="4" height="4"/><rect x="26" y="90" width="4" height="4"/><rect x="36" y="98" width="4" height="4"/>
+    <rect x="118" y="82" width="4" height="4"/><rect x="130" y="90" width="4" height="4"/><rect x="142" y="82" width="4" height="4"/>
+    <rect x="188" y="86" width="4" height="4"/><rect x="200" y="94" width="4" height="4"/><rect x="78" y="94" width="4" height="4"/><rect x="344" y="92" width="4" height="4"/><rect x="364" y="92" width="4" height="4"/>
+  </g>
+  <rect x="0" y="108" width="390" height="42" fill="#161616"/>
+  <g fill="none" stroke="#FFFFFF" stroke-opacity=".45" stroke-width="2" stroke-linecap="round">
+    <path d="M14 120 q8 -4 16 0 t16 0"/>
+    <path d="M150 128 q8 -4 16 0 t16 0"/>
+    <path d="M222 118 q8 -4 16 0 t16 0"/>
+    <path d="M80 140 q8 -4 16 0 t16 0"/>
+  </g>
+  <g fill="#D4A20B" fill-opacity=".85">
+    <rect x="308" y="116" width="24" height="2.5" rx="1.25"/>
+    <rect x="313" y="123" width="14" height="2.5" rx="1.25"/>
+  </g>
+  <g fill="#FFFFFF">
+    <path d="M262 134 h48 l-7 8 h-34 z"/>
+    <rect x="286" y="100" width="2" height="34"/>
+    <path d="M266 132 L312 88 L304 132 Z"/>
+  </g>
+</svg>

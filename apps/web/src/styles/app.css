@@ -1,0 +1,87 @@
+/* Website-only additions on top of the mockup styles: live states (loading, errors, toasts),
+   real photos and the Leaflet map. Same tokens, no new colours. */
+
+/* The mockups reserve 38px for the design-pack doc bar; the product has none. */
+.s-split { min-height: 100vh; }
+.s-hero { height: 100vh; }
+@media (max-width: 760px) { .s-hero { height: auto; } }
+
+.a-skip { position: absolute; inset-inline-start: 8px; top: -60px; z-index: 50; background: var(--ftc-ink); color: var(--ftc-on-ink); padding: 8px 14px; border-radius: var(--ftc-radius-sm); font: 600 14px/22px var(--ftc-font-sans); }
+.a-skip:focus { top: 8px; color: var(--ftc-on-ink); }
+
+.a-err { font: 500 12px/18px var(--ftc-font-sans); color: var(--ftc-urgent); }
+.ftc-input[aria-invalid='true'], .ftc-textarea[aria-invalid='true'] { border-color: var(--ftc-urgent); }
+.ftc-btn:disabled { opacity: .6; cursor: default; }
+button.w-link:disabled { opacity: .6; cursor: default; }
+
+/* Spinner */
+.a-spin { display: inline-block; width: 20px; height: 20px; border-radius: 50%; border: 2.5px solid var(--ftc-red-soft); border-top-color: var(--ftc-red); animation: a-spin .8s linear infinite; flex: none; }
+.a-spin--on-red { border-color: rgba(255, 255, 255, .35); border-top-color: #fff; }
+.a-spin--page { display: block; margin: 80px auto; width: 32px; height: 32px; }
+@keyframes a-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .a-spin { animation-duration: 2.4s; } html { scroll-behavior: auto; } }
+
+/* Loading / empty / error card */
+.a-state { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 32px 20px; }
+.a-state b { font: 600 16px/24px var(--ftc-font-display); }
+.a-state p { margin: 0; color: var(--ftc-ink-muted); font-size: 14px; line-height: 22px; max-width: 360px; }
+.a-state .ftc-btn { margin-top: 6px; }
+.a-state.is-error .ftc-icon-well { background: var(--ftc-urgent-soft); color: var(--ftc-urgent-deep); }
+
+/* Toast */
+.a-toast { position: fixed; inset-inline: 16px; bottom: 24px; z-index: 40; display: flex; justify-content: center; pointer-events: none; }
+.a-toast span { background: var(--ftc-ink); color: var(--ftc-on-ink); border-radius: var(--ftc-radius-md); padding: 10px 16px; font: 500 14px/22px var(--ftc-font-sans); box-shadow: var(--ftc-shadow-float); max-width: 480px; }
+@media (max-width: 760px) { .a-toast { bottom: 96px; } }
+
+/* Thumbnails and photo slots with real images */
+.w-thumb img, .t-ph img, .r-ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.r-ph img { position: absolute; inset: 0; }
+.r-drop.is-over { border-color: var(--ftc-red); background: var(--ftc-red-soft); }
+
+/* Small "قريبًا" pill (voice note, coming-soon services) */
+.a-soon { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px; background: var(--ftc-gold-soft); color: var(--ftc-gold-deep); font: 600 12px/1 var(--ftc-font-sans); flex: none; }
+.a-note { font: 500 12px/18px var(--ftc-font-sans); color: var(--ftc-gold-deep); }
+
+/* Category picker dialog */
+.a-dialog { border: 0; padding: 0; border-radius: var(--ftc-radius-lg); width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 64px); background: var(--ftc-paper); box-shadow: var(--ftc-shadow-float); }
+.a-dialog::backdrop { background: rgba(22, 22, 22, .45); }
+.a-dialog__head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 12px; padding: 16px 20px; background: var(--ftc-surface); border-bottom: 1px solid var(--ftc-line); }
+.a-dialog__head h2 { flex: 1; margin: 0; font: 600 18px/28px var(--ftc-font-display); }
+.a-dialog__body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.a-x { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--ftc-line); background: var(--ftc-surface); color: var(--ftc-ink); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.c-tile.is-sel { outline: 2px solid var(--ftc-red); }
+button.c-tile { border: 0; font: inherit; text-align: inherit; cursor: pointer; }
+
+/* Category row shown before the AI has anything to say */
+.a-catrow { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; background: var(--ftc-surface); border: 1px solid var(--ftc-line); border-radius: var(--ftc-radius-md); cursor: pointer; font: inherit; color: var(--ftc-ink); text-align: start; }
+.a-catrow .w-grow b { display: block; font: 600 14px/22px var(--ftc-font-sans); }
+
+/* Leaflet */
+.a-map { position: absolute; inset: 0; z-index: 0; background: var(--ftc-map-ground); }
+.a-map .leaflet-container { width: 100%; height: 100%; background: var(--ftc-map-ground); font-family: var(--ftc-font-sans); }
+.a-pin { background: none; border: 0; }
+.a-pin svg { display: block; filter: drop-shadow(0 2px 3px rgba(22, 22, 22, .3)); }
+.a-pin.is-sel svg { transform: scale(1.25); transform-origin: 50% 100%; }
+.a-pin--me span { display: block; width: 18px; height: 18px; border-radius: 50%; background: var(--ftc-red); border: 3px solid #fff; box-shadow: 0 0 0 6px rgba(200, 16, 46, .2); }
+.leaflet-control-attribution { font-size: 10px; }
+
+/* Map list item as a button */
+button.m-item { width: 100%; background: transparent; font: inherit; text-align: start; }
+
+/* Home map card uses the design pack's city illustration as an image. */
+.h-mapcard img.citymap { width: 100%; height: 100%; min-height: 320px; aspect-ratio: 1.4; object-fit: cover; }
+.a-chips { display: inline-flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* Map page: no doc bar above the 68px top bar; controls float above Leaflet's panes. */
+.m-wrap { height: calc(100vh - 69px); }
+.m-stage > :not(.a-map) { z-index: 1000; }
+.r-loc__map { overflow: hidden; border-radius: var(--ftc-radius-md) var(--ftc-radius-md) 0 0; }
+@media (max-width: 760px) { .m-wrap { height: auto; } .m-stage { min-height: 70vh; } }
+
+/* Tracking page: photo-less summary tile and the booking details list. */
+.a-ph-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--ftc-icon-muted); }
+.t-ph img { position: absolute; inset: 0; }
+.a-dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 14px; line-height: 22px; }
+.a-dl dt { color: var(--ftc-ink-muted); }
+.a-dl dd { margin: 0; font-weight: 600; }
+.a-initial { font: 700 30px/1 var(--ftc-font-display); color: var(--ftc-red); }
