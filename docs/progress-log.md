@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-21 — Review of the SDK 57 change and handoff (PRs #6, #7)
+
+**Done**
+- Reviewed and verified from a clean install: typecheck, lint, 89 tests, `expo install --check`, web export, CI all pass ([review](reviews/2026-10-21-sdk57-review.md)). Approved.
+- Updated stale "SDK 58 / RN 0.88" notes (implementation spec, `Screen.tsx` comments).
+- Mobile README: before the next Android APK, add a Google Maps API key (or the map tab will crash) and commit an `eas.json` build profile.
+
 ## 2026-10-21 — Mobile developer handoff: preview and APK investigation
 
 **Done**
