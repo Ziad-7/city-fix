@@ -2,23 +2,20 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FixTheCity — خدمات المدينة</title>
-<script src="./support.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;family=Readex+Pro:wght@500;600;700&amp;family=Aref+Ruqaa:wght@700&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../css/fixthecity.css">
 </head>
 <body>
-<x-dc>
-<helmet>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;family=Readex+Pro:wght@500;600;700&amp;display=swap" rel="stylesheet">
-<style>
-body{margin:0}
-a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
-</style>
-</helmet>
+<div class="ftc-docbar"><a href="../../index.html">FixTheCity design</a><span>Mobile app · Services</span></div>
+<div style="width:390px;margin:24px auto;box-shadow:var(--ftc-shadow-float);overflow:hidden">
 <div dir="rtl" style="width: 390px; height: 1080px; box-sizing: border-box; background: #F8F6F2; color: #161616; font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif; display: flex; flex-direction: column;">
 
   <header style="display: flex; align-items: center; gap: 8px; padding: 16px 12px 8px;">
-    <a href="Main.dc.html" aria-label="رجوع" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: #161616;"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg></a>
+    <a href="Main.html" aria-label="رجوع" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: #161616;"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg></a>
     <h1 style="margin: 0; flex: 1; font-family: 'Readex Pro', sans-serif; font-size: 20px; line-height: 30px; font-weight: 700;">خدمات المدينة</h1>
   </header>
 
@@ -57,12 +54,12 @@ a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
       <fieldset style="border: 0; margin: 0; padding: 0;">
         <legend style="font-size: 14px; line-height: 22px; font-weight: 600; padding: 0; margin-bottom: 8px;">اختار الميعاد</legend>
         <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
-          <label style="border-radius: 14px; background: #C8102E; color: #FFFFFF; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; font-size: 12px; line-height: 18px;"><input type="radio" name="day" checked style="position: absolute; opacity: 0; width: 1px; height: 1px;"><span>الأربعاء</span><span style="font-family: 'Readex Pro', sans-serif; font-size: 18px; line-height: 26px; font-weight: 700;">٢٢</span></label>
-          <label style="border-radius: 14px; background: #FFFFFF; border: 1px solid #E6E1D8; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; font-size: 12px; line-height: 18px;"><input type="radio" name="day" style="position: absolute; opacity: 0; width: 1px; height: 1px;"><span>الخميس</span><span style="font-family: 'Readex Pro', sans-serif; font-size: 18px; line-height: 26px; font-weight: 700;">٢٣</span></label>
-          <label style="border-radius: 14px; background: #FFFFFF; border: 1px solid #E6E1D8; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; font-size: 12px; line-height: 18px;"><input type="radio" name="day" style="position: absolute; opacity: 0; width: 1px; height: 1px;"><span>السبت</span><span style="font-family: 'Readex Pro', sans-serif; font-size: 18px; line-height: 26px; font-weight: 700;">٢٥</span></label>
+          <label style="border-radius: 14px; background: #FBE4E7; border: 1.5px solid #C8102E; color: #8E0A20; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; font-size: 12px; line-height: 18px;"><input type="radio" name="day" checked style="position: absolute; opacity: 0; width: 1px; height: 1px;"><span>الخميس</span><span style="font-family: 'Readex Pro', sans-serif; font-size: 18px; line-height: 26px; font-weight: 700;">٢٢</span></label>
+          <label style="border-radius: 14px; background: #FFFFFF; border: 1px solid #E6E1D8; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; font-size: 12px; line-height: 18px;"><input type="radio" name="day" style="position: absolute; opacity: 0; width: 1px; height: 1px;"><span>الأحد</span><span style="font-family: 'Readex Pro', sans-serif; font-size: 18px; line-height: 26px; font-weight: 700;">٢٥</span></label>
+          <label style="border-radius: 14px; background: #FFFFFF; border: 1px solid #E6E1D8; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; font-size: 12px; line-height: 18px;"><input type="radio" name="day" style="position: absolute; opacity: 0; width: 1px; height: 1px;"><span>الاتنين</span><span style="font-family: 'Readex Pro', sans-serif; font-size: 18px; line-height: 26px; font-weight: 700;">٢٦</span></label>
         </div>
         <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px;">
-          <label style="height: 40px; border-radius: 999px; background: #FAF0D2; color: #7A5A00; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;"><input type="radio" name="slot" checked style="position: absolute; opacity: 0; width: 1px; height: 1px;">٩ ص – ١٢ ظ</label>
+          <label style="height: 40px; border-radius: 999px; background: #FBE4E7; border: 1.5px solid #C8102E; color: #8E0A20; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;"><input type="radio" name="slot" checked style="position: absolute; opacity: 0; width: 1px; height: 1px;">٩ ص – ١٢ ظ</label>
           <label style="height: 40px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E6E1D8; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500;"><input type="radio" name="slot" style="position: absolute; opacity: 0; width: 1px; height: 1px;">٢ م – ٥ م</label>
         </div>
       </fieldset>
@@ -78,7 +75,7 @@ a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
         </div>
       </fieldset>
 
-      <a href="Track.dc.html" style="height: 52px; border-radius: 14px; background: #C8102E; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700;">احجز الميعاد</a>
+      <a href="Track.html" style="height: 52px; border-radius: 14px; background: #C8102E; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700;">احجز الميعاد</a>
     </section>
 
     <section style="display: flex; flex-direction: column; gap: 8px;">
@@ -96,11 +93,6 @@ a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
     </section>
   </main>
 </div>
-</x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1080}}'>
-class Component extends DCLogic {
-  renderVals() { return {}; }
-}
-</script>
+</div>
 </body>
 </html>

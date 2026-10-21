@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FixTheCity — مركز القيادة: طلبات الخدمات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;family=Readex+Pro:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../css/fixthecity.css">
+<style>
+.ftc-admin-sidebar .brand{display:flex;align-items:center;gap:10px;padding:0 8px 18px}
+.ftc-admin-sidebar .brand b{display:block;font:700 16px/22px var(--ftc-font-display)}
+.ftc-admin-sidebar .brand small{display:block;font-size:12px;line-height:18px;color:var(--ftc-on-ink-muted)}
+.ftc-admin-sidebar a:hover:not([aria-current]){background:rgba(255,255,255,.08);color:var(--ftc-on-ink)}
+.ftc-admin-sidebar a .lbl{flex:1}
+.ftc-admin-sidebar a .count{font-size:12px;color:var(--ftc-on-ink-muted)}
+.ftc-admin-sidebar a[aria-current="page"] .count{color:var(--ftc-ink);font-weight:700}
+.ftc-admin-sidebar .sb-user{margin-top:auto;border-top:1px solid rgba(255,255,255,.12);padding:14px 4px 0;display:flex;align-items:center;gap:10px}
+.ftc-admin-sidebar .sb-user .who{flex:1;min-width:0}
+.ftc-admin-sidebar .sb-user b{display:block;font:600 14px/20px var(--ftc-font-sans)}
+.ftc-admin-sidebar .sb-user small{display:block;font-size:12px;line-height:16px;color:var(--ftc-on-ink-muted)}
+.ftc-admin-sidebar .sb-user a.out{width:36px;height:36px;padding:0;justify-content:center;flex:none}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--ftc-gold);color:var(--ftc-ink);display:inline-flex;align-items:center;justify-content:center;font:700 15px/1 var(--ftc-font-display);flex:none}
+.page{display:flex;flex-direction:column;gap:20px}
+.page-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.page-head .grow{flex:1 1 260px;min-width:0}
+.page-head h1{margin:0;font:700 26px/36px var(--ftc-font-display)}
+.page-head p{margin:0;font-size:14px;line-height:22px;color:var(--ftc-ink-muted)}
+.search{height:44px;flex:0 1 280px;min-width:200px;border-radius:var(--ftc-radius-md);background:var(--ftc-surface);border:1px solid var(--ftc-line);display:flex;align-items:center;gap:8px;padding:0 12px;color:var(--ftc-ink-muted)}
+.search input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:400 14px/22px var(--ftc-font-sans);color:var(--ftc-ink)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{display:flex;flex-direction:column;gap:4px}
+.kpi .l{font-size:13px;line-height:20px;color:var(--ftc-ink-muted)}
+.kpi .d{font-size:12px;line-height:18px;font-weight:600}
+.d--bad{color:var(--ftc-urgent-deep)}.d--good{color:var(--ftc-status-resolved)}.d--mute{color:var(--ftc-ink-muted);font-weight:400!important}
+.sec-title{margin:0;font:600 17px/26px var(--ftc-font-display);display:flex;align-items:center;gap:8px}
+.sec-sub{margin:0;font-size:12px;line-height:18px;color:var(--ftc-ink-muted)}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.score{display:inline-flex;width:40px;height:28px;border-radius:8px;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex:none}
+.score--urgent{background:var(--ftc-urgent);color:#fff}
+.score--high{background:var(--ftc-gold-soft);color:var(--ftc-gold-deep)}
+.score--low{background:var(--ftc-status-received-bg);color:var(--ftc-status-received)}
+.tablewrap{overflow-x:auto}
+.mini{font-size:12px;line-height:18px;color:var(--ftc-ink-muted)}
+.strong{font-weight:600}
+.row-between{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.stack{display:flex;flex-direction:column}
+.g8{gap:8px}.g12{gap:12px}.g16{gap:16px}
+.link{color:var(--ftc-red);font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ftc-filter{cursor:pointer;font-family:inherit}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px}
+.ftc-btn--sm.ftc-btn--secondary{border-width:1.5px}
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){
+  .ftc-admin-main{padding:16px}
+  .ftc-admin-sidebar{flex-direction:row;flex-wrap:wrap;padding:12px;gap:6px}
+  .ftc-admin-sidebar .brand{width:100%;padding:0 4px 6px}
+  .ftc-admin-sidebar > a{flex:1 1 calc(50% - 6px);min-width:140px}
+  .ftc-admin-sidebar .sb-user{width:100%;margin-top:6px}
+  .page-head h1{font-size:22px;line-height:30px}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+.kv{display:grid;grid-template-columns:auto 1fr;gap:10px 16px;font-size:14px;line-height:22px;margin:0}
+.kv dt{color:var(--ftc-ink-muted)}.kv dd{margin:0;font-weight:600}
+.side-form{display:flex;flex-direction:column;gap:12px}
+.side-form .ftc-select,.side-form .ftc-input{min-height:44px;font-size:14px}
+.btn-split{display:flex;gap:8px;flex-wrap:wrap}
+.btn-split .ftc-btn{flex:1;padding:0 10px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.fbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.fbar .ftc-select{width:auto;min-height:36px;padding:4px 12px;font-size:14px;border-radius:999px}
+
+.sr-layout{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+.sr-table tbody tr{cursor:pointer}
+.sr-table tbody tr:hover td{background:var(--ftc-paper)}
+.sr-table tr.is-selected:hover td{background:var(--ftc-red-soft)}
+.type{display:flex;align-items:center;gap:10px}
+.type .ftc-icon-well{width:36px;height:36px}
+.slot{display:flex;flex-direction:column}
+.items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.items li{display:flex;align-items:center;gap:10px;background:var(--ftc-paper);border-radius:var(--ftc-radius-sm);padding:8px 12px;font-size:14px}
+.items li svg{color:var(--ftc-status-resolved)}
+.cap{display:flex;flex-direction:column;gap:6px}
+.mini-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:1200px){.sr-layout{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:760px){.mini-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div class="ftc-docbar"><a href="../../index.html">FixTheCity design</a><span>Command Center · ServiceRequests</span></div>
+<div class="ftc-admin">
+<nav class="ftc-admin-sidebar" aria-label="قائمة مركز القيادة">
+<div class="brand"><img src="../../assets/fixthecity-mark.svg" alt="" width="34" height="34"><span><b>FixTheCity</b><small>القاهرة · حي مدينة نصر أول</small></span></div>
+<a href="Overview.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="lbl">نظرة عامة</span></a>
+<a href="Incidents.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span class="lbl">البلاغات</span><span class="count">128</span></a>
+<a href="Map.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15"/><path d="M15 6v15"/></svg><span class="lbl">الخريطة</span></a>
+<a href="ServiceRequests.html" aria-current="page"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg><span class="lbl">طلبات الخدمات</span><span class="count">34</span></a>
+<a href="WorkOrders.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.6-.6-.6-2.6z"/></svg><span class="lbl">أوامر الشغل</span></a>
+<a href="Budget.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg><span class="lbl">الميزانية</span></a>
+<div class="sb-user"><span class="avatar" aria-hidden="true">س</span><span class="who"><b>سارة محمود</b><small>مشرفة فرز · حي مدينة نصر</small></span><a class="out" href="Login.html" aria-label="تسجيل الخروج" title="تسجيل الخروج"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></a></div>
+</nav>
+<main class="ftc-admin-main">
+<div class="page">
+<header class="page-head">
+  <div class="grow"><h1>طلبات الخدمات</h1><p>CityServe · رفع مخلفات كبيرة وصيانة أشجار بميعاد · الأربعاء 21 أكتوبر</p></div>
+  <label class="search"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input aria-label="ابحث في الطلبات" placeholder="ابحث برقم الطلب أو الشارع"></label>
+</header>
+
+<section class="mini-kpis" aria-label="ملخص">
+  <div class="ftc-card kpi"><span class="l">طلبات جديدة</span><span class="ftc-metric num">12</span><span class="d d--mute">محتاجة جدولة</span></div>
+  <div class="ftc-card kpi"><span class="l">متجدولة النهارده</span><span class="ftc-metric num">6</span><span class="d d--mute">2 جاري التنفيذ</span></div>
+  <div class="ftc-card kpi"><span class="l">مستنية تأكيد دفع</span><span class="ftc-metric num">4</span><span class="d d--mute">فوري وإنستاباي</span></div>
+  <div class="ftc-card kpi"><span class="l">اتنفّذت الأسبوع ده</span><span class="ftc-metric num">21</span><span class="d d--good">+5 عن الأسبوع اللي فات</span></div>
+</section>
+
+<div class="fbar" role="group" aria-label="فلاتر">
+  <button class="ftc-filter is-active" type="button" aria-pressed="true">الكل (34)</button>
+  <button class="ftc-filter" type="button" aria-pressed="false">رفع مخلفات كبيرة (21)</button>
+  <button class="ftc-filter" type="button" aria-pressed="false">صيانة أشجار (13)</button>
+  <button class="ftc-filter" type="button" aria-pressed="false">النهارده (2)</button>
+  <label class="sr-only" for="fp">طريقة الدفع</label>
+  <select class="ftc-select" id="fp"><option>كل طرق الدفع</option><option>كاش مع العامل</option><option>فوري</option><option>إنستاباي</option><option>محفظة موبايل</option></select>
+  <label class="sr-only" for="fs">الحالة</label>
+  <select class="ftc-select" id="fs"><option>كل الحالات</option><option>وصل</option><option>اتحوّل</option><option>جاري التنفيذ</option><option>اتصلّح</option></select>
+</div>
+
+<div class="sr-layout">
+  <section class="ftc-card" style="padding:0;overflow:hidden" aria-label="طلبات الخدمات">
+    <div class="tablewrap"><table class="ftc-table sr-table" style="min-width:640px">
+      <thead><tr><th>الطلب</th><th>العنوان والجهة</th><th>اليوم والفترة</th><th>الدفع</th><th>الحالة</th></tr></thead>
+      <tbody><tr class=is-selected><td><div class="type"><span class="ftc-icon-well"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span><div><span class="strong num">SRV-2001</span><span class="mini" style="display:block">رفع مخلفات كبيرة</span></div></div></td><td>شارع عباس العقاد، عمارة 12<span class="mini" style="display:block">هيئة النظافة والتجميل</span></td><td style="white-space:nowrap">الخميس 22/10<span class="mini num" style="display:block">9 ص – 12 ظ</span></td><td style="white-space:nowrap">كاش مع العامل</td><td><span class="ftc-chip ftc-chip--assigned">اتحوّل</span></td></tr><tr><td><div class="type"><span class="ftc-icon-well"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span><div><span class="strong num">SRV-2003</span><span class="mini" style="display:block">رفع مخلفات كبيرة</span></div></div></td><td>الحي السابع، شارع حسن المأمون<span class="mini" style="display:block">هيئة النظافة والتجميل</span></td><td style="white-space:nowrap">الخميس 22/10<span class="mini num" style="display:block">2 م – 5 م</span></td><td style="white-space:nowrap">إنستاباي · مدفوع</td><td><span class="ftc-chip ftc-chip--assigned">اتحوّل</span></td></tr><tr><td><div class="type"><span class="ftc-icon-well"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span><div><span class="strong num">SRV-2006</span><span class="mini" style="display:block">رفع مخلفات كبيرة</span></div></div></td><td>شارع أحمد فخري، عمارة 4<span class="mini" style="display:block">هيئة النظافة والتجميل</span></td><td style="white-space:nowrap">الخميس 22/10<span class="mini num" style="display:block">9 ص – 12 ظ</span></td><td style="white-space:nowrap">فوري · مدفوع</td><td><span class="ftc-chip ftc-chip--progress">جاري التنفيذ</span></td></tr><tr><td><div class="type"><span class="ftc-icon-well"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-6"/><path d="M12 16c-4 0-6-2.5-6-5.5 0-2 1.2-3.3 2.5-4C8.2 4 9.8 2 12 2s3.8 2 3.5 4.5c1.3.7 2.5 2 2.5 4 0 3-2 5.5-6 5.5z"/></svg></span><div><span class="strong num">SRV-2002</span><span class="mini" style="display:block">صيانة أشجار</span></div></div></td><td>شارع الطيران، قدام عمارة 9<span class="mini" style="display:block">حدائق الحي</span></td><td style="white-space:nowrap">الأحد 25/10<span class="mini num" style="display:block">2 م – 5 م</span></td><td style="white-space:nowrap">فوري · مدفوع</td><td><span class="ftc-chip ftc-chip--received">وصل</span></td></tr><tr><td><div class="type"><span class="ftc-icon-well"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span><div><span class="strong num">SRV-2004</span><span class="mini" style="display:block">رفع مخلفات كبيرة</span></div></div></td><td>شارع مصطفى النحاس، عمارة 31<span class="mini" style="display:block">هيئة النظافة والتجميل</span></td><td style="white-space:nowrap">الأحد 25/10<span class="mini num" style="display:block">9 ص – 12 ظ</span></td><td style="white-space:nowrap">محفظة موبايل</td><td><span class="ftc-chip ftc-chip--received">وصل</span></td></tr><tr><td><div class="type"><span class="ftc-icon-well"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-6"/><path d="M12 16c-4 0-6-2.5-6-5.5 0-2 1.2-3.3 2.5-4C8.2 4 9.8 2 12 2s3.8 2 3.5 4.5c1.3.7 2.5 2 2.5 4 0 3-2 5.5-6 5.5z"/></svg></span><div><span class="strong num">SRV-2005</span><span class="mini" style="display:block">صيانة أشجار</span></div></div></td><td>شارع ذاكر حسين<span class="mini" style="display:block">حدائق الحي</span></td><td style="white-space:nowrap">الاثنين 26/10<span class="mini num" style="display:block">9 ص – 12 ظ</span></td><td style="white-space:nowrap">كاش مع العامل</td><td><span class="ftc-chip ftc-chip--received">وصل</span></td></tr><tr><td><div class="type"><span class="ftc-icon-well"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-6"/><path d="M12 16c-4 0-6-2.5-6-5.5 0-2 1.2-3.3 2.5-4C8.2 4 9.8 2 12 2s3.8 2 3.5 4.5c1.3.7 2.5 2 2.5 4 0 3-2 5.5-6 5.5z"/></svg></span><div><span class="strong num">SRV-2007</span><span class="mini" style="display:block">صيانة أشجار</span></div></div></td><td>شارع حسن المأمون<span class="mini" style="display:block">حدائق الحي</span></td><td style="white-space:nowrap">الثلاثاء 27/10<span class="mini num" style="display:block">2 م – 5 م</span></td><td style="white-space:nowrap">كاش مع العامل</td><td><span class="ftc-chip ftc-chip--received">وصل</span></td></tr><tr><td><div class="type"><span class="ftc-icon-well"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span><div><span class="strong num">SRV-2008</span><span class="mini" style="display:block">رفع مخلفات كبيرة</span></div></div></td><td>شارع يوسف عباس، عمارة 18<span class="mini" style="display:block">هيئة النظافة والتجميل</span></td><td style="white-space:nowrap">النهارده 21/10<span class="mini num" style="display:block">2 م – 5 م</span></td><td style="white-space:nowrap">إنستاباي · مدفوع</td><td><span class="ftc-chip ftc-chip--progress">جاري التنفيذ</span></td></tr><tr><td><div class="type"><span class="ftc-icon-well"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span><div><span class="strong num">SRV-1998</span><span class="mini" style="display:block">رفع مخلفات كبيرة</span></div></div></td><td>شارع الطيران، عمارة 22<span class="mini" style="display:block">هيئة النظافة والتجميل</span></td><td style="white-space:nowrap">النهارده 21/10<span class="mini num" style="display:block">9 ص – 12 ظ</span></td><td style="white-space:nowrap">كاش مع العامل</td><td><span class="ftc-chip ftc-chip--resolved">اتصلّح</span></td></tr></tbody></table></div>
+  </section>
+
+  <aside class="ftc-card" aria-labelledby="h-sel">
+    <div class="card-head"><div><h2 class="sec-title" id="h-sel">SRV-2001</h2><p class="sec-sub">رفع مخلفات كبيرة · هيئة النظافة والتجميل</p></div><span class="ftc-chip ftc-chip--assigned">اتحوّل</span></div>
+    <h3 class="strong" style="margin:0 0 8px;font-size:14px">اللي محتاج يترفع</h3>
+    <ul class="items"><li><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>كنبة</li><li><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>تلاجة قديمة</li></ul>
+    <p class="small" style="margin:10px 0 0"><span class="ftc-muted">ملحوظة المواطن:</span> العمارة من غير أسانسير، الأغراض قدام الباب.</p>
+    <hr class="ftc-divider">
+    <dl class="kv">
+      <dt>العنوان</dt><dd>شارع عباس العقاد، عمارة 12</dd>
+      <dt>الميعاد</dt><dd>الخميس 22/10 · 9 ص – 12 ظ</dd>
+      <dt>الدفع</dt><dd>كاش مع العامل</dd>
+      <dt>الرسم</dt><dd>حسب لائحة الحي</dd>
+      <dt>المواطن</dt><dd>مواطن</dd>
+    </dl>
+    <hr class="ftc-divider">
+    <div class="cap"><div class="row-between"><span class="strong" style="font-size:14px">الخميس 9 ص – 12 ظ</span><span class="mini num">4 من 6 طلبات</span></div>
+      <span class="ftc-bar ftc-bar--gold" role="img" aria-label="4 من 6"><span style="width:67%"></span></span>
+      <span class="mini">فاضل مكانين على عربية النظافة 7.</span></div>
+    <form class="side-form" style="margin-top:14px" onsubmit="return false">
+      <div class="ftc-field"><label class="ftc-label" for="truck">العربية أو الفريق</label>
+        <select class="ftc-select" id="truck"><option>عربية نظافة 7 · 3 أفراد</option><option>عربية نظافة 4</option><option>فريق مخلفات البناء 1</option></select></div>
+      <button class="ftc-btn ftc-btn--primary ftc-btn--block" type="submit"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>جدوِل العربية</button>
+      <div class="btn-split"><button class="ftc-btn ftc-btn--secondary ftc-btn--sm" type="button">وزّع على فريق</button><button class="ftc-btn ftc-btn--secondary ftc-btn--sm" type="button">غيّر الميعاد</button></div>
+      <button class="ftc-btn ftc-btn--ghost ftc-btn--sm" type="button"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg>ابعت رسالة للمواطن</button>
+    </form>
+    <hr class="ftc-divider">
+    <h3 class="strong" style="margin:0 0 10px;font-size:14px">السجل</h3>
+    <ol class="ftc-timeline">
+      <li class="is-done"><div class="small"><b>وصل الطلب</b><div class="mini">النهارده 05:10</div></div></li>
+      <li class="is-done"><div class="small"><b>اتحوّل لهيئة النظافة والتجميل</b><div class="mini">النهارده 07:10 · النظام</div></div></li>
+      <li class="is-current"><div class="small"><b>في انتظار تحديد العربية</b><div class="mini">دلوقتي</div></div></li>
+    </ol>
+  </aside>
+</div>
+</div>
+</main>
+</div>
+</body>
+</html>

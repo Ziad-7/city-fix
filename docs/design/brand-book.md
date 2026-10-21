@@ -94,18 +94,19 @@ These rules apply to every citizen screen; they are what make FixTheCity Egyptia
 | Button / primary | `red` fill, `on-red` text, `radius-md`, 48px tall on mobile, 40px on desktop |
 | Button / report (mobile FAB) | `gold` fill, `ink` camera icon, `radius-pill`, `shadow-float`, 4px `paper` ring |
 | Status chip | `radius-pill`, `caption` text, status colour text on its `-bg` token, leading 6px dot |
+| Filter / choice chip | pill, `surface` with `line` border; selected = `red` fill with `on-red` text (boxed choice chips: `red-soft` with a `red` border) |
 | Service tile | `surface`, `radius-lg`, `shadow-card`, icon well `red-soft`, label `body-strong` |
 | Report card | photo thumbnail 64px `radius-sm`, title `body-strong`, reference + time in `ink-muted`, status chip at the end |
 | AI suggestion card | `red-soft` background, "اقتراح الذكاء الاصطناعي" `caption` label in `red-deep`, top-3 category options with confidence bars in `red`, a confirm control |
 | Priority breakdown | score `metric` (0–100), then one row per factor: label, `+points`, a bar in `red` |
 | Timeline | vertical, RTL; done steps `red`, the current step `gold` with a `gold-soft` ring, actor + note + time |
 | KPI card | `surface`, label `small` `ink-muted`, value `metric`, delta in `status-resolved` or `urgent` |
-| Admin sidebar | `ink` background, `paper`-light text, active item `gold` with `ink` text |
+| Admin sidebar | `ink` background, `on-ink` text (`on-ink-muted` for captions), active item `gold` with `ink` text |
 | Budget row | title, cost in EGP, priority score; selected rows on `gold-soft` |
 | Community badge | gold medal with red and black ribbon tails on `gold-soft`; title in `slogan-sm` `gold-deep` |
 
 ## Accessibility
 
-- Every text pair in the tokens meets 4.5:1 in both themes; `gold` only ever carries `ink` text.
+- Every text pair in the tokens meets 4.5:1 (light theme only; there is no dark mode); `gold` only ever carries `ink` text.
 - Status is never colour-only: chips have words, map pins have icons.
 - Touch targets at least 44px. Forms label every field above the input.

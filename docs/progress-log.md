@@ -15,6 +15,43 @@ Newest first. Each entry: what was done, how to test it, known issues.
 **Known issues**
 - Cloud previews need an active Expo tunnel; the development server and tunnel are temporary runtime processes.
 
+## 2026-10-21 — Design follow-ups
+
+**Done**
+- Priority decision: the formula in `apps/mobile/src/logic/priority.ts` is the source of truth (waiting time in whole days; equity bonus only for areas marked underserved). Admin example INC-0042 corrected from 93 to **78** ("أولوية عالية", still "خطر") on Incidents, IncidentDetail, Overview and Map.
+- Gender-neutral copy in the app and web design: "البلاغ ده متسجّل باسمك بالفعل".
+- Mobile designs: on/off settings drawn as switches, matching the app and website.
+- Mobile checks: typecheck, lint, 89 tests passing.
+## 2026-10-21 — Team roles: 5 members, one brief each
+
+**Done**
+- [`team/README.md`](team/README.md) rewritten as the single page for who does what: the 5 roles with owners, folders and branch prefixes; what each role delivers and doesn't; owners of shared things (contract, design, shared code, schema, demo data, deploys, CI); hand-offs; a 7-day plan per member; review rules; first-hour checklist.
+- Briefs: [admin web](team/admin-web.md) (new, 8 pages matching `design/screens/admin/`), [citizen website](team/citizen-web-portal.md) (updated), [API & database](team/api-database.md) (was backend-database; AI and optimizer moved out, staff login, admin endpoints and backend DevOps added), [AI & smart features](team/ai-features.md) (new: triage + fallback, budget optimizer, voice transcription, photo blur, duplicate help, insights, evaluation).
+- API contract: proposed staff login, admin list/update endpoints, merge, similar, insights, `/ai/transcribe`, `source`/`emergency` on triage.
+- Root README team table, CONTRIBUTING branch prefixes per role, PR template, CODEOWNERS template.
+
+## 2026-10-21 — Design pack: identity guide + screens for every surface (branch `design/identity-and-screens`)
+
+**Done** (three Sonnet 5.5 implementers in parallel, reviewed and fixed by Opus 5.5 — [review](reviews/2026-10-21-design-pack-review.md))
+- **Identity everyone follows:** [`design/identity.html`](design/identity.html) (logo, colours, type, spacing, icons, components, voice, Egypt rules, per-surface rules, accessibility, don'ts, CSS/Tailwind snippets) and the shared stylesheet [`design/css/fixthecity.css`](design/css/fixthecity.css). `tokens.json` stays the source of truth (now light-only, with six missing tokens added).
+- **28 HTML screens:** `screens/mobile/` (10, incl. new Requests, Map, Profile), `screens/web/` (10 citizen website pages, desktop + phone layout), `screens/admin/` (8 Command Center pages: Login, Overview, Incidents, IncidentDetail, Map, ServiceRequests, WorkOrders, Budget). Old design-tool exports cleaned into plain HTML.
+- **Design hub:** [`design/index.html`](design/index.html) and [`design/README.md`](design/README.md) with online preview links for every screen.
+- Demo data aligned across surfaces (pothole FTC-1042 priority = 66 from `priority.ts`).
+
+**How to open**
+- Online: https://raw.githack.com/Ziad-7/fix-city/main/docs/design/index.html
+- Locally: open `docs/design/index.html` in a browser.
+
+**Still open** (details in the review)
+- Admin INC-0042 score (93) needs the backend to confirm the priority formula; mobile app copy "إنت مبلّغ عنها بالفعل" should become gender-neutral; mobile mockup toggles drawn as checkboxes.
+
+## 2026-10-21 — Citizen web portal role
+
+**Done**
+- Decision: a citizen website in `apps/web` alongside the mobile app, same backend and contract, same design ([0002](decisions/0002-citizen-web-portal-alongside-mobile.md)).
+- Role brief for the member building it: [`team/citizen-web-portal.md`](team/citizen-web-portal.md): same brand, tokens, mockups, components and copy as the mobile app; pages mirroring the mobile screens; shared domain/logic copied with a CI diff check; mock mode then API mode; 10-step plan and acceptance checks.
+- API contract, backend brief and team table updated: three clients on one API, CORS for web origins, browser photo upload.
+
 ## 2026-10-21 — Phase C: review and fixes (branch `feat/mobile-citizen-app`, draft PR #1)
 
 **Done**

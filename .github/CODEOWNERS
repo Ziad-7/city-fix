@@ -1,0 +1,24 @@
+# Who reviews what. Roles: docs/team/README.md
+# Replace each @owner-… with the member's GitHub username when they join (then GitHub requests their review automatically).
+
+# ① Citizen mobile app — Abood + Claude
+# /apps/mobile/                @owner-mobile
+
+# ② Citizen website (client portal)
+# /apps/web/                   @owner-web
+
+# ③ Admin web (City Command Center)
+# /apps/admin-web/             @owner-admin
+
+# ④ Backend API & database
+# /backend/                    @owner-api
+# /supabase/                   @owner-api
+
+# ⑤ AI & smart features (CityBrain) — more specific paths win over /backend/
+# /backend/app/ai/             @owner-ai
+# /backend/app/optimizer/      @owner-ai
+# /backend/ai-eval/            @owner-ai
+
+# Shared
+# /docs/api-contract.md        @owner-api @owner-mobile @owner-web @owner-admin
+# /docs/design/                @owner-mobile

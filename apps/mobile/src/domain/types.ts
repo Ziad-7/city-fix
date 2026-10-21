@@ -141,7 +141,7 @@ export type TriageSuggestion = {
   summary: string;
   /** Joinable duplicates only: never an incident the caller reported or already follows. */
   duplicates: DuplicateMatch[];
-  /** Nearby incidents the caller reported themselves (shown as "إنت مبلّغ عنها بالفعل", not as a join offer). */
+  /** Nearby incidents the caller reported themselves (shown as "البلاغ ده متسجّل باسمك بالفعل", not as a join offer). */
   alreadyReported?: AlreadyReported[];
 };
 
