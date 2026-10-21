@@ -171,5 +171,7 @@ export function createMockIncidentService(): IncidentService {
       await saveDb(db);
       return updated;
     },
+    // Placeholder: implemented in Phase D (D3).
+    reopenIncident: () => Promise.reject(new Error('مش متاح لسه')),
   };
 }

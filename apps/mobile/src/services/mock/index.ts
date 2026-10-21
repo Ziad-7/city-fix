@@ -13,5 +13,8 @@ export function createMockServices(): Services {
     incidents: createMockIncidentService(),
     serviceRequests: createMockServiceRequestService(),
     triage: createMockTriageService(),
+    // Placeholders: replaced in Phase D (uploads: D2, transcription: D1).
+    uploads: { upload: async (uri) => uri },
+    transcription: { transcribe: async () => ({ text: '', confidence: 0 }) },
   };
 }

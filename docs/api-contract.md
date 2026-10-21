@@ -108,6 +108,7 @@ TriageSuggestion  = {
 | GET | `/incidents` | — | `Incident[]` | Citizens: all incidents, public fields only (no reporter identities). |
 | GET | `/incidents/{id}` | — | `Incident` | |
 | POST | `/incidents/{id}/follow` | — | `Incident` | "أنا كمان". Idempotent per user; increments `followers` once. |
+| POST | `/incidents/{id}/reopen` | `{ note }` | `Incident` | *Proposed.* "لسه المشكلة موجودة": only a reporter or follower, only on `resolved`; status back to `received`, timeline entry with the note. |
 | GET | `/map/incidents` | — | `MapPin[]` | Optional query: `status`, `categoryId`, `bbox=minLng,minLat,maxLng,maxLat`. |
 
 ### Service requests (CityServe)
@@ -116,6 +117,11 @@ TriageSuggestion  = {
 | POST | `/service-requests` | `NewServiceRequestInput` | `ServiceRequest` |
 | GET | `/service-requests` | — | `ServiceRequest[]` (the caller's) |
 | GET | `/service-requests/{id}` | — | `ServiceRequest` |
+
+### Garbage collection schedule — proposed
+| Method | Path | Response |
+| --- | --- | --- |
+| GET | `/services/garbage-schedule?district=…` | `{ district, days: ("sun"\|"mon"\|"tue"\|"wed"\|"thu"\|"sat")[], window: "٨ م – ١١ م", note? }` (the app uses static demo data until this exists) |
 
 ### Triage (CityBrain)
 | Method | Path | Body | Response |

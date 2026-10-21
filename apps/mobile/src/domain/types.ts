@@ -143,6 +143,28 @@ export type TriageSuggestion = {
   duplicates: DuplicateMatch[];
   /** Nearby incidents the caller reported themselves (shown as "البلاغ ده متسجّل باسمك بالفعل", not as a join offer). */
   alreadyReported?: AlreadyReported[];
+  /** "model" or "fallback" (keyword classifier). Proposed contract field. */
+  source?: 'model' | 'fallback';
+  /** The text mentions gas, fire, injury or a collapse: show the emergency numbers first. Proposed contract field. */
+  emergency?: boolean;
+};
+
+/** Result of POST /ai/transcribe (Egyptian Arabic speech to text). */
+export type Transcript = { text: string; confidence: number };
+
+export type UploadKind = 'report_photo' | 'voice_note';
+
+/** In-app notification (status changes on the citizen's reports and service requests). */
+export type AppNotification = {
+  id: string;
+  entityType: 'report' | 'service_request';
+  /** Report id (FTC-…) or service request id (SRV-…): opens /requests/{entityId}. */
+  entityId: string;
+  status: IncidentStatus;
+  title: string;
+  body: string;
+  at: string;
+  read: boolean;
 };
 
 export type ServiceType = 'bulky_waste' | 'tree_maintenance';

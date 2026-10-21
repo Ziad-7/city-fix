@@ -22,6 +22,7 @@ export function createApiServices(): Services {
     },
     followIncident: (_userId, id) => http<Incident>('POST', `/incidents/${encodeURIComponent(id)}/follow`),
     simulateProgress: () => Promise.reject(new Error('simulateProgress متاح في وضع mock بس')),
+    reopenIncident: (_userId, id, note) => http<Incident>('POST', `/incidents/${encodeURIComponent(id)}/reopen`, { note }),
   };
 
   return {
@@ -51,5 +52,8 @@ export function createApiServices(): Services {
         return { ...res, duplicates: res.duplicates ?? [], alreadyReported: res.alreadyReported ?? [] };
       },
     },
+    // Placeholders: replaced in Phase D (uploads: D2, transcription: D1).
+    uploads: { upload: () => Promise.reject(new Error('رفع الملفات لسه مش متاح')) },
+    transcription: { transcribe: (path) => http('POST', '/ai/transcribe', { path }) },
   };
 }

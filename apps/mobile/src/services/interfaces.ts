@@ -9,7 +9,9 @@ import type {
   Report,
   ServiceRequest,
   Session,
+  Transcript,
   TriageSuggestion,
+  UploadKind,
 } from '@/domain/types';
 
 export interface AuthService {
@@ -38,6 +40,8 @@ export interface IncidentService {
   followIncident(userId: string, incidentId: string): Promise<Incident>;
   /** Dev only: advance the incident to its next status. */
   simulateProgress(incidentId: string): Promise<Incident>;
+  /** POST /incidents/{id}/reopen (proposed): "لسه المشكلة موجودة" on a resolved incident; back to received with a timeline note. */
+  reopenIncident(userId: string, incidentId: string, note: string): Promise<Incident>;
 }
 
 export interface ServiceRequestService {
@@ -65,9 +69,24 @@ export interface TriageService {
   }): Promise<TriageSuggestion>;
 }
 
+export interface UploadService {
+  /**
+   * API mode: POST /uploads/sign, then PUT the file to the signed URL; returns the storage `path` to send in
+   * `photoUris` / `voiceNoteUri`. Mock mode: returns the local URI unchanged.
+   */
+  upload(localUri: string, kind: UploadKind, contentType: string): Promise<string>;
+}
+
+export interface TranscriptionService {
+  /** POST /ai/transcribe with an uploaded voice note path (mock: a canned Egyptian Arabic sentence). */
+  transcribe(path: string): Promise<Transcript>;
+}
+
 export type Services = {
   auth: AuthService;
   incidents: IncidentService;
   serviceRequests: ServiceRequestService;
   triage: TriageService;
+  uploads: UploadService;
+  transcription: TranscriptionService;
 };
