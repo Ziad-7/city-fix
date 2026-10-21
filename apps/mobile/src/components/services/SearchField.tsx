@@ -1,26 +1,29 @@
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Icon } from '@/components/Icon';
+import { useTr, useIsRTL } from '@/i18n';
 import { colors, fonts } from '@/theme/tokens';
 
 type Props = { value: string; onChangeText: (t: string) => void; placeholder?: string };
 
 /** 48 px pill search field from Services.html. */
-export function SearchField({ value, onChangeText, placeholder = 'ابحث عن خدمة…' }: Props) {
+export function SearchField({ value, onChangeText, placeholder }: Props) {
+  const tr = useTr();
+  const rtl = useIsRTL();
   return (
     <View style={styles.field}>
       <Icon name="search" size={20} color={colors.inkMuted} />
       <TextInput
-        accessibilityLabel="ابحث عن خدمة"
+        accessibilityLabel={tr('ابحث عن خدمة', 'Search services')}
         value={value}
         onChangeText={onChangeText}
-        placeholder={placeholder}
+        placeholder={placeholder ?? tr('ابحث عن خدمة…', 'Search services…')}
         placeholderTextColor={colors.inkMuted}
         returnKeyType="search"
-        style={[styles.input, { textAlign: 'right', writingDirection: 'rtl' }]}
+        style={[styles.input, rtl ? { textAlign: 'right', writingDirection: 'rtl' } : { textAlign: 'left', writingDirection: 'ltr' }]}
         testID="service-search"
       />
       {value ? (
-        <Pressable accessibilityRole="button" accessibilityLabel="مسح البحث" onPress={() => onChangeText('')} hitSlop={10} style={styles.clear}>
+        <Pressable accessibilityRole="button" accessibilityLabel={tr('مسح البحث', 'Clear search')} onPress={() => onChangeText('')} hitSlop={10} style={styles.clear}>
           <Icon name="x" size={18} color={colors.inkMuted} />
         </Pressable>
       ) : null}

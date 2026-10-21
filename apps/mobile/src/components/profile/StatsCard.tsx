@@ -2,15 +2,16 @@ import { StyleSheet, View } from 'react-native';
 import { Medal } from '@/components/brand';
 import { AppText, Card, ProgressBar } from '@/components/ui';
 import { colors, fonts, radius } from '@/theme/tokens';
-import { toArabicDigits } from '@/utils/digits';
+import { medalTitle, useTr } from '@/i18n';
+import { localDigits } from '@/utils/digits';
 import { medalFor, remainingLine } from '@/domain/medals';
 
 type Props = { reports: number; fixed: number };
 
 function Stat({ value, label }: { value: number; label: string }) {
   return (
-    <View style={styles.stat} accessible accessibilityLabel={`${label}: ${toArabicDigits(value)}`}>
-      <AppText style={styles.num}>{toArabicDigits(value)}</AppText>
+    <View style={styles.stat} accessible accessibilityLabel={`${label}: ${localDigits(value)}`}>
+      <AppText style={styles.num}>{localDigits(value)}</AppText>
       <AppText variant="caption" color={colors.inkMuted}>{label}</AppText>
     </View>
   );
@@ -18,20 +19,21 @@ function Stat({ value, label }: { value: number; label: string }) {
 
 /** "إحصائياتي": report and fixed counts, medal title (or progress toward the next one). */
 export function StatsCard({ reports, fixed }: Props) {
+  const tr = useTr();
   const medal = medalFor(reports);
   const title = medal.earnedTitle;
   const next = medal.next;
   return (
     <Card rounded="lg" padding={16} style={styles.card}>
-      <AppText style={styles.heading} accessibilityRole="header">إحصائياتي</AppText>
+      <AppText style={styles.heading} accessibilityRole="header">{tr('إحصائياتي', 'My stats')}</AppText>
       <View style={styles.stats}>
-        <Stat value={reports} label="بلاغاتك" />
+        <Stat value={reports} label={tr('بلاغاتك', 'Your reports')} />
         <View style={styles.divider} />
-        <Stat value={fixed} label="اتصلّحت" />
+        <Stat value={fixed} label={tr('اتصلّحت', 'Fixed')} />
       </View>
       {title ? (
         <View style={styles.medal}>
-          <Medal title={title} caption="لقبك" />
+          <Medal title={medalTitle(title)} caption={tr('لقبك', 'Your title')} />
         </View>
       ) : null}
       {next ? (
