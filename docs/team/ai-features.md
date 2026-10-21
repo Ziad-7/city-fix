@@ -4,7 +4,7 @@
 
 ## Your mission
 
-Make FixTheCity smart without making it unsafe. Every AI result is a **suggestion a person confirms**. The citizen or the staff member always has the last word, and the product keeps working when the model is slow, wrong or down.
+Make CityFix smart without making it unsafe. Every AI result is a **suggestion a person confirms**. The citizen or the staff member always has the last word, and the product keeps working when the model is slow, wrong or down.
 
 **Done means:** a citizen's photo + Egyptian Arabic text (or voice note) comes back in under ~5 seconds with a category, severity, a one-line Arabic summary and nearby duplicates; staff get a budget plan and a weekly hotspot summary; and you can show the accuracy numbers on a test set.
 

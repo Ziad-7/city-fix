@@ -3,6 +3,8 @@ import MapView, { Marker } from 'react-native-maps';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { STATUS_LABEL_AR } from '@/domain/types';
+import { useTr } from '@/i18n';
+import { statusLabel } from '@/i18n/labels';
 import { colors, radius } from '@/theme/tokens';
 import { statusColor } from '../ui/StatusChip';
 import { NASR_CITY, pinIsCritical, type IncidentMapProps } from './types';
@@ -33,13 +35,15 @@ function PinMarker({ pin, selected, onPress }: { pin: IncidentMapProps['pins'][n
     const t = setTimeout(() => setTracks(false), 600);
     return () => clearTimeout(t);
   }, []);
+  const tr = useTr();
+  const sep = tr('، ', ', ');
   const critical = pinIsCritical(pin);
   return (
     <Marker
       coordinate={{ latitude: pin.lat, longitude: pin.lng }}
       anchor={{ x: 0.5, y: 1 }}
       tracksViewChanges={tracks}
-      accessibilityLabel={`${pin.title}، ${critical ? 'خطر، ' : ''}${STATUS_LABEL_AR[pin.status]}`}
+      accessibilityLabel={`${pin.title}${sep}${critical ? `${tr('خطر', 'Danger')}${sep}` : ''}${statusLabel(pin.status, STATUS_LABEL_AR[pin.status])}`}
       onPress={() => onPress?.(pin.id)}
     >
       <Pin color={statusColor(pin.status)} selected={selected} critical={critical} />

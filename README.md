@@ -1,8 +1,8 @@
-# FixTheCity — فيكس ذا سيتي
+# CityFix — سيتي فيكس
 
 بلّغ.. وإحنا نتابع لحد ما تتصلّح — *Report it, and we follow it until it's fixed.*
 
-FixTheCity is a smart-city platform for Egyptian cities. Citizens report problems (potholes, open manholes, broken streetlights, garbage…) and request municipal services from a **mobile app**; the city's **Command Center** triages them with AI, prioritises them transparently, coordinates the fix, and plans repairs within a limited budget.
+CityFix is a smart-city platform for Egyptian cities. Citizens report problems (potholes, open manholes, broken streetlights, garbage…) and request municipal services from a **mobile app**; the city's **Command Center** triages them with AI, prioritises them transparently, coordinates the fix, and plans repairs within a limited budget.
 
 Built in 7 days by a team of 5 for a hackathon.
 

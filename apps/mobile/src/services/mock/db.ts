@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { buildSeed, type MockDb } from './seed';
+import { buildSeed, withEnglish, type MockDb } from './seed';
 
 const KEY = 'ftc.mock.db.v1';
 
@@ -10,7 +10,7 @@ let loading: Promise<MockDb> | null = null;
 async function readOrSeed(): Promise<MockDb> {
   try {
     const raw = await AsyncStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw) as MockDb;
+    if (raw) return withEnglish(JSON.parse(raw) as MockDb);
   } catch {
     // fall through to a fresh seed
   }

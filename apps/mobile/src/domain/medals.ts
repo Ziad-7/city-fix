@@ -1,3 +1,5 @@
+import { MEDAL_EN } from '@/i18n/labels';
+import { usePrefs } from '@/store/usePrefs';
 import { toArabicDigits } from '@/utils/digits';
 
 /** Single source of truth for community medals (profile card and report-success card). */
@@ -53,8 +55,11 @@ export function medalFor(reportCount: number): MedalState {
   return { tier: 'district', earnedTitle: DISTRICT_TITLE, title: DISTRICT_TITLE, next: null, remaining: 0, progress: 1, goal: DISTRICT_GOAL };
 }
 
-/** "فاضل بلاغين وتاخد لقب جدع الشارع", with Arabic count agreement. */
+/** "فاضل بلاغين وتاخد لقب جدع الشارع", with Arabic count agreement; English: "2 more reports to earn Street Hero". */
 export function remainingLine(remaining: number, title: string): string {
+  if (usePrefs.getState().lang === 'en') {
+    return `${remaining} more ${remaining === 1 ? 'report' : 'reports'} to earn ${MEDAL_EN[title] ?? title}`;
+  }
   const count = remaining === 1 ? 'بلاغ واحد' : remaining === 2 ? 'بلاغين' : `${toArabicDigits(remaining)} ${remaining <= 10 ? 'بلاغات' : 'بلاغ'}`;
   return `فاضل ${count} وتاخد لقب ${title}`;
 }

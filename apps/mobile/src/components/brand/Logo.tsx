@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
+import { useTr } from '@/i18n';
 import { colors, fonts } from '@/theme/tokens';
 import { AppText } from '../ui/AppText';
 
@@ -15,25 +16,35 @@ export function LogoMark({ size = 36 }: { size?: number }) {
   );
 }
 
-/** Arabic lockup: mark at the start (right in RTL) + "فيكس ذا سيتي" (فيكس red, ذا سيتي ink). */
-export function LogoLockup({ height = 36 }: { height?: number }) {
+/** The brand name as styled text: "سيتي فيكس" (سيتي ink, فيكس red) in Arabic, "CityFix" (City ink, Fix red) in English. */
+function BrandName({ size, lineHeight }: { size: number; lineHeight: number }) {
+  const tr = useTr();
+  const style = { fontFamily: fonts.display700, fontSize: size, lineHeight };
   return (
-    <View style={styles.lockup} accessibilityRole="image" accessibilityLabel="فيكس ذا سيتي">
+    <AppText style={style} accessibilityLabel={tr('سيتي فيكس', 'CityFix')}>
+      {tr('سيتي ', 'City')}
+      <AppText color={colors.red} style={style}>{tr('فيكس', 'Fix')}</AppText>
+    </AppText>
+  );
+}
+
+/** Lockup: mark at the start + the brand name, see docs/design/assets/cityfix-lockup-ar.svg and -en.svg. */
+export function LogoLockup({ height = 36 }: { height?: number }) {
+  const tr = useTr();
+  return (
+    <View style={styles.lockup} accessibilityRole="image" accessibilityLabel={tr('سيتي فيكس', 'CityFix')}>
       <LogoMark size={height} />
-      <AppText style={{ fontFamily: fonts.display700, fontSize: height * 0.5, lineHeight: height * 0.7 }}>
-        <AppText color={colors.red} style={{ fontFamily: fonts.display700, fontSize: height * 0.5, lineHeight: height * 0.7 }}>فيكس</AppText>
-        {' ذا سيتي'}
-      </AppText>
+      <BrandName size={height * 0.5} lineHeight={height * 0.7} />
     </View>
   );
 }
 
-/** White pill with the mark and the red brand name, for placing on red heroes. */
+/** White pill with the mark and the brand name, for placing on red heroes. */
 export function LogoPill() {
   return (
     <View style={styles.pill}>
       <LogoMark size={26} />
-      <AppText color={colors.red} style={{ fontFamily: fonts.display700, fontSize: 15, lineHeight: 22 }}>فيكس ذا سيتي</AppText>
+      <BrandName size={15} lineHeight={22} />
     </View>
   );
 }

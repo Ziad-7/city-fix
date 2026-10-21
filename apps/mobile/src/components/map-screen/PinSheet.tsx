@@ -5,9 +5,11 @@ import { getCategory } from '@/domain/categories';
 import type { Incident } from '@/domain/types';
 import { isCriticalIncident, priorityReason } from '@/logic/priority';
 import { colors, fonts, radius, shadows } from '@/theme/tokens';
-import { toArabicDigits } from '@/utils/digits';
-import { formatDistanceAr } from '@/utils/geo';
-import { relativeTimeAr } from '@/utils/time';
+import { useTr } from '@/i18n';
+import { departmentLabel, labelOfCategory } from '@/i18n/labels';
+import { localDigits } from '@/utils/digits';
+import { formatDistance } from '@/utils/geo';
+import { relativeTime } from '@/utils/time';
 
 type Props = {
   incident: Incident;
@@ -25,6 +27,7 @@ type Props = {
 
 /** Bottom card for the selected pin. */
 export function PinSheet({ incident, distanceM, following, followBusy, myReportId, expanded, onFollow, onDetails, onClose }: Props) {
+  const tr = useTr();
   const cat = getCategory(incident.categoryId);
   return (
     <View style={styles.sheet} testID="pin-sheet">
@@ -34,9 +37,9 @@ export function PinSheet({ incident, distanceM, following, followBusy, myReportI
         </View>
         <View style={styles.text}>
           <AppText style={styles.title} numberOfLines={2}>{incident.title}</AppText>
-          <AppText variant="caption" color={colors.inkMuted}>{cat.labelAr}</AppText>
+          <AppText variant="caption" color={colors.inkMuted}>{labelOfCategory(cat)}</AppText>
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel="إغلاق" onPress={onClose} style={styles.close}>
+        <Pressable accessibilityRole="button" accessibilityLabel={tr('إغلاق', 'Close')} onPress={onClose} style={styles.close}>
           <Icon name="x" size={18} color={colors.inkMuted} />
         </Pressable>
       </View>
@@ -45,27 +48,27 @@ export function PinSheet({ incident, distanceM, following, followBusy, myReportI
         <StatusChips status={incident.status} critical={isCriticalIncident(incident)} />
         <View style={styles.metaItem}>
           <Icon name="users" size={16} color={colors.inkMuted} />
-          <AppText variant="caption" color={colors.inkMuted}>{toArabicDigits(incident.followers)} متابع</AppText>
+          <AppText variant="caption" color={colors.inkMuted}>{localDigits(incident.followers)} {tr('متابع', incident.followers === 1 ? 'follower' : 'followers')}</AppText>
         </View>
         <View style={styles.metaItem}>
           <Icon name="pin" size={16} color={colors.inkMuted} />
-          <AppText variant="caption" color={colors.inkMuted}>{formatDistanceAr(distanceM)} من منطقتك</AppText>
+          <AppText variant="caption" color={colors.inkMuted}>{formatDistance(distanceM)} {tr('من منطقتك', 'from your area')}</AppText>
         </View>
       </View>
 
       {expanded && !myReportId ? (
         <View style={styles.details}>
-          <Row label="الجهة المسؤولة" value={incident.department} />
-          <Row label="الأولوية" value={priorityReason(incident.priority, incident.linkedReportIds.length, incident.sensitivePlace)} />
-          <Row label="المكان" value={incident.location.address} />
-          <Row label="آخر تحديث" value={relativeTimeAr(incident.updatedAt)} />
+          <Row label={tr('الجهة المسؤولة', 'Handled by')} value={departmentLabel(incident.department)} />
+          <Row label={tr('الأولوية', 'Priority')} value={priorityReason(incident.priority, incident.linkedReportIds.length, incident.sensitivePlace)} />
+          <Row label={tr('المكان', 'Location')} value={incident.location.address} />
+          <Row label={tr('آخر تحديث', 'Last update')} value={relativeTime(incident.updatedAt)} />
         </View>
       ) : null}
 
       <View style={styles.actions}>
         <View style={styles.action}>
           <Button
-            label={following ? 'متابَع' : 'أنا كمان'}
+            label={following ? tr('متابَع', 'Following') : tr('أنا كمان', 'Me too')}
             icon={following ? 'check' : 'plus'}
             size="sm"
             fullWidth
@@ -77,7 +80,7 @@ export function PinSheet({ incident, distanceM, following, followBusy, myReportI
           />
         </View>
         <View style={styles.action}>
-          <Button label={expanded && !myReportId ? 'إخفاء التفاصيل' : 'التفاصيل'} size="sm" fullWidth variant="secondary" onPress={onDetails} testID="pin-details" />
+          <Button label={expanded && !myReportId ? tr('إخفاء التفاصيل', 'Hide details') : tr('التفاصيل', 'Details')} size="sm" fullWidth variant="secondary" onPress={onDetails} testID="pin-details" />
         </View>
       </View>
     </View>
@@ -104,7 +107,7 @@ const styles = StyleSheet.create({
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   details: { backgroundColor: colors.paper, borderRadius: radius.sm, padding: 10, gap: 4 },
   row: { flexDirection: 'row', gap: 8 },
-  rowLabel: { width: 88 },
+  rowLabel: { width: 112 },
   rowValue: { flex: 1, fontFamily: fonts.sans600 },
   actions: { flexDirection: 'row', gap: 8 },
   action: { flex: 1 },

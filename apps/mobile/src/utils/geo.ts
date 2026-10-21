@@ -1,3 +1,5 @@
+import { usePrefs } from '@/store/usePrefs';
+
 export type LatLng = { lat: number; lng: number };
 
 const R = 6_371_000;
@@ -17,3 +19,12 @@ export function formatDistanceAr(m: number): string {
   if (m < 1000) return `${ar(String(Math.max(5, Math.round(m / 5) * 5)))} متر`;
   return `${ar((m / 1000).toFixed(1))} كم`;
 }
+
+/** English distance label: "250 m" / "1.2 km". Metres are rounded to 5 like the Arabic label. */
+export function formatDistanceEn(m: number): string {
+  if (m < 1000) return `${Math.max(5, Math.round(m / 5) * 5)} m`;
+  return `${(m / 1000).toFixed(1)} km`;
+}
+
+/** Distance label in the current language. */
+export const formatDistance = (m: number): string => (usePrefs.getState().lang === 'en' ? formatDistanceEn(m) : formatDistanceAr(m));

@@ -12,21 +12,23 @@ import { AppText, Button, Screen } from '@/components/ui';
 import { DEFAULT_PLACE, findDistrict } from '@/domain/locations';
 import type { IconName } from '@/domain/types';
 import { refreshAll, useFollowingSet, useReports, useRequestItems, useSession } from '@/store';
+import { placeName, useTr } from '@/i18n';
 import { colors } from '@/theme/tokens';
-import { greetingAr } from '@/utils/time';
+import { greeting } from '@/utils/time';
 
-type Tile = { icon: IconName; label: string; href: string; testID: string };
+type Tile = { icon: IconName; ar: string; en: string; href: string; testID: string };
 
 const TILES: Tile[] = [
-  { icon: 'alert-triangle', label: 'بلاغ عن مشكلة', href: '/report/category', testID: 'tile-report' },
-  { icon: 'trash', label: 'رفع مخلفات', href: '/services/bulky-waste', testID: 'tile-bulky' },
-  { icon: 'tree', label: 'صيانة الشجر', href: '/services', testID: 'tile-tree' },
-  { icon: 'map', label: 'خريطة المدينة', href: '/map', testID: 'tile-map' },
-  { icon: 'clipboard', label: 'طلباتي', href: '/requests', testID: 'tile-requests' },
-  { icon: 'bulb', label: 'إنارة الشوارع', href: '/report/new?category=streetlight_out', testID: 'tile-streetlight' },
+  { icon: 'alert-triangle', ar: 'بلاغ عن مشكلة', en: 'Report a problem', href: '/report/category', testID: 'tile-report' },
+  { icon: 'trash', ar: 'رفع مخلفات', en: 'Bulky waste', href: '/services/bulky-waste', testID: 'tile-bulky' },
+  { icon: 'tree', ar: 'صيانة الشجر', en: 'Tree care', href: '/services/tree', testID: 'tile-tree' },
+  { icon: 'map', ar: 'خريطة المدينة', en: 'City map', href: '/map', testID: 'tile-map' },
+  { icon: 'clipboard', ar: 'طلباتي', en: 'My requests', href: '/requests', testID: 'tile-requests' },
+  { icon: 'bulb', ar: 'إنارة الشوارع', en: 'Streetlights', href: '/report/new?category=streetlight_out', testID: 'tile-streetlight' },
 ];
 
 export default function HomeScreen() {
+  const tr = useTr();
   const name = useSession((s) => s.name);
   const governorate = useSession((s) => s.governorate);
   const district = useSession((s) => s.district);
@@ -90,29 +92,29 @@ export default function HomeScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.red} colors={[colors.red]} />}
       contentStyle={styles.content}
     >
-      <Greeting greeting={greetingAr()} name={name} area={`${governorate} · حي ${district}`} />
+      <Greeting greeting={greeting()} name={name} area={tr(`${governorate} · حي ${district}`, `${placeName(governorate)} · ${placeName(district)}`)} />
 
       <HeroCard />
 
       <View style={styles.section}>
-        <SectionTitle title="الخدمات" actionLabel="كل الخدمات" onAction={() => router.push('/services')} />
+        <SectionTitle title={tr('الخدمات', 'City services')} actionLabel={tr('كل الخدمات', 'All services')} onAction={() => router.push('/services')} />
         <Grid3>
           {TILES.map((t) => (
-            <ServiceTile key={t.testID} testID={t.testID} icon={t.icon} label={t.label} onPress={() => router.navigate(t.href)} />
+            <ServiceTile key={t.testID} testID={t.testID} icon={t.icon} label={tr(t.ar, t.en)} onPress={() => router.navigate(t.href)} />
           ))}
         </Grid3>
       </View>
 
       {failed ? (
-        <ErrorCard message={error ?? 'حصلت مشكلة، جرّب تاني'} onRetry={onRefresh} />
+        <ErrorCard message={error ?? tr('حصلت مشكلة، جرّب تاني', 'Something went wrong. Try again')} onRetry={onRefresh} />
       ) : (
         <>
           <View style={styles.section}>
-            <SectionTitle title="حوالين بيتك" />
+            <SectionTitle title={tr('حوالين بيتك', 'Near your home')} />
             {loading ? (
               <SkeletonRow />
             ) : nearby.length === 0 ? (
-              <EmptyNote icon="check" text="مفيش مشاكل مفتوحة حواليك دلوقتي." />
+              <EmptyNote icon="check" text={tr('مفيش مشاكل مفتوحة حواليك دلوقتي.', 'No open problems near you right now.')} />
             ) : (
               nearby.map(({ incident, distanceM }) => (
                 <NearbyCard
@@ -125,11 +127,11 @@ export default function HomeScreen() {
                 />
               ))
             )}
-            {followFailed ? <AppText variant="caption" color={colors.urgent}>معرفناش نسجّل متابعتك، جرّب تاني.</AppText> : null}
+            {followFailed ? <AppText variant="caption" color={colors.urgent}>{tr('معرفناش نسجّل متابعتك، جرّب تاني.', "We couldn't save your follow. Try again.")}</AppText> : null}
           </View>
 
           <View style={styles.section}>
-            <SectionTitle title="آخر التحديثات" actionLabel={items.length > 0 ? 'كل الطلبات' : undefined} onAction={() => router.navigate('/requests')} />
+            <SectionTitle title={tr('آخر التحديثات', 'Latest updates')} actionLabel={items.length > 0 ? tr('كل الطلبات', 'All requests') : undefined} onAction={() => router.navigate('/requests')} />
             {loading ? (
               <>
                 <SkeletonRow />
@@ -137,8 +139,8 @@ export default function HomeScreen() {
               </>
             ) : latest.length === 0 ? (
               <View style={styles.emptyBlock}>
-                <EmptyNote icon="clipboard" text="لسه مفيش طلبات. أول بلاغ ليك هيظهر هنا." />
-                <Button label="بلّغ عن مشكلة" icon="camera" variant="secondary" size="sm" onPress={() => router.push('/report/category')} />
+                <EmptyNote icon="clipboard" text={tr('لسه مفيش طلبات. أول بلاغ ليك هيظهر هنا.', 'No requests yet. Your first report will show up here.')} />
+                <Button label={tr('بلّغ عن مشكلة', 'Report a problem')} icon="camera" variant="secondary" size="sm" onPress={() => router.push('/report/category')} />
               </View>
             ) : (
               latest.map((item) => <RequestCard key={item.id} item={item} />)

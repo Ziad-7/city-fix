@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { AppText, Button } from '@/components/ui';
 import type { CatalogService } from '@/domain/services-catalog';
+import { serviceSubtitle, serviceTitle, useTr } from '@/i18n';
 import { colors, fonts, radius, shadows } from '@/theme/tokens';
 
 type Props = {
@@ -13,12 +14,15 @@ type Props = {
 
 /** Catalog row: icon, title, department + turnaround, chevron; "قريبًا" for services without a flow. */
 export function ServiceCard({ service, onPress, notice }: Props) {
+  const tr = useTr();
   const available = !!service.route;
+  const title = serviceTitle(service);
+  const subtitle = serviceSubtitle(service);
   return (
     <View style={[styles.card, available ? styles.featured : null]}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={available ? `${service.titleAr}، ${service.subtitleAr}` : `${service.titleAr}، قريبًا`}
+        accessibilityLabel={available ? `${title}${tr('، ', ', ')}${subtitle}` : `${title}${tr('، ', ', ')}${tr('قريبًا', 'Coming soon')}`}
         onPress={onPress}
         style={({ pressed }) => [styles.row, pressed ? styles.pressed : null]}
         testID={`service-${service.id}`}
@@ -27,18 +31,19 @@ export function ServiceCard({ service, onPress, notice }: Props) {
           <Icon name={service.icon} size={available ? 24 : 20} color={colors.red} />
         </View>
         <View style={styles.text}>
-          <AppText style={available ? styles.titleBig : styles.title}>{service.titleAr}</AppText>
-          <AppText variant="caption" color={colors.inkMuted}>{service.subtitleAr}</AppText>
+          <AppText style={available ? styles.titleBig : styles.title}>{title}</AppText>
+          <AppText variant="caption" color={colors.inkMuted}>{subtitle}</AppText>
         </View>
         {available ? null : (
           <View style={styles.badge}>
-            <AppText variant="caption" color={colors.goldDeep} style={{ fontFamily: fonts.sans600 }}>قريبًا</AppText>
+            <AppText variant="caption" color={colors.goldDeep} style={{ fontFamily: fonts.sans600 }}>{tr('قريبًا', 'Coming soon')}</AppText>
           </View>
         )}
         <Icon name="chevron" size={18} color={colors.inkMuted} />
       </Pressable>
       {available ? (
-        <Button label="احجز دلوقتي" icon="calendar" onPress={onPress} />
+        // The schedule is not a booking: both languages say so (see the 2026-10-21 review).
+        <Button label={tr(service.serviceType ? 'احجز دلوقتي' : 'شوف المواعيد', service.serviceType ? 'Book now' : 'See the times')} icon="calendar" onPress={onPress} />
       ) : null}
       {notice ? (
         <View style={styles.notice} accessibilityLiveRegion="polite">

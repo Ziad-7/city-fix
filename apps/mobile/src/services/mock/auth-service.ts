@@ -1,3 +1,4 @@
+import { tr } from '@/i18n';
 import type { AuthService } from '../interfaces';
 import { DEMO_USER_ID } from './seed';
 import { delay } from './db';
@@ -11,7 +12,7 @@ export function createMockAuthService(): AuthService {
     },
     async verifyCode(phone, code) {
       await delay(400);
-      if (!/^\d{6}$/.test(code)) throw new Error('الكود ٦ أرقام');
+      if (!/^\d{6}$/.test(code)) throw new Error(tr('الكود ٦ أرقام', 'The code is 6 digits'));
       return { userId: DEMO_USER_ID, phone };
     },
     async signOut() {

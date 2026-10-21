@@ -2,6 +2,8 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { AppText, Chip } from '@/components/ui';
 import { CATEGORIES } from '@/domain/categories';
 import type { CategoryId } from '@/domain/types';
+import { useTr } from '@/i18n';
+import { labelOfCategory } from '@/i18n/labels';
 import { colors, fonts } from '@/theme/tokens';
 import { Legend } from './Legend';
 import { MAP_STATUS_FILTERS, type MapStatusFilter } from './filters';
@@ -15,18 +17,19 @@ type Props = {
 
 /** Title + status chips + category chips + legend above the map. */
 export function TopBar({ status, onStatus, category, onCategory }: Props) {
+  const tr = useTr();
   return (
     <View style={styles.bar}>
-      <AppText accessibilityRole="header" style={styles.title}>الخريطة</AppText>
+      <AppText accessibilityRole="header" style={styles.title}>{tr('الخريطة', 'Map')}</AppText>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} accessibilityRole="tablist">
         {MAP_STATUS_FILTERS.map((f) => (
-          <Chip key={f.id} label={f.labelAr} selected={status === f.id} onPress={() => onStatus(f.id)} testID={`map-status-${f.id}`} />
+          <Chip key={f.id} label={tr(f.labelAr, f.labelEn)} selected={status === f.id} onPress={() => onStatus(f.id)} testID={`map-status-${f.id}`} />
         ))}
       </ScrollView>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-        <Chip label="كل الأنواع" selected={category === 'all'} onPress={() => onCategory('all')} testID="map-cat-all" />
+        <Chip label={tr('كل الأنواع', 'All types')} selected={category === 'all'} onPress={() => onCategory('all')} testID="map-cat-all" />
         {CATEGORIES.map((c) => (
-          <Chip key={c.id} label={c.labelAr} icon={c.icon} selected={category === c.id} onPress={() => onCategory(c.id)} testID={`map-cat-${c.id}`} />
+          <Chip key={c.id} label={labelOfCategory(c)} icon={c.icon} selected={category === c.id} onPress={() => onCategory(c.id)} testID={`map-cat-${c.id}`} />
         ))}
       </ScrollView>
       <Legend active={status} />

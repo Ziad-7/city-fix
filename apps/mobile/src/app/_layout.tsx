@@ -9,13 +9,16 @@ import {
 } from '@expo-google-fonts/ibm-plex-sans-arabic';
 import { ReadexPro_500Medium, ReadexPro_600SemiBold, ReadexPro_700Bold } from '@expo-google-fonts/readex-pro';
 import { useFonts as useExpoFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { colors } from '@/theme/tokens';
-import { refreshAll, useIsSignedIn, useSessionHydrated } from '@/store';
+import { OutboxToast } from '@/components/OutboxToast';
+import { onNotificationTapped, setupOsNotifications } from '@/notifications/os';
+import { refreshAll, startNotificationSync, useIsSignedIn, useOutboxSync, useSessionHydrated } from '@/store';
+import { isRtlLang, useLang } from '@/i18n';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -25,14 +28,15 @@ export default function RootLayout() {
   const signedIn = useIsSignedIn();
   const ready = (fontsLoaded || !!fontError) && hydrated;
 
-  // Web preview only: on native, RTL comes from the root `direction: 'rtl'` style below (see README).
+  const lang = useLang();
+  // Web preview only: on native, the direction comes from the root `direction` style below (see README).
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      document.documentElement.dir = 'rtl';
-      document.documentElement.lang = 'ar';
+      document.documentElement.dir = isRtlLang(lang) ? 'rtl' : 'ltr';
+      document.documentElement.lang = lang;
       document.body.style.backgroundColor = colors.paper;
     }
-  }, []);
+  }, [lang]);
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => undefined);
@@ -42,10 +46,28 @@ export default function RootLayout() {
     if (ready && signedIn) void refreshAll();
   }, [ready, signedIn]);
 
+  useOutboxSync(ready && signedIn);
+  // Status-change notifications: diff the report and service-request stores, show OS notifications.
+  useEffect(() => {
+    if (!ready || !signedIn) return;
+    void setupOsNotifications();
+    const stopSync = startNotificationSync();
+    const stopTap = onNotificationTapped((entityId) => router.push(`/requests/${entityId}`));
+    return () => {
+      stopSync();
+      stopTap();
+    };
+  }, [ready, signedIn]);
+
+  // The Android notification channel has a visible name: rename it when the language changes.
+  useEffect(() => {
+    if (ready && signedIn) void setupOsNotifications();
+  }, [ready, signedIn, lang]);
+
   if (!ready) return null;
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { direction: isRtlLang(lang) ? 'rtl' : 'ltr' }]}>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.paper } }}>
         <Stack.Protected guard={!signedIn}>
@@ -59,8 +81,12 @@ export default function RootLayout() {
           <Stack.Screen name="requests/[id]" />
           <Stack.Screen name="services/index" />
           <Stack.Screen name="services/bulky-waste" />
+          <Stack.Screen name="services/tree" />
+          <Stack.Screen name="services/garbage-schedule" />
+          <Stack.Screen name="notifications" />
         </Stack.Protected>
       </Stack>
+      <OutboxToast />
     </View>
   );
 }
@@ -78,10 +104,10 @@ function useFonts() {
   });
 }
 
-// direction: 'rtl' lays the whole app out right-to-left even in Expo Go, which ignores the
+// direction ('rtl' for Arabic, 'ltr' for English, set on the root view) lays the whole app out even in Expo Go, which ignores the
 // expo-localization forcesRTL plugin. RN's docs tag the prop `@platform ios`, but on Android Fabric applies it too:
 // `direction` is in the shared view config, YogaStylableProps.cpp feeds it to Yoga, the resolved direction reaches
 // SurfaceMountingManager.updateLayout (View.setLayoutDirection) and ParagraphShadowNode (text alignment). On wide web windows keep the phone-sized column centred.
 const styles = StyleSheet.create({
-  root: { flex: 1, direction: 'rtl', backgroundColor: colors.paper, width: '100%', maxWidth: Platform.OS === 'web' ? 480 : undefined, alignSelf: 'center' },
+  root: { flex: 1, backgroundColor: colors.paper, width: '100%', maxWidth: Platform.OS === 'web' ? 480 : undefined, alignSelf: 'center' },
 });

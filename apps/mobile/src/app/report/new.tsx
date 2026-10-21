@@ -1,24 +1,31 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
+import { EmergencyAlert } from '@/components/Hotlines';
 import { AiSuggestion, CategoryPicker, CategoryRow, type TriageState } from '@/components/report/AiSuggestion';
 import { useReportLocation } from '@/components/report/location';
 import { PhotoSlots, type PhotoPair } from '@/components/report/PhotoSlots';
-import { AlreadyReportedNote, DuplicatePanel, LocationCard, StepBar, VoiceRow } from '@/components/report/ReportParts';
+import { AlreadyReportedNote, DuplicatePanel, LocationCard, StepBar } from '@/components/report/ReportParts';
+import { VoiceNote, type VoiceStatus } from '@/components/report/VoiceNote';
+import { appendTranscript } from '@/components/report/voice';
 import { validateReportForm, type ReportFormErrors } from '@/components/report/validation';
 import { AppText, Button, Screen, ScreenHeader, TextField, ToggleRow } from '@/components/ui';
 import { CATEGORIES } from '@/domain/categories';
 import { DEFAULT_PLACE, findDistrict } from '@/domain/locations';
 import type { CategoryId, TriageSuggestion } from '@/domain/types';
+import { tr as trNow, useLang, useTr } from '@/i18n';
 import { pickDuplicateView } from '@/logic/duplicates';
+import { detectEmergency } from '@/logic/triage-mock';
 import { services } from '@/services';
-import { useReports, useSession } from '@/store';
+import { uploadAndTranscribeVoiceNote, useReports, useSession } from '@/store';
 import { colors } from '@/theme/tokens';
 
 const isCategoryId = (v: string | undefined): v is CategoryId => !!v && CATEGORIES.some((c) => c.id === v);
 
 export default function NewReportScreen() {
+  const tr = useTr();
+  const lang = useLang();
   const params = useLocalSearchParams<{ category?: string; voice?: string }>();
   const paramCategory = isCategoryId(params.category) ? params.category : null;
 
@@ -32,10 +39,16 @@ export default function NewReportScreen() {
     const d = findDistrict(governorate, district);
     return d ? { lat: d.lat, lng: d.lng } : { lat: DEFAULT_PLACE.lat, lng: DEFAULT_PLACE.lng };
   }, [governorate, district]);
-  const { place, state: locState, locate, setAddress, setLandmark } = useReportLocation(fallbackCenter);
+  const { place, state: locState, locate, moveTo, setAddress, setLandmark } = useReportLocation(fallbackCenter);
 
   const [photos, setPhotos] = useState<PhotoPair>([null, null]);
   const [description, setDescription] = useState('');
+  /** The recorded clip on the phone, and its storage path once uploaded. A report sends the path when there is one,
+   *  else the local file (the submit pipeline / offline queue uploads it): a failed or unfinished upload never drops it. */
+  const [voiceLocal, setVoiceLocal] = useState<string | null>(null);
+  const [voicePath, setVoicePath] = useState<string | null>(null);
+  const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('none');
+  const voiceTicket = useRef(0);
   const [blurFaces, setBlurFaces] = useState(true);
   const [anonymous, setAnonymous] = useState(false);
   const [manualCategory, setManualCategory] = useState<CategoryId | null>(null);
@@ -57,7 +70,7 @@ export default function NewReportScreen() {
 
   // Mock AI: runs once there is a photo or a few words; debounced while typing; stale answers are dropped.
   // `done.key` says which inputs the latest answer belongs to, so "loading" is derived rather than stored.
-  const inputKey = [trimmed, mainPhoto ?? '', priorCategory ?? '', place.lat, place.lng, retryTick].join('|');
+  const inputKey = [trimmed, mainPhoto ?? '', priorCategory ?? '', place.lat, place.lng, retryTick, lang].join('|');
   const triage = hasInput ? (done?.suggestion ?? null) : null;
   const triageState: TriageState = !hasInput ? 'idle' : done?.key !== inputKey ? 'loading' : done.suggestion ? 'ready' : 'error';
   const categoryId: CategoryId | null = manualCategory ?? triage?.options[0]?.categoryId ?? paramCategory;
@@ -90,6 +103,31 @@ export default function NewReportScreen() {
   const dupView = pickDuplicateView(triage, categoryId);
   const duplicate = dupView.kind === 'join' && dupView.match.incidentId !== dismissedDup ? dupView.match : null;
 
+  // Upload + transcribe a fresh recording; the transcript lands in the description (appended, still editable).
+  const onVoiceRecorded = useCallback(async (localUri: string) => {
+    const ticket = ++voiceTicket.current;
+    setVoiceLocal(localUri);
+    setVoicePath(null);
+    setVoiceStatus('transcribing');
+    const { text } = await uploadAndTranscribeVoiceNote(localUri, undefined, (path) => {
+      if (ticket === voiceTicket.current) setVoicePath(path);
+    });
+    if (ticket !== voiceTicket.current) return; // deleted or re-recorded meanwhile
+    if (text) {
+      setDescription((d) => appendTranscript(d, text));
+      setErrors((e) => ({ ...e, description: undefined }));
+      setVoiceStatus('done');
+    } else {
+      setVoiceStatus('failed');
+    }
+  }, []);
+  const onVoiceRemoved = useCallback(() => {
+    voiceTicket.current += 1;
+    setVoiceLocal(null);
+    setVoicePath(null);
+    setVoiceStatus('none');
+  }, []);
+
   const submit = useCallback(
     async (linkTo?: string) => {
       if (submitting) return;
@@ -108,10 +146,11 @@ export default function NewReportScreen() {
 
       setSubmitting(linkTo ? 'join' : 'send');
       try {
-        await submitReport({
+        const res = await submitReport({
           categoryId: values.categoryId as CategoryId,
           description: values.description,
           photoUris,
+          voiceNoteUri: voicePath ?? voiceLocal ?? undefined,
           location: values.location,
           anonymous,
           blurFaces,
@@ -120,13 +159,13 @@ export default function NewReportScreen() {
           district,
           linkToIncidentId: linkTo,
         });
-        router.replace('/report/success');
+        router.replace(res.queued ? { pathname: '/report/success', params: { queued: '1' } } : '/report/success');
       } catch (e) {
-        setSubmitError(e instanceof Error && e.message ? e.message : 'معرفناش نبعت البلاغ، جرّب تاني.');
+        setSubmitError(e instanceof Error && e.message ? e.message : trNow('معرفناش نبعت البلاغ، جرّب تاني.', "We couldn't send your report. Try again."));
         setSubmitting(null);
       }
     },
-    [submitting, categoryId, trimmed, photoUris, place, anonymous, blurFaces, submitReport, triage, governorate, district],
+    [submitting, categoryId, trimmed, photoUris, voicePath, voiceLocal, place, anonymous, blurFaces, submitReport, triage, governorate, district],
   );
 
   const pickCategory = (id: CategoryId) => {
@@ -144,7 +183,7 @@ export default function NewReportScreen() {
         avoidKeyboard
         header={
           <View>
-            <ScreenHeader title="بلاغ جديد" step="خطوة ٢ من ٣" />
+            <ScreenHeader title={tr('بلاغ جديد', 'New report')} step={tr('خطوة ٢ من ٣', 'Step 2 of 3')} />
             <StepBar step={2} />
           </View>
         }
@@ -153,13 +192,13 @@ export default function NewReportScreen() {
           <View style={styles.footer}>
             <View style={styles.offline}>
               <Icon name="wifi" size={14} color={colors.inkMuted} />
-              <AppText variant="caption" color={colors.inkMuted}>النت ضعيف؟ البلاغ هيتحفظ ويتبعت أول ما يرجع</AppText>
+              <AppText variant="caption" color={colors.inkMuted}>{tr('النت ضعيف؟ البلاغ هيتحفظ ويتبعت أول ما يرجع', 'Weak signal? We’ll save your report and send it when you’re back online')}</AppText>
             </View>
             {submitError ? <AppText accessibilityRole="alert" variant="caption" color={colors.urgent} center>{submitError}</AppText> : null}
             {!submitError && errorCount > 0 ? (
-              <AppText accessibilityRole="alert" variant="caption" color={colors.urgent} center>راجع الحقول اللي متعلّمة بالأحمر.</AppText>
+              <AppText accessibilityRole="alert" variant="caption" color={colors.urgent} center>{tr('راجع الحقول اللي متعلّمة بالأحمر.', 'Check the fields marked in red.')}</AppText>
             ) : null}
-            <Button testID="submit-report" label="ابعت البلاغ" icon="arrow-forward" iconPosition="end" loading={submitting === 'send'} disabled={submitting === 'join'} onPress={() => submit()} />
+            <Button testID="submit-report" label={tr('ابعت البلاغ', 'Send report')} icon="arrow-forward" iconPosition="end" loading={submitting === 'send'} disabled={submitting === 'join'} onPress={() => submit()} />
           </View>
         }
       >
@@ -172,6 +211,8 @@ export default function NewReportScreen() {
           </View>
         ) : (
           <View style={{ gap: 4 }}>
+            {/* Safety net: emergency numbers show even when the AI suggestion is loading or failed. */}
+            {!triage?.emergency && detectEmergency(trimmed) ? <EmergencyAlert /> : null}
             <AiSuggestion
               state={triageState}
               suggestion={triage}
@@ -185,8 +226,8 @@ export default function NewReportScreen() {
         )}
 
         <View style={{ gap: 8 }}>
-          <AppText variant="label">وصف المشكلة</AppText>
-          <VoiceRow highlight={params.voice === '1'} />
+          <AppText variant="label">{tr('وصف المشكلة', 'Describe the problem')}</AppText>
+          <VoiceNote highlight={params.voice === '1'} status={voiceStatus} onRecorded={onVoiceRecorded} onRemoved={onVoiceRemoved} />
           <TextField
             testID="description-input"
             value={description}
@@ -196,21 +237,21 @@ export default function NewReportScreen() {
             }}
             multiline
             rows={3}
-            placeholder="اكتب المشكلة بالعامية، زي: فيه حفرة قدام المدرسة"
+            placeholder={tr('اكتب المشكلة بالعامية، زي: فيه حفرة قدام المدرسة', 'Describe it in your own words, like: There’s a pothole in front of the school')}
             error={errors.description}
           />
         </View>
 
         <View style={{ gap: 8 }}>
-          <AppText variant="label">المكان</AppText>
-          <LocationCard place={place} state={locState} error={errors.address} onEditAddress={setAddress} onRetry={locate} />
-          <TextField testID="landmark-input" label="علامة مميزة (اختياري)" value={place.landmark ?? ''} onChangeText={setLandmark} placeholder="مثلًا: قدام مدرسة النصر الإعدادية" />
+          <AppText variant="label">{tr('المكان', 'Location')}</AppText>
+          <LocationCard place={place} state={locState} error={errors.address} onEditAddress={setAddress} onRetry={locate} onMove={moveTo} />
+          <TextField testID="landmark-input" label={tr('علامة مميزة (اختياري)', 'Landmark (optional)')} value={place.landmark ?? ''} onChangeText={setLandmark} placeholder={tr('مثلًا: قدام مدرسة النصر الإعدادية', 'e.g. in front of Al Nasr Prep School')} />
         </View>
 
         <View style={{ gap: 8 }}>
-          <AppText variant="label">خصوصيتك</AppText>
-          <ToggleRow testID="toggle-blur" icon="eye-off" title="اخفي الوشوش ونمر العربيات" subtitle="بنعمل blur تلقائي قبل ما الصورة تتنشر" value={blurFaces} onValueChange={setBlurFaces} />
-          <ToggleRow testID="toggle-anonymous" icon="shield-check" title="بلّغ من غير اسم" subtitle="الحي مش هيشوف اسمك ولا رقمك" value={anonymous} onValueChange={setAnonymous} />
+          <AppText variant="label">{tr('خصوصيتك', 'Your privacy')}</AppText>
+          <ToggleRow testID="toggle-blur" icon="eye-off" title={tr('اخفي الوشوش ونمر العربيات', 'Blur faces and car plates')} subtitle={tr('بنعمل blur تلقائي قبل ما الصورة تتنشر', 'We blur them automatically before the photo is published')} value={blurFaces} onValueChange={setBlurFaces} />
+          <ToggleRow testID="toggle-anonymous" icon="shield-check" title={tr('بلّغ من غير اسم', 'Report without my name')} subtitle={tr('الحي مش هيشوف اسمك ولا رقمك', 'The district won’t see your name or number')} value={anonymous} onValueChange={setAnonymous} />
         </View>
 
         {dupView.kind === 'own' ? (

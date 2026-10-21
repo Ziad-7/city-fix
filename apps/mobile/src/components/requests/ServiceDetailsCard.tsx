@@ -1,25 +1,33 @@
 import { StyleSheet, View } from 'react-native';
 import { AppText, Card } from '@/components/ui';
-import { FEE_LABEL } from '@/domain/services-catalog';
+import { FEE_LABEL, FREE_SERVICE_LABEL } from '@/domain/services-catalog';
 import type { ServiceRequest } from '@/domain/types';
+import { useTr } from '@/i18n';
+import { FEE_LABEL_EN, FREE_SERVICE_LABEL_EN, itemLabel } from '@/i18n/labels';
 import { colors, fonts } from '@/theme/tokens';
-import { dayLabel } from '../services/day';
-import { paymentLabel, slotLabel } from './labels';
+import { dayText, paymentLabel, slotLabel } from './labels';
 
 /** Booking details of a service request: items, day, slot, payment, fee, address. */
 export function ServiceDetailsCard({ request }: { request: ServiceRequest }) {
+  const tr = useTr();
   const { details, location } = request;
+  const free = !details.payment;
+  const items = details.items.map(itemLabel).join(tr('، ', ', '));
   const rows: { label: string; value: string }[] = [
-    { label: 'اللي هيترفع', value: details.items.join('، ') },
-    { label: 'اليوم', value: dayLabel(details.day) },
-    { label: 'الفترة', value: slotLabel(details.slot) },
-    { label: 'طريقة الدفع', value: paymentLabel(details.payment) },
-    { label: 'الرسوم', value: FEE_LABEL },
-    { label: 'العنوان', value: [location.address, location.landmark].filter(Boolean).join(' · ') },
+    free
+      ? { label: tr('نوع الشغل', 'Type of work'), value: details.workType ? itemLabel(details.workType) : items }
+      : { label: tr('اللي هيترفع', 'Items'), value: items },
+    { label: tr('اليوم', 'Day'), value: dayText(details.day) },
+    { label: tr('الفترة', 'Time slot'), value: slotLabel(details.slot) },
+    { label: tr('طريقة الدفع', 'Payment'), value: paymentLabel(details.payment) },
+    { label: tr('الرسوم', 'Fee'), value: free ? tr(FREE_SERVICE_LABEL, FREE_SERVICE_LABEL_EN) : tr(FEE_LABEL, FEE_LABEL_EN.charAt(0).toUpperCase() + FEE_LABEL_EN.slice(1)) },
+    { label: tr('العنوان', 'Address'), value: [location.address, location.landmark].filter(Boolean).join(' · ') },
+    ...(details.note ? [{ label: tr('ملاحظة', 'Note'), value: details.note }] : []),
   ];
+  const heading = tr('تفاصيل الحجز', 'Booking details');
   return (
-    <Card rounded="lg" padding={16} accessibilityLabel="تفاصيل الحجز">
-      <AppText style={styles.heading} accessibilityRole="header">تفاصيل الحجز</AppText>
+    <Card rounded="lg" padding={16} accessibilityLabel={heading}>
+      <AppText style={styles.heading} accessibilityRole="header">{heading}</AppText>
       <View style={styles.rows}>
         {rows.map((r) => (
           <View key={r.label} style={styles.row} accessible accessibilityLabel={`${r.label}: ${r.value}`}>

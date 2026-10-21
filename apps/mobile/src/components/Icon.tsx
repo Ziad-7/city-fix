@@ -1,11 +1,10 @@
 import { type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Circle, Ellipse, Path, Rect } from 'react-native-svg';
 import type { IconName } from '@/domain/types';
+import { useIsRTL } from '@/i18n';
 import { colors } from '@/theme/tokens';
 import { DIRECTIONAL_ICONS, FILLED_ICONS, ICON_SHAPES } from './icon-shapes';
 
-/** The app is Arabic-only and the root layout sets direction: 'rtl' on every platform. */
-export const isRTL = true;
 
 export type IconProps = {
   name: IconName;
@@ -15,10 +14,11 @@ export type IconProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-/** Lucide-style SVG icon. Directional icons (back, forward, chevron, play) mirror in RTL. */
+/** Lucide-style SVG icon. Directional icons (back, forward, chevron, play) mirror in RTL (Arabic). */
 export function Icon({ name, size = 22, color = colors.ink, strokeWidth = 1.75, style }: IconProps) {
   const filled = FILLED_ICONS.has(name);
-  const mirror = isRTL && DIRECTIONAL_ICONS.has(name);
+  const rtl = useIsRTL();
+  const mirror = rtl && DIRECTIONAL_ICONS.has(name);
   return (
     <Svg
       width={size}
