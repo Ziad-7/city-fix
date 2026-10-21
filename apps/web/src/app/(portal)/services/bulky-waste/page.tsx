@@ -12,6 +12,7 @@ import { paymentLabel, slotLabel } from '@/components/requests/labels';
 import { useServiceRequests, useSession } from '@/store';
 import { CheckGroup, ChoiceGroup } from '@/ui/controls';
 import { Icon } from '@/ui/Icon';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 type Errors = Partial<Record<'items' | 'day' | 'address', string>>;
 
@@ -19,6 +20,7 @@ const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'ماي�
 
 /** Bulky-waste pickup booking (same rules as apps/mobile/src/app/services/bulky-waste.tsx). */
 export default function BulkyWastePage() {
+  usePageTitle('رفع مخلفات كبيرة');
   const router = useRouter();
   const governorate = useSession((s) => s.governorate);
   const district = useSession((s) => s.district);
@@ -76,29 +78,24 @@ export default function BulkyWastePage() {
           </section>
           <section className="ftc-card v-sec" aria-labelledby="b2">
             <header><h2 className="w-h3" id="b2">اختار الميعاد</h2><span>الخدمة من الأحد للخميس</span></header>
-            <div className="v-days" role="radiogroup" aria-label="اليوم">
-              {days.map((d) => {
+            <ChoiceGroup
+              className="v-days"
+              label="اليوم"
+              marker={false}
+              value={day}
+              onChange={setDay}
+              testIdPrefix="day"
+              options={days.map((d) => {
                 const p = dayParts(d);
-                const on = d === day;
-                return (
-                  <div
-                    key={d}
-                    className={`v-day w-choice${on ? ' is-on' : ''}`}
-                    role="radio"
-                    aria-checked={on}
-                    aria-label={dayLabel(d)}
-                    tabIndex={on ? 0 : -1}
-                    style={{ flexDirection: 'column', padding: '12px 4px', gap: 2 }}
-                    onClick={() => setDay(d)}
-                    onKeyDown={(e) => {
-                      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setDay(d); }
-                    }}
-                  >
-                    <span>{p.weekday}</span><b>{p.dayOfMonth}</b><small>{MONTHS[parseIsoDay(d).getMonth()]}</small>
-                  </div>
-                );
+                return {
+                  id: d,
+                  ariaLabel: dayLabel(d),
+                  className: 'v-day',
+                  style: { flexDirection: 'column', padding: '12px 4px', gap: 2 },
+                  label: <><span>{p.weekday}</span><b>{p.dayOfMonth}</b><small>{MONTHS[parseIsoDay(d).getMonth()]}</small></>,
+                };
               })}
-            </div>
+            />
             <div className="ftc-field">
               <span className="ftc-label" id="sl">الفترة</span>
               <ChoiceGroup className="v-pair" labelledBy="sl" options={SLOTS.map((s) => ({ id: s.id, label: s.labelAr }))} value={slot} onChange={setSlot} />
@@ -127,7 +124,7 @@ export default function BulkyWastePage() {
             <h2 className="w-h3" style={{ marginBottom: 14 }}>ملخص الحجز</h2>
             <dl>
               <dt>الخدمة</dt><dd>رفع مخلفات كبيرة</dd>
-              <dt>اللي هيترفع</dt><dd>{items.length ? items.join('، ') : 'لسه مختارتش'}</dd>
+              <dt>اللي هيترفع</dt><dd>{items.length ? items.join('، ') : 'لسه مفيش'}</dd>
               <dt>اليوم</dt><dd>{dayLabel(day)}</dd>
               <dt>الفترة</dt><dd>{slotLabel(slot)}</dd>
               <dt>طريقة الدفع</dt><dd>{paymentLabel(payment)}</dd>

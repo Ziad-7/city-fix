@@ -10,6 +10,7 @@ import type { LocationState } from '@/lib/location';
 import { MAX_SECONDS, useVoiceNote } from '@/lib/voice';
 import { toArabicDigits } from '@/utils/digits';
 import { formatDistanceAr } from '@/utils/geo';
+import { radioKeys } from '@/ui/controls';
 import { Icon } from '@/ui/Icon';
 import { LocationPickerMap } from '@/ui/map';
 
@@ -26,9 +27,13 @@ export function PhotoSlots({ photos, onAdd, onRemove, busy, error }: { photos: s
     <div className="w-stack" style={{ gap: 8 }}>
       <div className="r-photos">
         {!full ? (
-          <label
+          // The zone itself opens the camera on a phone (`capture`); "أو من المعرض" is a second input without `capture`
+          // so an already-taken photo can be picked. On a computer both just open the file dialog.
+          <div
             className={`r-drop${over ? ' is-over' : ''}`}
-            htmlFor="photo"
+            onClick={(e) => {
+              if (!(e.target as HTMLElement).closest('label,input')) input.current?.click();
+            }}
             onDragOver={(e) => {
               e.preventDefault();
               setOver(true);
@@ -43,22 +48,35 @@ export function PhotoSlots({ photos, onAdd, onRemove, busy, error }: { photos: s
             <span className="ftc-icon-well">{busy ? <span className="a-spin" aria-hidden="true" /> : <Icon name="camera" size={26} />}</span>
             <b>صوّر المشكلة</b>
             <small>اسحب صورة هنا، أو اختار من جهازك</small>
-            <span className="w-link">أو من المعرض</span>
+            <label className="w-link" htmlFor="photo-gallery">أو من المعرض</label>
             <input
               ref={input}
               id="photo"
-              data-testid="photo-input"
+              data-testid="photo-camera"
               className="w-sr"
               type="file"
               accept="image/*"
               capture="environment"
-              multiple
+              aria-label="صوّر المشكلة بالكاميرا"
               onChange={(e) => {
                 onAdd(Array.from(e.target.files ?? []));
                 e.target.value = '';
               }}
             />
-          </label>
+            <input
+              id="photo-gallery"
+              data-testid="photo-input"
+              className="w-sr"
+              type="file"
+              accept="image/*"
+              multiple
+              aria-label="اختار صور من المعرض"
+              onChange={(e) => {
+                onAdd(Array.from(e.target.files ?? []));
+                e.target.value = '';
+              }}
+            />
+          </div>
         ) : null}
         {photos.map((p, i) => (
           <div className="r-ph" key={i}>
@@ -81,7 +99,7 @@ export function AiSuggestion({
     return (
       <div className="r-ai" role="alert">
         <b style={{ color: 'var(--ftc-urgent-deep)' }}>معرفناش نحلّل البلاغ دلوقتي</b>
-        <p>تقدر تختار التصنيف بنفسك وتكمّل.</p>
+        <p>اختار التصنيف بنفسك وكمّل.</p>
         <div className="w-row" style={{ gap: 16 }}>
           <button className="w-link" type="button" onClick={onRetry}>جرّب تاني</button>
           <button className="w-link" type="button" onClick={onPickOther}>اختار التصنيف بنفسك</button>
@@ -97,6 +115,8 @@ export function AiSuggestion({
     );
   }
   const critical = suggestion.severity === 'critical';
+  // Roving tabindex: the chosen option (or the first) is the one tab stop; the arrows move between the rest.
+  const tabStop = Math.max(0, suggestion.options.findIndex((x) => x.categoryId === selected));
   return (
     <div className="r-ai" aria-label="اقتراح الذكاء الاصطناعي" data-testid="ai-suggestion">
       <div className="r-ai__h">
@@ -108,7 +128,7 @@ export function AiSuggestion({
       <p>{suggestion.summary}</p>
       <span className="ftc-caption" style={{ color: 'var(--ftc-ink-muted)' }}>اختار التصنيف الصح</span>
       <div className="w-stack" style={{ gap: 8 }} role="radiogroup" aria-label="التصنيف">
-        {suggestion.options.map((o) => {
+        {suggestion.options.map((o, i) => {
           const on = o.categoryId === selected;
           const pct = Math.round(o.confidence * 100);
           return (
@@ -117,15 +137,10 @@ export function AiSuggestion({
               className={`r-opt${on ? ' is-on' : ''}`}
               role="radio"
               aria-checked={on}
-              tabIndex={0}
+              tabIndex={i === tabStop ? 0 : -1}
               data-testid={`ai-option-${o.categoryId}`}
               onClick={() => onSelect(o.categoryId)}
-              onKeyDown={(e) => {
-                if (e.key === ' ' || e.key === 'Enter') {
-                  e.preventDefault();
-                  onSelect(o.categoryId);
-                }
-              }}
+              onKeyDown={(e) => radioKeys(e, i, suggestion.options.length, (n) => onSelect(suggestion.options[n].categoryId))}
             >
               <span className="mk" />
               <span>{getCategory(o.categoryId).labelAr}</span>

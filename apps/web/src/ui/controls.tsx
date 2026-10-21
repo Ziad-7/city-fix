@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
 import type { IconName } from '@/domain/types';
 import { Icon } from './Icon';
 
@@ -35,22 +35,40 @@ export function ToggleRow({
   );
 }
 
-/** Single-choice group of `.w-choice` radios (keyboard: Space/Enter, arrows move between options). */
+/**
+ * Keyboard for one radio of a radiogroup whose radios are the direct children of the group element: Space/Enter
+ * choose it; the arrows (RTL: left/down = next, right/up = previous) choose the neighbour AND move focus to it, so
+ * the next arrow continues from there (roving tabindex). Returns true when it handled the key.
+ */
+export function radioKeys(e: KeyboardEvent<HTMLElement>, index: number, count: number, choose: (i: number) => void): boolean {
+  if (e.key === ' ' || e.key === 'Enter') {
+    e.preventDefault();
+    choose(index);
+    return true;
+  }
+  const step = e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowRight' || e.key === 'ArrowUp' ? -1 : 0;
+  if (!step) return false;
+  e.preventDefault();
+  const next = (index + step + count) % count;
+  choose(next);
+  (e.currentTarget.parentElement?.children[next] as HTMLElement | undefined)?.focus();
+  return true;
+}
+
+/** Single-choice group of `.w-choice` radios (keyboard: Space/Enter, arrows move between options and focus). */
 export function ChoiceGroup<T extends string>({
-  options, value, onChange, label, labelledBy, className, testIdPrefix,
+  options, value, onChange, label, labelledBy, className, testIdPrefix, marker = true,
 }: {
-  options: { id: T; label: ReactNode }[];
+  options: { id: T; label: ReactNode; ariaLabel?: string; className?: string; style?: CSSProperties }[];
   value: T | null;
   onChange: (v: T) => void;
   label?: string;
   labelledBy?: string;
   className?: string;
   testIdPrefix?: string;
+  /** The round marker before the label (off for the day tiles). */
+  marker?: boolean;
 }) {
-  const move = (from: number, step: number) => {
-    const next = options[(from + step + options.length) % options.length];
-    onChange(next.id);
-  };
   return (
     <div className={className} role="radiogroup" aria-label={label} aria-labelledby={labelledBy}>
       {options.map((o, i) => {
@@ -58,26 +76,17 @@ export function ChoiceGroup<T extends string>({
         return (
           <div
             key={o.id}
-            className={`w-choice${on ? ' is-on' : ''}`}
+            className={`w-choice${on ? ' is-on' : ''}${o.className ? ` ${o.className}` : ''}`}
+            style={o.style}
             role="radio"
             aria-checked={on}
+            aria-label={o.ariaLabel}
             tabIndex={on || (value === null && i === 0) ? 0 : -1}
             data-testid={testIdPrefix ? `${testIdPrefix}-${o.id}` : undefined}
             onClick={() => onChange(o.id)}
-            onKeyDown={(e) => {
-              if (e.key === ' ' || e.key === 'Enter') {
-                e.preventDefault();
-                onChange(o.id);
-              } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
-                e.preventDefault();
-                move(i, 1);
-              } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
-                e.preventDefault();
-                move(i, -1);
-              }
-            }}
+            onKeyDown={(e) => radioKeys(e, i, options.length, (n) => onChange(options[n].id))}
           >
-            <span className="mk" />
+            {marker ? <span className="mk" /> : null}
             {o.label}
           </div>
         );
