@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { create } from 'zustand';
 import type { Incident, NewReportInput, Report } from '@/domain/types';
+import { tr } from '@/i18n';
 import { services } from '@/services';
 import { classifyFailure } from '@/services/media';
 import { isOffline } from '@/services/network';
@@ -41,7 +42,7 @@ type ReportsState = {
 
 const uid = () => {
   const id = useSession.getState().userId;
-  if (!id) throw new Error('لازم تسجّل دخول الأول');
+  if (!id) throw new Error(tr('لازم تسجّل دخول الأول', 'Please sign in first'));
   return id;
 };
 
@@ -89,7 +90,7 @@ export const useReports = create<ReportsState>((set, get) => ({
       merged.reports.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
       set({ ...merged, status: 'ready' });
     } catch (e) {
-      set({ status: 'error', error: e instanceof Error ? e.message : 'حصلت مشكلة، جرّب تاني' });
+      set({ status: 'error', error: e instanceof Error ? e.message : tr('حصلت مشكلة، جرّب تاني', 'Something went wrong. Try again') });
     }
   },
 

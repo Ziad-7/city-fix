@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { NewServiceRequestInput, ServiceRequest } from '@/domain/types';
+import { tr } from '@/i18n';
 import { services } from '@/services';
 import { useSession } from './useSession';
 
@@ -20,7 +21,7 @@ type ServiceRequestsState = {
 
 const uid = () => {
   const id = useSession.getState().userId;
-  if (!id) throw new Error('لازم تسجّل دخول الأول');
+  if (!id) throw new Error(tr('لازم تسجّل دخول الأول', 'Please sign in first'));
   return id;
 };
 
@@ -34,7 +35,7 @@ export const useServiceRequests = create<ServiceRequestsState>((set, get) => ({
     try {
       set({ requests: await services.serviceRequests.listMine(uid()), status: 'ready' });
     } catch (e) {
-      set({ status: 'error', error: e instanceof Error ? e.message : 'حصلت مشكلة، جرّب تاني' });
+      set({ status: 'error', error: e instanceof Error ? e.message : tr('حصلت مشكلة، جرّب تاني', 'Something went wrong. Try again') });
     }
   },
 

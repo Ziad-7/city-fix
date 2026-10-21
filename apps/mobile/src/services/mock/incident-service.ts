@@ -1,15 +1,18 @@
 import { getCategory } from '@/domain/categories';
 import { findDistrict, GOVERNORATES } from '@/domain/locations';
-import type { Incident, IncidentStatus, MapPin, NewReportInput, Report } from '@/domain/types';
+import type { IncidentStatus, MapPin, NewReportInput } from '@/domain/types';
+import { tr } from '@/i18n';
 import { computePriority } from '@/logic/priority';
 import { daysBetween } from '@/utils/time';
 import type { IncidentService } from '../interfaces';
 import { delay, loadDb, saveDb } from './db';
+import { incidentView, reportView } from './localize';
+import type { DbIncident, DbReport } from './seed';
 import { etaFor, incidentTimelineEntry, nextStatus } from './timeline';
 
 const pad = (n: number) => String(n).padStart(4, '0');
 
-function reprioritize(i: Incident): Incident {
+function reprioritize<T extends DbIncident>(i: T): T {
   const cat = getCategory(i.categoryId);
   return {
     ...i,
@@ -36,7 +39,7 @@ export function createMockIncidentService(): IncidentService {
       const db = await loadDb();
       const now = new Date().toISOString();
       const reportId = `FTC-${pad(db.counters.report++)}`;
-      let incident: Incident | undefined = input.linkToIncidentId
+      let incident: DbIncident | undefined = input.linkToIncidentId
         ? db.incidents.find((i) => i.id === input.linkToIncidentId)
         : undefined;
 
@@ -58,10 +61,10 @@ export function createMockIncidentService(): IncidentService {
         const cat = getCategory(input.categoryId);
         const severity = input.severity ?? cat.defaultSeverity;
         const base = { categoryId: input.categoryId, severity, department: cat.department };
-        const fresh: Incident = {
+        const fresh: DbIncident = {
           id: `INC-${pad(db.counters.incident++)}`,
           ...base,
-          title: `${cat.labelAr}${input.location.address ? ` · ${input.location.address.split('،')[0]}` : ''}`,
+          title: `${cat.labelAr}${input.location.address ? ` · ${input.location.address.split(/[،,]/)[0].trim()}` : ''}`,
           priority: { score: 0, factors: [] },
           status: 'received',
           estimatedCostEgp: cat.estimatedCostEgp,
@@ -79,7 +82,7 @@ export function createMockIncidentService(): IncidentService {
         db.following[userId] = [...new Set([...(db.following[userId] ?? []), incident.id])];
       }
 
-      const report: Report = {
+      const report: DbReport = {
         id: reportId,
         reporterId: userId,
         incidentId: incident.id,
@@ -94,34 +97,39 @@ export function createMockIncidentService(): IncidentService {
       };
       db.reports = [report, ...db.reports];
       await saveDb(db);
-      return { report, incident };
+      return { report: reportView(report), incident: incidentView(incident) };
     },
 
     async listMyReports(userId) {
       await delay();
       const db = await loadDb();
-      return db.reports.filter((r) => r.reporterId === userId).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      return db.reports
+        .filter((r) => r.reporterId === userId)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .map(reportView);
     },
 
     async getReport(id) {
       const db = await loadDb();
-      return db.reports.find((r) => r.id === id) ?? null;
+      const found = db.reports.find((r) => r.id === id);
+      return found ? reportView(found) : null;
     },
 
     async listIncidents() {
       await delay();
-      return (await loadDb()).incidents;
+      return (await loadDb()).incidents.map(incidentView);
     },
 
     async getIncident(id) {
       const db = await loadDb();
-      return db.incidents.find((i) => i.id === id) ?? null;
+      const found = db.incidents.find((i) => i.id === id);
+      return found ? incidentView(found) : null;
     },
 
     async listMapPins(): Promise<MapPin[]> {
       await delay();
       const db = await loadDb();
-      return db.incidents.map((i) => ({
+      return db.incidents.map(incidentView).map((i) => ({
         id: i.id,
         categoryId: i.categoryId,
         title: i.title,
@@ -142,24 +150,24 @@ export function createMockIncidentService(): IncidentService {
       await delay(120);
       const db = await loadDb();
       const found = db.incidents.find((i) => i.id === incidentId);
-      if (!found) throw new Error('البلاغ مش موجود');
+      if (!found) throw new Error(tr('البلاغ مش موجود', "We couldn't find that report"));
       const already = (db.following[userId] ?? []).includes(incidentId);
-      if (already) return found;
-      const updated: Incident = { ...found, followers: found.followers + 1 };
+      if (already) return incidentView(found);
+      const updated: DbIncident = { ...found, followers: found.followers + 1 };
       db.incidents = db.incidents.map((i) => (i.id === incidentId ? updated : i));
       db.following[userId] = [...(db.following[userId] ?? []), incidentId];
       await saveDb(db);
-      return updated;
+      return incidentView(updated);
     },
 
     async simulateProgress(incidentId) {
       const db = await loadDb();
       const found = db.incidents.find((i) => i.id === incidentId);
-      if (!found) throw new Error('البلاغ مش موجود');
+      if (!found) throw new Error(tr('البلاغ مش موجود', "We couldn't find that report"));
       const status: IncidentStatus = nextStatus(found.status);
-      if (status === found.status) return found;
+      if (status === found.status) return incidentView(found);
       const at = new Date().toISOString();
-      const updated: Incident = {
+      const updated: DbIncident = {
         ...found,
         status,
         eta: etaFor(status),
@@ -169,30 +177,37 @@ export function createMockIncidentService(): IncidentService {
       };
       db.incidents = db.incidents.map((i) => (i.id === incidentId ? updated : i));
       await saveDb(db);
-      return updated;
+      return incidentView(updated);
     },
 
     async reopenIncident(_userId, incidentId, note) {
       await delay(120);
       const db = await loadDb();
       const found = db.incidents.find((i) => i.id === incidentId);
-      if (!found) throw new Error('البلاغ مش موجود');
-      if (found.status !== 'resolved') throw new Error('مينفعش نفتح البلاغ ده تاني، لأنه لسه مش متصلّح');
+      if (!found) throw new Error(tr('البلاغ مش موجود', "We couldn't find that report"));
+      if (found.status !== 'resolved') throw new Error(tr('مينفعش نفتح البلاغ ده تاني، لأنه لسه مش متصلّح', "We can't reopen this report because it isn't fixed yet"));
       const at = new Date().toISOString();
       const clean = note.trim();
-      const updated: Incident = {
+      const updated: DbIncident = {
         ...found,
         status: 'received',
         eta: etaFor('received'),
         timeline: [
           ...found.timeline,
-          { status: 'received', at, actor: 'مواطن', note: clean ? `اتفتح تاني: ${clean}` : 'اتفتح تاني' },
+          {
+            status: 'received',
+            at,
+            actor: 'مواطن',
+            note: clean ? `اتفتح تاني: ${clean}` : 'اتفتح تاني',
+            actorEn: 'Citizen',
+            noteEn: clean ? `Reopened: ${clean}` : 'Reopened',
+          },
         ],
         updatedAt: at,
       };
       db.incidents = db.incidents.map((i) => (i.id === incidentId ? updated : i));
       await saveDb(db);
-      return updated;
+      return incidentView(updated);
     },
   };
 }

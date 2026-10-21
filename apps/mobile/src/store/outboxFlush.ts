@@ -1,3 +1,4 @@
+import { tr } from '@/i18n';
 import { classifyFailure } from '@/services/media';
 import { isOffline } from '@/services/network';
 import { sendReport } from '@/services/sendReport';
@@ -6,6 +7,7 @@ import { useReports } from './useReports';
 import { useSession } from './useSession';
 
 export const MSG_RETRY_LATER = 'لسه مفيش نت، هنحاول تاني';
+const retryLaterMsg = () => tr(MSG_RETRY_LATER, "We're still offline. We'll try again");
 
 /** The flush in progress, if any: concurrent triggers (mount, NetInfo, AppState, pull-to-refresh) share it. */
 let inflight: Promise<FlushResult> | null = null;
@@ -105,10 +107,10 @@ async function deliver(item: OutboxItem): Promise<'sent' | 'dropped' | 'kept' | 
     return 'sent';
   } catch (e) {
     const kind = classifyFailure(e);
-    const message = e instanceof Error && e.message ? e.message : MSG_RETRY_LATER;
+    const message = e instanceof Error && e.message ? e.message : retryLaterMsg();
     if (kind === 'drop') {
       outbox.remove(item.id);
-      outbox.noteDropped(`معرفناش نبعت البلاغ اللي اتحفظ: ${message}`);
+      outbox.noteDropped(tr(`معرفناش نبعت البلاغ اللي اتحفظ: ${message}`, `We couldn't send your saved report: ${message}`));
       return 'dropped';
     }
     if (kind === 'auth') return 'auth';

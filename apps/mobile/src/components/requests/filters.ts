@@ -3,12 +3,12 @@ import type { RequestItem } from '@/store';
 
 export type RequestFilter = 'all' | 'reports' | 'services' | 'open' | 'fixed';
 
-export const REQUEST_FILTERS: { id: RequestFilter; labelAr: string }[] = [
-  { id: 'all', labelAr: 'الكل' },
-  { id: 'reports', labelAr: 'بلاغات' },
-  { id: 'services', labelAr: 'خدمات' },
-  { id: 'open', labelAr: 'مفتوحة' },
-  { id: 'fixed', labelAr: 'اتصلّحت' },
+export const REQUEST_FILTERS: { id: RequestFilter; labelAr: string; labelEn: string }[] = [
+  { id: 'all', labelAr: 'الكل', labelEn: 'All' },
+  { id: 'reports', labelAr: 'بلاغات', labelEn: 'Reports' },
+  { id: 'services', labelAr: 'خدمات', labelEn: 'Services' },
+  { id: 'open', labelAr: 'مفتوحة', labelEn: 'Open' },
+  { id: 'fixed', labelAr: 'اتصلّحت', labelEn: 'Fixed' },
 ];
 
 type Filterable = Pick<RequestItem, 'kind' | 'status'>;

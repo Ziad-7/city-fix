@@ -1,9 +1,11 @@
+import { tr } from '@/i18n';
 import { services } from '@/services';
 import { setUnauthorizedHandler } from '@/services/api/http';
 import { voiceContentType } from '@/services/media';
 import { expectOwnChange, useNotifications } from './useNotifications';
 import { useReports } from './useReports';
 import { useServiceRequests } from './useServiceRequests';
+import { usePrefs } from './usePrefs';
 import { useSession } from './useSession';
 
 export const SESSION_EXPIRED_MSG = 'الجلسة خلصت، سجّل دخول تاني.';
@@ -31,13 +33,21 @@ export async function expireSession(): Promise<void> {
   expiring = true;
   try {
     await signOutAll();
-    useSession.getState().setNotice(SESSION_EXPIRED_MSG);
+    useSession.getState().setNotice(tr(SESSION_EXPIRED_MSG, 'Your session ended. Please sign in again.'));
   } finally {
     expiring = false;
   }
 }
 
 setUnauthorizedHandler(() => void expireSession());
+
+/**
+ * The mock (and the real backend, by Accept-Language) answers in one language, so lists fetched before a language
+ * switch still hold the old one: fetch them again when the language changes.
+ */
+usePrefs.subscribe((state, prev) => {
+  if (state.lang !== prev.lang && useSession.getState().userId) void refreshAll();
+});
 
 export type VoiceNoteResult = {
   /** What to send as `voiceNoteUri` (API mode: the storage path; mock: the local URI). null if the upload failed. */

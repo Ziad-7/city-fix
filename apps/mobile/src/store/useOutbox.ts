@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { NewReportInput } from '@/domain/types';
+import { tr } from '@/i18n';
 
 /** A report saved on the phone, waiting for the network. */
 export type OutboxItem = {
@@ -42,7 +43,7 @@ export const useOutbox = create<OutboxState>()(
       },
       update: (id, patch) => set((s) => ({ items: s.items.map((i) => (i.id === id ? { ...i, ...patch } : i)) })),
       remove: (id) => set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
-      noteSent: () => set((s) => ({ notice: { n: (s.notice?.n ?? 0) + 1, ok: true, text: 'بلاغك اتبعت' } })),
+      noteSent: () => set((s) => ({ notice: { n: (s.notice?.n ?? 0) + 1, ok: true, text: tr('بلاغك اتبعت', 'Your report was sent') } })),
       noteDropped: (text) => set((s) => ({ notice: { n: (s.notice?.n ?? 0) + 1, ok: false, text } })),
     }),
     {

@@ -1,6 +1,9 @@
-import type { IncidentStatus, ServiceRequest } from '@/domain/types';
+import type { IncidentStatus } from '@/domain/types';
+import { tr } from '@/i18n';
 import type { ServiceRequestService } from '../interfaces';
 import { delay, loadDb, saveDb } from './db';
+import { requestView } from './localize';
+import type { DbServiceRequest } from './seed';
 import { nextStatus, serviceTimelineEntry } from './timeline';
 
 export function createMockServiceRequestService(): ServiceRequestService {
@@ -9,7 +12,7 @@ export function createMockServiceRequestService(): ServiceRequestService {
       await delay();
       const db = await loadDb();
       const now = new Date().toISOString();
-      const req: ServiceRequest = {
+      const req: DbServiceRequest = {
         ...input,
         citizenId: userId,
         id: `SRV-${db.counters.service++}`,
@@ -19,7 +22,7 @@ export function createMockServiceRequestService(): ServiceRequestService {
       };
       db.serviceRequests = [req, ...db.serviceRequests];
       await saveDb(db);
-      return req;
+      return requestView(req);
     },
 
     async listMine(userId) {
@@ -27,28 +30,30 @@ export function createMockServiceRequestService(): ServiceRequestService {
       const db = await loadDb();
       return db.serviceRequests
         .filter((r) => r.citizenId === userId)
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .map(requestView);
     },
 
     async get(id) {
       const db = await loadDb();
-      return db.serviceRequests.find((r) => r.id === id) ?? null;
+      const found = db.serviceRequests.find((r) => r.id === id);
+      return found ? requestView(found) : null;
     },
 
     async simulateProgress(id) {
       const db = await loadDb();
       const found = db.serviceRequests.find((r) => r.id === id);
-      if (!found) throw new Error('الطلب مش موجود');
+      if (!found) throw new Error(tr('الطلب مش موجود', "We couldn't find that request"));
       const status: IncidentStatus = nextStatus(found.status);
-      if (status === found.status) return found;
-      const updated: ServiceRequest = {
+      if (status === found.status) return requestView(found);
+      const updated: DbServiceRequest = {
         ...found,
         status,
         timeline: [...found.timeline, serviceTimelineEntry(status, new Date().toISOString(), found.serviceType)],
       };
       db.serviceRequests = db.serviceRequests.map((r) => (r.id === id ? updated : r));
       await saveDb(db);
-      return updated;
+      return requestView(updated);
     },
   };
 }
