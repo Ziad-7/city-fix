@@ -11,23 +11,25 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { AppText, InlineNotice } from '@/components/ui';
+import { useTr, tr as trNow } from '@/i18n';
 import { colors, radius } from '@/theme/tokens';
 import { MAX_VOICE_SECONDS, formatTimer } from './voice';
 import type { VoiceNoteProps } from './VoiceNote.types';
 
 type Phase = 'idle' | 'recording' | 'recorded';
 
-const DENIED_MSG = 'مفيش إذن للميكروفون. تقدر تكتب وصف المشكلة بنفسك، أو تفعّل الإذن من إعدادات الموبايل.';
-const FAILED_RECORD_MSG = 'مقدرناش نسجّل دلوقتي، جرّب تاني أو اكتب الوصف بنفسك.';
+const deniedMsg = () => trNow('مفيش إذن للميكروفون. تقدر تكتب وصف المشكلة بنفسك، أو تفعّل الإذن من إعدادات الموبايل.', 'No microphone permission. You can type the description yourself, or allow it in your phone settings.');
+const failedRecordMsg = () => trNow('مقدرناش نسجّل دلوقتي، جرّب تاني أو اكتب الوصف بنفسك.', "We couldn't record right now. Try again, or type the description yourself.");
 
 /** WhatsApp-style voice note: tap to record (live timer, stop), then play / delete / re-record. */
 export function VoiceNote({ highlight, status, onRecorded, onRemoved }: VoiceNoteProps) {
+  const tr = useTr();
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recState = useAudioRecorderState(recorder, 250);
   const [phase, setPhase] = useState<Phase>('idle');
   const [clipUri, setClipUri] = useState<string | null>(null);
   const [clipSeconds, setClipSeconds] = useState(0);
-  const [notice, setNotice] = useState<string | null>(highlight ? 'سجّل بصوتك أو اكتب وصف المشكلة بالعامية وإحنا نفهمها.' : null);
+  const [notice, setNotice] = useState<string | null>(highlight ? tr('سجّل بصوتك أو اكتب وصف المشكلة بالعامية وإحنا نفهمها.', 'Record your voice or type the problem in your own words and we’ll make sense of it.') : null);
   const stopping = useRef(false);
   const starting = useRef(false);
   const recordingRef = useRef(false);
@@ -55,7 +57,7 @@ export function VoiceNote({ highlight, status, onRecorded, onRemoved }: VoiceNot
       onRecorded(uri);
     } catch {
       setPhase('idle');
-      setNotice(FAILED_RECORD_MSG);
+      setNotice(failedRecordMsg());
     } finally {
       stopping.current = false;
     }
@@ -87,7 +89,7 @@ export function VoiceNote({ highlight, status, onRecorded, onRemoved }: VoiceNot
     try {
       const perm = await requestRecordingPermissionsAsync();
       if (!perm.granted) {
-        setNotice(DENIED_MSG);
+        setNotice(deniedMsg());
         return;
       }
       if (clipUri) {
@@ -103,7 +105,7 @@ export function VoiceNote({ highlight, status, onRecorded, onRemoved }: VoiceNot
       setPhase('recording');
     } catch {
       setPhase('idle');
-      setNotice(FAILED_RECORD_MSG);
+      setNotice(failedRecordMsg());
     } finally {
       starting.current = false;
     }
@@ -124,23 +126,23 @@ export function VoiceNote({ highlight, status, onRecorded, onRemoved }: VoiceNot
   return (
     <View style={{ gap: 6 }}>
       {phase === 'idle' ? (
-        <Pressable testID="voice-note" accessibilityRole="button" accessibilityLabel="سجّل فويس نوت" onPress={start} style={styles.row}>
+        <Pressable testID="voice-note" accessibilityRole="button" accessibilityLabel={tr('سجّل فويس نوت', 'Record a voice note')} onPress={start} style={styles.row}>
           <View style={[styles.disc, { backgroundColor: colors.red }]}>
             <Icon name="mic" size={20} color={colors.onRed} />
           </View>
-          <AppText variant="smallStrong" style={{ flex: 1 }}>سجّل فويس نوت</AppText>
-          <AppText variant="caption" color={colors.inkMuted}>لحد {formatTimer(MAX_VOICE_SECONDS)}</AppText>
+          <AppText variant="smallStrong" style={{ flex: 1 }}>{tr('سجّل فويس نوت', 'Record a voice note')}</AppText>
+          <AppText variant="caption" color={colors.inkMuted}>{tr('لحد ', 'Up to ')}{formatTimer(MAX_VOICE_SECONDS)}</AppText>
         </Pressable>
       ) : null}
 
       {phase === 'recording' ? (
-        <View testID="voice-recording" accessibilityLabel="بنسجّل" accessibilityLiveRegion="polite" style={[styles.row, { borderColor: colors.red }]}>
-          <Pressable testID="voice-stop" accessibilityRole="button" accessibilityLabel="وقّف التسجيل" onPress={stop} style={[styles.disc, { backgroundColor: colors.red }]}>
+        <View testID="voice-recording" accessibilityLabel={tr('بنسجّل', 'Recording')} accessibilityLiveRegion="polite" style={[styles.row, { borderColor: colors.red }]}>
+          <Pressable testID="voice-stop" accessibilityRole="button" accessibilityLabel={tr('وقّف التسجيل', 'Stop recording')} onPress={stop} style={[styles.disc, { backgroundColor: colors.red }]}>
             <View style={styles.stopSquare} />
           </Pressable>
           <View style={styles.dot} />
           <AppText testID="voice-timer" style={styles.timer}>{formatTimer(seconds)}</AppText>
-          <AppText variant="caption" color={colors.inkMuted} style={{ flex: 1 }}>بنسجّل... دوس للإيقاف</AppText>
+          <AppText variant="caption" color={colors.inkMuted} style={{ flex: 1 }}>{tr('بنسجّل... دوس للإيقاف', 'Recording... tap to stop')}</AppText>
         </View>
       ) : null}
 
@@ -149,7 +151,7 @@ export function VoiceNote({ highlight, status, onRecorded, onRemoved }: VoiceNot
           <Pressable
             testID="voice-play"
             accessibilityRole="button"
-            accessibilityLabel={playerStatus.playing ? 'وقّف الصوت مؤقتًا' : 'شغّل التسجيل'}
+            accessibilityLabel={playerStatus.playing ? tr('وقّف الصوت مؤقتًا', 'Pause') : tr('شغّل التسجيل', 'Play the recording')}
             onPress={togglePlay}
             style={[styles.disc, { backgroundColor: colors.red }]}
           >
@@ -163,13 +165,13 @@ export function VoiceNote({ highlight, status, onRecorded, onRemoved }: VoiceNot
             )}
           </Pressable>
           <View style={{ flex: 1 }}>
-            <AppText variant="smallStrong">فويس نوت</AppText>
+            <AppText variant="smallStrong">{tr('فويس نوت', 'Voice note')}</AppText>
             <AppText variant="caption" color={colors.inkMuted}>{formatTimer(clipSeconds)}</AppText>
           </View>
-          <Pressable testID="voice-rerecord" accessibilityRole="button" accessibilityLabel="سجّل تاني" onPress={start} style={styles.action}>
+          <Pressable testID="voice-rerecord" accessibilityRole="button" accessibilityLabel={tr('سجّل تاني', 'Record again')} onPress={start} style={styles.action}>
             <Icon name="mic" size={20} color={colors.red} />
           </Pressable>
-          <Pressable testID="voice-delete" accessibilityRole="button" accessibilityLabel="امسح التسجيل" onPress={remove} style={styles.action}>
+          <Pressable testID="voice-delete" accessibilityRole="button" accessibilityLabel={tr('امسح التسجيل', 'Delete the recording')} onPress={remove} style={styles.action}>
             <Icon name="trash" size={20} color={colors.urgent} />
           </Pressable>
         </View>
@@ -178,12 +180,12 @@ export function VoiceNote({ highlight, status, onRecorded, onRemoved }: VoiceNot
       {status === 'transcribing' ? (
         <View testID="voice-transcribing" accessibilityLiveRegion="polite" style={styles.status}>
           <ActivityIndicator color={colors.red} size="small" />
-          <AppText variant="caption" color={colors.redDeep}>بنكتب كلامك...</AppText>
+          <AppText variant="caption" color={colors.redDeep}>{tr('بنكتب كلامك...', 'Turning your voice into text...')}</AppText>
         </View>
       ) : null}
-      {status === 'failed' ? <InlineNotice testID="voice-failed" text="مقدرناش نكتب الصوت، تقدر تكتب الوصف بنفسك" /> : null}
+      {status === 'failed' ? <InlineNotice testID="voice-failed" text={tr('مقدرناش نكتب الصوت، تقدر تكتب الوصف بنفسك', "We couldn't turn your voice into text. You can type the description yourself.")} /> : null}
       {status === 'done' ? (
-        <AppText variant="caption" color={colors.inkMuted}>كتبنا كلامك في الوصف. راجعه وعدّل فيه براحتك.</AppText>
+        <AppText variant="caption" color={colors.inkMuted}>{tr('كتبنا كلامك في الوصف. راجعه وعدّل فيه براحتك.', 'We wrote your words in the description. Check it and edit as you like.')}</AppText>
       ) : null}
       {notice ? <InlineNotice testID="voice-notice" text={notice} /> : null}
     </View>

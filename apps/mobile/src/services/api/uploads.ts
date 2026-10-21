@@ -1,8 +1,10 @@
 import { Platform } from 'react-native';
+import { tr } from '@/i18n';
 import type { UploadService } from '../interfaces';
 import { ApiError, http } from './http';
 
 export const MSG_UPLOAD_FAILED = 'معرفناش نرفع الملف، جرّب تاني';
+const msgUploadFailed = () => tr(MSG_UPLOAD_FAILED, "We couldn't upload the file. Try again");
 
 type SignResponse = { uploadUrl: string; path: string };
 
@@ -15,12 +17,12 @@ export function createUploadService(): UploadService {
   return {
     async upload(localUri, kind, contentType) {
       const { uploadUrl, path } = await http<SignResponse>('POST', '/uploads/sign', { kind, contentType });
-      if (!uploadUrl || !path) throw new ApiError(502, MSG_UPLOAD_FAILED);
+      if (!uploadUrl || !path) throw new ApiError(502, msgUploadFailed());
       try {
         const status = await putFile(uploadUrl, localUri, contentType);
-        if (status < 200 || status >= 300) throw new ApiError(0, MSG_UPLOAD_FAILED);
+        if (status < 200 || status >= 300) throw new ApiError(0, msgUploadFailed());
       } catch (e) {
-        throw e instanceof ApiError ? e : new ApiError(0, MSG_UPLOAD_FAILED);
+        throw e instanceof ApiError ? e : new ApiError(0, msgUploadFailed());
       }
       return path;
     },

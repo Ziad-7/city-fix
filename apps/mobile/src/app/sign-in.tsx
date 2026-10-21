@@ -7,6 +7,7 @@ import { Icon } from '@/components/Icon';
 import { AppText, Button, ChoiceChip, InlineNotice, Screen, SelectField, TextField, ToggleRow, useTransientNotice } from '@/components/ui';
 import { DEFAULT_DISTRICT, GOVERNORATES, findGovernorate } from '@/domain/locations';
 import { otpSchema, phoneSchema } from '@/domain/schemas';
+import { placeName, setLang, useLang, useTr } from '@/i18n';
 import { MOCK_OTP, services } from '@/services';
 import { usePrefs, useSession } from '@/store';
 import { colors, fonts, radius } from '@/theme/tokens';
@@ -15,6 +16,8 @@ import { formatEgyptPhone, isolateLtr, normalizeEgyptPhone, toWesternDigits } fr
 type Step = 'phone' | 'code';
 
 export default function SignInScreen() {
+  const tr = useTr();
+  const lang = useLang();
   const insets = useSafeAreaInsets();
   const { governorate: savedGov, district: savedDistrict, otpChannel, prefs, notice: sessionNotice, setOtpChannel, setPrefs, startSession } = useSession();
   const { notice: soonNotice, show: showSoon } = useTransientNotice();
@@ -46,7 +49,7 @@ export default function SignInScreen() {
       await services.auth.requestCode(normalizeEgyptPhone(phone), otpChannel);
       setStep('code');
     } catch {
-      setError('معرفناش نبعت الكود، جرّب تاني');
+      setError(tr('معرفناش نبعت الكود، جرّب تاني', "We couldn't send the code. Try again"));
     } finally {
       setBusy(false);
     }
@@ -68,20 +71,20 @@ export default function SignInScreen() {
       startSession(session, { governorate, district });
       router.replace('/');
     } catch {
-      setError('الكود مش صح، جرّب تاني');
+      setError(tr('الكود مش صح، جرّب تاني', "That code isn't right. Try again"));
       setBusy(false);
     }
   };
 
-  // Alert.alert does nothing on web, so "coming soon" is an inline notice everywhere.
+  // Alert.alert does nothing on web, so notices are inline everywhere.
   const largeText = usePrefs((st) => st.largeText);
   const setLargeText = usePrefs((st) => st.setLargeText);
   const toggleLargeText = () => {
     const next = !largeText;
     setLargeText(next);
-    showSoon(next ? 'اتفعّل الخط الأكبر. تقدر تقفله من حسابي.' : 'رجعنا للخط العادي.');
+    showSoon(next ? tr('اتفعّل الخط الأكبر. تقدر تقفله من حسابي.', 'Larger text is on. You can turn it off in Account.') : tr('رجعنا للخط العادي.', 'Back to normal text.'));
   };
-  const soon = () => showSoon('الميزة دي قريبًا، هتتضاف في نسخة جاية.');
+  const switchLang = () => setLang(lang === 'en' ? 'ar' : 'en');
 
   // The 6th digit submits the code: the number pad has no return key.
   const onCodeChange = (t: string) => {
@@ -94,7 +97,7 @@ export default function SignInScreen() {
     <View style={[styles.hero, { paddingTop: insets.top + 24, height: 310 + insets.top }]}>
       <Skyline style={styles.skyline} />
       <LogoPill />
-      <AppText variant="slogan" color={colors.onRed} style={styles.slogan}>مدينتك أحلى لما نصلّحها سوا</AppText>
+      <AppText variant="slogan" color={colors.onRed} style={styles.slogan}>{tr('مدينتك أحلى لما نصلّحها سوا', 'Your city is better when we fix it together')}</AppText>
     </View>
   );
 
@@ -107,7 +110,7 @@ export default function SignInScreen() {
         <View style={styles.footer}>
           <Button
             testID="sign-in-submit"
-            label={step === 'phone' ? 'ابعتلي الكود' : 'دخول'}
+            label={step === 'phone' ? tr('ابعتلي الكود', 'Send me the code') : tr('دخول', 'Sign in')}
             onPress={step === 'phone' ? sendCode : () => void verify()}
             loading={busy}
           />
@@ -115,13 +118,13 @@ export default function SignInScreen() {
           <View style={styles.links}>
             {step === 'code' ? (
               <Pressable accessibilityRole="button" onPress={() => { setStep('phone'); setCode(''); setError(null); }}>
-                <AppText variant="smallStrong" color={colors.red}>غيّر الرقم</AppText>
+                <AppText variant="smallStrong" color={colors.red}>{tr('غيّر الرقم', 'Change number')}</AppText>
               </Pressable>
             ) : (
               <>
-                <Pressable accessibilityRole="button" onPress={soon}><AppText variant="smallStrong" color={colors.red}>English</AppText></Pressable>
+                <Pressable testID="lang-link" accessibilityRole="button" accessibilityLabel={lang === 'en' ? 'العربية' : 'English'} onPress={switchLang}><AppText variant="smallStrong" color={colors.red}>{lang === 'en' ? 'العربية' : 'English'}</AppText></Pressable>
                 <AppText color={colors.line}>|</AppText>
-                <Pressable testID="large-text-link" accessibilityRole="button" accessibilityState={{ selected: largeText }} onPress={toggleLargeText}><AppText variant="smallStrong" color={colors.red}>{largeText ? 'خط عادي' : 'خط أكبر'}</AppText></Pressable>
+                <Pressable testID="large-text-link" accessibilityRole="button" accessibilityState={{ selected: largeText }} onPress={toggleLargeText}><AppText variant="smallStrong" color={colors.red}>{largeText ? tr('خط عادي', 'Normal text') : tr('خط أكبر', 'Larger text')}</AppText></Pressable>
               </>
             )}
           </View>
@@ -135,7 +138,7 @@ export default function SignInScreen() {
           <>
             <TextField
               testID="phone-input"
-              label="رقم موبايلك"
+              label={tr('رقم موبايلك', 'Your mobile number')}
               value={phone}
               onChangeText={(t) => setPhone(toWesternDigits(t).replace(/[^\d ]/g, ''))}
               keyboardType="phone-pad"
@@ -144,7 +147,7 @@ export default function SignInScreen() {
               large
               placeholder="010 1234 5678"
               error={error}
-              helper="فودافون، أورانج، اتصالات، أو WE — هنبعتلك كود من ٦ أرقام."
+              helper={tr('فودافون، أورانج، اتصالات، أو WE — هنبعتلك كود من ٦ أرقام.', 'Vodafone, Orange, Etisalat or WE — we’ll send you a 6-digit code.')}
               onSubmitEditing={sendCode}
               prefix={
                 <View style={styles.cc}>
@@ -155,36 +158,39 @@ export default function SignInScreen() {
             />
 
             <View style={styles.group}>
-              <AppText variant="label">ابعتلي الكود على</AppText>
+              <AppText variant="label">{tr('ابعتلي الكود على', 'Send me the code by')}</AppText>
               <View style={styles.pair}>
-                <View style={styles.flex}><ChoiceChip testID="otp-sms" radio label="رسالة SMS" selected={otpChannel === 'sms'} onPress={() => setOtpChannel('sms')} /></View>
-                <View style={styles.flex}><ChoiceChip testID="otp-whatsapp" radio label="واتساب" selected={otpChannel === 'whatsapp'} onPress={() => setOtpChannel('whatsapp')} /></View>
+                <View style={styles.flex}><ChoiceChip testID="otp-sms" radio label={tr('رسالة SMS', 'SMS')} selected={otpChannel === 'sms'} onPress={() => setOtpChannel('sms')} /></View>
+                <View style={styles.flex}><ChoiceChip testID="otp-whatsapp" radio label="WhatsApp" selected={otpChannel === 'whatsapp'} onPress={() => setOtpChannel('whatsapp')} /></View>
               </View>
             </View>
 
             <View style={styles.pair}>
-              <SelectField label="المحافظة" value={governorate} options={GOVERNORATES.map((g) => ({ value: g.nameAr, label: g.nameAr }))} onChange={changeGovernorate} />
-              <SelectField label="الحي" value={district} options={districts.map((d) => ({ value: d.nameAr, label: d.nameAr }))} onChange={setDistrict} />
+              <SelectField label={tr('المحافظة', 'Governorate')} value={governorate} options={GOVERNORATES.map((g) => ({ value: g.nameAr, label: placeName(g.nameAr) }))} onChange={changeGovernorate} />
+              <SelectField label={tr('الحي', 'District')} value={district} options={districts.map((d) => ({ value: d.nameAr, label: placeName(d.nameAr) }))} onChange={setDistrict} />
             </View>
 
             <View style={styles.privacy}>
               <Icon name="shield-check" size={20} color={colors.red} style={styles.privacyIcon} />
-              <AppText variant="small" style={styles.privacyText}>رقمك مش هيظهر لحد. بنستخدمه بس عشان نبعتلك تحديثات بلاغك، وتقدر تبلّغ من غير اسم.</AppText>
+              <AppText variant="small" style={styles.privacyText}>{tr('رقمك مش هيظهر لحد. بنستخدمه بس عشان نبعتلك تحديثات بلاغك، وتقدر تبلّغ من غير اسم.', 'Your number won’t be shown to anyone. We only use it to send you updates on your report, and you can report without your name.')}</AppText>
             </View>
 
-            <ToggleRow icon="wifi" title="توفير باقة النت" subtitle="صور أخف، والخريطة بتحمّل بس لما تفتحها" value={prefs.dataSaver} onValueChange={(v) => setPrefs({ dataSaver: v })} />
+            <ToggleRow icon="wifi" title={tr('توفير باقة النت', 'Data saver')} subtitle={tr('صور أخف، والخريطة بتحمّل بس لما تفتحها', 'Lighter photos, and the map only loads when you open it')} value={prefs.dataSaver} onValueChange={(v) => setPrefs({ dataSaver: v })} />
           </>
         ) : (
           <>
             <View style={styles.group}>
-              <AppText variant="h2">اكتب الكود</AppText>
+              <AppText variant="h2">{tr('اكتب الكود', 'Enter the code')}</AppText>
               <AppText variant="small" color={colors.inkMuted}>
-                بعتنا كود من ٦ أرقام على {otpChannel === 'sms' ? 'رسالة SMS' : 'واتساب'} للرقم {isolateLtr(formatEgyptPhone(phone))}.
+                {tr(
+                  `بعتنا كود من ٦ أرقام على ${otpChannel === 'sms' ? 'رسالة SMS' : 'واتساب'} للرقم ${isolateLtr(formatEgyptPhone(phone))}.`,
+                  `We sent a 6-digit code by ${otpChannel === 'sms' ? 'SMS' : 'WhatsApp'} to ${isolateLtr(formatEgyptPhone(phone))}.`,
+                )}
               </AppText>
             </View>
             <TextField
               testID="code-input"
-              label="الكود"
+              label={tr('الكود', 'Code')}
               value={code}
               onChangeText={onCodeChange}
               keyboardType="number-pad"
@@ -198,7 +204,7 @@ export default function SignInScreen() {
             />
             <View style={styles.hint}>
               <Icon name="info" size={18} color={colors.goldDeep} />
-              <AppText variant="small" color={colors.goldDeep}>الكود التجريبي: {MOCK_OTP}</AppText>
+              <AppText variant="small" color={colors.goldDeep}>{tr('الكود التجريبي: ', 'Test code: ')}{MOCK_OTP}</AppText>
             </View>
           </>
         )}
