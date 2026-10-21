@@ -1,101 +1,160 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSession, clearSession } from '@/lib/session';
-import { useQuery } from '@tanstack/react-query';
+import { setUnauthorizedHandler } from '@/lib/http';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getDashboard } from '@/services/dashboard';
+import { Icon } from './Icon';
+import { formatNumber } from '@/lib/format';
 
 const navItems = [
-  { href: '/', label: 'نظرة عامة', icon: 'grid' },
-  { href: '/incidents', label: 'البلاغات', icon: 'alert-circle', countKey: 'incidentsOpen' },
-  { href: '/map', label: 'الخريطة', icon: 'map' },
-  { href: '/service-requests', label: 'طلبات الخدمات', icon: 'truck', countKey: 'serviceRequestsOpen' },
-  { href: '/work-orders', label: 'أوامر الشغل', icon: 'wrench' },
-  { href: '/budget', label: 'الميزانية', icon: 'wallet', adminOnly: true },
+  { href: '/', label: 'نظرة عامة', icon: 'grid' as const },
+  { href: '/incidents', label: 'البلاغات', icon: 'alert-triangle' as const, countKey: 'incidentsOpen' },
+  { href: '/map', label: 'الخريطة', icon: 'map' as const },
+  { href: '/service-requests', label: 'طلبات الخدمات', icon: 'truck' as const, countKey: 'serviceRequestsOpen' },
+  { href: '/work-orders', label: 'أوامر الشغل', icon: 'wrench' as const },
+  { href: '/budget', label: 'الميزانية', icon: 'wallet' as const, adminOnly: true },
 ];
+
+function nameInitial(name: string): string {
+  const trimmed = name.startsWith('م. ') ? name.slice(3) : name;
+  return trimmed.charAt(0);
+}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const session = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
+
+  // Register unauthorized handler once
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      clearSession();
+      router.replace('/login');
+    });
+  }, [router]);
+
+  // Handle null (no session) - redirect to login
+  useEffect(() => {
+    if (session === null) {
+      router.replace('/login');
+    }
+  }, [session, router]);
 
   const { data: dashboard } = useQuery({
     queryKey: ['dashboard', '7d'],
     queryFn: () => getDashboard('7d'),
+    enabled: !!session,
+    refetchInterval: 60000,
   });
 
-  // Redirect to login if not authenticated
-  if (session === null) {
-    // Still hydrating
-    return null;
+  // Handle undefined (still hydrating) - show skeleton
+  if (session === undefined) {
+    return (
+      <div className="ftc-admin">
+        <nav className="ftc-admin-sidebar" aria-label="قائمة مركز القيادة">
+          <div className="brand">
+            <div className="ftc-skel" style={{ width: '34px', height: '34px' }} />
+            <div style={{ flex: 1 }}>
+              <div className="ftc-skel" style={{ height: '18px', marginBottom: '4px' }} />
+              <div className="ftc-skel" style={{ height: '12px', width: '70%' }} />
+            </div>
+          </div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="ftc-skel" style={{ height: '44px' }} />
+            ))}
+          </div>
+        </nav>
+        <main className="ftc-admin-main">
+          <div className="page">
+            <div className="ftc-skel" style={{ height: '32px', width: '200px' }} />
+          </div>
+        </main>
+      </div>
+    );
   }
 
-  if (!session) {
-    router.replace('/login');
+  // Handle null (no session) - show nothing while redirecting
+  if (session === null) {
     return null;
   }
 
   const handleSignOut = () => {
     clearSession();
-    router.push('/login');
+    queryClient.clear();
+    router.replace('/login');
   };
 
   return (
     <div className="ftc-admin">
-      <aside className="ftc-admin-sidebar">
+      <a href="#main" className="sr-only focus:not-sr-only">
+        اقفز للمحتوى
+      </a>
+      <nav className="ftc-admin-sidebar" aria-label="قائمة مركز القيادة">
         <div className="brand">
-          <div style={{ width: '32px', height: '32px', backgroundColor: 'var(--ftc-gold)', borderRadius: '8px' }} />
-          <div>
-            <b>مركز القيادة</b>
-            <small>FixTheCity</small>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/fixthecity-mark.svg" alt="" width={34} height={34} />
+          <span>
+            <b>FixTheCity</b>
+            <small>{session.district}</small>
+          </span>
         </div>
 
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-          {navItems.map((item) => {
-            // Hide budget for staff
-            if (item.adminOnly && session.role === 'staff') {
-              return null;
-            }
+        {navItems.map((item) => {
+          // Hide budget for staff
+          if (item.adminOnly && session.role !== 'admin') {
+            return null;
+          }
 
-            const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
-            const count = item.countKey && dashboard ? dashboard.nav[item.countKey as keyof typeof dashboard.nav] : null;
+          const isActive =
+            (item.href === '/' && pathname === '/') ||
+            (item.href !== '/' && (pathname === item.href || pathname?.startsWith(item.href + '/')));
+          const count =
+            item.countKey && dashboard
+              ? dashboard.nav[item.countKey as keyof typeof dashboard.nav]
+              : undefined;
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={isActive ? 'page' : undefined}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '0 12px',
-                  height: '44px',
-                  borderRadius: 'var(--ftc-radius-md)',
-                }}
-              >
-                <span className="lbl">{item.label}</span>
-                {count !== null && <span className="count">{count}</span>}
-              </Link>
-            );
-          })}
-        </nav>
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              <Icon name={item.icon} size={20} />
+              <span className="lbl">{item.label}</span>
+              {count != null && <span className="count">{formatNumber(count)}</span>}
+            </Link>
+          );
+        })}
 
         <div className="sb-user">
-          <div className="avatar">{session.name.charAt(0)}</div>
-          <div className="who" style={{ minWidth: 0 }}>
+          <span className="avatar" aria-hidden="true">
+            {nameInitial(session.name)}
+          </span>
+          <span className="who">
             <b>{session.name}</b>
             <small>{session.title}</small>
-          </div>
-          <button className="out" onClick={handleSignOut} type="button" title="تسجيل الخروج">
-            ↪
+          </span>
+          <button
+            type="button"
+            className="out"
+            aria-label="تسجيل الخروج"
+            title="تسجيل الخروج"
+            onClick={handleSignOut}
+          >
+            <Icon name="logout" size={18} />
           </button>
         </div>
-      </aside>
+      </nav>
 
-      <main className="ftc-admin-main">{children}</main>
+      <main className="ftc-admin-main" id="main">
+        <div className="page">{children}</div>
+      </main>
     </div>
   );
 }

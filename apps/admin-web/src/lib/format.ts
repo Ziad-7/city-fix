@@ -217,7 +217,6 @@ export function formatDateTime(iso: string, now = Date.now()): string {
  * tomorrow → "الخميس 22/10"
  * today → "النهارده 21/10"
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function formatDayDM(iso: string, now = Date.now()): string {
   const date = new Date(iso);
   const { day: dateDay, month: dateMonth } = getCairoDateParts(date);
@@ -327,7 +326,7 @@ export function formatSlot(slot: string): string {
 /**
  * Format a span of milliseconds as human-readable duration.
  */
-export function formatSpan(ms: number, now = Date.now()): string {
+export function formatSpan(ms: number): string {
   const minutes = Math.floor(ms / 60000);
   const hours = Math.floor(ms / 3600000);
   const days = Math.floor(ms / 86400000);

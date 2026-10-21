@@ -12,3 +12,7 @@ export async function getMe(): Promise<StaffSession> {
   if (!result) throw new Error('No session returned');
   return result;
 }
+
+export async function demoReset(): Promise<void> {
+  await http('POST', '/admin/demo/reset');
+}

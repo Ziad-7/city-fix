@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "./ftc.css";
 
-/* Tailwind v4 theme: tokens as CSS variables */
+/* Tokens as Tailwind utilities: bg-ftc-red, text-ftc-ink, border-ftc-line, rounded-ftc-md, shadow-ftc-card, font-display … */
 @theme {
   --color-ftc-red: #C8102E;
   --color-ftc-red-deep: #8E0A20;
@@ -47,20 +47,15 @@
   --spacing-ftc-6: 24px;
   --spacing-ftc-8: 32px;
 
-  --text-ftc-h1: 28px;
-  --text-ftc-h1--line-height: 38px;
-  --text-ftc-h2: 22px;
-  --text-ftc-h2--line-height: 32px;
-  --text-ftc-metric: 32px;
-  --text-ftc-metric--line-height: 36px;
-  --text-ftc-body: 16px;
-  --text-ftc-body--line-height: 28px;
-  --text-ftc-small: 14px;
-  --text-ftc-small--line-height: 22px;
-  --text-ftc-caption: 12px;
-  --text-ftc-caption--line-height: 18px;
+  --text-ftc-h1: 28px;       --text-ftc-h1--line-height: 38px;
+  --text-ftc-h2: 22px;       --text-ftc-h2--line-height: 32px;
+  --text-ftc-metric: 32px;   --text-ftc-metric--line-height: 36px;
+  --text-ftc-body: 16px;     --text-ftc-body--line-height: 28px;
+  --text-ftc-small: 14px;    --text-ftc-small--line-height: 22px;
+  --text-ftc-caption: 12px;  --text-ftc-caption--line-height: 18px;
 }
 
+/* Fonts reference the CSS variables next/font sets on <html>, so they must be "inline". */
 @theme inline {
   --font-display: var(--font-readex), "Readex Pro", "IBM Plex Sans Arabic", system-ui, sans-serif;
   --font-sans: var(--font-plex), "IBM Plex Sans Arabic", "IBM Plex Sans", system-ui, sans-serif;

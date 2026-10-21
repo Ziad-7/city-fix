@@ -1,3 +1,7 @@
+export const generateStaticParams = async () => {
+  return [];
+};
+
 export default function IncidentDetailPage({ params }: { params: { id: string } }) {
   return (
     <div className="page">
