@@ -35,3 +35,26 @@ export async function expireSession(): Promise<void> {
 }
 
 setUnauthorizedHandler(() => void expireSession());
+
+export type VoiceNoteResult = {
+  /** What to send as `voiceNoteUri` (API mode: the storage path; mock: the local URI). null if the upload failed. */
+  path: string | null;
+  /** The transcript, or null when uploading or transcribing failed (the citizen types the description). */
+  text: string | null;
+};
+
+/** Uploads a recorded voice note and transcribes it. Never throws: a failure just leaves `text` (and maybe `path`) null. */
+export async function uploadAndTranscribeVoiceNote(localUri: string, contentType = 'audio/m4a'): Promise<VoiceNoteResult> {
+  let path: string;
+  try {
+    path = await services.uploads.upload(localUri, 'voice_note', contentType);
+  } catch {
+    return { path: null, text: null };
+  }
+  try {
+    const { text } = await services.transcription.transcribe(path);
+    return { path, text: text.trim() ? text.trim() : null };
+  } catch {
+    return { path, text: null };
+  }
+}

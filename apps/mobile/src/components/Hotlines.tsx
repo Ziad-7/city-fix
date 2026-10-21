@@ -57,6 +57,22 @@ export function EmergencyBox() {
   );
 }
 
+/** Report form: the text mentions gas, fire, an injury or a collapse. Calling comes first; the report can still be sent. */
+export function EmergencyAlert() {
+  return (
+    <View testID="emergency-alert" accessibilityRole="alert" accessibilityLabel="ده ممكن يكون طوارئ" style={styles.alert}>
+      <View style={styles.boxTitle}>
+        <Icon name="alert-triangle" size={20} color={colors.onRed} strokeWidth={2} />
+        <AppText style={{ fontFamily: fonts.sans700, fontSize: 15, lineHeight: 24, flex: 1 }} color={colors.onRed}>ده ممكن يكون طوارئ — اتصل فورًا</AppText>
+      </View>
+      <View style={styles.row}>
+        {pick(['122', '123', '180', '129']).map((h) => <HotlineButton key={h.number} hotline={h} onWhite />)}
+      </View>
+      <AppText variant="caption" color={colors.onRed}>الأرقام دي مجانية. وتقدر تبعت البلاغ برضه بعد ما تتصل.</AppText>
+    </View>
+  );
+}
+
 /** Utility outages (water, electricity, sewage) + the gas-leak safety line. */
 export function UtilityHotlines() {
   return (
@@ -84,6 +100,7 @@ const styles = StyleSheet.create({
   tile: { flex: 1, minHeight: 48, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
   box: { backgroundColor: colors.urgentSoft, borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 12, gap: 10 },
   boxTitle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  alert: { backgroundColor: colors.urgent, borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 12, gap: 10 },
   utility: { gap: 8, backgroundColor: colors.surface, borderRadius: radius.md, padding: 14 },
   gas: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.goldSoft, borderRadius: radius.sm, padding: 10 },
 });

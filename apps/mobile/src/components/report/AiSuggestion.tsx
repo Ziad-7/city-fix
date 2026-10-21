@@ -1,5 +1,5 @@
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { EmergencyBox } from '@/components/Hotlines';
+import { EmergencyAlert, EmergencyBox } from '@/components/Hotlines';
 import { Icon } from '@/components/Icon';
 import { AppText, ProgressBar } from '@/components/ui';
 import { CATEGORIES, getCategory } from '@/domain/categories';
@@ -49,6 +49,7 @@ export function AiSuggestion({ state, suggestion, selected, onSelect, onPickOthe
   const critical = suggestion.severity === 'critical';
   return (
     <View testID="ai-suggestion" accessibilityLabel="اقتراح الذكاء الاصطناعي" style={styles.card}>
+      {suggestion.emergency ? <EmergencyAlert /> : null}
       <View style={styles.head}>
         <View style={styles.title}>
           <Icon name="sparkles" size={18} color={colors.redDeep} />
