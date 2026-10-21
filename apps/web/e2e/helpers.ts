@@ -6,9 +6,17 @@ export async function at(context: BrowserContext, lat: number, lng: number) {
   await context.setGeolocation({ latitude: lat, longitude: lng });
 }
 
-/** Reverse geocoding answers nothing, so the address stays the "موقعك الحالي" placeholder. */
-export async function noGeocoder(context: BrowserContext) {
-  await context.route('**/nominatim.openstreetmap.org/**', (route) => route.abort());
+/**
+ * Records every request that goes to a public street-name service. The citizen's GPS fix must never leave for one
+ * (W18): the list stays empty, and the requests are blocked anyway so a regression cannot slow a test down.
+ */
+export async function trackGeocoder(context: BrowserContext): Promise<string[]> {
+  const seen: string[] = [];
+  await context.route(/nominatim|geocod/i, (route) => {
+    seen.push(route.request().url());
+    return route.abort();
+  });
+  return seen;
 }
 
 /** Signs in with the demo account (mock mode: any phone, code 123456). */

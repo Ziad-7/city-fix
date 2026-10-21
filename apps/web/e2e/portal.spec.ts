@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { at, noGeocoder, signIn } from './helpers';
+import { at, signIn, trackGeocoder } from './helpers';
 
 test.beforeEach(async ({ context }) => {
   await at(context, 30.07, 31.36); // in Nasr City, away from the seeded incidents
-  await noGeocoder(context);
+  await trackGeocoder(context);
 });
 
 test('signed-out visitors go to sign-in and come back after the code', async ({ page }) => {

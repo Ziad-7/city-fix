@@ -1,9 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { at, noGeocoder, signIn } from './helpers';
+import { at, signIn, trackGeocoder } from './helpers';
+
+let geocoderCalls: string[];
 
 test.beforeEach(async ({ context }) => {
   await at(context, 30.07, 31.36);
-  await noGeocoder(context);
+  geocoderCalls = await trackGeocoder(context);
 });
 
 async function openForm(page: import('@playwright/test').Page) {
@@ -12,12 +14,11 @@ async function openForm(page: import('@playwright/test').Page) {
   await expect(page.getByTestId('description-input')).toBeVisible();
 }
 
-test('a GPS fix fills in the street name', async ({ page }) => {
-  await page.route('**/nominatim.openstreetmap.org/reverse**', (route) =>
-    route.fulfill({ json: { address: { road: 'شارع عباس العقاد', suburb: 'مدينة نصر' } } }),
-  );
+test('a GPS fix is never sent to a street-name service: the address keeps the placeholder', async ({ page }) => {
   await openForm(page);
-  await expect(page.getByTestId('address-line')).toHaveText('شارع عباس العقاد، مدينة نصر');
+  await expect(page.getByTestId('address-line')).toHaveText('موقعك الحالي');
+  await page.waitForTimeout(1_000); // a service call would have started by now
+  expect(geocoderCalls).toEqual([]);
 });
 
 test('a report written offline is saved and goes out when the connection is back', async ({ page, context }) => {
