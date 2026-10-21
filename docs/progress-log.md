@@ -2,6 +2,13 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-21 — Citizen web portal role
+
+**Done**
+- Decision: a citizen website in `apps/web` alongside the mobile app, same backend and contract, same design ([0002](decisions/0002-citizen-web-portal-alongside-mobile.md)).
+- Role brief for the member building it: [`team/citizen-web-portal.md`](team/citizen-web-portal.md): same brand, tokens, mockups, components and copy as the mobile app; pages mirroring the mobile screens; shared domain/logic copied with a CI diff check; mock mode then API mode; 10-step plan and acceptance checks.
+- API contract, backend brief and team table updated: three clients on one API, CORS for web origins, browser photo upload.
+
 ## 2026-10-21 — Phase C: review and fixes (branch `feat/mobile-citizen-app`, draft PR #1)
 
 **Done**

@@ -1,10 +1,11 @@
 # Team roles while the mobile app is being built
 
-The citizen mobile app runs on mock data behind a fixed API contract ([`docs/api-contract.md`](../api-contract.md)), so nobody has to wait for it. Each role below works in its own folder and branch and only meets the others at the contract.
+The citizen mobile app (and the citizen website) run on mock data behind a fixed API contract ([`docs/api-contract.md`](../api-contract.md)), so nobody has to wait for it. Each role below works in its own folder and branch and only meets the others at the contract.
 
 | Role | Owner | Folder · branch | Can start now? | Brief |
 | --- | --- | --- | --- | --- |
 | Citizen mobile app | _[name]_ + Claude agents | `apps/mobile` · `feat/mobile-citizen-app` | In progress | [`docs/mobile/implementation-spec.md`](../mobile/implementation-spec.md) |
+| **Citizen web portal** | _[name]_ | `apps/web` · `feat/citizen-web` | **Yes** — on mock data, same contract, same design as mobile | [`citizen-web-portal.md`](citizen-web-portal.md) |
 | **Backend & database** | _[name]_ | `backend/` · `feat/backend-workflows` | **Yes** | [`backend-database.md`](backend-database.md) |
 | CityBrain AI triage | _[name]_ | `backend/app/ai/` · `feat/citybrain-triage` | Yes — prototype in isolation, plug into `POST /triage` | See below |
 | Admin web (Command Center) | _[name]_ | `apps/admin-web` · `feat/admin-dashboard` | Yes — on mock data, same contract | See below |
@@ -31,6 +32,7 @@ The citizen mobile app runs on mock data behind a fixed API contract ([`docs/api
 
 ## Working agreements
 
+- One design for every citizen screen: the website reuses the mobile app's brand, tokens, mockups, components and copy (`docs/design/`).
 - The contract is shared ground: change it only by PR to `docs/api-contract.md`, tagging the people it affects.
 - Small PRs into `main`, each with "how to test"; log each landed step in `docs/progress-log.md`.
 - Daily: 15-minute kickoff, midday merge, end-of-day demo on the deployed preview (from the plan).

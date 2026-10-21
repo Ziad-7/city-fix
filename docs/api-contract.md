@@ -1,9 +1,11 @@
-# API contract — mobile app ⇄ backend
+# API contract — apps ⇄ backend
 
-This is what the citizen mobile app (`apps/mobile`) sends and expects. The app already runs on mock data behind these exact shapes; switching to the real backend is a config change (`EXPO_PUBLIC_API_MODE=api`, `EXPO_PUBLIC_API_URL=https://…`). The admin web app will use the same API plus the `/admin/*` routes.
+One backend serves three clients with the same endpoints and shapes: the citizen mobile app (`apps/mobile`), the citizen website (`apps/web`) and the admin web app (`apps/admin-web`). There are no client-specific routes.
+
+This is what the citizen mobile app sends and expects. The app already runs on mock data behind these exact shapes; switching to the real backend is a config change (`EXPO_PUBLIC_API_MODE=api`, `EXPO_PUBLIC_API_URL=https://…`). The admin web app will use the same API plus the `/admin/*` routes.
 
 **Source of truth for types:** `apps/mobile/src/domain/types.ts`. The client is `apps/mobile/src/services/api/`.
-**Changing the contract:** open a PR that edits this file and tag the mobile owner. Don't change shapes silently.
+**Changing the contract:** open a PR that edits this file and tag the mobile, citizen web and backend owners. Don't change shapes silently.
 
 ## Conventions
 
@@ -14,6 +16,7 @@ This is what the citizen mobile app (`apps/mobile`) sends and expects. The app a
 - Errors: HTTP status + `{ "detail": "رسالة قصيرة" }`. 400 validation, 401 no/expired token, 403 not your resource / not admin, 404 not found, 409 conflict (e.g. already following), 422 FastAPI validation.
 - IDs are human-readable strings: reports `FTC-1042`, incidents `INC-0042`, service requests `SRV-2001`, work orders `WO-318`.
 - Lists are newest first.
+- CORS: allow the citizen web and admin web origins (`http://localhost:3000`, `http://localhost:3001`, the Vercel domains) with the `Authorization` header. Mobile needs no CORS.
 
 ## Enums
 
@@ -127,7 +130,7 @@ The app currently sends local photo URIs. Proposal:
 | --- | --- | --- | --- |
 | POST | `/uploads/sign` | `{ kind: "report_photo" \| "voice_note", contentType: "image/jpeg" }` | `{ uploadUrl, path }` |
 
-The app `PUT`s the file to `uploadUrl` (a Supabase Storage signed upload URL), then sends `path` in `photoUris`. Reads use short-lived signed URLs returned by the API. Faces and plates are blurred before a photo is shown to anyone but the reporter and admins (stretch: run the blur on upload).
+The mobile app and the website both `PUT` the file to `uploadUrl` (the URL must accept a browser `PUT` with CORS) (a Supabase Storage signed upload URL), then sends `path` in `photoUris`. Reads use short-lived signed URLs returned by the API. Faces and plates are blurred before a photo is shown to anyone but the reporter and admins (stretch: run the blur on upload).
 
 ### Admin (Command Center — web)
 From the plan (§7). Admin role required.
