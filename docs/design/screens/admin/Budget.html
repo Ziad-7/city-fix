@@ -2,179 +2,210 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<title>FixTheCity — ميزانية الإصلاحات</title>
-<script src="./support.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FixTheCity — مركز القيادة: ميزانية الإصلاحات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;family=Readex+Pro:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../css/fixthecity.css">
+<style>
+.ftc-admin-sidebar .brand{display:flex;align-items:center;gap:10px;padding:0 8px 18px}
+.ftc-admin-sidebar .brand b{display:block;font:700 16px/22px var(--ftc-font-display)}
+.ftc-admin-sidebar .brand small{display:block;font-size:12px;line-height:18px;color:#B3B3B3}
+.ftc-admin-sidebar a:hover:not([aria-current]){background:rgba(255,255,255,.08);color:#F2EFEA}
+.ftc-admin-sidebar a .lbl{flex:1}
+.ftc-admin-sidebar a .count{font-size:12px;color:#B3B3B3}
+.ftc-admin-sidebar a[aria-current="page"] .count{color:var(--ftc-ink);font-weight:700}
+.ftc-admin-sidebar .sb-user{margin-top:auto;border-top:1px solid #333;padding:14px 4px 0;display:flex;align-items:center;gap:10px}
+.ftc-admin-sidebar .sb-user .who{flex:1;min-width:0}
+.ftc-admin-sidebar .sb-user b{display:block;font:600 14px/20px var(--ftc-font-sans)}
+.ftc-admin-sidebar .sb-user small{display:block;font-size:12px;line-height:16px;color:#B3B3B3}
+.ftc-admin-sidebar .sb-user a.out{width:36px;height:36px;padding:0;justify-content:center;flex:none}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--ftc-gold);color:var(--ftc-ink);display:inline-flex;align-items:center;justify-content:center;font:700 15px/1 var(--ftc-font-display);flex:none}
+.page{display:flex;flex-direction:column;gap:20px}
+.page-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.page-head .grow{flex:1 1 260px;min-width:0}
+.page-head h1{margin:0;font:700 26px/36px var(--ftc-font-display)}
+.page-head p{margin:0;font-size:14px;line-height:22px;color:var(--ftc-ink-muted)}
+.search{height:44px;flex:0 1 280px;min-width:200px;border-radius:var(--ftc-radius-md);background:var(--ftc-surface);border:1px solid var(--ftc-line);display:flex;align-items:center;gap:8px;padding:0 12px;color:var(--ftc-ink-muted)}
+.search input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:400 14px/22px var(--ftc-font-sans);color:var(--ftc-ink)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{display:flex;flex-direction:column;gap:4px}
+.kpi .l{font-size:13px;line-height:20px;color:var(--ftc-ink-muted)}
+.kpi .d{font-size:12px;line-height:18px;font-weight:600}
+.d--bad{color:var(--ftc-urgent-deep)}.d--good{color:var(--ftc-status-resolved)}.d--mute{color:var(--ftc-ink-muted);font-weight:400!important}
+.sec-title{margin:0;font:600 17px/26px var(--ftc-font-display);display:flex;align-items:center;gap:8px}
+.sec-sub{margin:0;font-size:12px;line-height:18px;color:var(--ftc-ink-muted)}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.score{display:inline-flex;width:40px;height:28px;border-radius:8px;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex:none}
+.score--urgent{background:var(--ftc-urgent);color:#fff}
+.score--high{background:var(--ftc-gold-soft);color:var(--ftc-gold-deep)}
+.score--low{background:var(--ftc-status-received-bg);color:var(--ftc-status-received)}
+.tablewrap{overflow-x:auto}
+.mini{font-size:12px;line-height:18px;color:var(--ftc-ink-muted)}
+.strong{font-weight:600}
+.row-between{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.stack{display:flex;flex-direction:column}
+.g8{gap:8px}.g12{gap:12px}.g16{gap:16px}
+.link{color:var(--ftc-red);font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ftc-filter{cursor:pointer;font-family:inherit}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px}
+.ftc-btn--sm.ftc-btn--secondary{border-width:1.5px}
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){
+  .ftc-admin-main{padding:16px}
+  .ftc-admin-sidebar{flex-direction:row;flex-wrap:wrap;padding:12px;gap:6px}
+  .ftc-admin-sidebar .brand{width:100%;padding:0 4px 6px}
+  .ftc-admin-sidebar > a{flex:1 1 calc(50% - 6px);min-width:140px}
+  .ftc-admin-sidebar .sb-user{width:100%;margin-top:6px}
+  .page-head h1{font-size:22px;line-height:30px}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+input[type=range]{accent-color:#C8102E}</style>
 </head>
 <body>
-<x-dc>
-<helmet>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;family=Readex+Pro:wght@500;600;700&amp;display=swap" rel="stylesheet">
-<style>
-body{margin:0}
-a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
-input[type=range]{accent-color:#C8102E}
-</style>
-</helmet>
-<div dir="rtl" style="min-height: 960px; box-sizing: border-box; background: #F8F6F2; color: #161616; font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif; display: flex; flex-wrap: wrap; align-items: stretch;">
-
-  <nav aria-label="قائمة مركز القيادة" style="flex: 1 1 232px; max-width: 100%; box-sizing: border-box; background: #161616; color: #F2EFEA; padding: 20px 14px; display: flex; flex-direction: column; gap: 4px;">
-    <div style="display: flex; align-items: center; gap: 10px; padding: 0 8px 18px;">
-      <img src="../assets/fixthecity-mark.svg" alt="" style="width: 34px; height: 34px;">
-      <span style="display: flex; flex-direction: column;"><span style="font-family: 'Readex Pro', sans-serif; font-size: 16px; line-height: 22px; font-weight: 700;">FixTheCity</span><span style="font-size: 12px; line-height: 18px; color: #B3B3B3;">مركز القيادة · حي مدينة نصر</span></span>
-    </div>
-    <a href="#" style="height: 44px; border-radius: 14px; padding: 0 12px; display: flex; align-items: center; gap: 10px; color: #F2EFEA; font-size: 14px; font-weight: 500;"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>نظرة عامة</a>
-    <a href="Admin.dc.html" style="height: 44px; border-radius: 14px; padding: 0 12px; display: flex; align-items: center; gap: 10px; color: #F2EFEA; font-size: 14px; font-weight: 500;"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg><span style="flex: 1;">البلاغات</span><span style="font-size: 12px; color: #B3B3B3;">128</span></a>
-    <a href="#" style="height: 44px; border-radius: 14px; padding: 0 12px; display: flex; align-items: center; gap: 10px; color: #F2EFEA; font-size: 14px; font-weight: 500;"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg><span style="flex: 1;">طلبات الخدمات</span><span style="font-size: 12px; color: #B3B3B3;">34</span></a>
-    <a href="#" style="height: 44px; border-radius: 14px; padding: 0 12px; display: flex; align-items: center; gap: 10px; color: #F2EFEA; font-size: 14px; font-weight: 500;"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.6-.6-.6-2.6z"></path></svg>أوامر الشغل</a>
-    <a href="#" style="height: 44px; border-radius: 14px; padding: 0 12px; display: flex; align-items: center; gap: 10px; color: #F2EFEA; font-size: 14px; font-weight: 500;"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"></path><path d="M9 3v15"></path><path d="M15 6v15"></path></svg>خريطة المدينة</a>
-    <a href="Budget.dc.html" aria-current="page" style="height: 44px; border-radius: 14px; padding: 0 12px; display: flex; align-items: center; gap: 10px; background: #D4A20B; color: #161616; font-size: 14px; font-weight: 700;"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2.5"></circle></svg>ميزانية الإصلاحات</a>
-  </nav>
-
+<div class="ftc-docbar"><a href="../../index.html">FixTheCity design</a><span>Command Center · Budget</span></div>
+<div class="ftc-admin">
+<nav class="ftc-admin-sidebar" aria-label="قائمة مركز القيادة">
+<div class="brand"><img src="../../assets/fixthecity-mark.svg" alt="" width="34" height="34"><span><b>FixTheCity</b><small>القاهرة · حي مدينة نصر أول</small></span></div>
+<a href="Overview.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="lbl">نظرة عامة</span></a>
+<a href="Incidents.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span class="lbl">البلاغات</span><span class="count">128</span></a>
+<a href="Map.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15"/><path d="M15 6v15"/></svg><span class="lbl">الخريطة</span></a>
+<a href="ServiceRequests.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg><span class="lbl">طلبات الخدمات</span><span class="count">34</span></a>
+<a href="WorkOrders.html"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.6-.6-.6-2.6z"/></svg><span class="lbl">أوامر الشغل</span></a>
+<a href="Budget.html" aria-current="page"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg><span class="lbl">الميزانية</span></a>
+<div class="sb-user"><span class="avatar" aria-hidden="true">س</span><span class="who"><b>سارة محمود</b><small>مشرفة فرز · حي مدينة نصر أول</small></span><a class="out" href="Login.html" aria-label="تسجيل الخروج" title="تسجيل الخروج"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></a></div>
+</nav>
+<main class="ftc-admin-main" style="padding:0">
   <div style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 24px 28px 32px; display: flex; flex-direction: column; gap: 20px;">
     <header style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px;">
       <div style="flex: 1 1 280px;">
         <h1 style="margin: 0; font-family: 'Readex Pro', sans-serif; font-size: 26px; line-height: 36px; font-weight: 700;">ميزانية الإصلاحات</h1>
         <p style="margin: 0; font-size: 14px; line-height: 22px; color: #5A5A5A;">أحسن خطة إصلاح تجيب أعلى أولوية بالميزانية المتاحة · التكاليف تقديرية للمحاكاة</p>
       </div>
-      <a href="Admin.dc.html" style="height: 44px; padding: 0 18px; border-radius: 14px; background: #C8102E; color: #FFFFFF; display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700;">حوّل الخطة لأوامر شغل</a>
+      <a href="WorkOrders.html" style="height: 44px; padding: 0 18px; border-radius: 14px; background: #C8102E; color: #FFFFFF; display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700;">حوّل الخطة لأوامر شغل</a>
     </header>
 
     <section aria-label="الميزانية" style="background: #FFFFFF; border-radius: 14px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 1px 2px rgba(22,22,22,.06), 0 4px 16px rgba(22,22,22,.06);">
       <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px;">
         <label for="budget" style="font-size: 14px; font-weight: 600;">الميزانية المتاحة</label>
-        <span style="font-family: 'Readex Pro', sans-serif; font-size: 30px; line-height: 36px; font-weight: 700; color: #8E0A20;">{{budgetLabel}}</span>
+        <span style="font-family: 'Readex Pro', sans-serif; font-size: 30px; line-height: 36px; font-weight: 700; color: #8E0A20;"><span id="budgetLabel"></span></span>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-inline-start: auto;">
-          <button onClick="{{setTight}}" style="{{tightStyle}}">تقشّف · 150 ألف</button>
-          <button onClick="{{setCurrent}}" style="{{currentStyle}}">الميزانية الحالية · 300 ألف</button>
-          <button onClick="{{setAll}}" style="{{allStyle}}">بدون حد · {{totalLabel}}</button>
+          <button type="button" id="setTight" style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #E6E1D8; background: #FFFFFF; color: #161616; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;">تقشّف · 150 ألف</button>
+          <button type="button" id="setCurrent" style="height: 36px; padding: 0 14px; border-radius: 999px; border: 0; background: #C8102E; color: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;">الميزانية الحالية · 300 ألف</button>
+          <button type="button" id="setAll" style="height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #E6E1D8; background: #FFFFFF; color: #161616; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;">بدون حد · <span id="totalLabel">1 ألف</span></button>
         </div>
       </div>
-      <input id="budget" type="range" min="50" max="600" step="10" value="{{budget}}" onChange="{{onBudget}}" style="width: 100%;">
+      <input id="budget" type="range" min="50" max="600" step="10" value="300" style="width: 100%;">
       <div style="display: flex; justify-content: space-between; font-size: 12px; color: #5A5A5A;"><span>50 ألف جنيه</span><span>600 ألف جنيه</span></div>
     </section>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
-      <div style="background: #FFFFFF; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 1px 2px rgba(22,22,22,.06), 0 4px 16px rgba(22,22,22,.06);"><span style="font-size: 13px; color: #5A5A5A;">تكلفة الخطة</span><span style="font-family: 'Readex Pro', sans-serif; font-size: 28px; line-height: 34px; font-weight: 600;">{{costLabel}}</span><span style="font-size: 12px; color: #5A5A5A;">{{countLabel}}</span></div>
-      <div style="background: #FFFFFF; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 1px 2px rgba(22,22,22,.06), 0 4px 16px rgba(22,22,22,.06);"><span style="font-size: 13px; color: #5A5A5A;">المتبقي</span><span style="font-family: 'Readex Pro', sans-serif; font-size: 28px; line-height: 34px; font-weight: 600;">{{leftLabel}}</span><span style="font-size: 12px; color: #5A5A5A;">مفيش إصلاح تاني يكفّيه</span></div>
-      <div style="background: #FFFFFF; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 1px 2px rgba(22,22,22,.06), 0 4px 16px rgba(22,22,22,.06);"><span style="font-size: 13px; color: #5A5A5A;">الأولوية المغطّاة</span><span style="font-family: 'Readex Pro', sans-serif; font-size: 28px; line-height: 34px; font-weight: 600; color: #C8102E;">{{coverLabel}}</span><span aria-hidden="true" style="height: 6px; border-radius: 999px; background: #FBE4E7; display: block;"><span style="{{coverBar}}"></span></span></div>
-      <div style="background: #FFFFFF; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 1px 2px rgba(22,22,22,.06), 0 4px 16px rgba(22,22,22,.06);"><span style="font-size: 13px; color: #5A5A5A;">مواطنين هيشوفوا حل</span><span style="font-family: 'Readex Pro', sans-serif; font-size: 28px; line-height: 34px; font-weight: 600;">{{peopleLabel}}</span><span style="font-size: 12px; color: #5A5A5A;">من {{peopleTotal}} بلّغوا</span></div>
+      <div style="background: #FFFFFF; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 1px 2px rgba(22,22,22,.06), 0 4px 16px rgba(22,22,22,.06);"><span style="font-size: 13px; color: #5A5A5A;">تكلفة الخطة</span><span style="font-family: 'Readex Pro', sans-serif; font-size: 28px; line-height: 34px; font-weight: 600;"><span id="costLabel"></span></span><span style="font-size: 12px; color: #5A5A5A;"><span id="countLabel"></span></span></div>
+      <div style="background: #FFFFFF; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 1px 2px rgba(22,22,22,.06), 0 4px 16px rgba(22,22,22,.06);"><span style="font-size: 13px; color: #5A5A5A;">المتبقي</span><span style="font-family: 'Readex Pro', sans-serif; font-size: 28px; line-height: 34px; font-weight: 600;"><span id="leftLabel"></span></span><span style="font-size: 12px; color: #5A5A5A;">مفيش إصلاح تاني يكفّيه</span></div>
+      <div style="background: #FFFFFF; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 1px 2px rgba(22,22,22,.06), 0 4px 16px rgba(22,22,22,.06);"><span style="font-size: 13px; color: #5A5A5A;">الأولوية المغطّاة</span><span style="font-family: 'Readex Pro', sans-serif; font-size: 28px; line-height: 34px; font-weight: 600; color: #C8102E;"><span id="coverLabel"></span></span><span aria-hidden="true" style="height: 6px; border-radius: 999px; background: #FBE4E7; display: block;"><span id="coverBar" style="display: block; height: 6px; border-radius: 999px; background: #C8102E; width: 0;"></span></span></div>
+      <div style="background: #FFFFFF; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 1px 2px rgba(22,22,22,.06), 0 4px 16px rgba(22,22,22,.06);"><span style="font-size: 13px; color: #5A5A5A;">مواطنين هيشوفوا حل</span><span style="font-family: 'Readex Pro', sans-serif; font-size: 28px; line-height: 34px; font-weight: 600;"><span id="peopleLabel"></span></span><span style="font-size: 12px; color: #5A5A5A;">من <span id="peopleTotal"></span> بلّغوا</span></div>
     </div>
 
     <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;">
       <section aria-label="إصلاحات في الخطة" style="flex: 1 1 380px; min-width: 0; background: #FFFFFF; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px rgba(22,22,22,.06), 0 4px 16px rgba(22,22,22,.06);">
-        <h2 style="margin: 0; font-family: 'Readex Pro', sans-serif; font-size: 17px; line-height: 26px; font-weight: 600; display: flex; align-items: center; gap: 8px;"><span aria-hidden="true" style="width: 12px; height: 12px; border-radius: 999px; background: #D4A20B;"></span>في الخطة ({{inCount}})</h2>
-        <sc-for list="{{chosen}}" as="r" hint-placeholder-count="4">
-          <div style="background: #FAF0D2; border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 12px;">
-            <span style="display: inline-flex; width: 36px; height: 26px; border-radius: 8px; background: #FFFFFF; color: #7A5A00; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0;">{{r.score}}</span>
-            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;"><span style="font-size: 14px; line-height: 22px; font-weight: 600;">{{r.name}}</span><span style="font-size: 12px; line-height: 18px; color: #7A5A00;">{{r.why}}</span></span>
-            <span style="font-size: 14px; font-weight: 700; white-space: nowrap;">{{r.costLabel}}</span>
-          </div>
-        </sc-for>
+        <h2 style="margin: 0; font-family: 'Readex Pro', sans-serif; font-size: 17px; line-height: 26px; font-weight: 600; display: flex; align-items: center; gap: 8px;"><span aria-hidden="true" style="width: 12px; height: 12px; border-radius: 999px; background: #D4A20B;"></span>في الخطة (<span id="inCount"></span>)</h2>
+        <div id="chosenList" style="display: flex; flex-direction: column; gap: 10px;"></div>
       </section>
 
       <section aria-label="إصلاحات خارج الخطة" style="flex: 1 1 380px; min-width: 0; background: #FFFFFF; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px rgba(22,22,22,.06), 0 4px 16px rgba(22,22,22,.06);">
-        <h2 style="margin: 0; font-family: 'Readex Pro', sans-serif; font-size: 17px; line-height: 26px; font-weight: 600; display: flex; align-items: center; gap: 8px;"><span aria-hidden="true" style="width: 12px; height: 12px; border-radius: 999px; border: 2px solid #5A5A5A; box-sizing: border-box;"></span>مؤجّلة ({{outCount}})</h2>
-        <sc-if value="{{noneOut}}" hint-placeholder-val="{{false}}">
-          <p style="margin: 0; font-size: 14px; color: #5A5A5A;">كل الإصلاحات داخلة في الخطة.</p>
-        </sc-if>
-        <sc-for list="{{skipped}}" as="r" hint-placeholder-count="3">
-          <div style="border: 1px solid #E6E1D8; border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 12px;">
-            <span style="display: inline-flex; width: 36px; height: 26px; border-radius: 8px; background: #E6EAEC; color: #3D4A50; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0;">{{r.score}}</span>
-            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;"><span style="font-size: 14px; line-height: 22px; font-weight: 600;">{{r.name}}</span><span style="font-size: 12px; line-height: 18px; color: #5A5A5A;">{{r.why}}</span></span>
-            <span style="font-size: 14px; font-weight: 600; white-space: nowrap; color: #5A5A5A;">{{r.costLabel}}</span>
-          </div>
-        </sc-for>
+        <h2 style="margin: 0; font-family: 'Readex Pro', sans-serif; font-size: 17px; line-height: 26px; font-weight: 600; display: flex; align-items: center; gap: 8px;"><span aria-hidden="true" style="width: 12px; height: 12px; border-radius: 999px; border: 2px solid #5A5A5A; box-sizing: border-box;"></span>مؤجّلة (<span id="outCount"></span>)</h2>
+        <p id="noneOut" hidden style="margin: 0; font-size: 14px; color: #5A5A5A;">كل الإصلاحات داخلة في الخطة.</p>
+        <div id="skippedList" style="display: flex; flex-direction: column; gap: 10px;"></div>
       </section>
     </div>
   </div>
+</main>
 </div>
-</x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
-class Component extends DCLogic {
-  constructor(props) {
-    super(props);
-    this.state = { budget: 300 };
-  }
-  renderVals() {
-    var items = [
-      { name: 'كسر ماسورة مياه · مكرم عبيد', cost: 180, score: 92, people: 11 },
-      { name: 'هبوط أرضي · مصطفى النحاس', cost: 220, score: 77, people: 9 },
-      { name: 'حفرة في الطريق · عباس العقاد', cost: 45, score: 84, people: 7 },
-      { name: 'عمود إنارة واقع · الطيران', cost: 30, score: 71, people: 3 },
-      { name: 'بالوعة مسدودة · حسن المأمون', cost: 18, score: 64, people: 6 },
-      { name: 'تراكم قمامة · الحي السابع', cost: 12, score: 58, people: 5 },
-      { name: 'شجرة مايلة · الطيران', cost: 8, score: 46, people: 2 },
-      { name: 'كسر في الرصيف · ذاكر حسين', cost: 25, score: 33, people: 1 }
-    ];
-    var B = this.state.budget;
-    var n = items.length;
-    var dp = [];
-    for (var i = 0; i <= n; i++) { dp.push(new Array(B + 1).fill(0)); }
-    for (var i = 1; i <= n; i++) {
-      var c = items[i - 1].cost, v = items[i - 1].score;
-      for (var w = 0; w <= B; w++) {
-        dp[i][w] = dp[i - 1][w];
-        if (c <= w && dp[i - 1][w - c] + v > dp[i][w]) { dp[i][w] = dp[i - 1][w - c] + v; }
-      }
-    }
-    var pick = new Array(n).fill(false);
-    var w = B;
-    for (var i = n; i >= 1; i--) {
-      if (dp[i][w] !== dp[i - 1][w]) { pick[i - 1] = true; w -= items[i - 1].cost; }
-    }
-    var cost = 0, score = 0, people = 0, allScore = 0, allCost = 0, allPeople = 0;
-    items.forEach(function (it, k) {
-      allScore += it.score; allCost += it.cost; allPeople += it.people;
-      if (pick[k]) { cost += it.cost; score += it.score; people += it.people; }
-    });
-    var left = B - cost;
-    var chosen = [], skipped = [];
-    items.forEach(function (it, k) {
-      var row = { name: it.name, score: it.score, costLabel: it.cost + ' ألف' };
-      if (pick[k]) {
-        row.why = (Math.round(it.score / it.cost * 100) / 10) + ' نقطة أولوية لكل 10 آلاف جنيه · ' + it.people + ' مواطنين';
-        chosen.push(row);
-      } else {
-        row.why = 'محتاجة ' + it.cost + ' ألف والمتبقي ' + left + ' ألف';
-        skipped.push(row);
-      }
-    });
-    chosen.sort(function (a, b) { return b.score - a.score; });
-    skipped.sort(function (a, b) { return b.score - a.score; });
-    var pct = Math.round(score / allScore * 100);
-    var self = this;
-    var chip = function (on) {
-      return on
-        ? 'height: 36px; padding: 0 14px; border-radius: 999px; border: 0; background: #C8102E; color: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;'
-        : 'height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #E6E1D8; background: #FFFFFF; color: #161616; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;';
-    };
-    return {
-      budget: B,
-      budgetLabel: B + ' ألف جنيه',
-      totalLabel: allCost + ' ألف',
-      costLabel: cost + ' ألف',
-      countLabel: chosen.length + ' إصلاحات من ' + n,
-      leftLabel: left + ' ألف',
-      coverLabel: pct + '%',
-      coverBar: 'display: block; height: 6px; border-radius: 999px; background: #C8102E; width: ' + pct + '%;',
-      peopleLabel: String(people),
-      peopleTotal: String(allPeople),
-      inCount: String(chosen.length),
-      outCount: String(skipped.length),
-      noneOut: skipped.length === 0,
-      chosen: chosen,
-      skipped: skipped,
-      tightStyle: chip(B === 150),
-      currentStyle: chip(B === 300),
-      allStyle: chip(B >= allCost),
-      onBudget: function (e) { self.setState({ budget: Number(e.target.value) }); },
-      setTight: function () { self.setState({ budget: 150 }); },
-      setCurrent: function () { self.setState({ budget: 300 }); },
-      setAll: function () { self.setState({ budget: Math.min(600, Math.ceil(allCost / 10) * 10) }); }
-    };
-  }
+<script>
+
+var ITEMS = [
+  { name: 'كسر ماسورة مياه · مكرم عبيد', cost: 180, score: 92, people: 11 },
+  { name: 'هبوط أرضي · مصطفى النحاس', cost: 220, score: 77, people: 9 },
+  { name: 'حفرة في الطريق · عباس العقاد', cost: 45, score: 84, people: 7 },
+  { name: 'عمود إنارة واقع · الطيران', cost: 30, score: 71, people: 3 },
+  { name: 'بالوعة مسدودة · حسن المأمون', cost: 18, score: 64, people: 6 },
+  { name: 'تراكم قمامة · الحي السابع', cost: 12, score: 58, people: 5 },
+  { name: 'شجرة مايلة · الطيران', cost: 8, score: 46, people: 2 },
+  { name: 'كسر في الرصيف · ذاكر حسين', cost: 25, score: 33, people: 1 }
+];
+var CHIP_ON = 'height: 36px; padding: 0 14px; border-radius: 999px; border: 0; background: #C8102E; color: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;', CHIP_OFF = 'height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid #E6E1D8; background: #FFFFFF; color: #161616; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;';
+var $ = function (id) { return document.getElementById(id); };
+var allCost = 0; ITEMS.forEach(function (it) { allCost += it.cost; });
+$('totalLabel').textContent = allCost + ' ألف';
+
+function row(r, inPlan) {
+  var d = document.createElement('div');
+  d.style.cssText = inPlan
+    ? 'background: #FAF0D2; border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 12px;'
+    : 'border: 1px solid #E6E1D8; border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 12px;';
+  var sc = inPlan ? 'background: #FFFFFF; color: #7A5A00;' : 'background: #E6EAEC; color: #3D4A50;';
+  d.innerHTML =
+    '<span style="display: inline-flex; width: 36px; height: 26px; border-radius: 8px; ' + sc + ' align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0;">' + r.score + '</span>' +
+    '<span style="flex: 1; min-width: 0; display: flex; flex-direction: column;"><span style="font-size: 14px; line-height: 22px; font-weight: 600;">' + r.name + '</span>' +
+    '<span style="font-size: 12px; line-height: 18px; color: ' + (inPlan ? '#7A5A00' : '#5A5A5A') + ';">' + r.why + '</span></span>' +
+    '<span style="font-size: 14px; font-weight: ' + (inPlan ? 700 : 600) + '; white-space: nowrap;' + (inPlan ? '' : ' color: #5A5A5A;') + '">' + r.cost + ' ألف</span>';
+  return d;
 }
+
+function render(B) {
+  var n = ITEMS.length, dp = [];
+  for (var i = 0; i <= n; i++) dp.push(new Array(B + 1).fill(0));
+  for (i = 1; i <= n; i++) {
+    var c = ITEMS[i - 1].cost, v = ITEMS[i - 1].score;
+    for (var w = 0; w <= B; w++) {
+      dp[i][w] = dp[i - 1][w];
+      if (c <= w && dp[i - 1][w - c] + v > dp[i][w]) dp[i][w] = dp[i - 1][w - c] + v;
+    }
+  }
+  var pick = new Array(n).fill(false), w2 = B;
+  for (i = n; i >= 1; i--) if (dp[i][w2] !== dp[i - 1][w2]) { pick[i - 1] = true; w2 -= ITEMS[i - 1].cost; }
+  var cost = 0, score = 0, people = 0, allScore = 0, allPeople = 0;
+  ITEMS.forEach(function (it, k) {
+    allScore += it.score; allPeople += it.people;
+    if (pick[k]) { cost += it.cost; score += it.score; people += it.people; }
+  });
+  var left = B - cost, chosen = [], skipped = [];
+  ITEMS.forEach(function (it, k) {
+    var r = { name: it.name, score: it.score, cost: it.cost };
+    if (pick[k]) { r.why = (Math.round(it.score / it.cost * 100) / 10) + ' نقطة أولوية لكل 10 آلاف جنيه · ' + it.people + ' مواطنين'; chosen.push(r); }
+    else { r.why = 'محتاجة ' + it.cost + ' ألف والمتبقي ' + left + ' ألف'; skipped.push(r); }
+  });
+  chosen.sort(function (a, b) { return b.score - a.score; });
+  skipped.sort(function (a, b) { return b.score - a.score; });
+  var pct = Math.round(score / allScore * 100);
+  $('budgetLabel').textContent = B + ' ألف جنيه';
+  $('costLabel').textContent = cost + ' ألف';
+  $('countLabel').textContent = chosen.length + ' إصلاحات من ' + n;
+  $('leftLabel').textContent = left + ' ألف';
+  $('coverLabel').textContent = pct + '%';
+  $('coverBar').style.width = pct + '%';
+  $('peopleLabel').textContent = people;
+  $('peopleTotal').textContent = allPeople;
+  $('inCount').textContent = chosen.length;
+  $('outCount').textContent = skipped.length;
+  $('noneOut').hidden = skipped.length !== 0;
+  var cl = $('chosenList'), sl = $('skippedList');
+  cl.innerHTML = ''; sl.innerHTML = '';
+  chosen.forEach(function (r) { cl.appendChild(row(r, true)); });
+  skipped.forEach(function (r) { sl.appendChild(row(r, false)); });
+  $('setTight').style.cssText = B === 150 ? CHIP_ON : CHIP_OFF;
+  $('setCurrent').style.cssText = B === 300 ? CHIP_ON : CHIP_OFF;
+  $('setAll').style.cssText = B >= allCost ? CHIP_ON : CHIP_OFF;
+  $('budget').value = B;
+}
+$('budget').addEventListener('input', function (e) { render(Number(e.target.value)); });
+$('setTight').addEventListener('click', function () { render(150); });
+$('setCurrent').addEventListener('click', function () { render(300); });
+$('setAll').addEventListener('click', function () { render(Math.min(600, Math.ceil(allCost / 10) * 10)); });
+render(300);
+
 </script>
 </body>
 </html>

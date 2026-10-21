@@ -2,25 +2,22 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FixTheCity — تسجيل الدخول</title>
-<script src="./support.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;family=Readex+Pro:wght@500;600;700&amp;family=Aref+Ruqaa:wght@700&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../css/fixthecity.css">
 </head>
 <body>
-<x-dc>
-<helmet>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;family=Readex+Pro:wght@500;600;700&amp;family=Aref+Ruqaa:wght@700&amp;display=swap" rel="stylesheet">
-<style>
-body{margin:0}
-a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
-</style>
-</helmet>
+<div class="ftc-docbar"><a href="../../index.html">FixTheCity design</a><span>Mobile app · Login</span></div>
+<div style="width:390px;margin:24px auto;box-shadow:var(--ftc-shadow-float);overflow:hidden">
 <div dir="rtl" style="width: 390px; height: 980px; box-sizing: border-box; background: #F8F6F2; color: #161616; font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif; display: flex; flex-direction: column;">
 
   <div style="position: relative; height: 310px; background: #C8102E; overflow: hidden; border-radius: 0 0 28px 28px; display: flex; flex-direction: column; justify-content: flex-start; padding: 24px 20px 0; box-sizing: border-box;">
-    <img src="../assets/cairo-skyline.svg" alt="" style="position: absolute; left: 0; bottom: 0; width: 390px; height: 150px;">
+    <img src="../../assets/cairo-skyline.svg" alt="" style="position: absolute; left: 0; bottom: 0; width: 390px; height: 150px;">
     <span style="position: relative; display: inline-flex; align-self: flex-start; align-items: center; gap: 8px; height: 40px; padding: 0 14px 0 10px; border-radius: 999px; background: #FFFFFF;">
-      <img src="../assets/fixthecity-mark.svg" alt="" style="width: 26px; height: 26px;">
+      <img src="../../assets/fixthecity-mark.svg" alt="" style="width: 26px; height: 26px;">
       <span style="font-family: 'Readex Pro', sans-serif; font-size: 15px; font-weight: 700; color: #C8102E;">فيكس ذا سيتي</span>
     </span>
     <h1 style="position: relative; margin: 12px 0 0; font-family: 'Aref Ruqaa', 'Readex Pro', serif; font-size: 30px; line-height: 46px; font-weight: 700; color: #FFFFFF;">مدينتك أحلى لما نصلّحها سوا</h1>
@@ -73,7 +70,7 @@ a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
   </main>
 
   <footer style="padding: 12px 16px 24px; display: flex; flex-direction: column; gap: 10px;">
-    <a href="Main.dc.html" style="height: 52px; border-radius: 14px; background: #C8102E; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700;">ابعتلي الكود</a>
+    <a href="Main.html" style="height: 52px; border-radius: 14px; background: #C8102E; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700;">ابعتلي الكود</a>
     <div style="display: flex; justify-content: center; gap: 16px; font-size: 13px;">
       <a href="#" style="font-weight: 600;">English</a>
       <span aria-hidden="true" style="color: #E6E1D8;">|</span>
@@ -81,11 +78,6 @@ a{color:#C8102E;text-decoration:none}a:hover{color:#8E0A20}
     </div>
   </footer>
 </div>
-</x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":980}}'>
-class Component extends DCLogic {
-  renderVals() { return {}; }
-}
-</script>
+</div>
 </body>
 </html>
