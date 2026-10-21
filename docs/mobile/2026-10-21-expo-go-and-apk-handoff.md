@@ -2,7 +2,7 @@
 
 Date: 2026-10-21. Audience: the citizen mobile app developer.
 
-The app now opens in the user's Android Expo Go 57.0.9. The previously built standalone APK's startup crash is **still unresolved**: no device crash trace has been collected, and no corrected APK has been built or verified in this session.
+The app now opens in the user's Android Expo Go 57.0.9. **Update:** the startup crash has been traced and fixed in the repo; see [the crash analysis](2026-10-21-android-startup-crash.md). A new APK still has to be built to confirm. The original text below is kept for the record: the previously built standalone APK's startup crash is **still unresolved**: no device crash trace has been collected, and no corrected APK has been built or verified in this session.
 
 ## What happened and why
 
