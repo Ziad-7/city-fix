@@ -17,7 +17,7 @@ const TABS: Record<string, { label: string; icon: IconName }> = {
  * Bottom nav from Main.html: الرئيسية · الخريطة · [gold Report FAB] · طلباتي · حسابي.
  * Rows mirror automatically in RTL, so slots are listed in reading order.
  */
-export function TabBar({ state, emitter, navigateToTab, insets }: BottomTabBarProps) {
+export function TabBar({ state, navigation, insets }: BottomTabBarProps) {
   const focused = state.routes[state.index]?.name;
 
   const renderTab = (name: string) => {
@@ -33,8 +33,8 @@ export function TabBar({ state, emitter, navigateToTab, insets }: BottomTabBarPr
         accessibilityLabel={meta.label}
         accessibilityState={{ selected: active }}
         onPress={() => {
-          const e = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-          if (!active && !e.defaultPrevented) navigateToTab(route.key);
+          const e = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+          if (!active && !e.defaultPrevented) navigation.navigate(route.name, route.params);
         }}
         style={styles.slot}
       >

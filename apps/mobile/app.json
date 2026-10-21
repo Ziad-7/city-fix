@@ -41,7 +41,13 @@
       ],
       [
         "expo-localization",
-        { "forcesRTL": true, "supportedLocales": ["ar", "en"] }
+        {
+          "forcesRTL": true,
+          "supportedLocales": [
+            "ar",
+            "en"
+          ]
+        }
       ],
       [
         "expo-image-picker",
@@ -56,7 +62,8 @@
         {
           "locationWhenInUsePermission": "التطبيق محتاج موقعك عشان نحدد مكان المشكلة على الخريطة."
         }
-      ]
+      ],
+      "expo-status-bar"
     ]
   }
 }
