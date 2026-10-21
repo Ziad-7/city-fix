@@ -22,6 +22,24 @@ from app.logic.timeline import incident_timeline_entry, service_timeline_entry
 from app.auth import hash_password
 from app.helpers import now_utc, iso_z
 
+# ========================================================================
+# Teams constant (exported for GET /admin/teams)
+# ========================================================================
+TEAMS = [
+    {"name": "فريق الطرق 1", "department": "صيانة الطرق", "size": 4},
+    {"name": "فريق الطرق 2", "department": "صيانة الطرق", "size": 4},
+    {"name": "فريق الطرق 3", "department": "صيانة الطرق", "size": 6},
+    {"name": "فريق النظافة 1", "department": "هيئة النظافة والتجميل", "size": 5},
+    {"name": "فريق النظافة 2", "department": "هيئة النظافة والتجميل", "size": 5},
+    {"name": "فريق النظافة 3", "department": "هيئة النظافة والتجميل", "size": 5},
+    {"name": "فريق النظافة 4", "department": "هيئة النظافة والتجميل", "size": 5},
+    {"name": "فريق الإنارة 1", "department": "إنارة الحي", "size": 3},
+    {"name": "فريق الإنارة 2", "department": "إنارة الحي", "size": 3},
+    {"name": "فريق الحدائق 1", "department": "حدائق الحي", "size": 4},
+    {"name": "فريق الصرف 1", "department": "الصرف الصحي", "size": 5},
+    {"name": "فريق الصرف 2", "department": "الصرف الصحي", "size": 5},
+]
+
 
 def seed_db(db: Session) -> None:
     """Seed database with demo data."""
@@ -77,10 +95,14 @@ def seed_db(db: Session) -> None:
     db.flush()
 
     # ========================================================================
-    # Citizen profile (demo user)
+    # Citizen profiles (demo user + anonymous)
     # ========================================================================
     demo_citizen = Profile(id="citizen-001", phone="+201012345678", name="أحمد محمد", role="citizen")
     db.add(demo_citizen)
+
+    # Anonymous reporter profile for anonymous reports
+    anonymous_citizen = Profile(id="citizen-anonymous", phone=None, name="بلاغ بدون اسم", role="citizen")
+    db.add(anonymous_citizen)
 
     # ========================================================================
     # Staff accounts
@@ -114,35 +136,79 @@ def seed_db(db: Session) -> None:
     )
     db.add(staff_account)
 
+    # Additional staff accounts per department
+    dept_staff = [
+        ("sanitation", "staff-sanitation", "نادية علي", "sanitation@fixthecity.demo", "القاهرة · حي مدينة نصر أول"),
+        ("lighting", "staff-lighting", "محمود أحمد", "lighting@fixthecity.demo", "القاهرة · حي مدينة نصر أول"),
+        ("sewage", "staff-sewage", "سلام محمد", "sewage@fixthecity.demo", "القاهرة · حي مدينة نصر أول"),
+        ("water", "staff-water", "حسان علي", "water@fixthecity.demo", "القاهرة"),
+        ("electricity", "staff-electricity", "صادق محمود", "electricity@fixthecity.demo", "القاهرة"),
+        ("parks", "staff-parks", "فاطمة الزهراء", "parks@fixthecity.demo", "القاهرة · حي مدينة نصر أول"),
+        ("utilities", "staff-utilities", "عمر كمال", "utilities@fixthecity.demo", "القاهرة · حي مدينة نصر أول"),
+        ("veterinary", "staff-vet", "دينا ياسر", "veterinary@fixthecity.demo", "القاهرة · حي مدينة نصر أول"),
+    ]
+
+    for dept_id, profile_id, name, email, district in dept_staff:
+        staff_prof = Profile(
+            id=profile_id,
+            name=name,
+            role="staff",
+            district=district,
+        )
+        db.add(staff_prof)
+        staff_acct = StaffAccount(
+            profile_id=profile_id,
+            email=email,
+            password_hash=hash_password("FixCity2026!"),
+            department_id=dept_id,
+        )
+        db.add(staff_acct)
+
     db.flush()
 
     # ========================================================================
-    # Incidents (10 from mobile seed + more for completeness)
+    # Incidents (10 from mobile seed + 22 new for coverage)
     # ========================================================================
     incidents_data = [
-        # From mobile seed
+        # From mobile seed (INC-501..510)
         (501, "pothole", "حفرة في شارع عباس العقاد", "شارع عباس العقاد، مدينة نصر", 30.0562, 31.3305, "in_progress", "high", 2, 7, 7, "مدرسة النصر الإعدادية", "WO-318"),
         (502, "open_manhole", "بالوعة مفتوحة في شارع حسن المأمون", "شارع حسن المأمون، مدينة نصر", 30.0575, 31.329, "assigned", "critical", 30, 12, 12, None, "WO-321"),
-        (503, "streetlight_out", "عمود نور مطفي في شارع مكرم عبيد", "شارع مكرم عبيد، مدينة نصر", 30.054, 31.3335, "resolved", "low", 54, 2, 2, None, None),
+        (503, "streetlight_out", "عمود نور مطفي في شارع مكرم عبيد", "شارع مكرم عبيد، مدينة نصر", 30.054, 31.3335, "resolved", "low", 168, 2, 2, None, None),  # 7d ago
         (504, "garbage", "زبالة متراكمة في شارع الطيران", "شارع الطيران، مدينة نصر", 30.059, 31.335, "received", "medium", 5, 3, 3, None, None),
         (505, "sewage_overflow", "طفح مجاري قدام عمارة ١٢", "شارع الحجاز، مدينة نصر", 30.052, 31.327, "assigned", "high", 40, 5, 4, None, "WO-324"),
         (506, "water_pipe_burst", "كسر ماسورة مياه في شارع الثورة", "شارع الثورة، مدينة نصر", 30.061, 31.331, "in_progress", "high", 20, 9, 6, None, "WO-326"),
         (507, "exposed_wire", "سلك كهربا مكشوف جنب الحديقة", "شارع يوسف عباس، مدينة نصر", 30.055, 31.338, "received", "critical", 1, 1, 1, "حديقة الأطفال", None),
-        (508, "fallen_tree", "شجرة مايلة على الرصيف", "شارع مصطفى النحاس، مدينة نصر", 30.05, 31.333, "resolved", "medium", 100, 4, 3, None, None),
+        (508, "fallen_tree", "شجرة مايلة على الرصيف", "شارع مصطفى النحاس، مدينة نصر", 30.05, 31.333, "resolved", "medium", 120, 4, 3, None, None),  # 5d ago
         (509, "broken_sidewalk", "رصيف مكسور قدام المستشفى", "شارع أحمد فخري، مدينة نصر", 30.058, 31.326, "assigned", "medium", 72, 6, 5, "مستشفى المبرة", None),
         (510, "stray_dogs", "كلاب ضالة جنب المدرسة", "شارع عمر بن الخطاب، مدينة نصر", 30.053, 31.33, "triaged", "medium", 12, 3, 2, "مدرسة الشهيد محمود", None),
-        # Additional incidents for completeness (INC-511+)
+        # Additional incidents for completeness (INC-511..532: 22 more)
         (511, "garbage", "زبالة في شارع النيل", "شارع النيل، مدينة نصر", 30.0501, 31.3201, "received", "low", 6, 2, 1, None, None),
         (512, "pothole", "حفر في طريق مكرم عبيد", "طريق مكرم عبيد، مدينة نصر", 30.0571, 31.3381, "received", "medium", 3, 1, 1, None, None),
         (513, "streetlight_out", "إنارة مطفأة في شارع البطل أحمد", "شارع البطل أحمد، مدينة نصر", 30.0521, 31.3251, "triaged", "low", 18, 2, 2, None, None),
         (514, "water_pipe_burst", "تسريب مياه في شارع الرحاب", "شارع الرحاب، مدينة نصر", 30.0631, 31.3351, "assigned", "high", 8, 4, 3, None, None),
         (515, "open_manhole", "بالوعة بدون غطاء", "ميدان رابعة العدوية، مدينة نصر", 30.0481, 31.3321, "in_progress", "critical", 2, 8, 8, None, "WO-327"),
+        (516, "exposed_wire", "سلك كهرباء مكشوف في الشارع", "شارع ذاكر حسين، مدينة نصر", 30.063, 31.325, "received", "high", 4, 2, 1, None, None),
+        (517, "road_obstruction", "إشغالات في شارع البناء", "شارع البناء، مدينة نصر", 30.051, 31.328, "closed", "low", 216, 1, 1, None, None),  # 9d, closed
+        (518, "sewage_overflow", "طفح مجاري في شارع الحي", "شارع الحي السابع، مدينة نصر", 30.048, 31.340, "in_progress", "high", 48, 3, 2, None, "WO-328"),  # 2d overdue
+        (519, "garbage", "تجمع القمامة في الزاوية", "شارع الحي العاشر، مدينة نصر", 30.062, 31.320, "received", "medium", 1, 1, 1, None, None),
+        (520, "broken_sidewalk", "رصيف محطوم بالقرب من السوق", "سوق مدينة نصر، مدينة نصر", 30.0545, 31.3340, "triaged", "low", 10, 2, 2, None, None),
+        (521, "pothole", "حفرة عميقة في الشارع الرئيسي", "الشارع الرئيسي، مدينة نصر", 30.0588, 31.3298, "assigned", "medium", 60, 4, 3, None, "WO-329"),  # ~2.5d overdue
+        (522, "stray_dogs", "كلاب شرسة في المنطقة", "حديقة مدينة نصر، مدينة نصر", 30.0523, 31.3310, "received", "medium", 2, 1, 1, None, None),
+        (523, "fallen_tree", "شجرة سقطت على السور", "شارع الشجرة، مدينة نصر", 30.0598, 31.3365, "resolved", "low", 144, 2, 1, None, None),  # 6d ago
+        (524, "streetlight_out", "عدة أعمدة نور مطفأة", "شارع الإنارة، مدينة نصر", 30.0509, 31.3245, "in_progress", "low", 36, 3, 2, None, "WO-330"),
+        (525, "water_pipe_burst", "تسرب كبير من الماسورة", "شارع الماء، مدينة نصر", 30.0629, 31.3275, "assigned", "critical", 6, 5, 4, None, "WO-331"),  # critical
+        (526, "open_manhole", "بالوعة قديمة بدون تغطية", "شارع القديم، مدينة نصر", 30.0480, 31.3355, "received", "high", 9, 3, 2, None, None),
+        (527, "garbage", "نفايات متراكمة في الزقاق", "الزقاق القديم، مدينة نصر", 30.0535, 31.3218, "triaged", "medium", 12, 2, 2, None, None),
+        (528, "pothole", "حفرة جديدة ظهرت", "شارع جديد، مدينة نصر", 30.0610, 31.3340, "resolved", "medium", 96, 3, 2, None, None),  # 4d ago
+        (529, "exposed_wire", "سلك مكشوف خطير جداً", "شارع الخطر، مدينة نصر", 30.0515, 31.3290, "assigned", "critical", 3, 6, 5, None, "WO-332"),  # critical
+        (530, "sewage_overflow", "مياه ملوثة في الشارع", "شارع الصرف، مدينة نصر", 30.0578, 31.3218, "in_progress", "high", 24, 4, 3, None, "WO-333"),
+        (531, "road_obstruction", "مواد بناء تسد الطريق", "شارع البناء الجديد، مدينة نصر", 30.0492, 31.3338, "received", "medium", 7, 2, 1, None, None),
+        (532, "fallen_tree", "شجرة ضخمة واقعة", "شارع الحديقة الكبيرة، مدينة نصر", 30.0635, 31.3255, "closed", "medium", 240, 2, 1, None, None),  # 10d, closed
     ]
 
     for row in incidents_data:
         n, cat_id, title, address, lat, lng, status, severity, age_h, followers, reporters, sensitive, wo_id = row
-        created_ms = (now - timedelta(hours=age_h)).timestamp() * 1000
-        created = datetime.fromtimestamp(created_ms / 1000)
+        created = now - timedelta(hours=age_h)
         days_open = max(0, int(age_h / 24))
 
         cat = db.query(Category).filter_by(id=cat_id).first()
@@ -202,24 +268,34 @@ def seed_db(db: Session) -> None:
             )
             db.add(activity)
 
-        # Add linked reports
+        # Add linked reports (with some anonymous)
         for i in range(reporters):
             if n == 501 and i == 0:
                 report_seq = 1042  # Demo report
+                is_anonymous = False
             else:
                 report_seq = report_counter[0]
                 report_counter[0] += 1
+                # Make some reports anonymous (about 1 in 3)
+                is_anonymous = (report_seq % 3 == 0)
+
+            # Use anonymous profile for anonymous reports
+            if is_anonymous:
+                reporter_id = anonymous_citizen.id
+            else:
+                reporter_id = demo_citizen.id if n == 501 and i == 0 else f"citizen-{n}-{i}"
+
             report = Report(
                 id=f"FTC-{report_seq:04d}",
-                reporter_id=demo_citizen.id if n == 501 and i == 0 else f"citizen-{n}-{i}",
+                reporter_id=reporter_id,
                 incident_id=incident.id,
                 category_id=cat_id,
-                description="البلاغ عن هذه المشكلة",
+                description="البلاغ عن هذه المشكلة" if not is_anonymous else "بلاغ بدون اسم",
                 photo_paths=[],
                 lat=lat,
                 lng=lng,
                 address=address,
-                anonymous=False,
+                anonymous=is_anonymous,
                 blur_faces=False,
                 created_at=created,
             )
@@ -228,24 +304,78 @@ def seed_db(db: Session) -> None:
     db.flush()
 
     # ========================================================================
-    # Work Orders
+    # Work Orders (~14 with all 4 statuses)
     # ========================================================================
+    # Format: (wo_id, incident_id, dept_name, team, team_size, supervisor, status, due_at, cost)
     work_orders_data = [
-        ("WO-318", "INC-501", "صيانة الطرق", "فريق الطرق 1", 3, "أحمد على", "in_progress", now - timedelta(days=1), 4500),
-        ("WO-321", "INC-502", "الصرف الصحي", "فريق الصرف 1", 2, "محمد سالم", "assigned", now + timedelta(days=1), 1800),
-        ("WO-324", "INC-505", "الصرف الصحي", "فريق الصرف 2", 3, "خالد حسن", "in_progress", now, 6000),
-        ("WO-326", "INC-506", "شركة مياه الشرب", "فريق المياه 1", 4, "علي محمود", "in_progress", now - timedelta(hours=12), 7500),
-        ("WO-327", "INC-515", "الصرف الصحي", "فريق الصرف 1", 2, "محمد سالم", "in_progress", now - timedelta(hours=6), 1800),
+        # Status: in_progress (5)
+        ("WO-318", "INC-501", "صيانة الطرق", "فريق الطرق 1", 4, "م. هشام عادل", "in_progress", now - timedelta(days=1), 4500),
+        ("WO-324", "INC-505", "الصرف الصحي", "فريق الصرف 2", 5, "خالد حسن", "in_progress", now, 6000),
+        ("WO-326", "INC-506", "شركة مياه الشرب", None, None, "بلّغنا الشركة · الخط الساخن 125", "in_progress", now - timedelta(hours=12), 7500),
+        ("WO-327", "INC-515", "الصرف الصحي", "فريق الصرف 1", 5, "محمد سالم", "in_progress", now - timedelta(hours=6), 1800),
+        ("WO-330", "INC-524", "إنارة الحي", "فريق الإنارة 2", 3, "سامي علي", "in_progress", now - timedelta(hours=8), 900),
+        # Status: assigned (4)
+        ("WO-321", "INC-502", "الصرف الصحي", "فريق الصرف 1", 5, "محمد سالم", "assigned", now + timedelta(days=1), 1800),
+        ("WO-328", "INC-518", "الصرف الصحي", "فريق الصرف 2", 5, "خالد حسن", "assigned", now + timedelta(days=2), 6000),
+        ("WO-329", "INC-521", "صيانة الطرق", "فريق الطرق 2", 4, "علي حسين", "assigned", now - timedelta(hours=10), 4500),
+        ("WO-331", "INC-525", "شركة مياه الشرب", None, None, "الخط الساخن 125", "assigned", now + timedelta(hours=6), 7500),
+        # Status: open (2)
+        ("WO-335", None, "صيانة الطرق", "فريق الطرق 3", 6, "فاطمة محمود", "open", now + timedelta(days=3), 3500),
+        ("WO-336", None, "هيئة النظافة والتجميل", "فريق النظافة 2", 5, "نور أحمد", "open", now + timedelta(days=2), 2000),
+        # Status: done (4)
+        ("WO-310", "INC-503", "إنارة الحي", "فريق الإنارة 1", 3, "صالح محمد", "done", now - timedelta(days=3), 900),
+        ("WO-311", "INC-508", "حدائق الحي", "فريق الحدائق 1", 4, "أمينة علي", "done", now - timedelta(days=5), 2200),
+        ("WO-312", "INC-528", "صيانة الطرق", "فريق الطرق 1", 4, "م. هشام عادل", "done", now - timedelta(days=6), 4500),
+        ("WO-332", "INC-529", "شركة الكهرباء", None, None, "الخط الساخن 121", "done", now - timedelta(days=2), 2500),
+        ("WO-333", "INC-530", "الصرف الصحي", "فريق الصرف 1", 5, "محمد سالم", "in_progress", now - timedelta(hours=4), 6000),
     ]
 
-    for wo_id, incident_id, dept_name, team, team_size, supervisor, status, due_at, cost in work_orders_data:
+    for idx, wo_data in enumerate(work_orders_data):
+        wo_id = wo_data[0]
+        incident_id = wo_data[1] if wo_data[1] else None
+        dept_name = wo_data[2]
+        team = wo_data[3]
+        team_size = wo_data[4]
+        supervisor = wo_data[5]
+        status = wo_data[6]
+        due_at = wo_data[7]
+        cost = wo_data[8]
+
+        # Find department by name
         dept = db.query(Department).filter_by(name_ar=dept_name).first()
-        tasks = [
-            {"label": "المعاينة", "done": True},
-            {"label": "جلب المواد", "done": True if status != "open" else False},
-            {"label": "التنفيذ", "done": status == "done"},
-            {"label": "التسليم", "done": status == "done"},
-        ]
+
+        # Determine if external
+        is_external = dept_name in ["شركة مياه الشرب", "شركة الكهرباء"]
+        external_hotline = None
+        if is_external:
+            external_hotline = "125" if dept_name == "شركة مياه الشرب" else "121"
+
+        tasks = []
+        if "طرق" in dept_name or "صيانة" in dept_name:
+            tasks = [
+                {"label": "تأمين الموقع وتحويل المرور", "done": status in ["in_progress", "done"]},
+                {"label": "تكسير الحفرة وتنضيفها", "done": status == "done"},
+                {"label": "ردم وسفلتة", "done": status == "done"},
+                {"label": "رفع صور بعد الإصلاح", "done": status == "done"},
+            ]
+        elif "نظافة" in dept_name:
+            tasks = [
+                {"label": "تجميع النفايات", "done": status in ["in_progress", "done"]},
+                {"label": "تنظيف المنطقة", "done": status in ["in_progress", "done"]},
+                {"label": "المعاينة النهائية", "done": status == "done"},
+            ]
+        elif "حدائق" in dept_name:
+            tasks = [
+                {"label": "قص الأشجار", "done": status in ["in_progress", "done"]},
+                {"label": "تنظيف الحديقة", "done": status == "done"},
+            ]
+        else:
+            tasks = [
+                {"label": "المعاينة", "done": True},
+                {"label": "الإصلاح", "done": status in ["in_progress", "done"]},
+                {"label": "الاختبار", "done": status == "done"},
+            ]
+
         wo = WorkOrder(
             id=wo_id,
             incident_id=incident_id,
@@ -264,18 +394,28 @@ def seed_db(db: Session) -> None:
         db.add(wo)
         db.flush()
 
-        # Add updates
-        update_statuses = ["open", "assigned"] if status in ["open", "assigned"] else ["open", "assigned", "in_progress"]
+        # Add activity log entries for status progression
+        update_statuses = ["open"]
+        if status in ["assigned", "in_progress", "done"]:
+            update_statuses.append("assigned")
+        if status in ["in_progress", "done"]:
+            update_statuses.append("in_progress")
         if status == "done":
             update_statuses.append("done")
 
         for i, st in enumerate(update_statuses):
-            at = now - timedelta(days=2) + timedelta(hours=i * 8)
+            at = now - timedelta(days=2) + timedelta(hours=i * 12)
+            notes_map = {
+                "open": f"اتسلّم أمر الشغل · {supervisor}",
+                "assigned": f"اتوزّع على {team} · {supervisor}",
+                "in_progress": f"الفريق بدأ الشغل · {supervisor}",
+                "done": f"اتحلّت والصور اترفعت · {supervisor}",
+            }
             activity = ActivityLog(
                 entity_type="work_order",
                 entity_id=wo_id,
                 status=st,
-                note=f"تحديث الحالة إلى {st}",
+                note=notes_map.get(st, f"تحديث إلى {st}"),
                 actor=supervisor or "النظام",
                 kind="status_change",
                 at=at,
@@ -285,16 +425,22 @@ def seed_db(db: Session) -> None:
     db.flush()
 
     # ========================================================================
-    # Service Requests
+    # Service Requests (9 total)
     # ========================================================================
-    next_day = (now + timedelta(days=1)).date().isoformat()
+    days = [now.date() + timedelta(days=i) for i in range(1, 7)]
     service_requests_data = [
-        ("SRV-2001", "citizen-001", "bulky_waste", {"items": ["كنبة", "تلاجة قديمة"], "day": next_day, "slot": "morning", "payment": "cash"}, "assigned", now - timedelta(hours=5)),
-        ("SRV-2002", "citizen-002", "tree_maintenance", {"items": ["قص فروع"], "day": next_day, "slot": "afternoon", "payment": "fawry"}, "received", now - timedelta(hours=3)),
-        ("SRV-2003", "citizen-003", "bulky_waste", {"items": ["خزانة", "مرتبة"], "day": next_day, "slot": "morning", "payment": "instapay"}, "triaged", now - timedelta(hours=2)),
+        ("SRV-1998", "citizen-004", "bulky_waste", {"items": ["كنبة قديمة"], "day": days[0].isoformat(), "slot": "morning", "payment": "cash"}, "resolved", now - timedelta(days=1), True),
+        ("SRV-2001", "citizen-001", "bulky_waste", {"items": ["كنبة", "تلاجة قديمة"], "day": days[0].isoformat(), "slot": "morning", "payment": "cash"}, "assigned", now - timedelta(hours=5), False),
+        ("SRV-2002", "citizen-002", "tree_maintenance", {"items": ["قص فروع الشجرة"], "day": days[1].isoformat(), "slot": "afternoon", "payment": "fawry"}, "received", now - timedelta(hours=3), True),
+        ("SRV-2003", "citizen-003", "bulky_waste", {"items": ["خزانة", "مرتبة قديمة"], "day": days[1].isoformat(), "slot": "morning", "payment": "instapay"}, "in_progress", now - timedelta(hours=2), True),
+        ("SRV-2004", "citizen-005", "tree_maintenance", {"items": ["قص وتشذيب"], "day": days[2].isoformat(), "slot": "morning", "payment": "wallet"}, "assigned", now - timedelta(hours=1), False),
+        ("SRV-2005", "citizen-006", "bulky_waste", {"items": ["ثلاجة", "غسالة"], "day": days[3].isoformat(), "slot": "afternoon", "payment": "cash"}, "received", now - timedelta(hours=8), False),
+        ("SRV-2006", "citizen-007", "tree_maintenance", {"items": ["إزالة شجرة"], "day": days[4].isoformat(), "slot": "morning", "payment": "fawry"}, "in_progress", now - timedelta(hours=6), True),
+        ("SRV-2007", "citizen-008", "bulky_waste", {"items": ["خشب", "معادن"], "day": days[5].isoformat(), "slot": "afternoon", "payment": "instapay"}, "assigned", now - timedelta(hours=4), True),
+        ("SRV-2008", "citizen-009", "tree_maintenance", {"items": ["صيانة الحديقة"], "day": days[0].isoformat(), "slot": "morning", "payment": "cash"}, "received", now - timedelta(hours=2), False),
     ]
 
-    for srv_id, citizen_id, srv_type, details, status, created in service_requests_data:
+    for srv_id, citizen_id, srv_type, details, status, created, paid in service_requests_data:
         citizen = db.query(Profile).filter_by(id=citizen_id).first()
         if not citizen:
             citizen = Profile(id=citizen_id, role="citizen")
@@ -310,6 +456,7 @@ def seed_db(db: Session) -> None:
             lng=31.33,
             address="شارع عباس العقاد، مدينة نصر",
             status=status,
+            paid=paid,
             created_at=created,
         )
         db.add(sr)
@@ -327,5 +474,50 @@ def seed_db(db: Session) -> None:
             at=created,
         )
         db.add(activity)
+
+    db.flush()
+
+    # ========================================================================
+    # AI Suggestions (triage for received incidents)
+    # ========================================================================
+    ai_suggestions_counter = [1]  # Counter for AI suggestion IDs
+    received_incidents = db.query(Incident).filter_by(status="received").all()
+
+    for incident in received_incidents[:len(received_incidents)]:  # All received incidents
+        # For first 2 received, create confirmed triage; for others, unconfirmed
+        is_confirmed = ai_suggestions_counter[0] <= 2
+
+        # Get category and confidence
+        actual_cat = incident.category_id
+        confidence = 0.85 if is_confirmed else 0.72
+
+        # Build options with actual category first
+        category = db.query(Category).filter_by(id=actual_cat).first()
+        options = [
+            {"categoryId": actual_cat, "confidence": confidence},
+        ]
+
+        # Add 1-2 alternative categories
+        other_cats = db.query(Category).filter(Category.id != actual_cat).limit(2).all()
+        for other_cat in other_cats:
+            alt_conf = round((confidence - 0.1) / len(other_cats), 2)
+            options.append({"categoryId": other_cat.id, "confidence": alt_conf})
+
+        ai_suggestion = AISuggestion(
+            id=f"AS-{ai_suggestions_counter[0]:04d}",
+            report_id=None,  # For now, link to incident via first report
+            kind="triage",
+            payload={
+                "options": options,
+                "severity": incident.severity,
+                "summary": f"تصنيف آلي: {category.label_ar}",
+                "source": "fallback",
+            },
+            model="fallback",
+            created_at=incident.created_at + timedelta(minutes=5),
+            accepted=is_confirmed,
+        )
+        db.add(ai_suggestion)
+        ai_suggestions_counter[0] += 1
 
     db.commit()
