@@ -1,3 +1,4 @@
+import { serviceSubtitle, serviceTitle } from '@/i18n';
 import type { CatalogService, ServiceGroup } from '@/domain/services-catalog';
 
 /** Loosens Arabic spelling so "اشجار" finds "أشجار" and "ة" finds "ه". */
@@ -17,6 +18,6 @@ export function filterServices(list: CatalogService[], query: string, group: Ser
   return list.filter((s) => {
     if (group !== 'all' && s.group !== group) return false;
     if (!q) return true;
-    return normalizeArabic(`${s.titleAr} ${s.subtitleAr}`).includes(q);
+    return normalizeArabic(`${s.titleAr} ${s.subtitleAr} ${serviceTitle(s)} ${serviceSubtitle(s)}`).includes(q);
   });
 }

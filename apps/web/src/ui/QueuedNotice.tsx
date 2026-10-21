@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element -- brand mark */
 import Link from 'next/link';
-import { useOutbox } from '@/lib/outbox';
+import { useOutbox } from '@/store/useOutbox';
 
 /**
  * Shown in place of the form after a report was saved with no connection (rendered in place: with no

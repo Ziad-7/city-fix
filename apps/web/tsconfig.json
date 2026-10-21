@@ -20,6 +20,8 @@
       "@/logic/*": ["./src/shared/logic/*"],
       "@/utils/*": ["./src/shared/utils/*"],
       "@/components/*": ["./src/shared/components/*"],
+      "@react-native-async-storage/async-storage": ["./src/platform/async-storage.ts"],
+      "expo-image-manipulator": ["./src/platform/expo-image-manipulator.ts"],
       "@/*": ["./src/*"]
     }
   },
