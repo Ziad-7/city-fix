@@ -5,10 +5,8 @@ import { useMemo } from 'react';
 import { Marker } from 'react-leaflet';
 import type { LatLng, MapPin } from '@/domain/types';
 import { pinSvg } from '../brand';
-import { CRITICAL_COLOR, STATUS_COLOR } from '../StatusChip';
 import { BaseMap, meIcon, pinIcon } from './LeafletBase';
-
-export const pinColor = (p: MapPin) => (p.critical ? CRITICAL_COLOR : STATUS_COLOR[p.status]);
+import { pinColor } from './pinColor';
 
 /** CityPulse map: status-coloured pins (red for critical), the selected one enlarged, plus the area centre. */
 export default function IncidentMap({

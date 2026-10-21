@@ -17,7 +17,7 @@ import { PinIcon } from '@/ui/brand';
 import { Pills, SelectField } from '@/ui/controls';
 import { Icon } from '@/ui/Icon';
 import { IncidentMap } from '@/ui/map';
-import { pinColor } from '@/ui/map/IncidentMap';
+import { pinColor } from '@/ui/map/pinColor';
 import { StateMessage } from '@/ui/StateMessage';
 import { CRITICAL_COLOR, STATUS_COLOR, StatusChip, StatusChips } from '@/ui/StatusChip';
 
