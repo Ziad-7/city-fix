@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { at, noGeocoder, signIn } from './helpers';
+import { at, signIn, trackGeocoder } from './helpers';
 
 test.beforeEach(async ({ context }) => {
   await at(context, 30.07, 31.36); // in Nasr City, away from the seeded incidents
-  await noGeocoder(context);
+  await trackGeocoder(context);
 });
 
 test('signed-out visitors go to sign-in and come back after the code', async ({ page }) => {
@@ -64,7 +64,7 @@ test('a nearby same-category incident is offered as "نفس المشكلة، ت�
   await page.getByTestId('description-input').fill('زبالة متراكمة على الناصية من يومين');
   await expect(page.getByTestId('duplicate-panel')).toBeVisible();
   await page.getByTestId('dup-join').click();
-  await expect(page.getByText('اتضمّيت للبلاغ الموجود')).toBeVisible();
+  await expect(page.getByText('بلاغك اتضم للبلاغ الموجود')).toBeVisible();
 });
 
 test('my own nearby report is shown as already reported, not as a join offer', async ({ page, context }) => {

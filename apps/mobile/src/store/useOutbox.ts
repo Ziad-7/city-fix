@@ -28,6 +28,27 @@ type OutboxState = {
   noteDropped: (message: string) => void;
 };
 
+/**
+ * Cross-tab seam. On the phone there is one JS runtime, so both hooks do nothing. The website (several tabs share one
+ * localStorage queue) plugs in a lock (Web Locks) and a "read the queue from storage again" function.
+ */
+export type OutboxSync = {
+  /** Runs one flush with exclusive access to the queue (across tabs). Default: runs the job right away. */
+  lock?: <T>(job: () => Promise<T>) => Promise<T>;
+  /** Replaces the in-memory queue with what storage holds now (another tab may have changed it). Default: nothing. */
+  reload?: () => Promise<void>;
+};
+const direct = <T>(job: () => Promise<T>) => job();
+const nothing = async () => {};
+let sync: Required<OutboxSync> = { lock: direct, reload: nothing };
+
+/** Registers the cross-tab hooks (website only). Pass nothing to go back to the defaults. */
+export function setOutboxSync(hooks?: OutboxSync) {
+  sync = { lock: hooks?.lock ?? direct, reload: hooks?.reload ?? nothing };
+}
+export const withOutboxLock = <T>(job: () => Promise<T>): Promise<T> => sync.lock(job);
+export const reloadOutbox = (): Promise<void> => sync.reload();
+
 let seq = 0;
 const newId = () => `Q-${Date.now().toString(36)}-${(seq++).toString(36)}`;
 

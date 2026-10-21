@@ -3,12 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DEFAULT_PLACE } from '@/domain/locations';
 import type { LatLng, Place } from '@/domain/types';
-import { reverseGeocode } from './geocode';
 
 // Web port of apps/mobile/src/components/report/location.ts (browser geolocation instead of expo-location).
 export type LocationState = 'locating' | 'gps' | 'fallback';
 
-/** What a GPS fix shows when reverse geocoding finds no street (same placeholder as the app). */
+/** What a GPS fix shows as the address: the citizen's coordinates are never sent to a street-name service (see README, Privacy). */
 export const CURRENT_LOCATION_LABEL = 'موقعك الحالي';
 
 function currentPosition(timeoutMs: number): Promise<LatLng> {
@@ -37,22 +36,13 @@ function currentPosition(timeoutMs: number): Promise<LatLng> {
 /**
  * Current position for the report. On denial, timeout or any failure it falls back to `fallback`
  * (the centre of the citizen's saved district) with an EMPTY address: the citizen has to type the street,
- * so a report never goes out with a street they did not write. A GPS fix gets its street from reverseGeocode.
+ * so a report never goes out with a street they did not write. A GPS fix shows the "موقعك الحالي" placeholder (the
+ * citizen can type the street); the coordinates stay on the device and go only to our own report API.
  */
 export function useReportLocation(fallback: LatLng = DEFAULT_PLACE) {
   const [state, setState] = useState<LocationState>('locating');
   const [place, setPlace] = useState<Place>({ lat: fallback.lat, lng: fallback.lng, address: '' });
   const edited = useRef(false);
-
-  // Each fix or pin move bumps this, so a slow geocoder answer for an older point is dropped.
-  const seq = useRef(0);
-  const pinTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const fill = useCallback(async (lat: number, lng: number) => {
-    const mine = ++seq.current;
-    const line = await reverseGeocode(lat, lng);
-    if (mine !== seq.current || edited.current) return;
-    setPlace((prev) => ({ ...prev, address: line ?? CURRENT_LOCATION_LABEL }));
-  }, []);
 
   const locate = useCallback(async () => {
     setState('locating');
@@ -60,13 +50,11 @@ export function useReportLocation(fallback: LatLng = DEFAULT_PLACE) {
       const { lat, lng } = await currentPosition(10_000);
       setPlace((prev) => ({ lat, lng, address: edited.current ? prev.address : CURRENT_LOCATION_LABEL, landmark: prev.landmark }));
       setState('gps');
-      void fill(lat, lng);
     } catch {
-      seq.current++;
       setPlace((prev) => ({ lat: fallback.lat, lng: fallback.lng, address: edited.current ? prev.address : '', landmark: prev.landmark }));
       setState('fallback');
     }
-  }, [fallback.lat, fallback.lng, fill]);
+  }, [fallback.lat, fallback.lng]);
 
   useEffect(() => {
     void locate();
@@ -77,21 +65,8 @@ export function useReportLocation(fallback: LatLng = DEFAULT_PLACE) {
     setPlace((p) => ({ ...p, address }));
   }, []);
   const setLandmark = useCallback((landmark: string) => setPlace((p) => ({ ...p, landmark })), []);
-  /**
-   * Pin dragged or map clicked. After a GPS fix the street follows the pin until the citizen types one;
-   * on the fallback point the address stays theirs to write, like the app.
-   */
-  const setPoint = useCallback(
-    (pt: LatLng) => {
-      setPlace((p) => ({ ...p, lat: pt.lat, lng: pt.lng }));
-      if (state !== 'gps' || edited.current) return;
-      // Nominatim allows about a request a second: wait until the pin stops moving.
-      clearTimeout(pinTimer.current);
-      pinTimer.current = setTimeout(() => void fill(pt.lat, pt.lng), 700);
-    },
-    [state, fill],
-  );
-  useEffect(() => () => clearTimeout(pinTimer.current), []);
+  /** Pin dragged or map clicked: only the point moves. The address stays what the citizen sees or typed. */
+  const setPoint = useCallback((pt: LatLng) => setPlace((p) => ({ ...p, lat: pt.lat, lng: pt.lng })), []);
 
   return { place, state, locate, setAddress, setLandmark, setPoint };
 }

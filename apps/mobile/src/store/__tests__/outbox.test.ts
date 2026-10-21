@@ -3,7 +3,7 @@ import type { Incident, NewReportInput, Report } from '@/domain/types';
 import { services } from '@/services';
 import { ApiError } from '@/services/api/http';
 import { cancelOutboxRetry, flushOutbox } from '../outboxFlush';
-import { useOutbox } from '../useOutbox';
+import { setOutboxSync, useOutbox, type OutboxItem } from '../useOutbox';
 import { useReports } from '../useReports';
 import { useSession } from '../useSession';
 
@@ -129,5 +129,80 @@ describe('offline queue', () => {
     await flushOutbox({ force: true });
     expect(upload).toHaveBeenCalledTimes(1);
     upload.mockRestore();
+  });
+});
+
+describe('cross-tab seam (the website plugs a lock and a reload in; on the phone both do nothing)', () => {
+  // What "storage" holds: another tab writes here, `reload` copies it into the store.
+  let stored: OutboxItem[];
+  let log: string[];
+  let submit: jest.SpyInstance;
+  const item = (id: string): OutboxItem => ({ id, userId: 'u1', input, createdAt: '2026-10-01T10:00:00Z', attempts: 0 });
+
+  beforeEach(() => {
+    cancelOutboxRetry();
+    stored = [];
+    log = [];
+    useOutbox.setState({ items: [], notice: null });
+    useReports.getState().reset();
+    useSession.setState({ userId: 'u1' });
+    netinfo.fetch.mockResolvedValue(online);
+    submit = jest.spyOn(services.incidents, 'submitReport');
+    let tail: Promise<unknown> = Promise.resolve();
+    setOutboxSync({
+      // a mutex, like navigator.locks.request('ftc-outbox', job)
+      lock: <T,>(job: () => Promise<T>) => {
+        const run = tail.then(() => {
+          log.push('lock');
+          return job();
+        });
+        tail = run.catch(() => undefined);
+        return run;
+      },
+      reload: async () => {
+        log.push('reload');
+        useOutbox.setState({ items: stored });
+      },
+    });
+  });
+  afterEach(() => {
+    cancelOutboxRetry();
+    setOutboxSync();
+    submit.mockRestore();
+  });
+
+  it('a flush takes the lock and reads the queue again before sending', async () => {
+    // This tab never saw the report another tab queued: only the reload can find it.
+    stored = [item('Q-other')];
+    submit.mockResolvedValueOnce(result(1));
+    expect((await flushOutbox({ force: true })).sent).toBe(1);
+    expect(log.slice(0, 2)).toEqual(['lock', 'reload']);
+    expect(submit).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not send a report another tab already delivered (no duplicate)', async () => {
+    // This tab still holds Q-1 in memory, but the other tab sent it and the shared queue is empty.
+    useOutbox.setState({ items: [item('Q-1')] });
+    stored = [];
+    expect((await flushOutbox({ force: true })).sent).toBe(0);
+    expect(submit).not.toHaveBeenCalled();
+  });
+
+  it("queuing a report offline reads the queue first, so another tab's report is kept", async () => {
+    stored = [item('Q-other')];
+    netinfo.fetch.mockResolvedValue(offline);
+    const res = await useReports.getState().submitReport(input);
+    expect(res.queued).toBe(true);
+    expect(useOutbox.getState().items).toHaveLength(2);
+    expect(useOutbox.getState().items.map((i) => i.id)).toContain('Q-other');
+  });
+
+  it('without hooks (the phone) nothing is reloaded and the queue stays as it is', async () => {
+    setOutboxSync();
+    useOutbox.setState({ items: [item('Q-1')] });
+    stored = [];
+    submit.mockResolvedValueOnce(result(2));
+    expect((await flushOutbox({ force: true })).sent).toBe(1);
+    expect(log).toEqual([]);
   });
 });

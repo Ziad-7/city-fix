@@ -7,8 +7,10 @@ import { filterServices } from '@/components/services/filter';
 import { Pills } from '@/ui/controls';
 import { Icon } from '@/ui/Icon';
 import { StateMessage } from '@/ui/StateMessage';
+import { usePageTitle } from '@/lib/usePageTitle';
 
 export default function ServicesPage() {
+  usePageTitle('خدمات المدينة');
   const [group, setGroup] = useState<ServiceGroup | 'all'>('all');
   const [query, setQuery] = useState('');
   const list = useMemo(() => filterServices(SERVICES, query, group), [query, group]);
@@ -32,14 +34,16 @@ export default function ServicesPage() {
             s.route ? (
               <Link key={s.id} className="ftc-tile v-card" href={s.route} data-testid={`service-${s.id}`}>
                 <span className="ftc-icon-well"><Icon name={s.icon} size={24} /></span>
-                <h3>{s.titleAr}</h3>
+                <h2>{s.titleAr}</h2>
                 <p>{s.subtitleAr}</p>
-                <span className="ftc-btn ftc-btn--primary ftc-btn--sm" style={{ alignSelf: 'flex-start' }}><Icon name="calendar" size={18} />احجز دلوقتي</span>
+                <span className="ftc-btn ftc-btn--primary ftc-btn--sm" style={{ alignSelf: 'flex-start' }}>
+                  {s.serviceType ? <><Icon name="calendar" size={18} />احجز دلوقتي</> : <><Icon name="clock" size={18} />شوف المواعيد</>}
+                </span>
               </Link>
             ) : (
               <div key={s.id} className="ftc-tile v-card" aria-label={`${s.titleAr}، قريبًا`}>
                 <span className="ftc-icon-well"><Icon name={s.icon} size={24} /></span>
-                <h3>{s.titleAr}</h3>
+                <h2>{s.titleAr}</h2>
                 <p>{s.subtitleAr}</p>
                 <span className="soon">قريبًا</span>
               </div>

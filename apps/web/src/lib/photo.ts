@@ -1,12 +1,12 @@
 /**
  * Reads a picked image and re-encodes it as a JPEG data URL, scaled down like the app's camera quality
  * setting (data saver: smaller and lighter). In mock mode the data URL is the photo; in API mode it is
- * uploaded through POST /uploads/sign first (see services/api/upload.ts).
+ * uploaded through POST /uploads/sign first (shared services/api/uploads.ts, called by sendReport).
  */
 export async function compressImage(file: File, dataSaver: boolean): Promise<string> {
   if (!file.type.startsWith('image/')) throw new Error('not-image');
   const maxSide = dataSaver ? 1024 : 1600;
-  const quality = dataSaver ? 0.5 : 0.8;
+  const quality = dataSaver ? 0.5 : 0.7; // docs/api-contract.md: 1600 px, JPEG 0.7
   const url = URL.createObjectURL(file);
   try {
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {

@@ -12,6 +12,8 @@ import { useReportLocation } from '@/lib/location';
 import { compressImage } from '@/lib/photo';
 import { API_MODE, services } from '@/services';
 import { useReports, useSession } from '@/store';
+import { isQueuedOnDevice } from '@/store/outboxTabs';
+import { useOutbox } from '@/store/useOutbox';
 import { toArabicDigits } from '@/utils/digits';
 import { CategoryPicker } from '@/ui/CategoryGrid';
 import { ToggleRow } from '@/ui/controls';
@@ -155,6 +157,13 @@ export function ReportForm() {
         // shared store keeps the report in its outbox and says so: show the "saved" notice in place.
         const res = await useReports.getState().submitReport(input);
         if (res.queued) {
+          // A full disk drops the write: never say "saved on your device" when it is not.
+          if (!isQueuedOnDevice(res.item.id)) {
+            useOutbox.getState().remove(res.item.id);
+            setSubmitError('مفيش مساحة نحفظ البلاغ على جهازك. جرّب تبعته لما النت يرجع.');
+            setSubmitting(null);
+            return;
+          }
           setQueuedId(res.item.id);
           return;
         }

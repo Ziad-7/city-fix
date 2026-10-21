@@ -3,9 +3,9 @@
 /* eslint-disable @next/next/no-img-element -- report photo (data URL or storage URL) */
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { getCategory } from '@/domain/categories';
-import { FEE_LABEL, SERVICES } from '@/domain/services-catalog';
+import { SERVICES } from '@/domain/services-catalog';
 import { isOpenStatus } from '@/domain/types';
 import { followersLine, paymentLabel, slotLabel } from '@/components/requests/labels';
 import { buildTimelineSteps } from '@/components/requests/timeline';
@@ -20,10 +20,14 @@ import { ToggleRow } from '@/ui/controls';
 import { Icon } from '@/ui/Icon';
 import { StateMessage } from '@/ui/StateMessage';
 import { StatusChips } from '@/ui/StatusChip';
+import { usePageTitle } from '@/lib/usePageTitle';
+import { serviceDepartment, serviceDetailRows } from '@/lib/service-labels';
+import { ReopenCard } from '@/ui/ReopenCard';
 
 export default function RequestDetailPage() {
   const { id } = useParams<{ id: string }>();
   const item = useRequestItem(id);
+  usePageTitle(item?.title ?? 'تتبّع الطلب');
   const reportsStatus = useReports((s) => s.status);
   const servicesStatus = useServiceRequests((s) => s.status);
   const simulateReport = useReports((s) => s.simulateProgress);
@@ -54,7 +58,7 @@ export default function RequestDetailPage() {
         ) : failed ? (
           <StateMessage tone="error" icon="wifi" title="مقدرناش نحمّل الطلب" body="اتأكد من النت وجرّب تاني" actionLabel="جرّب تاني" onAction={() => void refreshAll()} />
         ) : (
-          <StateMessage icon="search" title="مش لاقيين الطلب ده" body="ممكن يكون اتمسح أو الرابط مش صح. تقدر ترجع لقايمة طلباتك." actionLabel="طلباتي" actionHref="/requests" />
+          <StateMessage icon="search" title="مش لاقيين الطلب ده" body="ممكن يكون اتمسح أو الرابط مش صح. ارجع لقايمة طلباتك." actionLabel="طلباتي" actionHref="/requests" />
         )}
       </main>
     );
@@ -64,11 +68,11 @@ export default function RequestDetailPage() {
   const incident = isReport ? item.incident : null;
   const category = isReport ? getCategory(item.categoryId) : null;
   const catalog = isReport ? null : SERVICES.find((s) => s.serviceType === item.request.serviceType);
-  const photo = isReport ? item.report.photoUris[0] : undefined;
+  const photo = isReport ? item.report.photoUris[0] : item.request.details.photoUris?.[0];
   const link = absoluteUrl(`/requests/${item.id}`);
   const message = isReport
-    ? `بلّغت عن "${item.title}" على فيكس ذا سيتي، رقم البلاغ ${isolateLtr(`#${item.id}`)}. تابعوا معايا لحد ما يتصلّح.`
-    : `حجزت خدمة "${item.title}" على فيكس ذا سيتي، رقم الطلب ${isolateLtr(`#${item.id}`)}.`;
+    ? `بلّغت عن "${item.title}" على سيتي فيكس، رقم البلاغ ${isolateLtr(`#${item.id}`)}. تابعوا معايا لحد ما يتصلّح.`
+    : `حجزت خدمة "${item.title}" على سيتي فيكس، رقم الطلب ${isolateLtr(`#${item.id}`)}.`;
 
   const tiles = isReport
     ? [
@@ -78,7 +82,7 @@ export default function RequestDetailPage() {
           : { label: 'اتصلّح', value: formatDateAr(incident?.updatedAt ?? item.createdAt) },
       ]
     : [
-        { label: 'الجهة المسؤولة', value: `خدمات الحي · حي ${district}` },
+        { label: 'الجهة المسؤولة', value: `${serviceDepartment(item.request.serviceType)} · حي ${district}` },
         { label: 'الميعاد', value: dayLabel(item.request.details.day) },
       ];
 
@@ -153,12 +157,9 @@ export default function RequestDetailPage() {
             <section className="ftc-card t-prio" aria-labelledby="bk">
               <h2 className="w-h3" id="bk" style={{ marginBottom: 14 }}>تفاصيل الحجز</h2>
               <dl className="a-dl">
-                <dt>اللي هيترفع</dt><dd>{item.request.details.items.join('، ')}</dd>
-                <dt>اليوم</dt><dd>{dayLabel(item.request.details.day)}</dd>
-                <dt>الفترة</dt><dd>{slotLabel(item.request.details.slot)}</dd>
-                <dt>طريقة الدفع</dt><dd>{paymentLabel(item.request.details.payment)}</dd>
-                <dt>الرسوم</dt><dd>{FEE_LABEL}</dd>
-                <dt>العنوان</dt><dd>{[item.request.location.address, item.request.location.landmark].filter(Boolean).join(' · ')}</dd>
+                {serviceDetailRows(item.request, dayLabel(item.request.details.day), slotLabel(item.request.details.slot), paymentLabel(item.request.details.payment)).map((r) => (
+                  <Fragment key={r.label}><dt>{r.label}</dt><dd>{r.value}</dd></Fragment>
+                ))}
               </dl>
             </section>
           ) : null}
@@ -175,6 +176,8 @@ export default function RequestDetailPage() {
               ))}
             </ol>
           </section>
+
+          {incident ? <ReopenCard key={incident.id} incidentId={incident.id} status={incident.status} /> : null}
 
           {API_MODE === 'mock' ? (
             <div className="w-stack" style={{ gap: 6, alignItems: 'center' }}>

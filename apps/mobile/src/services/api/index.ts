@@ -15,7 +15,7 @@ async function orNull<T>(p: Promise<T | null>): Promise<T | null> {
 
 /**
  * Real backend (FastAPI), following docs/api-contract.md.
- * Not wired by default: set EXPO_PUBLIC_API_MODE=api and EXPO_PUBLIC_API_URL.
+ * Not wired by default: set the app's API_MODE=api and API_URL env (EXPO_PUBLIC_* on mobile, NEXT_PUBLIC_* on the website).
  * The bearer token lives in the persisted session (store/useSession) and is handed to http.ts from there.
  */
 export function createApiServices(): Services {

@@ -2,9 +2,11 @@ import { tr } from '@/i18n';
 import { classifyFailure } from '@/services/media';
 import { isOffline } from '@/services/network';
 import { sendReport } from '@/services/sendReport';
-import { backoffMs, useOutbox, type OutboxItem } from './useOutbox';
+import { backoffMs, reloadOutbox, useOutbox, withOutboxLock, type OutboxItem } from './useOutbox';
 import { useReports } from './useReports';
 import { useSession } from './useSession';
+
+export { setOutboxSync, type OutboxSync } from './useOutbox';
 
 export const MSG_RETRY_LATER = 'لسه مفيش نت، هنحاول تاني';
 const retryLaterMsg = () => tr(MSG_RETRY_LATER, "We're still offline. We'll try again");
@@ -62,7 +64,11 @@ export async function flushOutbox(opts: FlushOptions = {}): Promise<FlushResult>
     // Already handled by that flush (sent or dropped): the card is gone either way.
     if (opts.only && !useOutbox.getState().items.some((i) => i.id === opts.only)) return { sent: 0, kept: 0, dropped: 0 };
   }
-  const run = runFlush(opts);
+  // One flush at a time across tabs (web): take the lock, then read the queue again, another tab may have changed it.
+  const run = withOutboxLock(async () => {
+    await reloadOutbox();
+    return runFlush(opts);
+  });
   inflight = run;
   inflightForced = !!opts.force && !opts.only;
   try {

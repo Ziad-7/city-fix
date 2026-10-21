@@ -6,6 +6,7 @@ import { DEFAULT_DISTRICT, GOVERNORATES, findGovernorate } from '@/domain/locati
 import { otpSchema, phoneSchema } from '@/domain/schemas';
 import type { OtpChannel } from '@/domain/types';
 import { API_MODE, MOCK_OTP, services } from '@/services';
+import { ApiError } from '@/services/api/http';
 import { useIsSignedIn, useSession, useSessionHydrated } from '@/store';
 import { maskPhone, normalizeEgyptPhone, toArabicDigits, toWesternDigits } from '@/utils/digits';
 import { LogoMark, Skyline } from '@/ui/brand';
@@ -66,8 +67,9 @@ export function SignIn() {
     try {
       await services.auth.requestCode(normalizeEgyptPhone(phone), otpChannel);
       setStep('code');
-    } catch {
-      setError('معرفناش نبعت الكود، جرّب تاني');
+    } catch (e) {
+      // http.ts words network and server trouble in Arabic already; keep that instead of a vague line.
+      setError(e instanceof Error && e.message ? e.message : 'معرفناش نبعت الكود، جرّب تاني');
     } finally {
       setBusy(false);
     }
@@ -86,8 +88,10 @@ export function SignIn() {
       const session = await services.auth.verifyCode(normalizeEgyptPhone(phone), digits);
       startSession(session, { governorate, district });
       router.replace(next);
-    } catch {
-      setError('الكود مش صح، جرّب تاني');
+    } catch (e) {
+      // Only a refused code is "wrong code"; no network or a server error says what happened.
+      const refused = e instanceof ApiError && [400, 401, 403, 404, 422].includes(e.status);
+      setError(!refused && e instanceof Error && e.message ? e.message : 'الكود مش صح، جرّب تاني');
       setBusy(false);
     }
   };
@@ -123,8 +127,8 @@ export function SignIn() {
 
   return (
     <div className="s-split">
-      <section className="s-hero" aria-label="فيكس ذا سيتي">
-        <span className="s-pill"><LogoMark size={28} />فيكس ذا سيتي</span>
+      <section className="s-hero" aria-label="سيتي فيكس">
+        <span className="s-pill"><LogoMark size={28} />سيتي فيكس</span>
         <h2 className="ftc-slogan">مدينتك أحلى لما نصلّحها سوا</h2>
         <p>بلّغ.. وإحنا نتابع لحد ما تتصلّح. صوّر المشكلة، ونوصّلها للجهة المسؤولة، ونبعتلك كل خطوة.</p>
         <Skyline className="s-sky" />

@@ -7,9 +7,9 @@ const plex = IBM_Plex_Sans_Arabic({ subsets: ['arabic', 'latin'], weight: ['400'
 const ruqaa = Aref_Ruqaa({ subsets: ['arabic', 'latin'], weight: ['700'], variable: '--font-ruqaa-face', display: 'swap' });
 
 export const metadata: Metadata = {
-  title: { default: 'فيكس ذا سيتي', template: '%s · فيكس ذا سيتي' },
+  title: { default: 'سيتي فيكس', template: '%s · سيتي فيكس' },
   description: 'بلّغ عن مشاكل الشارع، تابعها لحد ما تتصلّح، واحجز خدمات الحي.',
-  icons: { icon: '/brand/fixthecity-mark.svg' },
+  icons: { icon: '/brand/cityfix-mark.svg' },
 };
 
 export const viewport: Viewport = { themeColor: '#C8102E', width: 'device-width', initialScale: 1 };
