@@ -2,6 +2,24 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-22 — Citizen website review fixes (branch `fix/citizen-web-review`)
+
+**Done** ([review](reviews/2026-10-21-citizen-web-review.md), every finding has a Resolution)
+- **Rename:** سيتي فيكس / CityFix everywhere visible on the website, `cityfix-*.svg` assets.
+- **Services:** the two missing pages `/services/tree` (free booking, photo, map pin, day and slot) and `/services/garbage-schedule`; tree bookings show their own details on the tracking page and in the list.
+- **Reopen card** for resolved reports; **map pins** carry a status glyph and the status in their title; **photo picker** has a camera and a gallery input; **keyboard**: arrows move focus in every radio group.
+- **Offline queue across tabs:** shared outbox got a lock/reload seam (mobile first, no-op there); the website uses Web Locks, re-reads the queue before queuing or sending and follows other tabs; a full disk is reported; the old queue format is converted.
+- **Privacy:** the GPS fix is no longer sent to a public geocoder (`NEXT_PUBLIC_GEOCODER_URL` removed).
+- Gender-neutral copy, neutral Nasr City street names in the shared seed and tests (mobile first), sign-in error messages, voice notes through the shared upload service, per-page titles, accessibility fixes.
+- `check-shared.sh` now also reports mobile helpers that were never copied; `web-ci.yml` paths match it. New Playwright specs (services, keyboard, reopen, two tabs, photo picker); the flaky offline spec is deterministic.
+- Checks: mobile typecheck, lint, 211 tests, web export; website check:shared, typecheck, lint, 180 unit tests, build, 48 e2e tests (two full runs), doc links.
+
+**Left**
+- Notifications page (W16), English text on the website (W22, W29 `withEnglish`), Next patch for the `postcss` advisory (W31). W25 was not a defect.
+
+**How to test**
+- `cd apps/web && npm ci && npm run check:shared && npm run typecheck && npm run lint && npm test && NEXT_PUBLIC_API_MODE=mock npm run build && npm run test:e2e`.
+
 ## 2026-10-21 — English as a second language (merged into `feat/mobile-phase-d`, PR #10)
 
 **Done** (language layer by Claude; screens translated by three Sonnet 5.5 agents in parallel; reviewed and fixed by Opus 5.5 — [review](reviews/2026-10-21-english-review.md))
