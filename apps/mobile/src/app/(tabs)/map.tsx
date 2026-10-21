@@ -6,6 +6,7 @@ import { PinSheet, TopBar, filterPins, incidentToPin, type MapStatusFilter } fro
 import { StateMessage } from '@/components/requests';
 import { AppText, Screen } from '@/components/ui';
 import { findDistrict } from '@/domain/locations';
+import { useTr } from '@/i18n';
 import type { CategoryId } from '@/domain/types';
 import { refreshAll, useFollowingSet, useReports, useSession } from '@/store';
 import { colors, radius, shadows } from '@/theme/tokens';
@@ -13,6 +14,7 @@ import { haversineM } from '@/utils/geo';
 
 /** CityPulse: every open and recent incident as a status-coloured pin, with filters and a detail card. */
 export default function MapScreen() {
+  const tr = useTr();
   const incidents = useReports((s) => s.incidents);
   const reports = useReports((s) => s.reports);
   const status = useReports((s) => s.status);
@@ -64,7 +66,7 @@ export default function MapScreen() {
   const emptyFilter = status === 'ready' && visible.length === 0;
   const emptyPill = (
     <View style={Platform.OS === 'web' ? styles.emptyInline : styles.empty} pointerEvents="none">
-      <AppText variant="smallStrong" center>مفيش بلاغات بالفلتر ده</AppText>
+      <AppText variant="smallStrong" center>{tr('مفيش بلاغات بالفلتر ده', 'No reports match this filter')}</AppText>
     </View>
   );
 
@@ -96,11 +98,11 @@ export default function MapScreen() {
         )}
 
         {status === 'loading' && incidents.length === 0 ? (
-          <View style={styles.overlay}><StateMessage loading title="بنحمّل الخريطة…" /></View>
+          <View style={styles.overlay}><StateMessage loading title={tr('بنحمّل الخريطة…', 'Loading the map…')} /></View>
         ) : null}
         {status === 'error' && incidents.length === 0 ? (
           <View style={styles.overlay}>
-            <StateMessage tone="error" icon="wifi" title="مقدرناش نحمّل البلاغات" actionLabel="جرّب تاني" onAction={() => void refreshAll()} />
+            <StateMessage tone="error" icon="wifi" title={tr('مقدرناش نحمّل البلاغات', "We couldn't load the reports")} actionLabel={tr('جرّب تاني', 'Try again')} onAction={() => void refreshAll()} />
           </View>
         ) : null}
         {emptyFilter && Platform.OS !== 'web' ? emptyPill : null}

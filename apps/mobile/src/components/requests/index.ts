@@ -6,7 +6,7 @@ export { InfoTiles, type InfoTile } from './InfoTiles';
 export { PriorityStrip } from './PriorityStrip';
 export { REQUEST_FILTERS, filterRequests, type RequestFilter } from './filters';
 export { buildTimelineSteps, type TimelineStep } from './timeline';
-export { followersLine, paymentLabel, slotLabel } from './labels';
+export { dayText, followersLine, paymentLabel, slotLabel } from './labels';
 export { StateMessage } from './StateMessage';
 export { ServiceDetailsCard } from './ServiceDetailsCard';
 export { ReopenCard } from './ReopenCard';

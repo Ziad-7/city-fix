@@ -4,12 +4,14 @@ import { Icon } from '@/components/Icon';
 import { StateMessage } from '@/components/requests';
 import { AppText, Button, Screen, ScreenHeader, statusColor } from '@/components/ui';
 import type { AppNotification } from '@/domain/types';
+import { useTr } from '@/i18n';
 import { useNotifications, useUnreadCount } from '@/store';
 import { colors, fonts, radius } from '@/theme/tokens';
-import { relativeTimeAr } from '@/utils/time';
+import { relativeTime } from '@/utils/time';
 
 /** مركز الإشعارات: status changes on the citizen's reports and service requests, newest first. */
 export default function NotificationsScreen() {
+  const tr = useTr();
   const items = useNotifications((s) => s.items);
   const markRead = useNotifications((s) => s.markRead);
   const markAllRead = useNotifications((s) => s.markAllRead);
@@ -23,10 +25,10 @@ export default function NotificationsScreen() {
   return (
     <Screen
       scroll={false}
-      header={<ScreenHeader title="الإشعارات" />}
+      header={<ScreenHeader title={tr('الإشعارات', 'Notifications')} />}
     >
       {items.length === 0 ? (
-        <StateMessage icon="bell" title="مفيش إشعارات لسه" body="هنبلّغك هنا أول ما حالة بلاغ أو طلب من بتوعك تتغيّر." actionLabel="طلباتي" onAction={() => router.replace('/requests')} />
+        <StateMessage icon="bell" title={tr('مفيش إشعارات لسه', 'No notifications yet')} body={tr('هنبلّغك هنا أول ما حالة بلاغ أو طلب من بتوعك تتغيّر.', "We'll tell you here when one of your reports or requests changes.")} actionLabel={tr('طلباتي', 'My requests')} onAction={() => router.replace('/requests')} />
       ) : (
         <FlatList
           data={items}
@@ -34,7 +36,7 @@ export default function NotificationsScreen() {
           contentContainerStyle={styles.list}
           ListHeaderComponent={
             unread > 0 ? (
-              <Button testID="mark-all-read" label="علّم الكل مقروء" icon="check" variant="secondary" size="sm" onPress={markAllRead} style={styles.markAll} />
+              <Button testID="mark-all-read" label={tr('علّم الكل مقروء', 'Mark all as read')} icon="check" variant="secondary" size="sm" onPress={markAllRead} style={styles.markAll} />
             ) : null
           }
           renderItem={({ item }) => <Row n={item} onPress={() => open(item)} />}
@@ -45,11 +47,12 @@ export default function NotificationsScreen() {
 }
 
 function Row({ n, onPress }: { n: AppNotification; onPress: () => void }) {
+  const tr = useTr();
   return (
     <Pressable
       testID={`notification-${n.entityId}`}
       accessibilityRole="button"
-      accessibilityLabel={`${n.read ? '' : 'جديد. '}${n.title}. ${n.body}`}
+      accessibilityLabel={`${n.read ? '' : `${tr('جديد', 'New')}. `}${n.title}. ${n.body}`}
       onPress={onPress}
       style={({ pressed }) => [styles.row, n.read ? null : styles.unread, pressed ? { opacity: 0.85 } : null]}
     >
@@ -57,7 +60,7 @@ function Row({ n, onPress }: { n: AppNotification; onPress: () => void }) {
       <View style={styles.text}>
         <AppText style={[styles.title, n.read ? null : { fontFamily: fonts.sans700 }]}>{n.title}</AppText>
         <AppText variant="small" color={colors.inkMuted}>{n.body}</AppText>
-        <AppText variant="caption" color={colors.inkMuted}>{relativeTimeAr(n.at)}</AppText>
+        <AppText variant="caption" color={colors.inkMuted}>{relativeTime(n.at)}</AppText>
       </View>
       <Icon name="chevron" size={18} color={colors.inkMuted} />
     </Pressable>

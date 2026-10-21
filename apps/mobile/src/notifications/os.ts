@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import type { AppNotification } from '@/domain/types';
+import { tr } from '@/i18n';
 import { colors } from '@/theme/tokens';
 
 export const UPDATES_CHANNEL = 'updates';
@@ -25,7 +26,8 @@ export async function setupOsNotifications(): Promise<void> {
     });
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync(UPDATES_CHANNEL, {
-        name: 'تحديثات البلاغات والطلبات',
+        name: tr('تحديثات البلاغات والطلبات', 'Report and request updates'),
+        description: tr('لما حالة بلاغ أو طلب بتوعك تتغيّر', 'When one of your reports or requests changes status'),
         importance: Notifications.AndroidImportance.DEFAULT,
         lightColor: colors.red,
       });

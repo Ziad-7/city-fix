@@ -6,7 +6,7 @@ import { colors, radius, shadows } from '@/theme/tokens';
 import { Icon } from './Icon';
 import { AppText } from './ui';
 
-/** Toast for the offline queue: "بلاغك اتبعت" with a check icon, or why a queued report was dropped. */
+/** Toast for the offline queue: "بلاغك اتبعت" / "Your report was sent" with a check icon, or why a queued report was dropped. The text is written in the language of the moment it happened. */
 export function OutboxToast() {
   const insets = useSafeAreaInsets();
   const notice = useOutbox((s) => s.notice);
@@ -33,7 +33,7 @@ export function OutboxToast() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: 'absolute', left: 16, right: 16, alignItems: 'center', zIndex: 50 },
+  wrap: { position: 'absolute', start: 16, end: 16, alignItems: 'center', zIndex: 50 },
   box: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderRadius: radius.pill, ...shadows.card },
   text: { flexShrink: 1 },
 });

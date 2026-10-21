@@ -4,7 +4,9 @@ import { AppText, Button, Card, StatusChip } from '@/components/ui';
 import { getCategory } from '@/domain/categories';
 import type { OutboxItem } from '@/store/useOutbox';
 import { colors } from '@/theme/tokens';
-import { relativeTimeAr } from '@/utils/time';
+import { useTr } from '@/i18n';
+import { labelOfCategory } from '@/i18n/labels';
+import { relativeTime } from '@/utils/time';
 import { RequestThumb } from './RequestThumb';
 
 /**
@@ -14,6 +16,7 @@ import { RequestThumb } from './RequestThumb';
 export function QueuedCard({ item, onSend }: { item: OutboxItem; onSend: (id: string) => Promise<boolean> }) {
   const [sending, setSending] = useState(false);
   const [failed, setFailed] = useState(false);
+  const tr = useTr();
   const cat = getCategory(item.input.categoryId);
   const press = async () => {
     setSending(true);
@@ -30,16 +33,18 @@ export function QueuedCard({ item, onSend }: { item: OutboxItem; onSend: (id: st
       <View style={styles.row}>
         <RequestThumb uri={item.input.photoUris[0]} icon={cat.icon} />
         <View style={styles.text}>
-          <AppText variant="smallStrong" style={styles.title} numberOfLines={2}>{cat.labelAr}</AppText>
-          <AppText variant="caption" color={colors.inkMuted}>اتحفظ على الموبايل · {relativeTimeAr(item.createdAt)}</AppText>
+          <AppText variant="smallStrong" style={styles.title} numberOfLines={2}>{labelOfCategory(cat)}</AppText>
+          <AppText variant="caption" color={colors.inkMuted}>{tr('اتحفظ على الموبايل', 'Saved on your phone')} · {relativeTime(item.createdAt)}</AppText>
         </View>
-        <StatusChip status="received" label="مستني النت" />
+        <StatusChip status="received" label={tr('مستني النت', 'Waiting for internet')} />
       </View>
       <View style={styles.actions}>
         <AppText variant="caption" color={failed ? colors.urgent : colors.inkMuted} style={styles.hint}>
-          {failed ? 'لسه مقدرناش نبعته، هنحاول تاني لوحدنا.' : 'هيتبعت لوحده أول ما النت يرجع.'}
+          {failed
+            ? tr('لسه مقدرناش نبعته، هنحاول تاني لوحدنا.', "We couldn't send it yet. We'll keep trying.")
+            : tr('هيتبعت لوحده أول ما النت يرجع.', "It'll send by itself when you're back online.")}
         </AppText>
-        <Button label="ابعت دلوقتي" icon="refresh" size="sm" variant="secondary" loading={sending} onPress={press} testID={`send-queued-${item.id}`} />
+        <Button label={tr('ابعت دلوقتي', 'Send now')} icon="refresh" size="sm" variant="secondary" loading={sending} onPress={press} testID={`send-queued-${item.id}`} />
       </View>
     </Card>
   );
