@@ -9,13 +9,14 @@ import {
 } from '@expo-google-fonts/ibm-plex-sans-arabic';
 import { ReadexPro_500Medium, ReadexPro_600SemiBold, ReadexPro_700Bold } from '@expo-google-fonts/readex-pro';
 import { useFonts as useExpoFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { colors } from '@/theme/tokens';
-import { refreshAll, useIsSignedIn, useSessionHydrated } from '@/store';
+import { onNotificationTapped, setupOsNotifications } from '@/notifications/os';
+import { refreshAll, startNotificationSync, useIsSignedIn, useSessionHydrated } from '@/store';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -42,6 +43,18 @@ export default function RootLayout() {
     if (ready && signedIn) void refreshAll();
   }, [ready, signedIn]);
 
+  // Status-change notifications: diff the report and service-request stores, show OS notifications.
+  useEffect(() => {
+    if (!ready || !signedIn) return;
+    void setupOsNotifications();
+    const stopSync = startNotificationSync();
+    const stopTap = onNotificationTapped((entityId) => router.push(`/requests/${entityId}`));
+    return () => {
+      stopSync();
+      stopTap();
+    };
+  }, [ready, signedIn]);
+
   if (!ready) return null;
 
   return (
@@ -59,6 +72,9 @@ export default function RootLayout() {
           <Stack.Screen name="requests/[id]" />
           <Stack.Screen name="services/index" />
           <Stack.Screen name="services/bulky-waste" />
+          <Stack.Screen name="services/tree" />
+          <Stack.Screen name="services/garbage-schedule" />
+          <Stack.Screen name="notifications" />
         </Stack.Protected>
       </Stack>
     </View>

@@ -8,7 +8,7 @@ import { AppText, Button, ChoiceChip, InlineNotice, Screen, SelectField, TextFie
 import { DEFAULT_DISTRICT, GOVERNORATES, findGovernorate } from '@/domain/locations';
 import { otpSchema, phoneSchema } from '@/domain/schemas';
 import { MOCK_OTP, services } from '@/services';
-import { useSession } from '@/store';
+import { usePrefs, useSession } from '@/store';
 import { colors, fonts, radius } from '@/theme/tokens';
 import { formatEgyptPhone, isolateLtr, normalizeEgyptPhone, toWesternDigits } from '@/utils/digits';
 
@@ -74,6 +74,13 @@ export default function SignInScreen() {
   };
 
   // Alert.alert does nothing on web, so "coming soon" is an inline notice everywhere.
+  const largeText = usePrefs((st) => st.largeText);
+  const setLargeText = usePrefs((st) => st.setLargeText);
+  const toggleLargeText = () => {
+    const next = !largeText;
+    setLargeText(next);
+    showSoon(next ? 'اتفعّل الخط الأكبر. تقدر تقفله من حسابي.' : 'رجعنا للخط العادي.');
+  };
   const soon = () => showSoon('الميزة دي قريبًا، هتتضاف في نسخة جاية.');
 
   // The 6th digit submits the code: the number pad has no return key.
@@ -114,7 +121,7 @@ export default function SignInScreen() {
               <>
                 <Pressable accessibilityRole="button" onPress={soon}><AppText variant="smallStrong" color={colors.red}>English</AppText></Pressable>
                 <AppText color={colors.line}>|</AppText>
-                <Pressable accessibilityRole="button" onPress={soon}><AppText variant="smallStrong" color={colors.red}>خط أكبر</AppText></Pressable>
+                <Pressable testID="large-text-link" accessibilityRole="button" accessibilityState={{ selected: largeText }} onPress={toggleLargeText}><AppText variant="smallStrong" color={colors.red}>{largeText ? 'خط عادي' : 'خط أكبر'}</AppText></Pressable>
               </>
             )}
           </View>

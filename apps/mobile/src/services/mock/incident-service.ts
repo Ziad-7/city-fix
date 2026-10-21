@@ -171,7 +171,28 @@ export function createMockIncidentService(): IncidentService {
       await saveDb(db);
       return updated;
     },
-    // Placeholder: implemented in Phase D (D3).
-    reopenIncident: () => Promise.reject(new Error('مش متاح لسه')),
+
+    async reopenIncident(_userId, incidentId, note) {
+      await delay(120);
+      const db = await loadDb();
+      const found = db.incidents.find((i) => i.id === incidentId);
+      if (!found) throw new Error('البلاغ مش موجود');
+      if (found.status !== 'resolved') throw new Error('مينفعش نفتح البلاغ ده تاني، لأنه لسه مش متصلّح');
+      const at = new Date().toISOString();
+      const clean = note.trim();
+      const updated: Incident = {
+        ...found,
+        status: 'received',
+        eta: etaFor('received'),
+        timeline: [
+          ...found.timeline,
+          { status: 'received', at, actor: 'مواطن', note: clean ? `اتفتح تاني: ${clean}` : 'اتفتح تاني' },
+        ],
+        updatedAt: at,
+      };
+      db.incidents = db.incidents.map((i) => (i.id === incidentId ? updated : i));
+      await saveDb(db);
+      return updated;
+    },
   };
 }

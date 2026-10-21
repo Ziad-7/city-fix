@@ -3,7 +3,8 @@ import { PAYMENT_METHODS, SLOTS } from '@/domain/services-catalog';
 import type { PaymentMethod, SlotId } from '@/domain/types';
 
 export const slotLabel = (id: SlotId) => SLOTS.find((s) => s.id === id)?.labelAr ?? id;
-export const paymentLabel = (id: PaymentMethod) => PAYMENT_METHODS.find((p) => p.id === id)?.labelAr ?? id;
+/** Absent payment means a free district service. */
+export const paymentLabel = (id?: PaymentMethod) => (id ? (PAYMENT_METHODS.find((p) => p.id === id)?.labelAr ?? id) : 'مجانية');
 
 /** "٧ مواطنين متابعين البلاغ ده", with the Arabic count agreement (1, 2, 3-10, 11+). */
 export function followersLine(n: number): string {

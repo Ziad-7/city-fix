@@ -1,5 +1,6 @@
 import { services } from '@/services';
 import { setUnauthorizedHandler } from '@/services/api/http';
+import { useNotifications } from './useNotifications';
 import { useReports } from './useReports';
 import { useServiceRequests } from './useServiceRequests';
 import { useSession } from './useSession';
@@ -16,6 +17,7 @@ export async function signOutAll(): Promise<void> {
     await services.auth.signOut();
   } finally {
     useReports.getState().reset();
+    useNotifications.getState().reset();
     useServiceRequests.getState().reset();
     useSession.getState().clear();
   }

@@ -5,6 +5,7 @@ import { Icon } from '@/components/Icon';
 import {
   InfoTiles,
   PriorityStrip,
+  ReopenCard,
   RequestThumb,
   ServiceDetailsCard,
   StateMessage,
@@ -154,6 +155,8 @@ export default function RequestDetailScreen() {
       </Card>
 
       {item.kind === 'service' ? <ServiceDetailsCard request={item.request} /> : null}
+
+      {incident ? <ReopenCard incidentId={incident.id} status={incident.status} /> : null}
 
       <TimelineCard title={isReport ? 'مراحل البلاغ' : 'مراحل الطلب'} steps={steps} />
 

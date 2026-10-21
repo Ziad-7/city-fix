@@ -39,7 +39,7 @@ export function TabBar({ state, navigation, insets }: BottomTabBarProps) {
         style={styles.slot}
       >
         <Icon name={meta.icon} size={22} color={color} />
-        <AppText color={color} style={{ fontFamily: active ? fonts.sans600 : fonts.sans500, fontSize: 11, lineHeight: 16 }}>{meta.label}</AppText>
+        <AppText fixedSize numberOfLines={1} maxFontSizeMultiplier={1.2} color={color} style={{ fontFamily: active ? fonts.sans600 : fonts.sans500, fontSize: 11, lineHeight: 16 }}>{meta.label}</AppText>
       </Pressable>
     );
   };

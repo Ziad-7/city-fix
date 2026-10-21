@@ -7,13 +7,19 @@ import { StatsCard } from '@/components/profile';
 import { AppText, Button, Card, Screen, ScreenHeader, SelectField, TextField, ToggleRow, confirmAction } from '@/components/ui';
 import { GOVERNORATES, findGovernorate } from '@/domain/locations';
 import { isOpenStatus } from '@/domain/types';
-import { signOutAll, useReports, useSession } from '@/store';
+import { ensureNotificationPermission, setupOsNotifications } from '@/notifications/os';
+import { signOutAll, usePrefs, useReports, useSession } from '@/store';
 import { colors, fonts } from '@/theme/tokens';
 import { isolateLtr, maskPhone, toArabicDigits } from '@/utils/digits';
 
 /** حسابي: name, phone, area, preferences, stats, language, emergency numbers, sign out. */
 export default function ProfileScreen() {
   const { phone, name, governorate, district, prefs, setArea, setPrefs, setName } = useSession();
+  const largeText = usePrefs((s) => s.largeText);
+  const setLargeText = usePrefs((s) => s.setLargeText);
+  const appNotifications = usePrefs((s) => s.appNotifications);
+  const setAppNotifications = usePrefs((s) => s.setAppNotifications);
+  const [notifDenied, setNotifDenied] = useState(false);
   const reports = useReports((s) => s.reports);
   const incidents = useReports((s) => s.incidents);
 
@@ -45,6 +51,15 @@ export default function ProfileScreen() {
     setSaved(true);
     if (savedTimer.current) clearTimeout(savedTimer.current);
     savedTimer.current = setTimeout(() => setSaved(false), 2000);
+  };
+
+  const toggleNotifications = async (on: boolean) => {
+    setNotifDenied(false);
+    setAppNotifications(on);
+    if (!on) return;
+    await setupOsNotifications();
+    // Asks for the OS permission now; a refusal keeps the in-app centre working and says so.
+    if (!(await ensureNotificationPermission())) setNotifDenied(true);
   };
 
   const changeGovernorate = (g: string) => {
@@ -89,12 +104,35 @@ export default function ProfileScreen() {
         />
         <ToggleRow
           bare
+          icon="bell"
+          title="إشعارات التطبيق"
+          subtitle="تنبيه على موبايلك لما حالة بلاغ أو طلب تتغيّر"
+          value={appNotifications}
+          onValueChange={(v) => void toggleNotifications(v)}
+          testID="pref-notifications"
+        />
+        {notifDenied ? (
+          <AppText variant="caption" color={colors.goldDeep} accessibilityLiveRegion="polite">
+            الإذن مش متاح. هتلاقي التحديثات في مركز الإشعارات جوه التطبيق، وتقدر تسمح بالتنبيهات من إعدادات الموبايل.
+          </AppText>
+        ) : null}
+        <ToggleRow
+          bare
           icon="wifi"
           title="توفير البيانات"
           subtitle="صور أخف، والخريطة بتتحمّل لما تطلبها"
           value={prefs.dataSaver}
           onValueChange={(v) => setPrefs({ dataSaver: v })}
           testID="pref-datasaver"
+        />
+        <ToggleRow
+          bare
+          icon="search"
+          title="خط أكبر"
+          subtitle="يكبّر الكلام في التطبيق كله"
+          value={largeText}
+          onValueChange={setLargeText}
+          testID="pref-largetext"
         />
       </Card>
 

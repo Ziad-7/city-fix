@@ -2,30 +2,31 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { LogoLockup, Skyline } from '@/components/brand';
 import { Icon } from '@/components/Icon';
-import { AppText, Button, Card, InlineNotice, StatusChip, useTransientNotice } from '@/components/ui';
+import { AppText, Button, Card, StatusChip } from '@/components/ui';
 import { getCategory } from '@/domain/categories';
 import type { IconName, Incident } from '@/domain/types';
 import { isCriticalIncident } from '@/logic/priority';
+import { useUnreadCount } from '@/store/useNotifications';
 import { colors, fonts, radius, shadows } from '@/theme/tokens';
+import { toArabicDigits } from '@/utils/digits';
 import { formatDistanceAr } from '@/utils/geo';
 import { neighboursAr } from '../report/text';
 
-/** Logo at the start, notification bell at the end (notifications arrive later: the bell says so). */
+/** Logo at the start, notification bell (with the unread count) at the end: opens the notifications centre. */
 export function HomeHeader() {
-  const { notice, show } = useTransientNotice(3000);
+  const unread = useUnreadCount();
+  const label = unread > 0 ? `الإشعارات، ${toArabicDigits(unread)} جديد` : 'الإشعارات';
   return (
-    <View>
-      <View style={styles.header}>
-        <LogoLockup height={36} />
-        <Pressable accessibilityRole="button" accessibilityLabel="الإشعارات" onPress={() => show('الإشعارات قريبًا. لحد ما تنزل، تابع طلباتك من تبويب طلباتي.')} style={styles.bell}>
-          <Icon name="bell" size={22} />
-        </Pressable>
-      </View>
-      {notice ? (
-        <View style={styles.notice}>
-          <InlineNotice text={notice} />
-        </View>
-      ) : null}
+    <View style={styles.header}>
+      <LogoLockup height={36} />
+      <Pressable testID="bell" accessibilityRole="button" accessibilityLabel={label} onPress={() => router.push('/notifications')} style={styles.bell}>
+        <Icon name="bell" size={22} />
+        {unread > 0 ? (
+          <View testID="bell-badge" style={styles.badge}>
+            <AppText fixedSize color={colors.ink} style={styles.badgeText}>{unread > 9 ? `${toArabicDigits(9)}+` : toArabicDigits(unread)}</AppText>
+          </View>
+        ) : null}
+      </Pressable>
     </View>
   );
 }
@@ -157,7 +158,8 @@ export function ErrorCard({ message, onRetry }: { message: string; onRetry: () =
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 },
   bell: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-  notice: { marginHorizontal: 16, marginTop: 4 },
+  badge: { position: 'absolute', top: -4, end: -4, minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 4, backgroundColor: colors.gold, borderWidth: 2, borderColor: colors.paper, alignItems: 'center', justifyContent: 'center' },
+  badgeText: { fontFamily: fonts.sans700, fontSize: 11, lineHeight: 14 },
   greeting: { gap: 2 },
   ruqaa: { fontFamily: fonts.ruqaa, fontSize: 28, lineHeight: 42 },
   areaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
