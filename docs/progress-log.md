@@ -2,6 +2,18 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-21 — Android APK startup crash: root cause and fix
+
+**Done**
+- Abood captured the crash on an Android Studio emulator. Root cause: WorkManager (brought in by `react-native-maps`) starts at launch and creates its Room database by reflection; R8 in the release build stripped `WorkDatabase_Impl`. Details: [crash analysis](mobile/2026-10-21-android-startup-crash.md).
+- Fix: `expo-build-properties` keep rules (verified in a local `expo prebuild`), `app.config.js` for the Google Maps key (prevents the next crash on the map tab), `eas.json` build profiles. Typecheck, lint, 89 tests pass.
+
+**How to test**
+- Set `GOOGLE_MAPS_API_KEY` in EAS, `eas build --platform android --profile preview`, install, launch, open the map tab; `adb logcat -b crash` should stay empty.
+
+**Known issues**
+- Not built here (Android/Maven downloads blocked in the sandbox); the new APK still needs to be built and checked on the emulator and a real phone.
+
 ## 2026-10-21 — Review of the SDK 57 change and handoff (PRs #6, #7)
 
 **Done**

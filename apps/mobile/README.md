@@ -36,6 +36,21 @@ Demo sign-in: any valid Egyptian mobile (`01[0125]` + 8 digits), then any 6-digi
 
 Installs must use `npx expo install <pkg>` (set `EXPO_OFFLINE=1` in sandboxes where Expo's version API is blocked).
 
+## Build an Android APK
+
+```bash
+npm i -g eas-cli && eas login
+eas env:create --name GOOGLE_MAPS_API_KEY --value <key> --environment preview   # once
+eas build --platform android --profile preview                                  # internal APK
+```
+
+Build profiles live in `eas.json` (`preview` = installable APK, `production` = Play Store bundle). Install the APK on a phone
+or emulator, then check `adb logcat -b crash` stays empty after launch.
+
+**Startup crash fixed (2026-10-21):** the first APK crashed before any screen because WorkManager (included by
+`react-native-maps`) starts at launch and builds its Room database by reflection, and R8 had stripped that class. `app.json`
+now adds keep rules through `expo-build-properties`. See the [crash analysis](../../docs/mobile/2026-10-21-android-startup-crash.md).
+
 ## Mock vs API mode
 
 `src/services/index.ts` picks the implementation from `EXPO_PUBLIC_API_MODE`:
@@ -79,10 +94,8 @@ Everything below is labelled "قريبًا" (or is copy only) in the UI:
   `listMapPins` and `ServiceRequestService.get` exist for that but no screen calls them yet.
 - `react-native-maps` has no web support; `IncidentMap.web.tsx` renders a list instead. Config plugin not added
   (Expo Go needs no API key); a development build will need one.
-- **Before the next Android APK:** `react-native-maps` uses Google Maps on Android, and a standalone build needs a Maps API key
-  (`android.config.googleMaps.apiKey`, set from an EAS secret through an `app.config.js`; never committed). Without it the app will crash when
-  the map tab opens. Expo Go hides this because it ships its own key. This is separate from the startup crash in the handoff.
-- There is no `eas.json` in the repo, so the APK that crashed can't be rebuilt from the repo with the same settings. Commit the
-  build profile (e.g. a `preview` profile with `"buildType": "apk"`) with the next build.
+- **Google Maps key (Android builds):** `react-native-maps` uses Google Maps on Android. `app.config.js` reads
+  `GOOGLE_MAPS_API_KEY` and puts it in the manifest; set it as an EAS environment variable (never commit it). Without it a
+  standalone build crashes when the map tab opens. Expo Go doesn't need it.
 - The mock `simulateProgress` actions are for demos only.
 - Needs a real-device check: keyboard avoidance on Android (edge-to-edge), RTL on Android, horizontal chip rows starting at the right.
