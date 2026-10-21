@@ -14,7 +14,7 @@ export function createMockServiceRequestService(): ServiceRequestService {
         citizenId: userId,
         id: `SRV-${db.counters.service++}`,
         status: 'received',
-        timeline: [serviceTimelineEntry('received', now)],
+        timeline: [serviceTimelineEntry('received', now, input.serviceType)],
         createdAt: now,
       };
       db.serviceRequests = [req, ...db.serviceRequests];
@@ -44,7 +44,7 @@ export function createMockServiceRequestService(): ServiceRequestService {
       const updated: ServiceRequest = {
         ...found,
         status,
-        timeline: [...found.timeline, serviceTimelineEntry(status, new Date().toISOString())],
+        timeline: [...found.timeline, serviceTimelineEntry(status, new Date().toISOString(), found.serviceType)],
       };
       db.serviceRequests = db.serviceRequests.map((r) => (r.id === id ? updated : r));
       await saveDb(db);

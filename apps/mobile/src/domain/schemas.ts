@@ -36,3 +36,10 @@ export const bulkyBookingSchema = z.object({
   slot: z.enum(['morning', 'afternoon']),
   payment: z.enum(['cash', 'fawry', 'instapay', 'wallet']),
 });
+
+export const treeBookingSchema = z.object({
+  workType: z.string().min(1, 'اختار نوع الشغل'),
+  day: z.string().min(1, 'اختار اليوم'),
+  slot: z.enum(['morning', 'afternoon']),
+  note: z.string().trim().optional(),
+});

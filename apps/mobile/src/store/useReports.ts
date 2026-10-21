@@ -34,6 +34,8 @@ type ReportsState = {
   followIncident: (incidentId: string) => Promise<void>;
   /** Dev only: advance an incident to its next status. */
   simulateProgress: (incidentId: string) => Promise<void>;
+  /** "افتح البلاغ تاني": a resolved incident goes back to received with the citizen's note. */
+  reopenIncident: (incidentId: string, note: string) => Promise<void>;
   reset: () => void;
 };
 
@@ -116,6 +118,11 @@ export const useReports = create<ReportsState>((set, get) => ({
 
   async simulateProgress(incidentId) {
     const inc = await services.incidents.simulateProgress(incidentId);
+    set((s) => ({ incidents: upsertIncident(s.incidents, inc) }));
+  },
+
+  async reopenIncident(incidentId, note) {
+    const inc = await services.incidents.reopenIncident(uid(), incidentId, note);
     set((s) => ({ incidents: upsertIncident(s.incidents, inc) }));
   },
 

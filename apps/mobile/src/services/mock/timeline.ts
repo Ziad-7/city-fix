@@ -1,5 +1,5 @@
 import { getCategory } from '@/domain/categories';
-import { SEVERITY_LABEL_AR, type Incident, type IncidentStatus, type TimelineEntry } from '@/domain/types';
+import { SEVERITY_LABEL_AR, type Incident, type IncidentStatus, type ServiceType, type TimelineEntry } from '@/domain/types';
 
 export const STATUS_ORDER: IncidentStatus[] = ['received', 'triaged', 'assigned', 'in_progress', 'resolved'];
 
@@ -30,7 +30,17 @@ export function incidentTimelineEntry(
   }
 }
 
-export function serviceTimelineEntry(status: IncidentStatus, at: string): TimelineEntry {
+export function serviceTimelineEntry(status: IncidentStatus, at: string, serviceType: ServiceType = 'bulky_waste'): TimelineEntry {
+  if (serviceType === 'tree_maintenance') {
+    const treeNotes: Partial<Record<IncidentStatus, string>> = {
+      received: 'وصلنا طلب تقليم أو إزالة الشجرة',
+      triaged: 'إدارة الحدائق راجعت الطلب',
+      assigned: 'اتحدد فريق الحدائق وميعاد التنفيذ',
+      in_progress: 'فريق الحدائق في الطريق',
+      resolved: 'اتنفّذ الطلب',
+    };
+    return { status, at, actor: 'إدارة الحدائق', note: treeNotes[status] ?? 'اتقفل الطلب' };
+  }
   const notes: Partial<Record<IncidentStatus, string>> = {
     received: 'وصلنا طلبك',
     triaged: 'اتراجع الطلب',

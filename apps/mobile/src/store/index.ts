@@ -5,3 +5,5 @@ export { useServiceRequests } from './useServiceRequests';
 export { useIsSignedIn, useSession, useSessionHydrated, type Prefs } from './useSession';
 export { flushOutbox } from './outboxFlush';
 export { useOutboxSync } from './useOutboxSync';
+export { startNotificationSync, useNotifications, useUnreadCount } from './useNotifications';
+export { LARGE_TEXT_SCALE, scaleTextStyle, textScaleFor, usePrefs } from './usePrefs';

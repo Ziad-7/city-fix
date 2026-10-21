@@ -20,7 +20,7 @@ type Tile = { icon: IconName; label: string; href: string; testID: string };
 const TILES: Tile[] = [
   { icon: 'alert-triangle', label: 'بلاغ عن مشكلة', href: '/report/category', testID: 'tile-report' },
   { icon: 'trash', label: 'رفع مخلفات', href: '/services/bulky-waste', testID: 'tile-bulky' },
-  { icon: 'tree', label: 'صيانة الشجر', href: '/services', testID: 'tile-tree' },
+  { icon: 'tree', label: 'صيانة الشجر', href: '/services/tree', testID: 'tile-tree' },
   { icon: 'map', label: 'خريطة المدينة', href: '/map', testID: 'tile-map' },
   { icon: 'clipboard', label: 'طلباتي', href: '/requests', testID: 'tile-requests' },
   { icon: 'bulb', label: 'إنارة الشوارع', href: '/report/new?category=streetlight_out', testID: 'tile-streetlight' },

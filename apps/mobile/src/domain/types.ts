@@ -180,8 +180,12 @@ export type ServiceRequest = {
     /** ISO date (YYYY-MM-DD) */
     day: string;
     slot: SlotId;
-    payment: PaymentMethod;
+    /** Absent for free district services (tree maintenance). */
+    payment?: PaymentMethod;
     note?: string;
+    /** Tree maintenance: what is needed (تقليم، إزالة …). */
+    workType?: string;
+    photoUris?: string[];
   };
   location: Place;
   status: IncidentStatus;
