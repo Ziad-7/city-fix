@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { setSession, getSession, clearSession } from '../session';
+import { setSession, getSession, clearSession, __resetSessionState } from '../session';
 import type { StaffSession } from '@/domain/admin-types';
 import * as httpModule from '../http';
 
@@ -19,11 +19,11 @@ const mockSession: StaffSession = {
 
 describe('session storage', () => {
   beforeEach(() => {
-    // Clear localStorage before each test
+    // Clear all storage and reset internal state before each test
     localStorage.clear();
+    sessionStorage.clear();
+    __resetSessionState();
     vi.clearAllMocks();
-    // Reset the session state cache by calling clearSession
-    clearSession();
   });
 
   describe('setSession', () => {
@@ -89,6 +89,22 @@ describe('session storage', () => {
       const retrieved = getSession();
       expect(retrieved).toEqual(mockSession);
       expect(retrieved?.token).toBe('token-123');
+    });
+  });
+
+  describe('remember device storage', () => {
+    it('should store to localStorage when remember=true', () => {
+      setSession(mockSession, { remember: true });
+
+      expect(localStorage.getItem('ftc-admin-session')).toBeTruthy();
+      expect(sessionStorage.getItem('ftc-admin-session-temp')).toBeNull();
+    });
+
+    it('should store to sessionStorage when remember=false', () => {
+      setSession(mockSession, { remember: false });
+
+      expect(localStorage.getItem('ftc-admin-session')).toBeNull();
+      expect(sessionStorage.getItem('ftc-admin-session-temp')).toBeTruthy();
     });
   });
 });

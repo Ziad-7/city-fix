@@ -74,14 +74,7 @@ export default function LoginPage() {
 
     try {
       const session = await staffLogin(email, password);
-
-      if (rememberDevice) {
-        localStorage.setItem('ftc-admin-session', JSON.stringify(session));
-      } else {
-        sessionStorage.setItem('ftc-admin-session-temp', JSON.stringify(session));
-      }
-
-      setSession(session);
+      setSession(session, { remember: rememberDevice });
       router.replace('/');
     } catch (err) {
       if (err instanceof ApiError) {

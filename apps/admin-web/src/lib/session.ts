@@ -4,7 +4,8 @@ import { useSyncExternalStore } from 'react';
 import type { StaffSession } from '@/domain/admin-types';
 import { setApiToken } from './http';
 
-const STORAGE_KEY = 'ftc-admin-session';
+const LS_KEY = 'ftc-admin-session';
+const SS_KEY = 'ftc-admin-session-temp';
 
 // External store for session state
 type SessionState = StaffSession | null | undefined;
@@ -15,14 +16,43 @@ function notifyListeners() {
   listeners.forEach((listener) => listener());
 }
 
+function applyToken(state: SessionState) {
+  setApiToken(state?.token ?? null);
+}
+
+function hydrateFromStorage(): StaffSession | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    // Try localStorage first (remember=true)
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) {
+      const session = JSON.parse(raw) as StaffSession;
+      applyToken(session);
+      return session;
+    }
+    // Fall back to sessionStorage (remember=false)
+    const ssRaw = sessionStorage.getItem(SS_KEY);
+    if (ssRaw) {
+      const session = JSON.parse(ssRaw) as StaffSession;
+      applyToken(session);
+      return session;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 // Subscribe to storage events (for cross-tab sync)
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', (e) => {
-    if (e.key === STORAGE_KEY) {
+    if (e.key === LS_KEY || e.key === SS_KEY) {
       try {
         sessionState = e.newValue ? (JSON.parse(e.newValue) as StaffSession) : null;
+        applyToken(sessionState);
       } catch {
         sessionState = null;
+        applyToken(null);
       }
       notifyListeners();
     }
@@ -37,25 +67,24 @@ if (typeof window !== 'undefined') {
 export function getSession(): StaffSession | null {
   if (typeof window === 'undefined') return null;
   if (sessionState !== undefined) return sessionState;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      sessionState = null;
-      return null;
-    }
-    sessionState = JSON.parse(raw) as StaffSession;
-    return sessionState;
-  } catch {
-    sessionState = null;
-    return null;
-  }
+  sessionState = hydrateFromStorage();
+  return sessionState;
 }
 
-export function setSession(session: StaffSession): void {
+export function setSession(session: StaffSession, { remember = true } = {}): void {
   if (typeof window === 'undefined') return;
   sessionState = session;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-  setApiToken(session.token);
+  applyToken(session);
+
+  // Write to appropriate storage
+  if (remember) {
+    localStorage.setItem(LS_KEY, JSON.stringify(session));
+    sessionStorage.removeItem(SS_KEY);
+  } else {
+    sessionStorage.setItem(SS_KEY, JSON.stringify(session));
+    localStorage.removeItem(LS_KEY);
+  }
+
   notifyListeners();
   window.dispatchEvent(new Event('session-change'));
 }
@@ -63,8 +92,9 @@ export function setSession(session: StaffSession): void {
 export function clearSession(): void {
   if (typeof window === 'undefined') return;
   sessionState = null;
-  localStorage.removeItem(STORAGE_KEY);
-  setApiToken(null);
+  applyToken(null);
+  localStorage.removeItem(LS_KEY);
+  sessionStorage.removeItem(SS_KEY);
   notifyListeners();
   window.dispatchEvent(new Event('session-change'));
 }
@@ -86,10 +116,15 @@ export function useSession(): SessionState {
     () => {
       // Hydrate on first call
       if (sessionState === undefined && typeof window !== 'undefined') {
-        getSession();
+        sessionState = hydrateFromStorage();
       }
       return sessionState;
     },
     () => undefined // During SSR, return undefined (not hydrated)
   );
+}
+
+// Test-only helper to reset session state
+export function __resetSessionState() {
+  sessionState = undefined as SessionState;
 }
