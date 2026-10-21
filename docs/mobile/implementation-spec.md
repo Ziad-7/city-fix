@@ -1,4 +1,4 @@
-# FixTheCity citizen mobile app — implementation spec
+# CityFix citizen mobile app — implementation spec
 
 This is the brief the implementers work from. The design is final; implement it faithfully.
 

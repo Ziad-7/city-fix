@@ -4,7 +4,7 @@
 
 ## Your mission
 
-Build the **citizen website** for FixTheCity: the same things a citizen can do in the mobile app (report a problem, follow it, book a city service, see the map), in the browser, for people on a laptop or who don't want to install an app.
+Build the **citizen website** for CityFix: the same things a citizen can do in the mobile app (report a problem, follow it, book a city service, see the map), in the browser, for people on a laptop or who don't want to install an app.
 
 You work **in parallel** with the mobile app and the backend, and you all meet at one place: [`docs/api-contract.md`](../api-contract.md). The website and the mobile app talk to **the same backend** with the **same endpoints, shapes and token**. A report sent from the phone shows up on the website for the same phone number, and the other way round.
 
@@ -14,7 +14,7 @@ The website is the **same product** as the mobile app, not a new look. Someone w
 
 - **Same brand, nothing new.** Use the files we already have:
   - [`docs/design/identity.html`](../design/identity.html): the visual identity guide (colours, type, components, per-surface rules, Tailwind theme). Read it first; it is the single source of rules.
-  - [`docs/design/css/fixthecity.css`](../design/css/fixthecity.css): the shared `--ftc-*` variables and `.ftc-*` components the mockups use.
+  - [`docs/design/css/cityfix.css`](../design/css/cityfix.css): the shared `--ftc-*` variables and `.ftc-*` components the mockups use.
   - [`docs/design/brand-book.md`](../design/brand-book.md): brand idea, voice, Egypt rules, component specs.
   - [`docs/design/tokens.json`](../design/tokens.json): the source of truth for colours, fonts, sizes, spacing, radii, shadows. Turn it into Tailwind theme values / CSS variables. Don't hand-pick colours.
   - [`docs/design/screens/*.html`](../design/screens/): the mockups (`mobile/` for the phone, `web/` for the website — your pages must match `web/`). Open them in a browser (links in [`docs/design/README.md`](../design/README.md)).
