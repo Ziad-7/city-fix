@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { at, signIn, trackGeocoder } from './helpers';
+import { at, latestReportId, queuedCount, serverReportCount, signIn, trackGeocoder } from './helpers';
 
 let geocoderCalls: string[];
 
@@ -23,25 +23,29 @@ test('a GPS fix is never sent to a street-name service: the address keeps the pl
 
 test('a report written offline is saved and goes out when the connection is back', async ({ page, context }) => {
   await openForm(page);
-  await page.goto('/requests');
-  const rows = page.locator('[data-testid^="request-FTC-"]');
-  await expect(rows.first()).toBeVisible();
-  const before = await rows.count();
+  // What the (mock) server holds, read from its database: no waiting for a list to finish painting.
+  const before = await serverReportCount(page);
 
-  await page.goto('/report/new?category=pothole');
   await page.getByTestId('description-input').fill('حفرة كبيرة قدام باب المدرسة');
   await expect(page.getByText('النت ضعيف؟ البلاغ هيتحفظ ويتبعت أول ما يرجع')).toBeVisible();
   await context.setOffline(true);
   await page.getByTestId('submit-report').click();
   await expect(page.getByTestId('report-queued')).toContainText('بلاغك اتحفظ');
   await expect(page.getByTestId('outbox-banner')).toContainText('عندك بلاغ متحفظ على جهازك');
+  expect(await queuedCount(page)).toBe(1);
+  expect(await serverReportCount(page)).toBe(before);
 
   await context.setOffline(false);
   await expect(page.getByTestId('report-queued')).toContainText('بلاغك اتبعت');
   await expect(page.getByTestId('outbox-banner')).toBeHidden();
+  expect(await queuedCount(page)).toBe(0);
+  await expect.poll(() => serverReportCount(page)).toBe(before + 1);
 
+  // The new report is listed under my requests: look for that very report, not for a row count.
+  const id = await latestReportId(page);
   await page.getByRole('link', { name: 'طلباتي' }).first().click();
-  await expect(rows).toHaveCount(before + 1);
+  await expect(page.getByRole('heading', { name: 'طلباتي', level: 1 })).toBeVisible();
+  await expect(page.getByTestId(`request-${id}`)).toBeVisible({ timeout: 15_000 });
 });
 
 test('speaking adds the words to the description', async ({ page }) => {

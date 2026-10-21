@@ -64,7 +64,7 @@ test('a nearby same-category incident is offered as "نفس المشكلة، ت�
   await page.getByTestId('description-input').fill('زبالة متراكمة على الناصية من يومين');
   await expect(page.getByTestId('duplicate-panel')).toBeVisible();
   await page.getByTestId('dup-join').click();
-  await expect(page.getByText('اتضمّيت للبلاغ الموجود')).toBeVisible();
+  await expect(page.getByText('بلاغك اتضم للبلاغ الموجود')).toBeVisible();
 });
 
 test('my own nearby report is shown as already reported, not as a join offer', async ({ page, context }) => {
