@@ -1,0 +1,47 @@
+@import 'tailwindcss';
+/* Shared identity stylesheet (copied from docs/design/css/fixthecity.css; checked by scripts/check-shared.sh). */
+@import '../styles/fixthecity.css';
+/* Page styles of the citizen-website mockups (docs/design/screens/web), merged into one file. */
+@import '../styles/web.css';
+/* Website-only additions: states and pieces the static mockups don't draw. */
+@import '../styles/app.css';
+
+/* Tailwind theme from docs/design/tokens.json (same values as the --ftc-* variables). */
+@theme {
+  --color-red: #c8102e;
+  --color-red-deep: #8e0a20;
+  --color-red-soft: #fbe4e7;
+  --color-gold: #d4a20b;
+  --color-gold-pressed: #bc8f09;
+  --color-gold-soft: #faf0d2;
+  --color-gold-deep: #7a5a00;
+  --color-ink: #161616;
+  --color-ink-muted: #5a5a5a;
+  --color-paper: #f8f6f2;
+  --color-surface: #ffffff;
+  --color-line: #e6e1d8;
+  --color-urgent: #a50e25;
+  --color-urgent-soft: #fbe4e7;
+  --color-urgent-deep: #8e0a20;
+  --color-status-received: #3d4a50;
+  --color-status-received-bg: #e6eaec;
+  --color-status-assigned: #1e4f87;
+  --color-status-assigned-bg: #dce8f6;
+  --color-status-progress: #7a5a00;
+  --color-status-progress-bg: #faf0d2;
+  --color-status-resolved: #1f6b33;
+  --color-status-resolved-bg: #dcf1e1;
+  --font-display: var(--font-readex), var(--font-plex), system-ui, sans-serif;
+  --font-sans: var(--font-plex), system-ui, sans-serif;
+  --font-ruqaa: var(--font-ruqaa-face), serif;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+}
+
+/* next/font families feed the --ftc-* font stacks. */
+:root {
+  --ftc-font-display: var(--font-readex), var(--font-plex), system-ui, sans-serif;
+  --ftc-font-sans: var(--font-plex), system-ui, sans-serif;
+  --ftc-font-ruqaa: var(--font-ruqaa-face), var(--font-readex), serif;
+}
