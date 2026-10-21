@@ -14,11 +14,11 @@ import {
   type InfoTile,
 } from '@/components/requests';
 import { dayLabel } from '@/components/services';
-import { AppText, Button, Card, Screen, ScreenHeader, StatusChip, ToggleRow } from '@/components/ui';
+import { AppText, Button, Card, Screen, ScreenHeader, StatusChips, ToggleRow } from '@/components/ui';
 import { getCategory } from '@/domain/categories';
 import { SERVICES } from '@/domain/services-catalog';
 import { isOpenStatus } from '@/domain/types';
-import { priorityReason } from '@/logic/priority';
+import { isCriticalIncident, priorityReason } from '@/logic/priority';
 import { useReports, useRequestItem, useServiceRequests, useSession } from '@/store';
 import { colors, fonts } from '@/theme/tokens';
 import { isolateLtr, maskPhone } from '@/utils/digits';
@@ -135,7 +135,9 @@ export default function RequestDetailScreen() {
             <AppText variant="caption" color={colors.inkMuted}>
               {isolateLtr(`#${item.id}`)} · {isReport ? 'اتبلّغ' : 'اتحجز'} {formatDateTimeAr(item.createdAt)}
             </AppText>
-            <StatusChip status={item.status} />
+            <View style={styles.chips}>
+              <StatusChips status={item.status} critical={!!incident && isCriticalIncident(incident)} />
+            </View>
           </View>
         </View>
         <InfoTiles tiles={tiles} />
@@ -189,6 +191,7 @@ const styles = StyleSheet.create({
   summary: { gap: 12 },
   summaryTop: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   summaryText: { flex: 1, minWidth: 0, gap: 4 },
+  chips: { alignSelf: 'flex-start' },
   title: { fontFamily: fonts.display700, fontSize: 18, lineHeight: 26, color: colors.ink },
   updates: { gap: 12, paddingVertical: 14 },
   followers: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 4 },

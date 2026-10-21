@@ -7,7 +7,7 @@ import { StateMessage } from '@/components/requests';
 import { AppText, Screen } from '@/components/ui';
 import { findDistrict } from '@/domain/locations';
 import type { CategoryId } from '@/domain/types';
-import { refreshAll, useReports, useSession } from '@/store';
+import { refreshAll, useFollowingSet, useReports, useSession } from '@/store';
 import { colors, radius, shadows } from '@/theme/tokens';
 import { haversineM } from '@/utils/geo';
 
@@ -24,7 +24,7 @@ export default function MapScreen() {
   const [category, setCategory] = useState<CategoryId | 'all'>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
-  const [followed, setFollowed] = useState<Set<string>>(() => new Set());
+  const followed = useFollowingSet();
   const [followBusy, setFollowBusy] = useState(false);
 
   const pins = useMemo(() => incidents.map(incidentToPin), [incidents]);
@@ -49,7 +49,6 @@ export default function MapScreen() {
     setFollowBusy(true);
     try {
       await followIncident(sheetIncident.id);
-      setFollowed((cur) => new Set(cur).add(sheetIncident.id));
     } catch {
       // The card stays as it was; the button is available again.
     } finally {
@@ -61,6 +60,13 @@ export default function MapScreen() {
     if (myReport) router.push(`/requests/${myReport.id}`);
     else setExpanded((e) => !e);
   };
+
+  const emptyFilter = status === 'ready' && visible.length === 0;
+  const emptyPill = (
+    <View style={Platform.OS === 'web' ? styles.emptyInline : styles.empty} pointerEvents="none">
+      <AppText variant="smallStrong" center>مفيش بلاغات بالفلتر ده</AppText>
+    </View>
+  );
 
   const map = (
     <IncidentMap
@@ -81,7 +87,10 @@ export default function MapScreen() {
     >
       <View style={styles.body}>
         {Platform.OS === 'web' ? (
-          <ScrollView style={styles.webList} contentContainerStyle={styles.webListContent}>{map}</ScrollView>
+          <ScrollView style={styles.webList} contentContainerStyle={styles.webListContent}>
+            {map}
+            {emptyFilter ? emptyPill : null}
+          </ScrollView>
         ) : (
           map
         )}
@@ -94,18 +103,14 @@ export default function MapScreen() {
             <StateMessage tone="error" icon="wifi" title="مقدرناش نحمّل البلاغات" actionLabel="جرّب تاني" onAction={() => void refreshAll()} />
           </View>
         ) : null}
-        {status === 'ready' && visible.length === 0 ? (
-          <View style={styles.empty} pointerEvents="none">
-            <AppText variant="smallStrong" center>مفيش بلاغات بالفلتر ده</AppText>
-          </View>
-        ) : null}
+        {emptyFilter && Platform.OS !== 'web' ? emptyPill : null}
 
         {sheetIncident ? (
           <View style={styles.sheetWrap} pointerEvents="box-none">
             <PinSheet
               incident={sheetIncident}
               distanceM={haversineM(center, { lat: sheetIncident.location.lat, lng: sheetIncident.location.lng })}
-              following={!!myReport || followed.has(sheetIncident.id)}
+              following={followed.has(sheetIncident.id)}
               followBusy={followBusy}
               myReportId={myReport?.id}
               expanded={expanded}
@@ -127,5 +132,6 @@ const styles = StyleSheet.create({
   webListContent: { padding: 16, paddingBottom: 220 },
   overlay: { position: 'absolute', top: 0, bottom: 0, start: 0, end: 0, backgroundColor: colors.paper, justifyContent: 'center' },
   empty: { position: 'absolute', top: 16, alignSelf: 'center', backgroundColor: colors.surface, borderRadius: radius.pill, paddingHorizontal: 16, paddingVertical: 8, ...shadows.card },
+  emptyInline: { alignSelf: 'center', backgroundColor: colors.surface, borderRadius: radius.pill, paddingHorizontal: 16, paddingVertical: 8, marginTop: 12, ...shadows.card },
   sheetWrap: { position: 'absolute', start: 12, end: 12, bottom: 12 },
 });

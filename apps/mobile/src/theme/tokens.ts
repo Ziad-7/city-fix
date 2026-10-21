@@ -6,6 +6,7 @@ export const colors = {
   redDeep: '#8E0A20',
   redSoft: '#FBE4E7',
   gold: '#D4A20B',
+  goldPressed: '#BC8F09',
   goldSoft: '#FAF0D2',
   goldDeep: '#7A5A00',
   ink: '#161616',
@@ -25,6 +26,10 @@ export const colors = {
   urgent: '#A50E25',
   urgentSoft: '#FBE4E7',
   urgentDeep: '#8E0A20',
+  /** Placeholder icon on a photo-less thumbnail. */
+  iconMuted: '#C9D1D4',
+  /** Ground colour of the static map illustration. */
+  mapGround: '#F1EEE8',
 } as const;
 
 export const spacing = { s1: 4, s2: 8, s3: 12, s4: 16, s6: 24, s8: 32 } as const;

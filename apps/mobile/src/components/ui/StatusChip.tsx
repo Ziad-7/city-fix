@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import { STATUS_LABEL_AR, type IncidentStatus } from '@/domain/types';
-import { colors, radius } from '@/theme/tokens';
+import { colors, fonts, radius } from '@/theme/tokens';
 import { AppText } from './AppText';
 
 export type ChipKind = IncidentStatus | 'critical';
@@ -38,8 +38,24 @@ export function StatusChip({ status, label }: StatusChipProps) {
   );
 }
 
+/**
+ * Status chip, plus the red "خطر" chip when the incident is critical (severity or priority).
+ * `stack` puts them in a column (row cards, end-aligned); the default is a wrapping row.
+ */
+export function StatusChips({ status, critical, stack }: { status: IncidentStatus; critical?: boolean; stack?: boolean }) {
+  if (!critical) return <StatusChip status={status} />;
+  return (
+    <View style={stack ? styles.stack : styles.inline}>
+      <StatusChip status="critical" />
+      <StatusChip status={status} />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 26, paddingHorizontal: 10, borderRadius: radius.pill, alignSelf: 'flex-start' },
+  inline: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
+  stack: { alignItems: 'flex-end', gap: 4 },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 26, paddingHorizontal: 10, borderRadius: radius.pill },
   dot: { width: 6, height: 6, borderRadius: 3 },
-  text: { fontWeight: '600', lineHeight: 18 },
+  text: { fontFamily: fonts.sans600, lineHeight: 18 },
 });

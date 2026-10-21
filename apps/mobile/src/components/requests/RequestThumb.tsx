@@ -20,7 +20,7 @@ export function RequestThumb({ uri, icon, size = 52, tone = 'report' }: Props) {
   const service = tone === 'service';
   return (
     <View style={[styles.base, styles.tile, { width: size, height: size, backgroundColor: service ? colors.redSoft : colors.statusReceived }]}>
-      <Icon name={icon} size={Math.round(size * 0.46)} color={service ? colors.red : '#C9D1D4'} />
+      <Icon name={icon} size={Math.round(size * 0.46)} color={service ? colors.red : colors.iconMuted} />
     </View>
   );
 }

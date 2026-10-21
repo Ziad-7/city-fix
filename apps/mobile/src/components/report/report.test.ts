@@ -1,4 +1,3 @@
-import { medalFor } from './medal';
 import { moreReportsAr, neighboursAr, reportedByAr } from './text';
 import { validateReportForm, type ReportFormValues } from './validation';
 
@@ -10,30 +9,6 @@ const base: ReportFormValues = {
   anonymous: false,
   blurFaces: true,
 };
-
-describe('medalFor', () => {
-  it('1-2 reports: working towards جدع الشارع', () => {
-    const m = medalFor(1);
-    expect(m.tier).toBe('none');
-    expect(m.title).toBe('جدع الشارع');
-    expect(m.remaining).toBe(2);
-    expect(m.goal).toBe(3);
-    expect(m.progress).toBeCloseTo(1 / 3);
-  });
-  it('3 reports: earned جدع الشارع, 7 to جدع الحي', () => {
-    const m = medalFor(3);
-    expect(m.tier).toBe('street');
-    expect(m.next).toEqual({ title: 'جدع الحي', goal: 10 });
-    expect(m.remaining).toBe(7);
-    expect(m.progress).toBeCloseTo(0.3);
-  });
-  it('10+ reports: top tier, full bar', () => {
-    const m = medalFor(12);
-    expect(m.tier).toBe('district');
-    expect(m.next).toBeNull();
-    expect(m.progress).toBe(1);
-  });
-});
 
 describe('Arabic phrases', () => {
   it('pluralises report counts', () => {

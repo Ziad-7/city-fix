@@ -1,10 +1,11 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { getCategory } from '@/domain/categories';
+import { STATUS_LABEL_AR } from '@/domain/types';
 import { colors, radius } from '@/theme/tokens';
 import { AppText } from '../ui/AppText';
-import { statusColor, StatusChip } from '../ui/StatusChip';
+import { statusColor, StatusChips } from '../ui/StatusChip';
 import { Icon } from '../Icon';
-import type { IncidentMapProps } from './types';
+import { pinIsCritical, type IncidentMapProps } from './types';
 
 /** Web preview stand-in: react-native-maps does not support web, so show the pins as a list. */
 export function IncidentMap({ pins, selectedId, onSelectPin, style }: IncidentMapProps) {
@@ -15,10 +16,17 @@ export function IncidentMap({ pins, selectedId, onSelectPin, style }: IncidentMa
         <AppText variant="caption" color={colors.inkMuted}>الخريطة بتشتغل على الموبايل. دي قائمة بالبلاغات القريبة.</AppText>
       </View>
       {pins.map((p) => (
-        <Pressable key={p.id} onPress={() => onSelectPin?.(p.id)} style={[styles.row, selectedId === p.id ? styles.rowOn : null]}>
+        <Pressable
+          key={p.id}
+          testID={`pin-${p.id}`}
+          accessibilityRole="button"
+          accessibilityLabel={`${p.title || getCategory(p.categoryId).labelAr}، ${pinIsCritical(p) ? 'خطر، ' : ''}${STATUS_LABEL_AR[p.status]}`}
+          onPress={() => onSelectPin?.(p.id)}
+          style={[styles.row, selectedId === p.id ? styles.rowOn : null]}
+        >
           <View style={[styles.dot, { backgroundColor: statusColor(p.status) }]} />
           <AppText variant="smallStrong" style={styles.title} numberOfLines={1}>{p.title || getCategory(p.categoryId).labelAr}</AppText>
-          <StatusChip status={p.status} />
+          <StatusChips status={p.status} critical={pinIsCritical(p)} />
         </Pressable>
       ))}
     </View>

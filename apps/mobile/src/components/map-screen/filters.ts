@@ -1,3 +1,4 @@
+import { isCriticalIncident } from '@/logic/priority';
 import type { CategoryId, Incident, IncidentStatus, MapPin } from '@/domain/types';
 
 export type MapStatusFilter = 'all' | 'received' | 'assigned' | 'in_progress' | 'resolved';
@@ -22,5 +23,5 @@ export function filterPins(pins: MapPin[], status: MapStatusFilter, category: Ca
 }
 
 export function incidentToPin(i: Incident): MapPin {
-  return { id: i.id, categoryId: i.categoryId, title: i.title, status: i.status, severity: i.severity, lat: i.location.lat, lng: i.location.lng };
+  return { id: i.id, categoryId: i.categoryId, title: i.title, status: i.status, severity: i.severity, lat: i.location.lat, lng: i.location.lng, critical: isCriticalIncident(i) };
 }

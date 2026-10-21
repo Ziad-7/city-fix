@@ -1,4 +1,4 @@
-import { computePriority, priorityLevel, priorityReason } from '../priority';
+import { computePriority, isCriticalIncident, priorityLevel, priorityReason } from '../priority';
 
 const base = { severity: 'medium' as const, nearSensitivePlace: false, reporters: 1, daysOpen: 0, targetDays: 5, areaUnderserved: false };
 
@@ -31,5 +31,29 @@ describe('computePriority', () => {
     expect(priorityLevel(10)).toBe('low');
     const p = computePriority({ ...base, severity: 'high', nearSensitivePlace: true, reporters: 7 });
     expect(priorityReason(p, 7, 'مدرسة')).toContain('٧ بلاغات');
+  });
+});
+
+describe('priorityReason never contradicts the level', () => {
+  it('shows the bare label for a regular-priority incident, even with high severity', () => {
+    const p = computePriority({ ...base, severity: 'high' }); // 28 points
+    expect(priorityLevel(p.score)).toBe('low');
+    const line = priorityReason(p, 1);
+    expect(line).toBe('أولوية عادية');
+    expect(line).not.toContain('خطورة عالية');
+  });
+  it('lists reasons from medium priority up', () => {
+    const p = computePriority({ ...base, severity: 'high', nearSensitivePlace: true, reporters: 4 });
+    expect(priorityLevel(p.score)).not.toBe('low');
+    expect(priorityReason(p, 4, 'مدرسة')).toMatch(/قريب من مدرسة \+ ٤ بلاغات \+ خطورة عالية$/);
+  });
+});
+
+describe('isCriticalIncident', () => {
+  const lowScore = { score: 20 };
+  it('is critical by severity or by an urgent score', () => {
+    expect(isCriticalIncident({ severity: 'critical', priority: lowScore })).toBe(true);
+    expect(isCriticalIncident({ severity: 'medium', priority: { score: 90 } })).toBe(true);
+    expect(isCriticalIncident({ severity: 'high', priority: { score: 70 } })).toBe(false);
   });
 });

@@ -13,3 +13,6 @@ export type IncidentMapProps = {
 };
 
 export const NASR_CITY: LatLng = { lat: 30.056, lng: 31.33 };
+
+/** Critical pins get an alert glyph and the "خطر" chip. */
+export const pinIsCritical = (p: MapPin): boolean => p.critical ?? p.severity === 'critical';

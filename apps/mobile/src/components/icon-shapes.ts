@@ -66,5 +66,5 @@ export const ICON_SHAPES: Record<IconName, readonly Shape[]> = {
 /** Icons drawn filled instead of stroked. */
 export const FILLED_ICONS: ReadonlySet<IconName> = new Set<IconName>(['more', 'play']);
 
-/** Directional icons mirror in RTL; objects never do. */
-export const DIRECTIONAL_ICONS: ReadonlySet<IconName> = new Set<IconName>(['arrow-back', 'arrow-forward', 'chevron', 'play']);
+/** Directional icons mirror in RTL; objects never do. Media controls (play) keep their direction. */
+export const DIRECTIONAL_ICONS: ReadonlySet<IconName> = new Set<IconName>(['arrow-back', 'arrow-forward', 'chevron']);

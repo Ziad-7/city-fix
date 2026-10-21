@@ -1,15 +1,17 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { AiSuggestion, CategoryPicker, CategoryRow, type TriageState } from '@/components/report/AiSuggestion';
 import { useReportLocation } from '@/components/report/location';
 import { PhotoSlots, type PhotoPair } from '@/components/report/PhotoSlots';
-import { DuplicatePanel, LocationCard, StepBar, VoiceRow } from '@/components/report/ReportParts';
+import { AlreadyReportedNote, DuplicatePanel, LocationCard, StepBar, VoiceRow } from '@/components/report/ReportParts';
 import { validateReportForm, type ReportFormErrors } from '@/components/report/validation';
 import { AppText, Button, Screen, ScreenHeader, TextField, ToggleRow } from '@/components/ui';
 import { CATEGORIES } from '@/domain/categories';
+import { DEFAULT_PLACE, findDistrict } from '@/domain/locations';
 import type { CategoryId, TriageSuggestion } from '@/domain/types';
+import { pickDuplicateView } from '@/logic/duplicates';
 import { services } from '@/services';
 import { useReports, useSession } from '@/store';
 import { colors } from '@/theme/tokens';
@@ -21,11 +23,16 @@ export default function NewReportScreen() {
   const paramCategory = isCategoryId(params.category) ? params.category : null;
 
   const submitReport = useReports((s) => s.submitReport);
+  const userId = useSession((s) => s.userId);
   const governorate = useSession((s) => s.governorate);
   const district = useSession((s) => s.district);
   const dataSaver = useSession((s) => s.prefs.dataSaver);
 
-  const { place, state: locState, locate, setAddress, setLandmark } = useReportLocation();
+  const fallbackCenter = useMemo(() => {
+    const d = findDistrict(governorate, district);
+    return d ? { lat: d.lat, lng: d.lng } : { lat: DEFAULT_PLACE.lat, lng: DEFAULT_PLACE.lng };
+  }, [governorate, district]);
+  const { place, state: locState, locate, setAddress, setLandmark } = useReportLocation(fallbackCenter);
 
   const [photos, setPhotos] = useState<PhotoPair>([null, null]);
   const [description, setDescription] = useState('');
@@ -62,6 +69,7 @@ export default function NewReportScreen() {
       let suggestion: TriageSuggestion | null = null;
       try {
         suggestion = await services.triage.analyze({
+          userId: userId ?? '',
           description: trimmed,
           categoryId: priorCategory ?? undefined,
           photoUri: mainPhoto,
@@ -76,10 +84,11 @@ export default function NewReportScreen() {
       cancelled = true;
       clearTimeout(t);
     };
-  }, [hasInput, inputKey, trimmed, mainPhoto, priorCategory, place.lat, place.lng]);
+  }, [hasInput, inputKey, userId, trimmed, mainPhoto, priorCategory, place.lat, place.lng]);
 
-  const duplicate = triage?.duplicates[0] ?? null;
-  const showDuplicate = !!duplicate && duplicate.incidentId !== dismissedDup;
+  // Only matches of the category that will be submitted count (the AI top pick may differ from a manual pick).
+  const dupView = pickDuplicateView(triage, categoryId);
+  const duplicate = dupView.kind === 'join' && dupView.match.incidentId !== dismissedDup ? dupView.match : null;
 
   const submit = useCallback(
     async (linkTo?: string) => {
@@ -126,11 +135,13 @@ export default function NewReportScreen() {
     setErrors((e) => ({ ...e, categoryId: undefined }));
   };
 
-  const errorCount = Object.keys(errors).length;
+  // `setErrors((e) => ({ ...e, x: undefined }))` leaves the key behind: count real messages only.
+  const errorCount = Object.values(errors).filter(Boolean).length;
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <>
       <Screen
+        avoidKeyboard
         header={
           <View>
             <ScreenHeader title="بلاغ جديد" step="خطوة ٢ من ٣" />
@@ -148,7 +159,7 @@ export default function NewReportScreen() {
             {!submitError && errorCount > 0 ? (
               <AppText accessibilityRole="alert" variant="caption" color={colors.urgent} center>راجع الحقول اللي متعلّمة بالأحمر.</AppText>
             ) : null}
-            <Button testID="submit-report" label="ابعت البلاغ" loading={submitting === 'send'} disabled={submitting === 'join'} onPress={() => submit()} />
+            <Button testID="submit-report" label="ابعت البلاغ" icon="arrow-forward" iconPosition="end" loading={submitting === 'send'} disabled={submitting === 'join'} onPress={() => submit()} />
           </View>
         }
       >
@@ -185,7 +196,7 @@ export default function NewReportScreen() {
             }}
             multiline
             rows={3}
-            placeholder="اكتب إيه اللي شايفه بالعامية، زي: فيه حفرة قدام المدرسة"
+            placeholder="اكتب المشكلة بالعامية، زي: فيه حفرة قدام المدرسة"
             error={errors.description}
           />
         </View>
@@ -202,7 +213,10 @@ export default function NewReportScreen() {
           <ToggleRow testID="toggle-anonymous" icon="shield-check" title="بلّغ من غير اسم" subtitle="الحي مش هيشوف اسمك ولا رقمك" value={anonymous} onValueChange={setAnonymous} />
         </View>
 
-        {showDuplicate && duplicate ? (
+        {dupView.kind === 'own' ? (
+          <AlreadyReportedNote own={dupView.own} onOpen={() => router.push(`/requests/${dupView.own.reportId}`)} />
+        ) : null}
+        {duplicate ? (
           <DuplicatePanel
             match={duplicate}
             busy={submitting === 'join'}
@@ -213,12 +227,11 @@ export default function NewReportScreen() {
       </Screen>
 
       <CategoryPicker visible={pickerOpen} selected={categoryId} onClose={() => setPickerOpen(false)} onSelect={pickCategory} />
-    </KeyboardAvoidingView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   footer: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, gap: 8, backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.line },
   offline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
 });

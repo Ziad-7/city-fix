@@ -1,29 +1,14 @@
-import { z } from 'zod';
+import type { z } from 'zod';
 import { newReportSchema } from '@/domain/schemas';
 
-export const MIN_DESCRIPTION = 10;
+export { MIN_DESCRIPTION } from '@/domain/schemas';
 
-/**
- * The shared newReportSchema asks for a photo AND a description. The product rule is looser:
- * a category, a location, and at least a photo OR a description of 10+ characters.
- */
-export const reportFormSchema = newReportSchema
-  .extend({
-    description: z.string().trim(),
-    photoUris: z.array(z.string()),
-  })
-  .superRefine((v, ctx) => {
-    if (v.photoUris.length === 0 && v.description.length < MIN_DESCRIPTION) {
-      ctx.addIssue({ code: 'custom', path: ['description'], message: 'ضيف صورة أو اكتب وصف للمشكلة (١٠ حروف على الأقل)' });
-    }
-  });
-
-export type ReportFormValues = z.input<typeof reportFormSchema>;
+export type ReportFormValues = z.input<typeof newReportSchema>;
 export type ReportFormErrors = Partial<Record<'categoryId' | 'description' | 'address', string>>;
 
-/** Returns inline error messages keyed by field (empty object when valid). */
+/** Maps the shared `newReportSchema` issues to inline messages keyed by field (empty object when valid). */
 export function validateReportForm(values: ReportFormValues): ReportFormErrors {
-  const res = reportFormSchema.safeParse(values);
+  const res = newReportSchema.safeParse(values);
   if (res.success) return {};
   const errors: ReportFormErrors = {};
   for (const issue of res.error.issues) {

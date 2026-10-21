@@ -8,11 +8,10 @@ export { MOCK_OTP } from './auth-service';
 export { resetMockDb } from './db';
 
 export function createMockServices(): Services {
-  const incidents = createMockIncidentService();
   return {
     auth: createMockAuthService(),
-    incidents,
+    incidents: createMockIncidentService(),
     serviceRequests: createMockServiceRequestService(),
-    triage: createMockTriageService(incidents),
+    triage: createMockTriageService(),
   };
 }

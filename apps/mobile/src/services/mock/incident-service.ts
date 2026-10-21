@@ -1,7 +1,6 @@
 import { getCategory } from '@/domain/categories';
 import { findDistrict, GOVERNORATES } from '@/domain/locations';
 import type { Incident, IncidentStatus, MapPin, NewReportInput, Report } from '@/domain/types';
-import { findDuplicates } from '@/logic/duplicates';
 import { computePriority } from '@/logic/priority';
 import { daysBetween } from '@/utils/time';
 import type { IncidentService } from '../interfaces';
@@ -42,10 +41,14 @@ export function createMockIncidentService(): IncidentService {
         : undefined;
 
       if (incident) {
+        // Linking makes the reporter a follower, once: no extra follower if they already follow or reported it.
+        const linked = incident;
+        const alreadyFollowing =
+          (db.following[userId] ?? []).includes(linked.id) || db.reports.some((r) => r.reporterId === userId && r.incidentId === linked.id);
         incident = reprioritize({
           ...incident,
           linkedReportIds: [...incident.linkedReportIds, reportId],
-          followers: incident.followers + 1,
+          followers: incident.followers + (alreadyFollowing ? 0 : 1),
           updatedAt: now,
         });
         const target = incident;
@@ -56,7 +59,7 @@ export function createMockIncidentService(): IncidentService {
         const severity = input.severity ?? cat.defaultSeverity;
         const base = { categoryId: input.categoryId, severity, department: cat.department };
         const fresh: Incident = {
-          id: `INC-${db.counters.incident++}`,
+          id: `INC-${pad(db.counters.incident++)}`,
           ...base,
           title: `${cat.labelAr}${input.location.address ? ` · ${input.location.address.split('،')[0]}` : ''}`,
           priority: { score: 0, factors: [] },
@@ -73,6 +76,7 @@ export function createMockIncidentService(): IncidentService {
         };
         incident = reprioritize(fresh);
         db.incidents = [incident, ...db.incidents];
+        db.following[userId] = [...new Set([...(db.following[userId] ?? []), incident.id])];
       }
 
       const report: Report = {
@@ -128,9 +132,10 @@ export function createMockIncidentService(): IncidentService {
       }));
     },
 
-    async findDuplicates(categoryId, at) {
+    async listFollowing(userId) {
+      await delay(120);
       const db = await loadDb();
-      return findDuplicates(db.incidents, categoryId, at);
+      return [...new Set([...(db.following[userId] ?? []), ...db.reports.filter((r) => r.reporterId === userId).map((r) => r.incidentId)])];
     },
 
     async followIncident(userId, incidentId) {

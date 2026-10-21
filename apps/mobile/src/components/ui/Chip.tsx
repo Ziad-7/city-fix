@@ -39,11 +39,13 @@ export type ChoiceChipProps = {
   sublabel?: string;
   /** Show a check mark when selected (multi-select lists). */
   check?: boolean;
+  /** Show a radio dot before the label (single choice, e.g. SMS / WhatsApp). */
+  radio?: boolean;
   testID?: string;
 };
 
 /** Boxed single/multi choice (OTP channel, items, day, slot, payment). 48 px, red-soft when selected. */
-export function ChoiceChip({ label, sublabel, selected, onPress, check, testID }: ChoiceChipProps) {
+export function ChoiceChip({ label, sublabel, selected, onPress, check, radio, testID }: ChoiceChipProps) {
   return (
     <Pressable
       testID={testID}
@@ -53,6 +55,11 @@ export function ChoiceChip({ label, sublabel, selected, onPress, check, testID }
       style={[styles.box, selected ? styles.boxOn : styles.boxOff]}
     >
       <View style={styles.boxRow}>
+        {radio ? (
+          <View style={[styles.radio, { borderColor: selected ? colors.red : colors.inkMuted }]}>
+            {selected ? <View style={styles.radioDot} /> : null}
+          </View>
+        ) : null}
         {check && selected ? <Icon name="check" size={16} color={colors.redDeep} strokeWidth={3} /> : null}
         <AppText variant="small" color={selected ? colors.redDeep : colors.ink} style={{ fontFamily: selected ? fonts.sans600 : fonts.sans500 }}>
           {label}
@@ -68,11 +75,13 @@ export function ChoiceChip({ label, sublabel, selected, onPress, check, testID }
 }
 
 const styles = StyleSheet.create({
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 40, paddingHorizontal: 14, borderRadius: radius.pill, borderWidth: 1 },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, paddingHorizontal: 14, borderRadius: radius.pill, borderWidth: 1 },
   chipOn: { backgroundColor: colors.red, borderColor: colors.red },
   chipOff: { backgroundColor: colors.surface, borderColor: colors.line },
   box: { minHeight: 48, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12, paddingVertical: 6 },
   boxOn: { backgroundColor: colors.redSoft, borderColor: colors.red, borderWidth: 2 },
   boxOff: { backgroundColor: colors.surface, borderColor: colors.line, borderWidth: 1 },
+  radio: { width: 16, height: 16, borderRadius: 8, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  radioDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.red },
   boxRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
 });

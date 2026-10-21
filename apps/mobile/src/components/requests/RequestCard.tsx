@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
-import { AppText, Card, StatusChip } from '@/components/ui';
+import { AppText, Card, StatusChips } from '@/components/ui';
 import { getCategory } from '@/domain/categories';
 import { SERVICES } from '@/domain/services-catalog';
+import { isCriticalIncident } from '@/logic/priority';
 import { STATUS_LABEL_AR } from '@/domain/types';
 import type { RequestItem } from '@/store';
 import { colors } from '@/theme/tokens';
@@ -14,6 +15,7 @@ import { slotLabel } from './labels';
 
 /** List row in the "آخر التحديثات" style: thumbnail, title, #ID + time, status chip. */
 export function RequestCard({ item }: { item: RequestItem }) {
+  const critical = item.kind === 'report' && !!item.incident && isCriticalIncident(item.incident);
   const meta = `${isolateLtr(`#${item.id}`)} · ${relativeTimeAr(item.createdAt)}`;
   const isService = item.kind === 'service';
   const icon = isService
@@ -22,7 +24,7 @@ export function RequestCard({ item }: { item: RequestItem }) {
   return (
     <Card
       onPress={() => router.push(`/requests/${item.id}`)}
-      accessibilityLabel={`${item.title}، ${STATUS_LABEL_AR[item.status]}`}
+      accessibilityLabel={`${item.title}، ${critical ? 'خطر، ' : ''}${STATUS_LABEL_AR[item.status]}`}
       testID={`request-${item.id}`}
     >
       <View style={styles.row}>
@@ -36,7 +38,7 @@ export function RequestCard({ item }: { item: RequestItem }) {
             </AppText>
           ) : null}
         </View>
-        <StatusChip status={item.status} />
+        <StatusChips status={item.status} critical={critical} stack />
       </View>
     </Card>
   );

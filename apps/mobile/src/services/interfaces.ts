@@ -1,6 +1,5 @@
 import type {
   CategoryId,
-  DuplicateMatch,
   Incident,
   LatLng,
   MapPin,
@@ -33,8 +32,8 @@ export interface IncidentService {
   getIncident(id: string): Promise<Incident | null>;
   /** GET /map/incidents */
   listMapPins(): Promise<MapPin[]>;
-  /** Open incidents of the same category within 250 m. */
-  findDuplicates(categoryId: CategoryId, at: LatLng): Promise<DuplicateMatch[]>;
+  /** Ids of the incidents the user follows (own reports are included once reported). Contract proposal: `Incident.isFollowing`. */
+  listFollowing(userId: string): Promise<string[]>;
   /** "أنا كمان": adds the user as a follower (once per user). */
   followIncident(userId: string, incidentId: string): Promise<Incident>;
   /** Dev only: advance the incident to its next status. */
@@ -52,8 +51,13 @@ export interface ServiceRequestService {
 }
 
 export interface TriageService {
-  /** AI suggestion (mock: keyword classifier). Includes duplicates when `location` is given. */
+  /**
+   * AI suggestion (mock: keyword classifier). Includes duplicates when `location` is given.
+   * `userId` lets the service leave out incidents the caller reported or follows (the backend does this
+   * from the auth token). Own nearby incidents come back as `alreadyReported`.
+   */
   analyze(input: {
+    userId: string;
     description: string;
     categoryId?: CategoryId;
     photoUri?: string;

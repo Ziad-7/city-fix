@@ -2,27 +2,29 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { buildSeed, type MockDb } from './seed';
 
 const KEY = 'ftc.mock.db.v1';
-let cache: MockDb | null = null;
 
-/** Loads the mock database from AsyncStorage, seeding it on first run. */
-export async function loadDb(): Promise<MockDb> {
-  if (cache) return cache;
+// One in-flight load shared by every caller: the first screens fire several list calls at once, and each
+// must see the same database object (otherwise several seeds are built and a later write mutates only one).
+let loading: Promise<MockDb> | null = null;
+
+async function readOrSeed(): Promise<MockDb> {
   try {
     const raw = await AsyncStorage.getItem(KEY);
-    if (raw) {
-      cache = JSON.parse(raw) as MockDb;
-      return cache;
-    }
+    if (raw) return JSON.parse(raw) as MockDb;
   } catch {
     // fall through to a fresh seed
   }
-  cache = buildSeed();
-  await saveDb(cache);
-  return cache;
+  const seed = buildSeed();
+  await persist(seed);
+  return seed;
 }
 
-export async function saveDb(db: MockDb): Promise<void> {
-  cache = db;
+/** Loads the mock database from AsyncStorage, seeding it on first run. */
+export function loadDb(): Promise<MockDb> {
+  return (loading ??= readOrSeed());
+}
+
+async function persist(db: MockDb): Promise<void> {
   try {
     await AsyncStorage.setItem(KEY, JSON.stringify(db));
   } catch {
@@ -30,9 +32,14 @@ export async function saveDb(db: MockDb): Promise<void> {
   }
 }
 
+export async function saveDb(db: MockDb): Promise<void> {
+  loading = Promise.resolve(db);
+  await persist(db);
+}
+
 /** Wipes persisted mock data (next load re-seeds). Used by tests and the dev reset. */
 export async function resetMockDb(): Promise<void> {
-  cache = null;
+  loading = null;
   try {
     await AsyncStorage.removeItem(KEY);
   } catch {

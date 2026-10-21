@@ -80,6 +80,8 @@ export type Incident = {
   timeline: TimelineEntry[];
   createdAt: string;
   updatedAt: string;
+  /** For the authenticated caller: they reported or follow this incident (backend proposal; the mock keeps a per-user list). */
+  isFollowing?: boolean;
 };
 
 export type Report = {
@@ -120,6 +122,16 @@ export type DuplicateMatch = {
   status: IncidentStatus;
 };
 
+/** An open, nearby, same-category incident that the caller has already reported themselves. */
+export type AlreadyReported = {
+  incidentId: string;
+  /** The caller's own report on that incident (links to /requests/{reportId}). */
+  reportId: string;
+  title: string;
+  categoryId: CategoryId;
+  distanceM: number;
+};
+
 export type TriageOption = { categoryId: CategoryId; confidence: number };
 export type TriageSuggestion = {
   /** Top-3, sorted by confidence desc; confidences sum <= 1. */
@@ -127,7 +139,10 @@ export type TriageSuggestion = {
   severity: Severity;
   /** One-line Arabic summary. */
   summary: string;
+  /** Joinable duplicates only: never an incident the caller reported or already follows. */
   duplicates: DuplicateMatch[];
+  /** Nearby incidents the caller reported themselves (shown as "إنت مبلّغ عنها بالفعل", not as a join offer). */
+  alreadyReported?: AlreadyReported[];
 };
 
 export type ServiceType = 'bulky_waste' | 'tree_maintenance';
@@ -163,12 +178,16 @@ export type MapPin = {
   severity: Severity;
   lat: number;
   lng: number;
+  /** Severity is critical or the priority score is urgent (client-computed when the server sends only severity). */
+  critical?: boolean;
 };
 
 export type Session = {
   userId: string;
   phone: string;
   name?: string;
+  /** Bearer token from /auth/verify (API mode). Persisted with the session. */
+  token?: string;
 };
 
 export type OtpChannel = 'sms' | 'whatsapp';

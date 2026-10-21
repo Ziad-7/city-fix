@@ -1,6 +1,7 @@
 import { getCategory } from '@/domain/categories';
 import { findDistrict } from '@/domain/locations';
 import type { CategoryId, Incident, IncidentStatus, Report, ServiceRequest, Severity } from '@/domain/types';
+import { nextWorkingDays } from '@/domain/services-catalog';
 import { computePriority } from '@/logic/priority';
 import { etaFor, incidentTimelineEntry, serviceTimelineEntry, STATUS_ORDER } from './timeline';
 
@@ -116,7 +117,7 @@ export function buildSeed(now: number = Date.now()): MockDb {
       id: 'SRV-2001',
       citizenId: DEMO_USER_ID,
       serviceType: 'bulky_waste',
-      details: { items: ['كنبة', 'تلاجة قديمة'], day: iso(now + 24 * HOUR).slice(0, 10), slot: 'morning', payment: 'cash' },
+      details: { items: ['كنبة', 'تلاجة قديمة'], day: nextWorkingDays(1, new Date(now))[0], slot: 'morning', payment: 'cash' },
       location: { lat: 30.056, lng: 31.33, address: 'شارع عباس العقاد، مدينة نصر', landmark: 'عمارة ١٢' },
       status: 'assigned',
       timeline: [

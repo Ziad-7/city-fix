@@ -1,4 +1,5 @@
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { EmergencyBox } from '@/components/Hotlines';
 import { Icon } from '@/components/Icon';
 import { AppText, ProgressBar } from '@/components/ui';
 import { CATEGORIES, getCategory } from '@/domain/categories';
@@ -120,7 +121,7 @@ export function CategoryRow({ selected, onPress }: { selected: CategoryId | null
       </View>
       <View style={{ flex: 1 }}>
         <AppText variant="caption" color={colors.inkMuted}>نوع المشكلة</AppText>
-        <AppText variant="smallStrong">{cat ? cat.labelAr : 'لسه ماحددتش النوع'}</AppText>
+        <AppText variant="smallStrong">{cat ? cat.labelAr : 'النوع لسه مش متحدد'}</AppText>
       </View>
       <AppText variant="smallStrong" color={colors.red}>{cat ? 'غيّر' : 'اختار'}</AppText>
     </Pressable>
@@ -141,6 +142,7 @@ export function CategoryPicker({ visible, selected, onClose, onSelect }: { visib
             </Pressable>
           </View>
           <ScrollView contentContainerStyle={styles.sheetGrid}>
+            <EmergencyBox />
             <Grid3>
               {CATEGORIES.map((c) => (
                 <CategoryTile key={c.id} category={c} selected={c.id === selected} onPress={() => onSelect(c.id)} />
@@ -177,5 +179,5 @@ const styles = StyleSheet.create({
   sheet: { maxHeight: '80%', backgroundColor: colors.paper, borderTopStartRadius: 28, borderTopEndRadius: 28, paddingTop: 16 },
   sheetHead: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 8 },
   close: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  sheetGrid: { paddingHorizontal: 16, paddingBottom: 32 },
+  sheetGrid: { paddingHorizontal: 16, paddingBottom: 32, gap: 14 },
 });

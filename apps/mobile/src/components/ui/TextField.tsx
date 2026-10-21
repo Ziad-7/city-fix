@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { StyleSheet, TextInput, View, type KeyboardTypeOptions, type StyleProp, type ViewStyle } from 'react-native';
 import { colors, fonts, radius } from '@/theme/tokens';
 import { AppText } from './AppText';
+import { useScrollIntoView } from './Screen';
 
 export type TextFieldProps = {
   label?: string;
@@ -31,9 +32,11 @@ export function TextField({
   prefix, ltr, large, autoFocus, onSubmitEditing, style, testID,
 }: TextFieldProps) {
   const [focused, setFocused] = useState(false);
+  const wrapRef = useRef<View>(null);
+  const scrollIntoView = useScrollIntoView();
   const borderColor = error ? colors.urgent : focused ? colors.red : colors.line;
   return (
-    <View style={[styles.wrap, style]}>
+    <View ref={wrapRef} style={[styles.wrap, style]}>
       {label ? <AppText variant="label">{label}</AppText> : null}
       <View
         style={[
@@ -46,6 +49,8 @@ export function TextField({
         {prefix}
         <TextInput
           testID={testID}
+          accessibilityLabel={label ?? placeholder}
+          accessibilityHint={error ?? helper}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -55,7 +60,10 @@ export function TextField({
           multiline={multiline}
           autoFocus={autoFocus}
           onSubmitEditing={onSubmitEditing}
-          onFocus={() => setFocused(true)}
+          onFocus={() => {
+            setFocused(true);
+            scrollIntoView?.(wrapRef.current);
+          }}
           onBlur={() => setFocused(false)}
           textAlignVertical={multiline ? 'top' : 'center'}
           style={[

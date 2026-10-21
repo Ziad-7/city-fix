@@ -1,14 +1,11 @@
 import type { Incident, MapPin, Report, ServiceRequest, Session, TriageSuggestion } from '@/domain/types';
-import { findDuplicates } from '@/logic/duplicates';
 import type { Services } from '../interfaces';
 import { http, setApiToken } from './http';
 
 /**
- * Real backend (FastAPI). Contract from the plan:
- *   POST /reports, GET /reports, GET /incidents, GET /incidents/{id},
- *   POST /service-requests, GET /service-requests, GET /map/incidents.
- * Auth and triage endpoints (/auth/otp, /auth/verify, /triage) are assumed, to be confirmed on Day 3.
+ * Real backend (FastAPI), following docs/api-contract.md.
  * Not wired by default: set EXPO_PUBLIC_API_MODE=api and EXPO_PUBLIC_API_URL.
+ * The bearer token lives in the persisted session (store/useSession) and is handed to http.ts from there.
  */
 export function createApiServices(): Services {
   const incidents: Services['incidents'] = {
@@ -18,9 +15,10 @@ export function createApiServices(): Services {
     listIncidents: () => http<Incident[]>('GET', '/incidents'),
     getIncident: (id) => http<Incident | null>('GET', `/incidents/${encodeURIComponent(id)}`),
     listMapPins: () => http<MapPin[]>('GET', '/map/incidents'),
-    async findDuplicates(categoryId, at) {
-      // Server-side duplicate search is not in the contract yet; reuse the client logic.
-      return findDuplicates(await http<Incident[]>('GET', '/incidents'), categoryId, at);
+    async listFollowing() {
+      // Proposed contract field: `Incident.isFollowing` for the authenticated caller.
+      const all = await http<Incident[]>('GET', '/incidents');
+      return all.filter((i) => i.isFollowing).map((i) => i.id);
     },
     followIncident: (_userId, id) => http<Incident>('POST', `/incidents/${encodeURIComponent(id)}/follow`),
     simulateProgress: () => Promise.reject(new Error('simulateProgress متاح في وضع mock بس')),
@@ -33,8 +31,7 @@ export function createApiServices(): Services {
       },
       async verifyCode(phone, code) {
         const res = await http<Session & { token: string }>('POST', '/auth/verify', { phone, code });
-        setApiToken(res.token);
-        return { userId: res.userId, phone: res.phone, name: res.name };
+        return { userId: res.userId, phone: res.phone, name: res.name, token: res.token };
       },
       async signOut() {
         setApiToken(null);
@@ -48,9 +45,10 @@ export function createApiServices(): Services {
       simulateProgress: () => Promise.reject(new Error('simulateProgress متاح في وضع mock بس')),
     },
     triage: {
-      async analyze(input) {
-        const res = await http<TriageSuggestion>('POST', '/triage', input);
-        return { ...res, duplicates: res.duplicates ?? [] };
+      async analyze({ userId: _userId, ...body }) {
+        // The backend knows the caller from the token and leaves out their own and followed incidents.
+        const res = await http<TriageSuggestion>('POST', '/triage', body);
+        return { ...res, duplicates: res.duplicates ?? [], alreadyReported: res.alreadyReported ?? [] };
       },
     },
   };

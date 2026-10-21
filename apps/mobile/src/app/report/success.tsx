@@ -130,7 +130,7 @@ export default function SuccessScreen() {
 
 const styles = StyleSheet.create({
   hero: { backgroundColor: colors.red, borderBottomLeftRadius: 28, borderBottomRightRadius: 28, alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 20, paddingBottom: 24 },
-  logoDisc: { width: 108, height: 108, borderRadius: 54, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', ...shadows.float },
+  logoDisc: { width: 108, height: 108, borderRadius: 54, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', ...shadows.float },
   title: { fontFamily: fonts.ruqaa, fontSize: 40, lineHeight: 56, marginTop: 10 },
   sub: { fontSize: 15, lineHeight: 24 },
   strong: { fontFamily: fonts.sans700, fontSize: 15, lineHeight: 24 },

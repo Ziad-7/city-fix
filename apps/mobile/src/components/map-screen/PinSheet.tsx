@@ -1,9 +1,9 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
-import { AppText, Button, StatusChip } from '@/components/ui';
+import { AppText, Button, StatusChips } from '@/components/ui';
 import { getCategory } from '@/domain/categories';
 import type { Incident } from '@/domain/types';
-import { priorityReason } from '@/logic/priority';
+import { isCriticalIncident, priorityReason } from '@/logic/priority';
 import { colors, fonts, radius, shadows } from '@/theme/tokens';
 import { toArabicDigits } from '@/utils/digits';
 import { formatDistanceAr } from '@/utils/geo';
@@ -36,13 +36,13 @@ export function PinSheet({ incident, distanceM, following, followBusy, myReportI
           <AppText style={styles.title} numberOfLines={2}>{incident.title}</AppText>
           <AppText variant="caption" color={colors.inkMuted}>{cat.labelAr}</AppText>
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel="إغلاق" onPress={onClose} style={styles.close} hitSlop={6}>
+        <Pressable accessibilityRole="button" accessibilityLabel="إغلاق" onPress={onClose} style={styles.close}>
           <Icon name="x" size={18} color={colors.inkMuted} />
         </Pressable>
       </View>
 
       <View style={styles.meta}>
-        <StatusChip status={incident.status} />
+        <StatusChips status={incident.status} critical={isCriticalIncident(incident)} />
         <View style={styles.metaItem}>
           <Icon name="users" size={16} color={colors.inkMuted} />
           <AppText variant="caption" color={colors.inkMuted}>{toArabicDigits(incident.followers)} متابع</AppText>
@@ -65,7 +65,7 @@ export function PinSheet({ incident, distanceM, following, followBusy, myReportI
       <View style={styles.actions}>
         <View style={styles.action}>
           <Button
-            label={following ? 'بتتابعه' : 'أنا كمان'}
+            label={following ? 'متابَع' : 'أنا كمان'}
             icon={following ? 'check' : 'plus'}
             size="sm"
             fullWidth
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   icon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.redSoft, alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, minWidth: 0 },
   title: { fontFamily: fonts.sans600, fontSize: 15, lineHeight: 24, color: colors.ink },
-  close: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  close: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   meta: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10 },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   details: { backgroundColor: colors.paper, borderRadius: radius.sm, padding: 10, gap: 4 },

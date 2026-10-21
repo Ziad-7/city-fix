@@ -1,37 +1,29 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { LogoLockup, Skyline } from '@/components/brand';
 import { Icon } from '@/components/Icon';
-import { AppText, Button, Card, StatusChip } from '@/components/ui';
+import { AppText, Button, Card, InlineNotice, StatusChip, useTransientNotice } from '@/components/ui';
 import { getCategory } from '@/domain/categories';
 import type { IconName, Incident } from '@/domain/types';
-import type { RequestItem } from '@/store';
+import { isCriticalIncident } from '@/logic/priority';
 import { colors, fonts, radius, shadows } from '@/theme/tokens';
 import { formatDistanceAr } from '@/utils/geo';
-import { isolateLtr } from '@/utils/digits';
-import { relativeTimeAr } from '@/utils/time';
 import { neighboursAr } from '../report/text';
 
 /** Logo at the start, notification bell at the end (notifications arrive later: the bell says so). */
 export function HomeHeader() {
-  const [notice, setNotice] = useState(false);
-  useEffect(() => {
-    if (!notice) return;
-    const t = setTimeout(() => setNotice(false), 3000);
-    return () => clearTimeout(t);
-  }, [notice]);
+  const { notice, show } = useTransientNotice(3000);
   return (
     <View>
       <View style={styles.header}>
         <LogoLockup height={36} />
-        <Pressable accessibilityRole="button" accessibilityLabel="الإشعارات" onPress={() => setNotice(true)} style={styles.bell}>
+        <Pressable accessibilityRole="button" accessibilityLabel="الإشعارات" onPress={() => show('الإشعارات قريبًا. لحد ما تنزل، تابع طلباتك من تبويب طلباتي.')} style={styles.bell}>
           <Icon name="bell" size={22} />
         </Pressable>
       </View>
       {notice ? (
-        <View accessibilityLiveRegion="polite" style={styles.notice}>
-          <AppText variant="caption" color={colors.goldDeep}>الإشعارات قريبًا. لحد ما تنزل، تابع طلباتك من تبويب طلباتي.</AppText>
+        <View style={styles.notice}>
+          <InlineNotice text={notice} />
         </View>
       ) : null}
     </View>
@@ -113,32 +105,20 @@ export function NearbyCard({
         <AppText variant="caption" color={colors.inkMuted}>
           على بعد {formatDistanceAr(distanceM)} · {neighboursAr(incident.followers)}
         </AppText>
+        {isCriticalIncident(incident) ? (
+          <View style={styles.criticalChip}>
+            <StatusChip status="critical" />
+          </View>
+        ) : null}
       </View>
       {followed ? (
-        <View accessibilityLabel="بتتابع المشكلة دي" style={styles.followed}>
+        <View accessibilityLabel="متابَع" style={styles.followed}>
           <Icon name="check" size={16} color={colors.statusResolved} strokeWidth={2.5} />
-          <AppText variant="smallStrong" color={colors.statusResolved} style={{ fontSize: 13 }}>متابع</AppText>
+          <AppText variant="smallStrong" color={colors.statusResolved} style={{ fontSize: 13 }}>متابَع</AppText>
         </View>
       ) : (
         <Button label="أنا كمان" size="sm" variant="secondary" loading={busy} onPress={onFollow} />
       )}
-    </Card>
-  );
-}
-
-/** One "آخر التحديثات" row: thumbnail, title, id · time, status chip. */
-export function UpdateRow({ item, onPress }: { item: RequestItem; onPress: () => void }) {
-  const icon: IconName = item.kind === 'report' ? getCategory(item.categoryId).icon : item.request.serviceType === 'bulky_waste' ? 'trash' : 'tree';
-  return (
-    <Card padding={12} onPress={onPress} accessibilityLabel={`${item.title}، افتح التفاصيل`} style={styles.rowCard}>
-      <View style={styles.thumb}>
-        <Icon name={icon} size={22} color="#C9D1D4" />
-      </View>
-      <View style={styles.rowText}>
-        <AppText style={styles.rowTitle} numberOfLines={2}>{item.title}</AppText>
-        <AppText variant="caption" color={colors.inkMuted}>{isolateLtr(`#${item.id}`)} · {relativeTimeAr(item.createdAt)}</AppText>
-      </View>
-      <StatusChip status={item.status} />
     </Card>
   );
 }
@@ -177,7 +157,7 @@ export function ErrorCard({ message, onRetry }: { message: string; onRetry: () =
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 },
   bell: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
-  notice: { marginHorizontal: 16, marginTop: 4, backgroundColor: colors.goldSoft, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 8 },
+  notice: { marginHorizontal: 16, marginTop: 4 },
   greeting: { gap: 2 },
   ruqaa: { fontFamily: fonts.ruqaa, fontSize: 28, lineHeight: 42 },
   areaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
@@ -196,7 +176,7 @@ const styles = StyleSheet.create({
   rowText: { flex: 1, minWidth: 0, gap: 2 },
   rowTitle: { fontFamily: fonts.sans600, fontSize: 15, lineHeight: 24 },
   nearIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.redSoft, alignItems: 'center', justifyContent: 'center' },
-  thumb: { width: 52, height: 52, borderRadius: radius.sm, backgroundColor: colors.statusReceived, alignItems: 'center', justifyContent: 'center' },
+  criticalChip: { alignSelf: 'flex-start', marginTop: 2 },
   followed: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 40, paddingHorizontal: 12, borderRadius: radius.pill, backgroundColor: colors.statusResolvedBg },
   skeleton: { backgroundColor: colors.surface, borderRadius: radius.md, padding: 12 },
   skeletonDot: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.statusReceivedBg },

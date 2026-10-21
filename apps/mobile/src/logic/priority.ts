@@ -52,13 +52,24 @@ export const PRIORITY_LABEL_AR: Record<PriorityLevel, string> = {
   low: 'أولوية عادية',
 };
 
-/** One-line reason, e.g. "أولوية عالية: قريب من مدرسة + ٧ بلاغات". */
+/** Critical means a life-safety severity or an urgent score; both get the red "خطر" badge. */
+export function isCriticalIncident(i: { severity: Severity; priority: Pick<Priority, 'score'> }): boolean {
+  return i.severity === 'critical' || priorityLevel(i.priority.score) === 'critical';
+}
+
+/**
+ * One-line reason, e.g. "أولوية عالية: قريب من مدرسة + ٧ بلاغات".
+ * Reasons are only listed from medium priority up; a regular-priority line is the
+ * label alone, so it never contradicts itself ("أولوية عادية — خطورة عالية").
+ */
 export function priorityReason(p: Priority, reporters: number, sensitivePlace?: string): string {
+  const level = priorityLevel(p.score);
+  const label = PRIORITY_LABEL_AR[level];
+  if (level === 'low') return label;
   const parts: string[] = [];
   if (sensitivePlace) parts.push(`قريب من ${sensitivePlace}`);
   if (reporters > 1) parts.push(`${toArabicDigits(reporters)} بلاغات`);
   const sev = p.factors.find((f) => f.key === 'severity');
   if (sev && sev.points >= SEVERITY_POINTS.high) parts.push('خطورة عالية');
-  const label = PRIORITY_LABEL_AR[priorityLevel(p.score)];
   return parts.length ? `${label}: ${parts.join(' + ')}` : label;
 }

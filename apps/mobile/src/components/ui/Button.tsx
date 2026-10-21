@@ -11,6 +11,8 @@ export type ButtonProps = {
   onPress?: () => void;
   variant?: ButtonVariant;
   icon?: IconName;
+  /** Where the icon sits: before the label (default) or after it (a trailing arrow). */
+  iconPosition?: 'start' | 'end';
   loading?: boolean;
   disabled?: boolean;
   /** `sm` is a 40px pill for inline actions ("أنا كمان"). */
@@ -24,11 +26,11 @@ export type ButtonProps = {
 const palette: Record<ButtonVariant, { bg: string; fg: string; border?: string; pressed: string }> = {
   primary: { bg: colors.red, fg: colors.onRed, pressed: colors.redDeep },
   secondary: { bg: colors.surface, fg: colors.red, border: colors.red, pressed: colors.redSoft },
-  gold: { bg: colors.gold, fg: colors.ink, pressed: '#BC8F09' },
+  gold: { bg: colors.gold, fg: colors.ink, pressed: colors.goldPressed },
   ghost: { bg: 'transparent', fg: colors.red, pressed: colors.redSoft },
 };
 
-export function Button({ label, onPress, variant = 'primary', icon, loading, disabled, size = 'md', fullWidth, style, testID }: ButtonProps) {
+export function Button({ label, onPress, variant = 'primary', icon, iconPosition = 'start', loading, disabled, size = 'md', fullWidth, style, testID }: ButtonProps) {
   const p = palette[variant];
   const small = size === 'sm';
   const stretch = fullWidth ?? !small;
@@ -39,6 +41,7 @@ export function Button({ label, onPress, variant = 'primary', icon, loading, dis
       accessibilityRole="button"
       accessibilityState={{ disabled: !!inactive, busy: !!loading }}
       disabled={inactive}
+      hitSlop={small ? { top: 2, bottom: 2 } : undefined}
       onPress={onPress}
       style={({ pressed }) => [
         styles.base,
@@ -53,10 +56,11 @@ export function Button({ label, onPress, variant = 'primary', icon, loading, dis
         <ActivityIndicator color={p.fg} />
       ) : (
         <View style={styles.row}>
-          {icon ? <Icon name={icon} size={small ? 16 : 20} color={p.fg} strokeWidth={2} /> : null}
+          {icon && iconPosition === 'start' ? <Icon name={icon} size={small ? 16 : 20} color={p.fg} strokeWidth={2} /> : null}
           <AppText variant="bodyStrong" color={p.fg} style={{ fontFamily: fonts.sans700, fontSize: small ? 13 : 16, lineHeight: small ? 20 : 24 }}>
             {label}
           </AppText>
+          {icon && iconPosition === 'end' ? <Icon name={icon} size={small ? 16 : 20} color={p.fg} strokeWidth={2} /> : null}
         </View>
       )}
     </Pressable>

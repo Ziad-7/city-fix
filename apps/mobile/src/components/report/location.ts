@@ -1,7 +1,7 @@
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DEFAULT_PLACE } from '@/domain/locations';
-import type { Place } from '@/domain/types';
+import type { LatLng, Place } from '@/domain/types';
 
 export type LocationState = 'locating' | 'gps' | 'fallback';
 
@@ -20,12 +20,13 @@ async function addressFor(lat: number, lng: number): Promise<string> {
 }
 
 /**
- * Current GPS position for the report. On denial, timeout or any failure it falls back to the default
- * Nasr City point and the screen asks the citizen to type the address.
+ * Current GPS position for the report. On denial, timeout or any failure it falls back to `fallback`
+ * (the centre of the citizen's saved district, else Nasr City) with an EMPTY address: the citizen has to
+ * type the street, so a report can never go out with a street they did not write.
  */
-export function useReportLocation() {
+export function useReportLocation(fallback: LatLng = DEFAULT_PLACE) {
   const [state, setState] = useState<LocationState>('locating');
-  const [place, setPlace] = useState<Place>(DEFAULT_PLACE);
+  const [place, setPlace] = useState<Place>({ lat: fallback.lat, lng: fallback.lng, address: '' });
   const edited = useRef(false);
 
   const resolve = useCallback(async (): Promise<{ state: LocationState; coords?: { lat: number; lng: number; address: string } }> => {
@@ -45,10 +46,10 @@ export function useReportLocation() {
       const { lat, lng, address } = r.coords;
       setPlace((prev) => ({ lat, lng, address: edited.current ? prev.address : address, landmark: prev.landmark }));
     } else {
-      setPlace((prev) => ({ ...DEFAULT_PLACE, address: edited.current ? prev.address : DEFAULT_PLACE.address, landmark: prev.landmark }));
+      setPlace((prev) => ({ lat: fallback.lat, lng: fallback.lng, address: edited.current ? prev.address : '', landmark: prev.landmark }));
     }
     setState(r.state);
-  }, []);
+  }, [fallback.lat, fallback.lng]);
 
   /** Retry from the "حدد موقعي تاني" button. */
   const locate = useCallback(async () => {

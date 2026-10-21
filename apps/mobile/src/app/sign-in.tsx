@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LogoPill, Skyline } from '@/components/brand';
 import { Icon } from '@/components/Icon';
-import { AppText, Button, ChoiceChip, Screen, SelectField, TextField, ToggleRow } from '@/components/ui';
+import { AppText, Button, ChoiceChip, InlineNotice, Screen, SelectField, TextField, ToggleRow, useTransientNotice } from '@/components/ui';
 import { DEFAULT_DISTRICT, GOVERNORATES, findGovernorate } from '@/domain/locations';
 import { otpSchema, phoneSchema } from '@/domain/schemas';
 import { MOCK_OTP, services } from '@/services';
@@ -16,7 +16,8 @@ type Step = 'phone' | 'code';
 
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
-  const { governorate: savedGov, district: savedDistrict, otpChannel, prefs, setOtpChannel, setPrefs, startSession } = useSession();
+  const { governorate: savedGov, district: savedDistrict, otpChannel, prefs, notice: sessionNotice, setOtpChannel, setPrefs, startSession } = useSession();
+  const { notice: soonNotice, show: showSoon } = useTransientNotice();
 
   const [step, setStep] = useState<Step>('phone');
   const [phone, setPhone] = useState('');
@@ -51,16 +52,19 @@ export default function SignInScreen() {
     }
   };
 
-  const verify = async () => {
-    const parsed = otpSchema.safeParse(toWesternDigits(code));
+  const verify = async (value: string = code) => {
+    if (busy) return;
+    const digits = toWesternDigits(value);
+    const parsed = otpSchema.safeParse(digits);
     if (!parsed.success) {
       setError(parsed.error.issues[0].message);
       return;
     }
     setError(null);
     setBusy(true);
+    Keyboard.dismiss();
     try {
-      const session = await services.auth.verifyCode(normalizeEgyptPhone(phone), toWesternDigits(code));
+      const session = await services.auth.verifyCode(normalizeEgyptPhone(phone), digits);
       startSession(session, { governorate, district });
       router.replace('/');
     } catch {
@@ -69,7 +73,15 @@ export default function SignInScreen() {
     }
   };
 
-  const soon = () => Alert.alert('قريبًا', 'الميزة دي هتتضاف في نسخة جاية.');
+  // Alert.alert does nothing on web, so "coming soon" is an inline notice everywhere.
+  const soon = () => showSoon('الميزة دي قريبًا، هتتضاف في نسخة جاية.');
+
+  // The 6th digit submits the code: the number pad has no return key.
+  const onCodeChange = (t: string) => {
+    const digits = toWesternDigits(t).replace(/\D/g, '');
+    setCode(digits);
+    if (digits.length === 6) void verify(digits);
+  };
 
   const hero = (
     <View style={[styles.hero, { paddingTop: insets.top + 24, height: 310 + insets.top }]}>
@@ -81,6 +93,7 @@ export default function SignInScreen() {
 
   return (
     <Screen
+      avoidKeyboard
       edges={['bottom']}
       padded={false}
       footer={
@@ -88,9 +101,10 @@ export default function SignInScreen() {
           <Button
             testID="sign-in-submit"
             label={step === 'phone' ? 'ابعتلي الكود' : 'دخول'}
-            onPress={step === 'phone' ? sendCode : verify}
+            onPress={step === 'phone' ? sendCode : () => void verify()}
             loading={busy}
           />
+          {soonNotice ? <InlineNotice text={soonNotice} testID="soon-notice" /> : null}
           <View style={styles.links}>
             {step === 'code' ? (
               <Pressable accessibilityRole="button" onPress={() => { setStep('phone'); setCode(''); setError(null); }}>
@@ -109,6 +123,7 @@ export default function SignInScreen() {
     >
       {hero}
       <View style={styles.form}>
+        {sessionNotice ? <InlineNotice text={sessionNotice} testID="session-notice" /> : null}
         {step === 'phone' ? (
           <>
             <TextField
@@ -135,8 +150,8 @@ export default function SignInScreen() {
             <View style={styles.group}>
               <AppText variant="label">ابعتلي الكود على</AppText>
               <View style={styles.pair}>
-                <View style={styles.flex}><ChoiceChip testID="otp-sms" label="رسالة SMS" selected={otpChannel === 'sms'} onPress={() => setOtpChannel('sms')} /></View>
-                <View style={styles.flex}><ChoiceChip testID="otp-whatsapp" label="واتساب" selected={otpChannel === 'whatsapp'} onPress={() => setOtpChannel('whatsapp')} /></View>
+                <View style={styles.flex}><ChoiceChip testID="otp-sms" radio label="رسالة SMS" selected={otpChannel === 'sms'} onPress={() => setOtpChannel('sms')} /></View>
+                <View style={styles.flex}><ChoiceChip testID="otp-whatsapp" radio label="واتساب" selected={otpChannel === 'whatsapp'} onPress={() => setOtpChannel('whatsapp')} /></View>
               </View>
             </View>
 
@@ -164,7 +179,7 @@ export default function SignInScreen() {
               testID="code-input"
               label="الكود"
               value={code}
-              onChangeText={(t) => setCode(toWesternDigits(t).replace(/\D/g, ''))}
+              onChangeText={onCodeChange}
               keyboardType="number-pad"
               maxLength={6}
               ltr
@@ -172,7 +187,7 @@ export default function SignInScreen() {
               autoFocus
               placeholder="······"
               error={error}
-              onSubmitEditing={verify}
+              onSubmitEditing={() => void verify()}
             />
             <View style={styles.hint}>
               <Icon name="info" size={18} color={colors.goldDeep} />

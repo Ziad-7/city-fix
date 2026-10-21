@@ -4,7 +4,7 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { Icon } from '@/components/Icon';
 import { AppText, Button, TextField } from '@/components/ui';
 import { getCategory } from '@/domain/categories';
-import { STATUS_LABEL_AR, type DuplicateMatch, type Place } from '@/domain/types';
+import { STATUS_LABEL_AR, type AlreadyReported, type DuplicateMatch, type Place } from '@/domain/types';
 import { colors, fonts, radius } from '@/theme/tokens';
 import { formatDistanceAr } from '@/utils/geo';
 import type { LocationState } from './location';
@@ -59,13 +59,13 @@ export function LocationCard({
   return (
     <View style={{ gap: 8 }}>
       <View style={styles.locCard}>
-        <Svg accessibilityLabel="خريطة: موقع البلاغ" width="100%" height={132} viewBox="0 0 356 132" preserveAspectRatio="xMidYMid slice" style={{ backgroundColor: '#F1EEE8' }}>
+        <Svg accessibilityLabel="خريطة: موقع البلاغ" width="100%" height={132} viewBox="0 0 356 132" preserveAspectRatio="xMidYMid slice" style={{ backgroundColor: colors.mapGround }}>
           <Path d="M0 44h356M0 98h356M88 0v132M210 0v132M300 0v132" stroke="#FFFFFF" strokeWidth={10} />
           <Path d="M0 70h356" stroke="#FFFFFF" strokeWidth={16} />
-          <Rect x={226} y={8} width={60} height={26} rx={6} fill="#DCF1E1" />
-          <Circle cx={178} cy={70} r={34} fill="#D4A20B" fillOpacity={0.14} stroke="#D4A20B" strokeDasharray="4 4" />
+          <Rect x={226} y={8} width={60} height={26} rx={6} fill={colors.statusResolvedBg} />
+          <Circle cx={178} cy={70} r={34} fill={colors.gold} fillOpacity={0.14} stroke={colors.gold} strokeDasharray="4 4" />
           <Path d="M178 38c-9 0-16 7-16 16 0 12 16 24 16 24s16-12 16-24c0-9-7-16-16-16z" fill={colors.red} />
-          <Circle cx={178} cy={54} r={6} fill="#FFFFFF" />
+          <Circle cx={178} cy={54} r={6} fill={colors.surface} />
         </Svg>
         {state === 'locating' ? (
           <View style={styles.locating}>
@@ -75,7 +75,7 @@ export function LocationCard({
         ) : null}
         <View style={styles.addressRow}>
           <Icon name="pin" size={20} color={colors.red} />
-          <AppText testID="address-line" variant="small" style={{ flex: 1 }} numberOfLines={2}>{place.address || 'لسه ماكتبتش العنوان'}</AppText>
+          <AppText testID="address-line" variant="small" style={{ flex: 1 }} numberOfLines={2}>{place.address || (state === 'locating' ? 'بنحدد العنوان…' : 'العنوان لسه مش مكتوب')}</AppText>
           <Pressable testID="address-edit" accessibilityRole="button" accessibilityLabel="تعديل العنوان" onPress={() => setEditing((v) => !v)} style={styles.edit}>
             <AppText variant="smallStrong" color={colors.red} style={{ fontSize: 13 }}>{editing ? 'تم' : 'تعديل'}</AppText>
           </Pressable>
@@ -86,7 +86,7 @@ export function LocationCard({
         <View style={styles.fallback}>
           <Icon name="info" size={18} color={colors.goldDeep} />
           <AppText variant="caption" color={colors.goldDeep} style={{ flex: 1 }}>
-            مقدرناش نحدد موقعك بدقة، فاخترنا مدينة نصر. اكتب العنوان الصح تحت.
+            مقدرناش نحدد موقعك بدقة، فاخترنا وسط منطقتك. اكتب العنوان الصح تحت.
           </AppText>
           <Pressable accessibilityRole="button" accessibilityLabel="حدد موقعي تاني" onPress={onRetry} style={styles.retry}>
             <Icon name="locate" size={18} color={colors.goldDeep} />
@@ -130,7 +130,29 @@ export function DuplicatePanel({
   );
 }
 
+/** "إنت مبلّغ عنها بالفعل": the nearest same-category problem is the citizen's own report, so there is nothing to join. */
+export function AlreadyReportedNote({ own, onOpen }: { own: AlreadyReported; onOpen: () => void }) {
+  return (
+    <View testID="already-reported" accessibilityLabel="إنت مبلّغ عنها بالفعل" style={styles.own}>
+      <View style={styles.dupHead}>
+        <View style={styles.ownIcon}>
+          <Icon name="check" size={18} color={colors.statusResolved} strokeWidth={2.5} />
+        </View>
+        <View style={{ flex: 1, gap: 2 }}>
+          <AppText style={{ fontFamily: fonts.sans700, fontSize: 15, lineHeight: 24 }}>إنت مبلّغ عنها بالفعل</AppText>
+          <AppText variant="small" color={colors.inkMuted}>
+            {own.title} على بعد {formatDistanceAr(own.distanceM)}. مش محتاج تبلّغ تاني، تقدر تتابع بلاغك.
+          </AppText>
+        </View>
+      </View>
+      <Button testID="open-own-report" label="افتح بلاغك" variant="secondary" onPress={onOpen} style={styles.dupBtn} />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  own: { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.statusResolved, borderRadius: radius.md, padding: 14, gap: 10 },
+  ownIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.statusResolvedBg, alignItems: 'center', justifyContent: 'center' },
   stepBar: { flexDirection: 'row', gap: 6, paddingHorizontal: 16, paddingBottom: 14 },
   seg: { flex: 1, height: 4, borderRadius: 2 },
   voice: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 10, paddingVertical: 8, minHeight: 56 },

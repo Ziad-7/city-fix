@@ -12,14 +12,23 @@ export const placeSchema = z.object({
   landmark: z.string().optional(),
 });
 
-export const newReportSchema = z.object({
-  categoryId: z.string().min(1, 'اختار نوع المشكلة'),
-  description: z.string().trim().min(5, 'اكتب وصف قصير للمشكلة (٥ حروف على الأقل)'),
-  photoUris: z.array(z.string()).min(1, 'ضيف صورة للمشكلة'),
-  location: placeSchema,
-  anonymous: z.boolean(),
-  blurFaces: z.boolean(),
-});
+/** A report needs a photo OR a description of at least this many characters. */
+export const MIN_DESCRIPTION = 10;
+
+export const newReportSchema = z
+  .object({
+    categoryId: z.string().min(1, 'اختار نوع المشكلة'),
+    description: z.string().trim(),
+    photoUris: z.array(z.string()),
+    location: placeSchema,
+    anonymous: z.boolean(),
+    blurFaces: z.boolean(),
+  })
+  .superRefine((v, ctx) => {
+    if (v.photoUris.length === 0 && v.description.length < MIN_DESCRIPTION) {
+      ctx.addIssue({ code: 'custom', path: ['description'], message: 'ضيف صورة أو اكتب وصف للمشكلة (١٠ حروف على الأقل)' });
+    }
+  });
 
 export const bulkyBookingSchema = z.object({
   items: z.array(z.string()).min(1, 'اختار حاجة واحدة على الأقل'),

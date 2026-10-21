@@ -5,12 +5,13 @@ import { EmergencyRow } from '@/components';
 import { Grid3 } from '@/components/report/Grid3';
 import { selectNearby } from '@/components/home/nearby';
 import {
-  EmptyNote, ErrorCard, Greeting, HeroCard, HomeHeader, NearbyCard, SectionTitle, ServiceTile, SkeletonRow, UpdateRow,
+  EmptyNote, ErrorCard, Greeting, HeroCard, HomeHeader, NearbyCard, SectionTitle, ServiceTile, SkeletonRow,
 } from '@/components/home/HomeParts';
+import { RequestCard } from '@/components/requests';
 import { AppText, Button, Screen } from '@/components/ui';
 import { DEFAULT_PLACE, findDistrict } from '@/domain/locations';
 import type { IconName } from '@/domain/types';
-import { refreshAll, useReports, useRequestItems, useSession } from '@/store';
+import { refreshAll, useFollowingSet, useReports, useRequestItems, useSession } from '@/store';
 import { colors } from '@/theme/tokens';
 import { greetingAr } from '@/utils/time';
 
@@ -38,7 +39,7 @@ export default function HomeScreen() {
   const items = useRequestItems();
 
   const [refreshing, setRefreshing] = useState(false);
-  const [followed, setFollowed] = useState<ReadonlySet<string>>(new Set());
+  const followed = useFollowingSet();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [followFailed, setFollowFailed] = useState(false);
 
@@ -72,7 +73,6 @@ export default function HomeScreen() {
       setFollowFailed(false);
       try {
         await followIncident(id);
-        setFollowed((prev) => new Set(prev).add(id));
       } catch {
         setFollowFailed(true);
       } finally {
@@ -137,11 +137,11 @@ export default function HomeScreen() {
               </>
             ) : latest.length === 0 ? (
               <View style={styles.emptyBlock}>
-                <EmptyNote icon="clipboard" text="لسه ماعملتش أي طلب. أول بلاغ ليك هيظهر هنا." />
+                <EmptyNote icon="clipboard" text="لسه مفيش طلبات. أول بلاغ ليك هيظهر هنا." />
                 <Button label="بلّغ عن مشكلة" icon="camera" variant="secondary" size="sm" onPress={() => router.push('/report/category')} />
               </View>
             ) : (
-              latest.map((item) => <UpdateRow key={item.id} item={item} onPress={() => router.push(`/requests/${item.id}`)} />)
+              latest.map((item) => <RequestCard key={item.id} item={item} />)
             )}
           </View>
         </>
