@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import type { AppNotification } from '@/domain/types';
+import { colors } from '@/theme/tokens';
 
 export const UPDATES_CHANNEL = 'updates';
 
@@ -26,7 +27,7 @@ export async function setupOsNotifications(): Promise<void> {
       await Notifications.setNotificationChannelAsync(UPDATES_CHANNEL, {
         name: 'تحديثات البلاغات والطلبات',
         importance: Notifications.AndroidImportance.DEFAULT,
-        lightColor: '#C8102E',
+        lightColor: colors.red,
       });
     }
   } catch {
@@ -65,15 +66,29 @@ export async function showLocalNotification(n: Pick<AppNotification, 'title' | '
   }
 }
 
-/** Calls `onOpen(entityId)` when the citizen taps an OS notification. Returns an unsubscribe function. */
+/**
+ * Calls `onOpen(entityId)` when the citizen taps an OS notification. Returns an unsubscribe function.
+ * A tap that launched the app from the killed state is delivered too (once), after the navigator has mounted.
+ */
 export function onNotificationTapped(onOpen: (entityId: string) => void): () => void {
   if (!supported) return () => undefined;
   try {
-    const sub = load().addNotificationResponseReceivedListener((res) => {
-      const id = res.notification.request.content.data?.entityId;
+    const Notifications = load();
+    const open = (res: { notification: { request: { content: { data?: Record<string, unknown> | null } } } } | null) => {
+      const id = res?.notification.request.content.data?.entityId;
       if (typeof id === 'string') onOpen(id);
-    });
-    return () => sub.remove();
+    };
+    const sub = Notifications.addNotificationResponseReceivedListener(open);
+    let coldStart: ReturnType<typeof setTimeout> | null = null;
+    const last = Notifications.getLastNotificationResponse?.();
+    if (last) {
+      Notifications.clearLastNotificationResponse?.();
+      coldStart = setTimeout(() => open(last), 0);
+    }
+    return () => {
+      if (coldStart) clearTimeout(coldStart);
+      sub.remove();
+    };
   } catch {
     return () => undefined;
   }

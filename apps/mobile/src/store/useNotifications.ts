@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { diffStatuses, type KnownStatuses, type TrackedItem } from '@/domain/notifications';
-import type { AppNotification } from '@/domain/types';
+import type { AppNotification, IncidentStatus } from '@/domain/types';
 import { showLocalNotification } from '@/notifications/os';
 import { usePrefs } from './usePrefs';
 import { useReports } from './useReports';
@@ -24,6 +24,19 @@ type NotificationsState = {
 
 let counter = 0;
 
+/**
+ * Status changes the citizen just caused themselves (reopening a report): the next sync records them as the new
+ * baseline without a notification, so the person does not get an OS banner about their own tap.
+ */
+const ownChanges = new Map<string, IncidentStatus>();
+
+export function expectOwnChange(entityIds: string[], status: IncidentStatus): () => void {
+  for (const id of entityIds) ownChanges.set(id, status);
+  return () => {
+    for (const id of entityIds) if (ownChanges.get(id) === status) ownChanges.delete(id);
+  };
+}
+
 export const useNotifications = create<NotificationsState>()(
   persist(
     (set, get) => ({
@@ -31,9 +44,14 @@ export const useNotifications = create<NotificationsState>()(
       known: {},
       sync(tracked) {
         const at = new Date().toISOString();
-        const before = get().known;
+        let before = get().known;
+        for (const t of tracked) {
+          if (ownChanges.get(t.entityId) !== t.status) continue;
+          ownChanges.delete(t.entityId);
+          before = { ...before, [t.entityId]: t.status };
+        }
         const { known, created } = diffStatuses(before, tracked, at, (it, i) => `n-${Date.now()}-${counter++}-${i}-${it.entityId}`);
-        const baselineChanged = tracked.some((t) => before[t.entityId] !== t.status);
+        const baselineChanged = tracked.some((t) => get().known[t.entityId] !== t.status);
         if (created.length === 0) {
           if (baselineChanged) set({ known });
           return [];

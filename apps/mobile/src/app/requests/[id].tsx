@@ -182,7 +182,7 @@ export default function RequestDetailScreen() {
 
       {item.kind === 'service' ? <ServiceDetailsCard request={item.request} /> : null}
 
-      {incident ? <ReopenCard incidentId={incident.id} status={incident.status} /> : null}
+      {incident ? <ReopenCard key={incident.id} incidentId={incident.id} status={incident.status} /> : null}
 
       <TimelineCard title={isReport ? 'مراحل البلاغ' : 'مراحل الطلب'} steps={steps} />
 

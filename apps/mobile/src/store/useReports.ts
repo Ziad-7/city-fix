@@ -50,6 +50,13 @@ const upsertIncident = (list: Incident[], inc: Incident) =>
 
 const addId = (ids: string[], id: string) => (ids.includes(id) ? ids : [...ids, id]);
 
+/**
+ * Reports accepted while a refresh may have been in flight (form submit, offline queue), kept until a fetched list
+ * contains them. Without this a refresh that started before the POST (sign-in refresh + queue flush, pull-to-refresh)
+ * overwrites the list and the new report disappears until the next refresh.
+ */
+const unconfirmed = new Map<string, { report: Report; incident: Incident }>();
+
 export const useReports = create<ReportsState>((set, get) => ({
   status: 'idle',
   error: null,
@@ -67,13 +74,27 @@ export const useReports = create<ReportsState>((set, get) => ({
         services.incidents.listIncidents(),
         services.incidents.listFollowing(userId),
       ]);
-      set({ reports, incidents, followingIds, status: 'ready' });
+      let merged = { reports, incidents, followingIds };
+      for (const [id, res] of unconfirmed) {
+        if (reports.some((r) => r.id === id)) {
+          unconfirmed.delete(id);
+          continue;
+        }
+        merged = {
+          reports: [res.report, ...merged.reports],
+          incidents: merged.incidents.some((i) => i.id === res.incident.id) ? merged.incidents : [res.incident, ...merged.incidents],
+          followingIds: addId(merged.followingIds, res.incident.id),
+        };
+      }
+      merged.reports.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      set({ ...merged, status: 'ready' });
     } catch (e) {
       set({ status: 'error', error: e instanceof Error ? e.message : 'حصلت مشكلة، جرّب تاني' });
     }
   },
 
   ingestSubmitted(res, opts) {
+    unconfirmed.set(res.report.id, res);
     set((s) => ({
       reports: s.reports.some((r) => r.id === res.report.id) ? s.reports : [res.report, ...s.reports],
       incidents: upsertIncident(s.incidents, res.incident),
@@ -126,7 +147,10 @@ export const useReports = create<ReportsState>((set, get) => ({
     set((s) => ({ incidents: upsertIncident(s.incidents, inc) }));
   },
 
-  reset: () => set({ status: 'idle', error: null, reports: [], incidents: [], followingIds: [], lastSubmitted: null }),
+  reset: () => {
+    unconfirmed.clear();
+    set({ status: 'idle', error: null, reports: [], incidents: [], followingIds: [], lastSubmitted: null });
+  },
 }));
 
 /** Incident ids the user follows or reported, from the store (not screen-local state). */

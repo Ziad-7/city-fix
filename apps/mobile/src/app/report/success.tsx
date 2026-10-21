@@ -109,7 +109,7 @@ export default function SuccessScreen() {
           <AppText variant="small">
             {medal.next
               ? `ده بلاغك رقم ${n}. ${moreReportsAr(medal.remaining)} وتاخد لقب `
-              : `ده بلاغك رقم ${n}. ده أعلى لقب، شكرًا إنك بتصلّح مدينتك.`}
+              : `ده بلاغك رقم ${n}. ده أعلى لقب، شكرًا على مشاركتك في تصليح مدينتك.`}
             {medal.next ? <AppText variant="smallStrong">{medal.next.title}</AppText> : null}
             {medal.next ? '.' : null}
           </AppText>
@@ -135,7 +135,7 @@ export default function SuccessScreen() {
 
 /** Offline variant: the report is saved on the phone and goes out when the network is back. */
 function QueuedSuccess({ topInset }: { topInset: number }) {
-  const steps = ['هنبعته لوحدنا أول ما النت يرجع، من غير ما تعمل حاجة', 'هتلاقيه في طلباتي بعلامة "مستني النت"', 'بعد ما يتبعت هتوصلك رسالة برقم البلاغ'];
+  const steps = ['هيتبعت لوحده أول ما النت يرجع، من غير أي خطوة تانية', 'هتلاقيه في طلباتي بعلامة "مستني النت"', 'بعد ما يتبعت هتوصلك رسالة برقم البلاغ'];
   return (
     <Screen
       edges={['bottom']}

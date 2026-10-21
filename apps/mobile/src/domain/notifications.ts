@@ -39,8 +39,8 @@ export function describeChange(item: TrackedItem, previous: IncidentStatus): { t
       return { title: isReport ? `الفريق بدأ شغل في ${who}` : `${who} جاري تنفيذه`, body: note ?? 'الفريق في الموقع دلوقتي' };
     case 'resolved':
       return isReport
-        ? { title: `${who} اتصلّح`, body: 'اتصلّحت! شكرًا إنك بلّغت' }
-        : { title: `${who} اتنفّذ`, body: note ?? 'اتنفّذ الطلب. شكرًا إنك استخدمت الخدمة' };
+        ? { title: `${who} اتصلّح`, body: 'اتصلّحت! شكرًا على بلاغك' }
+        : { title: `${who} اتنفّذ`, body: note ?? 'اتنفّذ الطلب. شكرًا لاستخدام الخدمة' };
     default:
       return { title: `${who} اتقفل`, body: note ?? 'اتقفل من غير تغيير تاني' };
   }

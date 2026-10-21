@@ -24,7 +24,7 @@ export function incidentTimelineEntry(
     case 'in_progress':
       return { status, at, actor: incident.department, note: 'الفريق في الموقع' };
     case 'resolved':
-      return { status, at, actor: incident.department, note: 'اتصلّحت. شكرًا إنك بلّغت' };
+      return { status, at, actor: incident.department, note: 'اتصلّحت. شكرًا على بلاغك' };
     default:
       return { status, at, actor: 'النظام', note: 'اتقفل البلاغ' };
   }

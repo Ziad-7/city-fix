@@ -6,8 +6,13 @@ import { addressAfterMove, formatAddress } from './address';
 
 export type LocationState = 'locating' | 'gps' | 'fallback';
 
-const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T> =>
-  Promise.race([p, new Promise<T>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))]);
+const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T> => {
+  let t: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<T>((_, reject) => {
+    t = setTimeout(() => reject(new Error('timeout')), ms);
+  });
+  return Promise.race([p, timeout]).finally(() => clearTimeout(t));
+};
 
 async function geocode(lat: number, lng: number): Promise<string> {
   try {
@@ -56,21 +61,33 @@ export function useReportLocation(fallback: LatLng = DEFAULT_PLACE) {
   }, [fallback.lat, fallback.lng]);
 
   /** Retry from the "حدد موقعي تاني" button. */
+  // A GPS fix that arrives after the citizen moved the pin must not throw the pin back (slow GPS, 10 s timeout):
+  // `moveTicket` changes on every pin move and every new locate, and a stale fix only ends the spinner.
+  const applyUnlessMoved = useCallback(
+    (ticket: number, r: Awaited<ReturnType<typeof resolve>>) => {
+      if (ticket === moveTicket.current) apply(r);
+      else setState(r.state);
+    },
+    [apply],
+  );
+
   const locate = useCallback(async () => {
     edited.current = false;
+    const ticket = ++moveTicket.current; // also drops the address of a pin move still being geocoded
     setState('locating');
-    apply(await resolve());
-  }, [apply, resolve]);
+    applyUnlessMoved(ticket, await resolve());
+  }, [applyUnlessMoved, resolve]);
 
   useEffect(() => {
     let cancelled = false;
+    const ticket = moveTicket.current;
     void resolve().then((r) => {
-      if (!cancelled) apply(r);
+      if (!cancelled) applyUnlessMoved(ticket, r);
     });
     return () => {
       cancelled = true;
     };
-  }, [resolve, apply]);
+  }, [resolve, applyUnlessMoved]);
 
   /** The citizen tapped/dragged the pin: move the place and refresh the address line (best effort). */
   const moveTo = useCallback(async (lat: number, lng: number) => {

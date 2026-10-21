@@ -2,12 +2,11 @@ import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 import type { IncidentStatus } from '@/domain/types';
 import { AppText, Button, Card, InlineNotice, TextField } from '@/components/ui';
-import { useReports } from '@/store/useReports';
+import { reopenReport } from '@/store/actions';
 import { colors, fonts } from '@/theme/tokens';
 
 /** "لسه المشكلة موجودة؟" on a resolved report: a short note and "افتح البلاغ تاني". Self-contained (uses the reports store). */
 export function ReopenCard({ incidentId, status }: { incidentId: string; status: IncidentStatus }) {
-  const reopen = useReports((s) => s.reopenIncident);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -17,7 +16,7 @@ export function ReopenCard({ incidentId, status }: { incidentId: string; status:
     setBusy(true);
     setError(null);
     try {
-      await reopen(incidentId, note.trim());
+      await reopenReport(incidentId, note.trim());
       setDone(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'معرفناش نفتح البلاغ، جرّب تاني');

@@ -49,7 +49,7 @@ describe('describeChange', () => {
   it('says thanks when a report is fixed', () => {
     const d = describeChange(report({ status: 'resolved' }), 'in_progress');
     expect(d.title).toBe('بلاغك FTC-1042 اتصلّح');
-    expect(d.body).toBe('اتصلّحت! شكرًا إنك بلّغت');
+    expect(d.body).toBe('اتصلّحت! شكرًا على بلاغك');
   });
 
   it('says a reopened report was reopened', () => {

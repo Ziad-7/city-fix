@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { useReportLocation } from '@/components/report/location';
@@ -12,6 +12,7 @@ import { DEFAULT_PLACE, findDistrict } from '@/domain/locations';
 import { FREE_SERVICE_LABEL, SLOTS, TREE_WORK_TYPES, nextWorkingDays } from '@/domain/services-catalog';
 import type { SlotId } from '@/domain/types';
 import { services } from '@/services';
+import { PHOTO_CONTENT_TYPE, compressImage } from '@/services/media';
 import { useServiceRequests, useSession } from '@/store';
 import { colors, radius } from '@/theme/tokens';
 
@@ -38,6 +39,7 @@ export default function TreeMaintenanceScreen() {
   const [errors, setErrors] = useState<TreeFormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const uploaded = useRef<{ local: string; path: string } | null>(null);
 
   const quality = dataSaver ? 0.5 : 0.8;
   const addPhoto = async (source: 'camera' | 'gallery') => {
@@ -51,6 +53,7 @@ export default function TreeMaintenanceScreen() {
   };
 
   const submit = async () => {
+    if (busy) return;
     const { errors: next, input } = validateTreeBooking({ workType, day, slot, note, place, photoUris: photo ? [photo] : [] });
     setErrors(next);
     setSubmitError(null);
@@ -58,8 +61,12 @@ export default function TreeMaintenanceScreen() {
     setBusy(true);
     try {
       if (photo && input.details.photoUris) {
-        const path = await services.uploads.upload(photo, 'report_photo', 'image/jpeg');
-        input.details.photoUris = [path];
+        // Same pipeline as report photos: shrink to 1600 px JPEG, upload once (a retry after a failed booking reuses it).
+        if (uploaded.current?.local !== photo) {
+          const path = await services.uploads.upload(await compressImage(photo), 'report_photo', PHOTO_CONTENT_TYPE);
+          uploaded.current = { local: photo, path };
+        }
+        input.details.photoUris = [uploaded.current.path];
       }
       const req = await bookService(input);
       router.replace(`/requests/${req.id}`);
@@ -82,7 +89,7 @@ export default function TreeMaintenanceScreen() {
         </View>
       }
     >
-      <AppText variant="small" color={colors.inkMuted}>إدارة الحدائق بتبعت فريق خلال ٥ أيام من الميعاد اللي تختاره.</AppText>
+      <AppText variant="small" color={colors.inkMuted}>إدارة الحدائق بتبعت فريق خلال ٥ أيام من الميعاد المختار.</AppText>
 
       <Card background={colors.statusResolvedBg} padding={12} style={styles.free}>
         <Icon name="check" size={18} color={colors.statusResolved} strokeWidth={2.5} />

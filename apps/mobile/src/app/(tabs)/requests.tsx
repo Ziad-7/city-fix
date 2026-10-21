@@ -28,7 +28,9 @@ export default function RequestsScreen() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await Promise.all([flushOutbox({ force: true }), refreshAll()]);
+      // Queue first, then the lists: the refreshed lists then already contain what the queue just sent.
+      await flushOutbox({ force: true });
+      await refreshAll();
     } finally {
       setRefreshing(false);
     }

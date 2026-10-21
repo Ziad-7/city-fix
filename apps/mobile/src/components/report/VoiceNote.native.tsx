@@ -29,6 +29,8 @@ export function VoiceNote({ highlight, status, onRecorded, onRemoved }: VoiceNot
   const [clipSeconds, setClipSeconds] = useState(0);
   const [notice, setNotice] = useState<string | null>(highlight ? 'سجّل بصوتك أو اكتب وصف المشكلة بالعامية وإحنا نفهمها.' : null);
   const stopping = useRef(false);
+  const starting = useRef(false);
+  const recordingRef = useRef(false);
   const limitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const player = useAudioPlayer(clipUri);
@@ -42,6 +44,7 @@ export function VoiceNote({ highlight, status, onRecorded, onRemoved }: VoiceNot
     if (limitTimer.current) clearTimeout(limitTimer.current);
     try {
       const secs = Math.max(1, Math.round(recorder.currentTime));
+      recordingRef.current = false;
       await recorder.stop();
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
       const uri = recorder.uri;
@@ -58,10 +61,19 @@ export function VoiceNote({ highlight, status, onRecorded, onRemoved }: VoiceNot
     }
   }, [recorder, onRecorded]);
 
-  // Hard stop at the limit (a timer armed when recording starts; cleared on stop and on unmount).
+  // Hard stop at the limit (a timer armed when recording starts; cleared on stop and on unmount). Leaving the screen
+  // mid-recording also hands the audio session back (otherwise iOS keeps playback on the earpiece).
   useEffect(() => () => {
     if (limitTimer.current) clearTimeout(limitTimer.current);
-  }, []);
+    if (recordingRef.current) {
+      try {
+        void recorder.stop().catch(() => undefined);
+      } catch {
+        // already released with the screen
+      }
+      void setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+    }
+  }, [recorder]);
 
   // Back to the start of the clip once it has played through.
   useEffect(() => {
@@ -69,6 +81,8 @@ export function VoiceNote({ highlight, status, onRecorded, onRemoved }: VoiceNot
   }, [playerStatus.didJustFinish, player]);
 
   const start = async () => {
+    if (starting.current || recordingRef.current) return; // a double tap must not prepare two recordings
+    starting.current = true;
     setNotice(null);
     try {
       const perm = await requestRecordingPermissionsAsync();
@@ -84,11 +98,14 @@ export function VoiceNote({ highlight, status, onRecorded, onRemoved }: VoiceNot
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
       await recorder.prepareToRecordAsync();
       recorder.record();
+      recordingRef.current = true;
       limitTimer.current = setTimeout(() => void stop(), MAX_VOICE_SECONDS * 1000);
       setPhase('recording');
     } catch {
       setPhase('idle');
       setNotice(FAILED_RECORD_MSG);
+    } finally {
+      starting.current = false;
     }
   };
 
@@ -166,7 +183,7 @@ export function VoiceNote({ highlight, status, onRecorded, onRemoved }: VoiceNot
       ) : null}
       {status === 'failed' ? <InlineNotice testID="voice-failed" text="مقدرناش نكتب الصوت، تقدر تكتب الوصف بنفسك" /> : null}
       {status === 'done' ? (
-        <AppText variant="caption" color={colors.inkMuted}>كتبنا كلامك في الوصف. راجعه وعدّل زي ما تحب.</AppText>
+        <AppText variant="caption" color={colors.inkMuted}>كتبنا كلامك في الوصف. راجعه وعدّل فيه براحتك.</AppText>
       ) : null}
       {notice ? <InlineNotice testID="voice-notice" text={notice} /> : null}
     </View>

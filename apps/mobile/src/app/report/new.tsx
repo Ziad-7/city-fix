@@ -38,6 +38,9 @@ export default function NewReportScreen() {
 
   const [photos, setPhotos] = useState<PhotoPair>([null, null]);
   const [description, setDescription] = useState('');
+  /** The recorded clip on the phone, and its storage path once uploaded. A report sends the path when there is one,
+   *  else the local file (the submit pipeline / offline queue uploads it): a failed or unfinished upload never drops it. */
+  const [voiceLocal, setVoiceLocal] = useState<string | null>(null);
   const [voicePath, setVoicePath] = useState<string | null>(null);
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('none');
   const voiceTicket = useRef(0);
@@ -98,11 +101,13 @@ export default function NewReportScreen() {
   // Upload + transcribe a fresh recording; the transcript lands in the description (appended, still editable).
   const onVoiceRecorded = useCallback(async (localUri: string) => {
     const ticket = ++voiceTicket.current;
+    setVoiceLocal(localUri);
     setVoicePath(null);
     setVoiceStatus('transcribing');
-    const { path, text } = await uploadAndTranscribeVoiceNote(localUri);
+    const { text } = await uploadAndTranscribeVoiceNote(localUri, undefined, (path) => {
+      if (ticket === voiceTicket.current) setVoicePath(path);
+    });
     if (ticket !== voiceTicket.current) return; // deleted or re-recorded meanwhile
-    setVoicePath(path);
     if (text) {
       setDescription((d) => appendTranscript(d, text));
       setErrors((e) => ({ ...e, description: undefined }));
@@ -113,6 +118,7 @@ export default function NewReportScreen() {
   }, []);
   const onVoiceRemoved = useCallback(() => {
     voiceTicket.current += 1;
+    setVoiceLocal(null);
     setVoicePath(null);
     setVoiceStatus('none');
   }, []);
@@ -139,7 +145,7 @@ export default function NewReportScreen() {
           categoryId: values.categoryId as CategoryId,
           description: values.description,
           photoUris,
-          voiceNoteUri: voicePath ?? undefined,
+          voiceNoteUri: voicePath ?? voiceLocal ?? undefined,
           location: values.location,
           anonymous,
           blurFaces,
@@ -154,7 +160,7 @@ export default function NewReportScreen() {
         setSubmitting(null);
       }
     },
-    [submitting, categoryId, trimmed, photoUris, voicePath, place, anonymous, blurFaces, submitReport, triage, governorate, district],
+    [submitting, categoryId, trimmed, photoUris, voicePath, voiceLocal, place, anonymous, blurFaces, submitReport, triage, governorate, district],
   );
 
   const pickCategory = (id: CategoryId) => {

@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { EmergencyRow } from '@/components';
 import { Icon } from '@/components/Icon';
 import { StatsCard } from '@/components/profile';
@@ -56,7 +56,7 @@ export default function ProfileScreen() {
   const toggleNotifications = async (on: boolean) => {
     setNotifDenied(false);
     setAppNotifications(on);
-    if (!on) return;
+    if (!on || Platform.OS === 'web') return; // the web preview has no OS notifications: the in-app centre only
     await setupOsNotifications();
     // Asks for the OS permission now; a refusal keeps the in-app centre working and says so.
     if (!(await ensureNotificationPermission())) setNotifDenied(true);

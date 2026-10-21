@@ -68,7 +68,7 @@ export function EmergencyAlert() {
       <View style={styles.row}>
         {pick(['122', '123', '180', '129']).map((h) => <HotlineButton key={h.number} hotline={h} onWhite />)}
       </View>
-      <AppText variant="caption" color={colors.onRed}>الأرقام دي مجانية. وتقدر تبعت البلاغ برضه بعد ما تتصل.</AppText>
+      <AppText variant="caption" color={colors.onRed}>الأرقام دي مجانية. والبلاغ ممكن يتبعت برضه بعد المكالمة.</AppText>
     </View>
   );
 }
