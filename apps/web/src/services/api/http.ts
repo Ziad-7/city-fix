@@ -39,36 +39,68 @@ function messageFor(status: number, raw: string): string {
   return MSG_GENERIC;
 }
 
-/** Minimal typed JSON fetch against NEXT_PUBLIC_API_URL. Empty bodies (204) resolve to `undefined`. */
-export async function http<T>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<T> {
-  if (!API_URL) throw new Error('NEXT_PUBLIC_API_URL مش متحدد');
-  let res: Response;
-  try {
-    res = await fetch(`${API_URL}${path}`, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        'Accept-Language': 'ar',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
-  } catch {
-    throw new ApiError(0, MSG_NETWORK);
-  }
+export type HttpOptions = { timeoutMs?: number };
 
-  const raw = res.status === 204 ? '' : await res.text().catch(() => '');
-  if (!res.ok) {
-    // A 401 on a call that carried our token means the session is over. (Without a token, e.g. a wrong
-    // OTP on /auth/verify, it is just an error for the form to show.)
-    if (res.status === 401 && token) onUnauthorized?.();
-    throw new ApiError(res.status, messageFor(res.status, raw));
-  }
-  if (!raw.trim()) return undefined as T;
+/** Minimal typed JSON fetch against NEXT_PUBLIC_API_URL. Empty bodies (204) resolve to `undefined`. */
+export async function http<T>(
+  method: 'GET' | 'POST',
+  path: string,
+  body?: unknown,
+  options: HttpOptions = {},
+): Promise<T> {
+  if (!API_URL) throw new Error('NEXT_PUBLIC_API_URL مش متحدد');
+  const controller = options.timeoutMs ? new AbortController() : undefined;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const request = async (): Promise<T> => {
+    let res: Response;
+    try {
+      res = await fetch(`${API_URL}${path}`, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'Accept-Language': 'ar',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: body === undefined ? undefined : JSON.stringify(body),
+        ...(controller ? { signal: controller.signal } : {}),
+      });
+    } catch {
+      throw new ApiError(0, controller?.signal.aborted ? MSG_SERVER : MSG_NETWORK);
+    }
+
+    let raw = '';
+    if (res.status !== 204) {
+      try {
+        raw = await res.text();
+      } catch {
+        if (controller?.signal.aborted) throw new ApiError(0, MSG_SERVER);
+      }
+    }
+    if (!res.ok) {
+      // A 401 on a call that carried our token means the session is over. (Without a token, e.g. a wrong
+      // OTP on /auth/verify, it is just an error for the form to show.)
+      if (res.status === 401 && token) onUnauthorized?.();
+      throw new ApiError(res.status, messageFor(res.status, raw));
+    }
+    if (!raw.trim()) return undefined as T;
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      throw new ApiError(res.status, MSG_GENERIC);
+    }
+  };
+
+  if (!controller || !options.timeoutMs) return request();
+  const deadline = new Promise<never>((_resolve, reject) => {
+    timeout = setTimeout(() => {
+      controller.abort();
+      reject(new ApiError(0, MSG_SERVER));
+    }, options.timeoutMs);
+  });
   try {
-    return JSON.parse(raw) as T;
-  } catch {
-    throw new ApiError(res.status, MSG_GENERIC);
+    return await Promise.race([request(), deadline]);
+  } finally {
+    if (timeout !== undefined) clearTimeout(timeout);
   }
 }

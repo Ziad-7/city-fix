@@ -15,6 +15,7 @@
 | [`mobile/remaining-work.md`](mobile/remaining-work.md) | Checklist of what is left on the citizen mobile app |
 | [`api-contract.md`](api-contract.md) | The API between the apps and the backend — endpoints, shapes, business rules |
 | [`team/`](team/) | **Who does what:** the 6 roles, owners, folders, hand-offs, week plan, and one brief per role (citizen website, admin web, API & database, AI & smart features, [hardware & IoT](team/hardware-iot.md)) |
+| [`ai-status.md`](ai-status.md) | CityBrain implementation status: delivered AI work, verification evidence, and remaining release/deployment steps |
 | [`progress-log.md`](progress-log.md) | Dated log of what was built, how to test it, known issues |
 
 Live design files (private until shared by the owner): the design system and the screen canvas are on claude.ai — ask Abood for access.

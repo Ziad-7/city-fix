@@ -1,24 +1,64 @@
 """FastAPI application entry point."""
 
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.auth import AuthContext, AuthSettings
+from app.ai.integrations import find_nearby_incidents_with_session
+from app.ai.llm import GeminiClient
+from app.ai.router import create_triage_router
+from app.ai.schemas import CategoryId
+from app.ai.transcribe import GeminiAudioTranscriber, create_transcription_router
+from app.auth import AuthContext, AuthSettings, current_user
 from app.auth_adapters import DatabaseStaffDirectory, DatabaseUserRepository
 from app.config import settings, validate_settings
-from app.db import SessionLocal, init_db
+from app.db import SessionLocal, get_db, init_db
 from app.models import Incident
-from app.routers import admin, auth, incidents, map, reports, service_requests, staff_auth, triage, uploads
+from app.routers import admin, auth, incidents, map, reports, service_requests, staff_auth, uploads
 from app.schemas import HealthResponse
 from app.seed import seed_db
 from app.staff_auth import StaffLoginContext
+from app.storage import SupabaseMediaStorage
 
 logger = logging.getLogger("fixthecity")
+
+
+async def load_approved_triage_photo(path: str, user_id: str, consent: bool) -> bytes:
+    """Read only a consented caller-owned photo through the private storage adapter."""
+    storage = getattr(app.state, "media_storage", None)
+    if storage is None or not callable(getattr(storage, "read_approved", None)):
+        raise HTTPException(503, "تحليل الصور مش متاح لحد ما التخزين الخاص يكون جاهز.")
+    return await storage.read_approved(user_id, path, "report_photo", consent)
+
+
+async def find_nearby_incidents_from_db(
+    category_id: CategoryId, lat: float, lng: float, radius_m: float, user_id: str
+) -> dict[str, list[dict]]:
+    """Duplicates / alreadyReported from the app database (honours ``get_db`` overrides)."""
+    provider = app.dependency_overrides.get(get_db, get_db)
+
+    def run() -> dict[str, list[dict]]:
+        sessions = provider()
+        db = next(sessions)
+        try:
+            return find_nearby_incidents_with_session(db, category_id, lat, lng, radius_m, user_id)
+        finally:
+            sessions.close()
+
+    return await asyncio.to_thread(run)
+
+
+async def load_authorized_voice_note(path: str, user_id: str) -> tuple[bytes, str]:
+    """Read only an authenticated caller-owned voice note from private storage."""
+    storage = getattr(app.state, "media_storage", None)
+    if storage is None or not callable(getattr(storage, "read_voice_note", None)):
+        raise HTTPException(503, "تحويل الصوت لنص مش متاح لحد ما التخزين الخاص يكون جاهز.")
+    return await storage.read_voice_note(user_id, path)
 
 
 @asynccontextmanager
@@ -41,6 +81,10 @@ async def lifespan(app: FastAPI):
 
     yield
     # Shutdown
+    media_storage = getattr(app.state, "media_storage", None)
+    if isinstance(media_storage, SupabaseMediaStorage):
+        await media_storage.aclose()
+        media_storage.close()
 
 
 app = FastAPI(
@@ -61,8 +105,15 @@ app.state.auth_context = AuthContext(
     DatabaseUserRepository(),
 )
 app.state.staff_login_context = StaffLoginContext(DatabaseStaffDirectory())
-# Optional signed-upload / private-media storage (see app.media); None = local upload stub.
-app.state.media_storage = None
+# Optional private-media storage (Supabase); None = local upload stub.
+if settings.supabase_url.strip() and settings.supabase_service_role_key.strip():
+    app.state.media_storage = SupabaseMediaStorage(
+        settings.supabase_url,
+        settings.supabase_service_role_key,
+        settings.supabase_media_bucket,
+    )
+else:
+    app.state.media_storage = None
 
 # CORS middleware for web clients
 cors_origins = [
@@ -96,6 +147,34 @@ async def health_check() -> HealthResponse:
 # ============================================================================
 
 app.include_router(auth.router)
+app.include_router(uploads.router)
+app.include_router(
+    create_triage_router(
+        get_current_user=current_user,
+        load_authorized_photo=load_approved_triage_photo,
+        find_nearby_incidents=find_nearby_incidents_from_db,
+        provider=(
+            GeminiClient(api_key=settings.gemini_api_key, model=settings.gemini_model)
+            if settings.gemini_api_key.strip()
+            else None
+        ),
+        photo_analysis_enabled=settings.gemini_photo_analysis_enabled,
+    )
+)
+app.include_router(
+    create_transcription_router(
+        get_current_user=current_user,
+        load_authorized_voice=load_authorized_voice_note,
+        provider=(
+            GeminiAudioTranscriber(
+                api_key=settings.gemini_api_key,
+                model=settings.gemini_model,
+            )
+            if settings.gemini_api_key.strip()
+            else None
+        ),
+    )
+)
 app.include_router(staff_auth.router)
 app.include_router(admin.router)
 app.include_router(admin.top_level_router)
@@ -103,8 +182,6 @@ app.include_router(reports.router)
 app.include_router(incidents.router)
 app.include_router(map.router)
 app.include_router(service_requests.router)
-app.include_router(triage.router)
-app.include_router(uploads.router)
 
 
 # ============================================================================

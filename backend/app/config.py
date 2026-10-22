@@ -37,6 +37,16 @@ class Settings(BaseSettings):
     # API version
     version: str = "0.1.0"
 
+    # CityBrain provider configuration (keys remain server-side).
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-3.5-flash-lite"
+    gemini_photo_analysis_enabled: bool = False
+
+    # Supabase private Storage; the service-role key must never reach a client.
+    supabase_url: str = ""
+    supabase_service_role_key: str = ""
+    supabase_media_bucket: str = "report-media"
+
 
 settings = Settings()
 

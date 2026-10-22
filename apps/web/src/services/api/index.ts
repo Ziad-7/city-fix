@@ -59,12 +59,19 @@ export function createApiServices(): Services {
     triage: {
       async analyze({ userId: _userId, ...body }) {
         // The backend knows the caller from the token and leaves out their own and followed incidents.
-        const res = await http<TriageSuggestion>('POST', '/triage', body);
+        const res = await http<TriageSuggestion>(
+          'POST',
+          '/triage',
+          body,
+          { timeoutMs: 6000 },
+        );
         return { ...res, duplicates: res.duplicates ?? [], alreadyReported: res.alreadyReported ?? [] };
       },
     },
     uploads: createUploadService(),
     // POST /ai/transcribe (proposed, member 5) with the uploaded voice-note path.
-    transcription: { transcribe: (path) => http('POST', '/ai/transcribe', { path }) },
+    transcription: {
+      transcribe: (path) => http('POST', '/ai/transcribe', { path }, { timeoutMs: 25000 }),
+    },
   };
 }
