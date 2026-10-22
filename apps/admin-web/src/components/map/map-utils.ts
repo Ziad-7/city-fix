@@ -1,6 +1,6 @@
-import type L from 'leaflet';
+import L from 'leaflet';
 import type { AdminIncident } from '@/domain/admin-types';
-import type { IncidentStatus } from '@/domain/types';
+import { isCriticalIncident } from '@/logic/priority';
 
 export type PinKind = 'received' | 'assigned' | 'progress' | 'resolved' | 'critical';
 
@@ -36,21 +36,23 @@ export function pinIcon(kind: PinKind, selected = false, near = false): L.DivIco
   return L.divIcon({ className: 'ftc-divicon', html: `<div class="${classes}">${tag}${pinSvg(kind)}</div>`, iconSize: [w, h], iconAnchor: [w / 2, h] });
 }
 
-export function clusterIcon(cluster: L.MarkerCluster): L.DivIcon {
+export function clusterIcon(cluster: { getChildCount(): number }): L.DivIcon {
   const n = cluster.getChildCount();
   const d = n < 10 ? 40 : n < 50 ? 44 : 48;
   return L.divIcon({ className: 'ftc-divicon', html: `<div class="ftc-cluster">${n}</div>`, iconSize: [d, d] });
 }
 
-/** Determine the pin kind based on incident status and critical flag */
-export function pinKind(incident: AdminIncident): PinKind {
-  const isCritical = incident.priority.score >= 85 && (incident.status === 'received' || incident.status === 'triaged' || incident.status === 'assigned' || incident.status === 'in_progress');
-  if (isCritical) return 'critical';
+const OPEN_STATUSES = ['received', 'triaged', 'assigned', 'in_progress'];
 
+/** Open incident that needs immediate attention (spec 2.21 / 3.5). */
+export function isCriticalOpen(incident: AdminIncident): boolean {
+  return OPEN_STATUSES.includes(incident.status) && isCriticalIncident(incident);
+}
+
+/** Determine the pin kind: critical open incidents win, otherwise by status. */
+export function pinKind(incident: AdminIncident): PinKind {
+  if (isCriticalOpen(incident)) return 'critical';
   switch (incident.status) {
-    case 'received':
-    case 'triaged':
-      return 'received';
     case 'assigned':
       return 'assigned';
     case 'in_progress':
@@ -74,42 +76,7 @@ export function incidentToPin(incident: AdminIncident): MapPinModel {
   };
 }
 
-/** Simple grid-based clustering (client-side, no external plugin) */
-export function clusterPins(pins: MapPinModel[], zoomLevel: number): MapPinModel[][] {
-  if (zoomLevel >= 17) {
-    // No clustering at high zoom
-    return pins.map(p => [p]);
-  }
-
-  // Grid size in degrees based on zoom
-  const gridSize = Math.pow(2, 17 - zoomLevel) * 0.01;
-
-  const clusters: Map<string, MapPinModel[]> = new Map();
-
-  pins.forEach(pin => {
-    const gridX = Math.floor(pin.lat / gridSize);
-    const gridY = Math.floor(pin.lng / gridSize);
-    const key = `${gridX},${gridY}`;
-
-    if (!clusters.has(key)) {
-      clusters.set(key, []);
-    }
-    clusters.get(key)!.push(pin);
-  });
-
-  return Array.from(clusters.values());
-}
-
-/** Filter pins by status, category, department, and period */
-export function filterPins(
-  pins: MapPinModel[],
-  statuses: PinKind[],
-  categoryId?: string,
-  department?: string,
-): MapPinModel[] {
-  return pins.filter(pin => {
-    if (!statuses.includes(pin.kind)) return false;
-    // Note: categoryId and department filtering happens at the API level
-    return true;
-  });
+/** Keep only pins whose kind is toggled on. */
+export function filterPins(pins: MapPinModel[], kinds: PinKind[]): MapPinModel[] {
+  return pins.filter((pin) => kinds.includes(pin.kind));
 }
