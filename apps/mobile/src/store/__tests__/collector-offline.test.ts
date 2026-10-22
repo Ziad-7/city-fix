@@ -47,6 +47,21 @@ describe('collector mode: offline-first', () => {
     expect(useCollector.getState().mine[0]).toMatchObject({ id: p.id, status: 'weighed', totalKg: 3 });
   });
 
+  it('queues behind earlier queued actions even when the network is back, then flushes in order', async () => {
+    const p = await newPickup();
+    const job = (await services.collector.jobs(DEMO_USER_ID, { lat: 30.056, lng: 31.33, radiusM: 5000 })).find((j) => j.id === p.id)!;
+    netinfo.fetch.mockResolvedValue(offline);
+    expect(await useCollector.getState().accept(job)).toBe('queued');
+    netinfo.fetch.mockResolvedValue(online);
+    // The accept is still queued: the weighing must not jump ahead of it.
+    expect(await useCollector.getState().weigh(p.id, { materialId: 'pet_plastic', kg: 2, source: 'manual' })).toBe('queued');
+    await flushCollectorQueue({ force: true });
+    expect(useCollectorQueue.getState().items).toHaveLength(0);
+    const server = await services.recycling.get(p.id);
+    expect(server).toMatchObject({ status: 'weighed', collectorId: expect.any(String) });
+    expect(server?.weighings).toHaveLength(1);
+  });
+
   it('saves accept, weigh and finish while offline, shows them at once, and syncs once online', async () => {
     const p = await newPickup();
     const job = (await services.collector.jobs(DEMO_USER_ID, { lat: 30.056, lng: 31.33, radiusM: 5000 })).find((j) => j.id === p.id)!;

@@ -19,7 +19,8 @@ import {
   type MaterialId,
 } from '@/domain/citycycle';
 import { useTr } from '@/i18n';
-import { useCollector } from '@/store';
+import { useCollector, useCollectorQueue } from '@/store';
+import { queuedFor } from '@/store/collectorQueue';
 import { colors, fonts } from '@/theme/tokens';
 import { formatDistance } from '@/utils/geo';
 
@@ -32,6 +33,7 @@ export default function CollectorJobScreen() {
   const accept = useCollector((s) => s.accept);
   const weigh = useCollector((s) => s.weigh);
   const complete = useCollector((s) => s.complete);
+  const queueItems = useCollectorQueue((s) => s.items);
 
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +80,7 @@ export default function CollectorJobScreen() {
           <Row icon="coins" text={pickupModeLabel(job.mode)} />
           {job.note ? <Row icon="info" text={job.note} /> : null}
         </Card>
-        <AppText variant="caption" color={colors.inkMuted}>{tr('الموقع بالظبط واسم صاحب الطلب بيظهروا بعد ما تقبل.', 'The exact location appears once you accept.')}</AppText>
+        <AppText variant="caption" color={colors.inkMuted}>{tr('الموقع بالظبط بيظهر بعد ما تقبل.', 'The exact location appears once you accept.')}</AppText>
         {error ? <AppText variant="caption" color={colors.urgent} accessibilityRole="alert">{error}</AppText> : null}
         {notice ? <AppText variant="caption" color={colors.goldDeep}>{notice}</AppText> : null}
         <Button label={tr('اقبل الطلب', 'Accept this request')} loading={busy === 'accept'} onPress={() => run('accept', () => accept(job))} testID="job-accept" />
@@ -87,7 +89,8 @@ export default function CollectorJobScreen() {
   }
 
   const p = pickup!;
-  const active = p.status === 'accepted' || p.status === 'weighed';
+  const active = (p.status === 'accepted' || p.status === 'weighed') && !p.collectorFinishedAt;
+  const acceptQueued = queuedFor(queueItems, p.id).some((q) => q.action.kind === 'accept');
   const totals = weighingTotals(p.weighings);
   const kg = parseKg(kgText);
   const kgValid = Number.isFinite(kg) && kg >= MIN_KG && kg <= MAX_KG;
@@ -114,7 +117,11 @@ export default function CollectorJobScreen() {
         <Row icon="map" text={`${p.location.address}${p.location.landmark ? ` · ${p.location.landmark}` : ''}`} />
         <Row icon="clock" text={`${dayText(p.day)} · ${slotLabel(p.slot)}`} />
         {p.note ? <Row icon="info" text={p.note} /> : null}
-        <Button label={tr('افتح في الخرائط', 'Open in Maps')} icon="locate" variant="secondary" size="sm" onPress={openMaps} testID="job-open-maps" />
+        {acceptQueued ? (
+          <AppText variant="caption" color={colors.goldDeep}>{tr('الموقع بالظبط هيظهر أول ما الطلب يتبعت.', 'The exact location appears once your acceptance is sent.')}</AppText>
+        ) : (
+          <Button label={tr('افتح في الخرائط', 'Open in Maps')} icon="locate" variant="secondary" size="sm" onPress={openMaps} testID="job-open-maps" />
+        )}
       </Card>
 
       {active ? (

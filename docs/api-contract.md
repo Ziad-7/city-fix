@@ -239,7 +239,7 @@ Collector = {
 }   // phone and national ID are never sent to other users
 
 CollectorJob = {   // a pickup as seen by a verified collector (no citizen phone or exact name)
-  id, items, location: Place /* address and landmark; exact pin after accept */,
+  id, items, location: Place /* address, landmark and an APPROXIMATE lat/lng (the server rounds to about 100 m); the exact pin arrives only with accept */,
   day, slot, mode, estimatedKg: number, estimatedValueEgp?: number, distanceM?: number
 }
 
@@ -353,7 +353,7 @@ The app implements every endpoint above against the mock, and calls the real rou
 
 - **Collector offline queue.** Accept, weigh and complete are saved on the phone when the network or server fails (`ApiError` 5xx or no connection) and sent later **in order**. A `4xx` answer (for example `409` "already taken") drops that action and all later queued actions for the same pickup, and tells the collector. So accept, weighings and complete must return plain `4xx` for business-rule refusals, and `5xx`/timeouts only for real trouble.
 - **`clientId`** is made by the app (`c-<time>-<seq>-<random>`) and re-sent unchanged on every retry.
-- **Pin privacy.** `GET /collector/jobs` rows have only the address, landmark and a distance. The exact `lat`/`lng` of the household arrives with `POST …/accept` and `GET /collector/pickups`. Neither shows the citizen's name or phone. The household sees the collector's first name only.
+- **Pin privacy.** `GET /collector/jobs` rows have the address, landmark, a distance and an approximate (server-rounded, about 100 m) `lat`/`lng` for the map only. The exact `lat`/`lng` of the household arrives with `POST …/accept` and `GET /collector/pickups`. Neither shows the citizen's name or phone. The household sees the collector's first name only.
 - **Prices.** The app never keeps a price. `null` price means "السعر هيتحدد". The mock ships DEMO prices; remove none of this logic when real prices arrive.
 - **Waste classify.** The app shows the result as a suggestion; any failure just hides the suggestion.
 - **CO₂.** `co2AvoidedKg` is shown only when the backend sends it.

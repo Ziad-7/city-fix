@@ -18,7 +18,8 @@ import { tr } from '@/i18n';
 import { services } from '@/services';
 import { classifyFailure } from '@/services/media';
 import { isOffline } from '@/services/network';
-import { newClientId, useCollectorQueue } from './collectorQueue';
+import { newClientId, queuedFor, useCollectorQueue } from './collectorQueue';
+import { flushCollectorQueue } from './collectorSync';
 import { useRecycling } from './useRecycling';
 import { useSession } from './useSession';
 
@@ -62,6 +63,15 @@ const errText = (e: unknown) => (e instanceof Error && e.message ? e.message : t
 
 const upsert = (list: RecyclingPickup[], p: RecyclingPickup): RecyclingPickup[] =>
   list.some((x) => x.id === p.id) ? list.map((x) => (x.id === p.id ? p : x)) : [p, ...list];
+
+/** Earlier actions for this pickup still wait in the queue: a new one must go behind them, never ahead. */
+const queuedBehind = (queueIt: () => ActionResult): ActionResult => {
+  const r = queueIt();
+  void flushCollectorQueue();
+  return r;
+};
+
+const hasQueued = (pickupId: string): boolean => queuedFor(useCollectorQueue.getState().items, pickupId).length > 0;
 
 /** Should this failure be kept for later (network or server trouble) instead of shown to the person? */
 const keepForLater = (e: unknown): boolean => classifyFailure(e) === 'retry';
@@ -145,6 +155,7 @@ export const useCollector = create<CollectorState>((set, get) => {
         return 'queued';
       };
       if (await isOffline()) return queueIt();
+      if (hasQueued(job.id)) return queuedBehind(queueIt);
       try {
         const p = await services.collector.accept(userId, job.id);
         set((s) => ({ mine: upsert(s.mine, p), jobs: s.jobs.filter((j) => j.id !== job.id) }));
@@ -181,6 +192,7 @@ export const useCollector = create<CollectorState>((set, get) => {
         return 'queued';
       };
       if (await isOffline()) return queueIt();
+      if (hasQueued(pickupId)) return queuedBehind(queueIt);
       try {
         const w = await services.collector.addWeighing(userId, pickupId, full);
         patchMine(pickupId, (p) => {
@@ -197,12 +209,14 @@ export const useCollector = create<CollectorState>((set, get) => {
 
     async complete(pickupId, paidToHouseholdEgp) {
       const userId = uid();
+      if (get().mine.find((p) => p.id === pickupId)?.collectorFinishedAt) return 'done';
       const queueIt = (): ActionResult => {
         patchMine(pickupId, (p) => ({ ...p, paidToHouseholdEgp: p.mode === 'paid' ? paidToHouseholdEgp : undefined, collectorFinishedAt: new Date().toISOString() }));
         useCollectorQueue.getState().enqueue(userId, { kind: 'complete', pickupId, paidToHouseholdEgp }, newClientId());
         return 'queued';
       };
       if (await isOffline()) return queueIt();
+      if (hasQueued(pickupId)) return queuedBehind(queueIt);
       try {
         const p = await services.collector.complete(userId, pickupId, paidToHouseholdEgp);
         set((s) => ({ mine: upsert(s.mine, p) }));
