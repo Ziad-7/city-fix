@@ -10,7 +10,7 @@ from app.db import get_db
 from app.helpers import now_utc
 from app.logic.domain import create_report
 from app.logic.duplicates import is_within_radius
-from app.logic.idempotency import clean_key, lookup, remember
+from app.logic.idempotency import claim, clean_key
 from app.logic.serialize import incident_public, load_ctx, report_view
 from app.logic.triage import triage_text
 from app.media import MediaStorage, get_media, report_for_reader, validate_media
@@ -53,7 +53,8 @@ def post_report(
     An optional ``Idempotency-Key`` makes a retry by the same user return the original result.
     """
     key = clean_key(idempotency_key)
-    earlier = db.get(Report, lookup(db, payload["sub"], "report", key)) if key else None
+    key_row, earlier_id = claim(db, payload["sub"], "report", key)
+    earlier = db.get(Report, earlier_id) if earlier_id else None
     if earlier is not None:
         incident = db.get(Incident, earlier.incident_id)
         ctx = load_ctx(db, [incident], payload["sub"])
@@ -94,7 +95,8 @@ def post_report(
                 created_at=now_utc(),
             )
         )
-    remember(db, user_id, "report", key, report.id)
+    if key_row is not None:
+        key_row.resource_id = report.id
     db.commit()
     ctx = load_ctx(db, [incident], user_id)
     return {

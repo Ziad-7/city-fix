@@ -1,5 +1,12 @@
 # Progress log
 
+## 2026-10-23 — Backend: CityCycle API complete (branch `feat/backend-complete`, PR #60)
+
+- **Added:** recycling pickups (create, list, detail, cancel, confirm), price list, `/me/impact`, collectors (apply, jobs with ~100 m pin privacy, first-accept-wins, idempotent weighings, complete, earnings), public `/bins`, `POST /bins/{id}/report-full`, hub weighings, bin key rotation, admin pickups/collectors/prices/payouts/summary and `POST /ai/waste-classify` (Gemini only with key, photo analysis on and `photoConsent`; deterministic fallback otherwise). Demo seed, `backend/migrations/001_citycycle.sql` (idempotent, RLS on), contract and README updated.
+- **Safety:** `/uploads/sign` answers 503 when media storage is not configured, unless the local stub is allowed (`ALLOW_LOCAL_UPLOAD_STUB`; default only on SQLite). Admin writes are admin-only and department staff see districts, not households. Suspending a collector frees their unweighed jobs; cancel and weighing are atomic against each other. `POST /reports` and `POST /recycling/pickups` accept `Idempotency-Key` (a concurrent duplicate returns the first result, not a 500). The fallback triage summary uses the Arabic severity label.
+- **Not done:** bin forecast, route optimisation, hotspots, SMS gateway, a notifications endpoint (no client calls one). Incident ids stay unpadded (`INC-501`).
+- **Owner must:** configure Supabase Storage variables, set real district prices with `PUT /admin/material-prices`, apply the SQL (or let `create_all` do it; not yet run against a real Supabase), and have the clients send `photoConsent: true` to get model results from waste-classify.
+
 ## 2026-10-23 — Command Center shows report photos (branch `fix/admin-report-photos`)
 
 - **Root cause (two bugs):** (1) the admin incident API only sent `photoCount` for linked reports and `PhotosCard` drew a grey placeholder icon, so no admin screen ever had an image URL; (2) `report_for_reader` signed media against the *reader's* id, and the private-storage adapter only signs `<owner_id>/...` paths, so an admin calling `GET /reports/{id}` on a report with photos got a 503.

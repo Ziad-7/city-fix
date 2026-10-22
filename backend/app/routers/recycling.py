@@ -13,7 +13,7 @@ from app.admin_auth import current_claims
 from app.db import get_db
 from app.helpers import iso_z, now_utc
 from app.logic.duplicates import haversine_m
-from app.logic.idempotency import clean_key, lookup, remember
+from app.logic.idempotency import claim, clean_key
 from app.logic.ids import next_id
 from app.logic.recycling import (
     approx,
@@ -67,7 +67,7 @@ def create_pickup(
 ):
     """Create a pickup. An optional ``Idempotency-Key`` makes a retry by the same user return the original."""
     key = clean_key(idempotency_key)
-    earlier_id = lookup(db, claims["sub"], "recycling_pickup", key)
+    key_row, earlier_id = claim(db, claims["sub"], "recycling_pickup", key)
     earlier = db.get(RecyclingPickup, earlier_id) if earlier_id else None
     if earlier is not None:
         return pickup_view(db, earlier, viewer="citizen", storage=storage)
@@ -101,7 +101,8 @@ def create_pickup(
     db.add(pickup)
     db.flush()
     log(db, pickup.id, "requested", "سيتي سايكل", "طلبك وصل وبندوّر على جامع قريب")
-    remember(db, claims["sub"], "recycling_pickup", key, pickup.id)
+    if key_row is not None:
+        key_row.resource_id = pickup.id
     db.commit()
     return pickup_view(db, pickup, viewer="citizen", storage=storage)
 

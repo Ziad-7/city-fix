@@ -586,3 +586,34 @@ def test_report_idempotency_key(client, citizen_h, other_citizen_h):
     assert len(mine) == 1
     other = client.post("/reports", json=body, headers={**other_citizen_h, "Idempotency-Key": "rep-1"})
     assert other.json()["report"]["id"] != first.json()["report"]["id"]
+
+
+def test_idempotency_race_returns_the_winner_not_a_500(client, citizen_h, monkeypatch):
+    """Both requests passed the first lookup; the loser hits the unique key and gets the original back."""
+    from app.logic import idempotency
+
+    h = {**citizen_h, "Idempotency-Key": "race-1"}
+    winner = client.post("/recycling/pickups", json=pickup_body(), headers=h).json()
+    real = idempotency.lookup
+    calls = []
+
+    def blind_first_lookup(*args, **kwargs):
+        calls.append(1)
+        return None if len(calls) == 1 else real(*args, **kwargs)
+
+    monkeypatch.setattr(idempotency, "lookup", blind_first_lookup)
+    loser = client.post("/recycling/pickups", json=pickup_body(), headers=h)
+    assert loser.status_code == 200 and loser.json()["id"] == winner["id"]
+    mine = [p for p in client.get("/recycling/pickups", headers=citizen_h).json() if p["id"] != "RCY-3100"]
+    assert len(mine) == 1
+
+    body = {
+        "categoryId": "pothole",
+        "description": "حفرة كبيرة في الشارع قدام المدرسة",
+        "location": {"lat": 30.1, "lng": 31.4, "address": "شارع"},
+    }
+    rh = {**citizen_h, "Idempotency-Key": "race-2"}
+    first = client.post("/reports", json=body, headers=rh).json()
+    calls.clear()
+    again = client.post("/reports", json=body, headers=rh)
+    assert again.status_code == 200 and again.json()["report"]["id"] == first["report"]["id"]
