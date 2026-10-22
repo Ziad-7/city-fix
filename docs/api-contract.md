@@ -343,7 +343,7 @@ Suggestion only: the citizen or collector confirms the materials and the size. O
 - **Prices:** `priceEgpPerKg` comes only from the district price table; never hard-coded in an app. If it is `null`, apps show "السعر هيتحدد" / "price to be set" and no value.
 - **Weighings are the source of truth** for kg and EGP. A manual weight and a scale weight use the same endpoint; the `source` is recorded.
 - **Offline:** collector writes carry a client-generated `clientId`; the server de-duplicates.
-- **Privacy:** a collector sees the address, landmark and materials of an open job, never the citizen's phone or name; the exact pin appears only after accept. A citizen sees the collector's first name only. An open job shows the street-level address (no building number), the landmark and an approximate pin; the exact pin arrives with accept. Earnings are visible to the collector and to admins only. Bin telemetry holds no personal data.
+- **Privacy:** a collector sees the materials, the address and landmark (street level, no building number) and an approximate pin of an open job, never the citizen's phone or name; the exact pin appears only after accept. A citizen sees the collector's first name, district and verified badge (collectors are always verified). Earnings are visible to the collector and to admins only. Bin telemetry holds no personal data.
 - **Money** is recorded, not processed: the platform logs cash paid and the value at the price list. No payment-provider integration in the MVP.
 - Timeline entries for pickups use the same `TimelineEntry` shape and `activity_log` table (entity type `recycling_pickup`).
 

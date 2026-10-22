@@ -83,7 +83,7 @@ export function BinSheet({ bin, busy, result, onReportFull, onOpenRequests, onCl
 
       {binNeedsAttention(bin) ? (
         <AppText variant="caption" color={colors.urgentDeep}>
-          {bin.state === 'hot' ? tr('الصندوق سخن. بلّغ لو فيه دخان أو ريحة حرق.', 'The bin is hot. Report it if you see smoke or smell burning.') : tr('الصندوق وصل لآخره وبنبلّغ الحي أوتوماتيك.', 'The bin is full and the district is alerted automatically.')}
+          {bin.state === 'hot' ? tr('الصندوق سخن. لو فيه دخان أو ريحة حرق، التبليغ مهم.', 'The bin is hot. Report it if you see smoke or smell burning.') : tr('الصندوق وصل لآخره وبنبلّغ الحي أوتوماتيك.', 'The bin is full and the district is alerted automatically.')}
         </AppText>
       ) : null}
 

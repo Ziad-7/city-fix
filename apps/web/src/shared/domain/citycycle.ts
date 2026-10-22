@@ -94,7 +94,7 @@ export type NewRecyclingPickupInput = {
 export type CollectorJob = {
   id: string;
   items: PickupItem[];
-  /** Address and landmark only; the exact pin arrives with the accepted pickup. */
+  /** Street-level address, landmark and an approximate pin; the exact pin arrives with the accepted pickup. */
   location: Place;
   day: string;
   slot: SlotId;

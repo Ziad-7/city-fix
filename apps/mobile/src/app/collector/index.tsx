@@ -9,7 +9,7 @@ import { COLLECTOR_VEHICLES, DEFAULT_JOB_RADIUS_M, MATERIAL_IDS, collectorStatus
 import { findDistrict } from '@/domain/locations';
 import { useTr } from '@/i18n';
 import { API_MODE } from '@/services';
-import { useCollector, useSession } from '@/store';
+import { useCollector, useRecycling, useSession } from '@/store';
 import { colors } from '@/theme/tokens';
 
 /** Collector mode: apply, wait for verification, then find and work jobs. */
@@ -93,7 +93,7 @@ function Pending() {
   const [busy, setBusy] = useState(false);
   return (
     <>
-      <StateMessage icon="clock" title={collectorStatusLabel('pending')} body={tr('مكتب الحي بيراجع طلبك. الطلبات هتظهر أول ما يتفعّل.', 'The district office is reviewing your application. You can see requests as soon as it is approved.')} actionLabel={tr('حدّث', 'Refresh')} onAction={() => void loadMe()} />
+      <StateMessage icon="clock" title={collectorStatusLabel('pending')} body={tr('مكتب الحي بيراجع طلبك. الطلبات هتظهر أول ما حسابك يتفعّل.', 'The district office is reviewing your application. You can see requests as soon as it is approved.')} actionLabel={tr('حدّث', 'Refresh')} onAction={() => void loadMe()} />
       {API_MODE === 'mock' ? (
         <Button
           label={tr('(تجربة) اعتبرني موثّق', '(Demo) Mark me as verified')}
@@ -124,6 +124,10 @@ function Jobs() {
   const mine = useCollector((s) => s.mine);
   const refreshJobs = useCollector((s) => s.refreshJobs);
   const refreshMine = useCollector((s) => s.refreshMine);
+  const loadPrices = useRecycling((s) => s.loadPrices);
+  useEffect(() => {
+    void loadPrices();
+  }, [loadPrices]);
   const [tab, setTab] = useState<'open' | 'mine'>('open');
   const [refreshing, setRefreshing] = useState(false);
   const center = useMemo(() => {

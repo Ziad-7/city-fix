@@ -12,7 +12,7 @@ Date: 2026-10-22. The app is feature complete against the mock. Use this list wh
 | Pickup form: send | `POST /recycling/pickups` | body `NewRecyclingPickupInput` (`items`, `photoUris`, `location`, `day`, `slot`, `mode`, `note?`) |
 | طلباتي / detail | `GET /recycling/pickups`, `GET /recycling/pickups/{id}` | `404` for a missing id, `403` for someone else's |
 | Cancel / confirm | `POST /recycling/pickups/{id}/cancel`, `…/confirm` | cancel only while `requested` |
-| My impact | `GET /me/impact` | |
+| My impact | `GET /me/impact?as=citizen` | one account can also be a collector |
 | Map: bins | `GET /bins`, `POST /bins/{id}/report-full` | creates a garbage incident |
 | Collector: apply / status | `POST /collectors/apply`, `GET /collectors/me` | `null`/404 when never applied; verification is by staff (the mock has a demo button) |
 | Collector: jobs | `GET /collector/jobs?lat&lng&radiusM`, `GET /collector/pickups` | `/collector/pickups` is **new** |

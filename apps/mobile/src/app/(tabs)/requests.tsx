@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { PickupCard } from '@/components/citycycle';
 import { pickupInFilter } from '@/logic/citycycle';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { QueuedCard, REQUEST_FILTERS, RequestCard, StateMessage, filterRequests, type RequestFilter } from '@/components/requests';
 import { AppText, Chip, Screen, ScreenHeader } from '@/components/ui';
@@ -22,6 +22,10 @@ export default function RequestsScreen() {
   const outboxItems = useOutbox((s) => s.items);
   const queued = useMemo(() => outboxItems.filter((i) => i.userId === userId), [outboxItems, userId]);
   const pickups = useRecycling((s) => s.pickups);
+  const loadPrices = useRecycling((s) => s.loadPrices);
+  useEffect(() => {
+    void loadPrices(); // the pickup cards say "From" only when they know the price list
+  }, [loadPrices]);
   const pickupsStatus = useRecycling((s) => s.status);
   const [filter, setFilter] = useState<RequestFilter | 'recycling'>('all');
   const filters = useMemo(() => [...REQUEST_FILTERS, { id: 'recycling' as const, labelAr: 'تدوير', labelEn: 'Recycling' }], []);
