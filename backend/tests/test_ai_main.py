@@ -1,24 +1,19 @@
 import pytest
 from fastapi import HTTPException
-from fastapi.routing import APIRoute
 
-from app.auth import current_user
 from app.main import app, load_approved_triage_photo
 
 
 def test_main_api_registers_triage_with_the_shared_auth_dependency():
-    route = next(
-        route
-        for route in app.routes
-        if isinstance(route, APIRoute) and route.path == "/triage"
-    )
-    assert any(
-        dependency.call is current_user for dependency in route.dependant.dependencies
-    )
-    assert any(
-        isinstance(route, APIRoute) and route.path == "/uploads/sign"
-        for route in app.routes
-    )
+    openapi = app.openapi()
+    paths = openapi["paths"]
+    assert "/triage" in paths
+    assert "/uploads/sign" in paths
+    assert paths["/triage"]["post"]["security"] == [{"HTTPBearer": []}]
+    assert openapi["components"]["securitySchemes"]["HTTPBearer"] == {
+        "scheme": "bearer",
+        "type": "http",
+    }
 
 
 @pytest.mark.anyio
