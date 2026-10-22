@@ -1,5 +1,9 @@
 # Progress log
 
+## 2026-10-22 — Demo seed works on PostgreSQL
+
+- PostgreSQL enforces foreign keys statement by statement, and the seed inserted categories and staff accounts before their parent rows were flushed (SQLite does not check this). The seed now flushes departments and profiles first. Verified by seeding a real PostgreSQL 16 database (34 incidents).
+
 ## 2026-10-22 — Backend can run on Vercel with Supabase Postgres
 
 - Added the `psycopg` driver (also in `uv.lock`, which Vercel installs from), a `DATABASE_URL` normaliser that accepts Supabase's plain `postgresql://` string, connection-pool settings for non-SQLite databases, and `backend/vercel.json`.
