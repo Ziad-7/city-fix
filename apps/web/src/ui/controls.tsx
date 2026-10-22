@@ -2,6 +2,7 @@
 
 import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
 import type { IconName } from '@/domain/types';
+import { getLang } from '@/i18n';
 import { Icon } from './Icon';
 
 /** On/off switch (`.ftc-toggle`), a real button with role="switch". */
@@ -38,7 +39,7 @@ export function ToggleRow({
 /**
  * Keyboard for one radio of a radiogroup whose radios are the direct children of the group element: Space/Enter
  * choose it; the arrows (RTL: left/down = next, right/up = previous) choose the neighbour AND move focus to it, so
- * the next arrow continues from there (roving tabindex). Returns true when it handled the key.
+ * the next arrow continues from there (roving tabindex). In LTR (English) the arrows swap: right/down = next. Returns true when it handled the key.
  */
 export function radioKeys(e: KeyboardEvent<HTMLElement>, index: number, count: number, choose: (i: number) => void): boolean {
   if (e.key === ' ' || e.key === 'Enter') {
@@ -46,7 +47,8 @@ export function radioKeys(e: KeyboardEvent<HTMLElement>, index: number, count: n
     choose(index);
     return true;
   }
-  const step = e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowRight' || e.key === 'ArrowUp' ? -1 : 0;
+  const [nextKey, prevKey] = getLang() === 'en' ? ['ArrowRight', 'ArrowLeft'] : ['ArrowLeft', 'ArrowRight'];
+  const step = e.key === nextKey || e.key === 'ArrowDown' ? 1 : e.key === prevKey || e.key === 'ArrowUp' ? -1 : 0;
   if (!step) return false;
   e.preventDefault();
   const next = (index + step + count) % count;
