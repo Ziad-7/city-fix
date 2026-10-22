@@ -29,6 +29,14 @@ def utc_now():
 Base = declarative_base()
 
 
+class ReadableIdCounter(Base):
+    """Transactional reservations for CityCycle readable IDs."""
+
+    __tablename__ = "readable_id_counters"
+    prefix = Column(String(10), primary_key=True)
+    last_value = Column(BigInteger, nullable=False)
+
+
 class IncidentStatusEnum(str, enum.Enum):
     """Incident status enumeration."""
 
@@ -319,3 +327,136 @@ class BinReading(Base):
         UniqueConstraint("bin_id", "seq", name="uq_bin_reading_sequence"),
         Index("idx_bin_reading_received", "bin_id", "received_at"),
     )
+
+
+# --------------------------------------------------------------------------- CityCycle (recycling)
+class MaterialPriceRow(Base):
+    """District price list. A NULL price means the district has not set one yet."""
+
+    __tablename__ = "material_prices"
+
+    district = Column(String(100), primary_key=True)
+    material_id = Column(String(30), primary_key=True)
+    price_egp_per_kg = Column(Float, nullable=True)
+    updated_at = Column(DateTime, nullable=False, default=utc_now)
+
+
+class Collector(Base):
+    """A citizen's collector profile. Verification is staff-controlled; one profile per user."""
+
+    __tablename__ = "collectors"
+
+    id = Column(String(50), primary_key=True)  # COL-1
+    profile_id = Column(String(50), ForeignKey("profiles.id"), nullable=False, unique=True)
+    name = Column(String(255), nullable=False)
+    district = Column(String(100), nullable=False)
+    status = Column(String(20), nullable=False, default="pending")  # pending, verified, suspended
+    materials = Column(JSON, nullable=False, default=[])
+    vehicle = Column(String(255), nullable=True)
+    review_note = Column(Text, nullable=True)
+    joined_at = Column(DateTime, nullable=False, default=utc_now)
+
+
+class RecyclingPickup(Base):
+    """A household's request to have recyclables collected (id RCY-3001)."""
+
+    __tablename__ = "recycling_pickups"
+
+    id = Column(String(50), primary_key=True)
+    citizen_id = Column(String(50), ForeignKey("profiles.id"), nullable=False)
+    items = Column(JSON, nullable=False)  # [{materialId, estimatedKg}]
+    photo_paths = Column(JSON, default=[])
+    lat = Column(Float, nullable=False)
+    lng = Column(Float, nullable=False)
+    address = Column(String(500), nullable=False)
+    landmark = Column(String(255), nullable=True)
+    district = Column(String(100), nullable=False)
+    day = Column(String(10), nullable=False)
+    slot = Column(String(20), nullable=False)
+    mode = Column(String(10), nullable=False)  # free, paid
+    note = Column(Text, nullable=True)
+    estimated_value_egp = Column(Float, nullable=True)
+    status = Column(String(20), nullable=False, default="requested")
+    collector_id = Column(String(50), ForeignKey("collectors.id"), nullable=True)
+    accepted_at = Column(DateTime, nullable=True)
+    paid_to_household_egp = Column(Float, nullable=True)
+    collector_finished_at = Column(DateTime, nullable=True)
+    confirmed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+
+    __table_args__ = (
+        Index("idx_pickup_citizen", "citizen_id", "created_at"),
+        Index("idx_pickup_status", "status", "created_at"),
+        Index("idx_pickup_collector", "collector_id"),
+    )
+
+
+class Weighing(Base):
+    """Weighings are the source of truth for kg and EGP; unique per (pickup, app clientId)."""
+
+    __tablename__ = "recycling_weighings"
+
+    id = Column(String(50), primary_key=True)  # WGH-1
+    pickup_id = Column(String(50), ForeignKey("recycling_pickups.id"), nullable=False)
+    collector_id = Column(String(50), ForeignKey("collectors.id"), nullable=False)
+    material_id = Column(String(30), nullable=False)
+    kg = Column(Float, nullable=False)
+    source = Column(String(20), nullable=False)
+    scale_id = Column(String(100), nullable=True)
+    price_egp_per_kg = Column(Float, nullable=True)
+    value_egp = Column(Float, nullable=True)
+    client_id = Column(String(100), nullable=False)
+    at = Column(DateTime, nullable=False, default=utc_now)
+
+    __table_args__ = (
+        UniqueConstraint("pickup_id", "client_id", name="uq_weighing_client"),
+        Index("idx_weighing_pickup", "pickup_id"),
+        Index("idx_weighing_collector_at", "collector_id", "at"),
+    )
+
+
+class BinReport(Base):
+    """A citizen's "this bin is full" report and the FixFirst incident it created or joined."""
+
+    __tablename__ = "bin_reports"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    bin_id = Column(String(64), ForeignKey("smart_bins.id"), nullable=False)
+    incident_id = Column(String(50), ForeignKey("incidents.id"), nullable=False)
+    reporter_id = Column(String(50), ForeignKey("profiles.id"), nullable=False)
+    note = Column(Text, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+
+    __table_args__ = (Index("idx_bin_report_bin", "bin_id", "created_at"),)
+
+
+class HubWeighing(Base):
+    """Weighing sent by a hub scale (device auth), unique per hub sequence."""
+
+    __tablename__ = "hub_weighings"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    hub_id = Column(String(64), ForeignKey("smart_bins.id"), nullable=False)
+    seq = Column(BigInteger, nullable=False)
+    recorded_at = Column(DateTime, nullable=False)
+    received_at = Column(DateTime, nullable=False, default=utc_now)
+    material_id = Column(String(30), nullable=False)
+    kg = Column(Float, nullable=False)
+    pickup_id = Column(String(50), ForeignKey("recycling_pickups.id"), nullable=True)
+
+    __table_args__ = (UniqueConstraint("hub_id", "seq", name="uq_hub_weighing_sequence"),)
+
+
+class IdempotencyKey(Base):
+    """``Idempotency-Key`` header values already used by a user for a create endpoint."""
+
+    __tablename__ = "idempotency_keys"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String(50), nullable=False)
+    scope = Column(String(30), nullable=False)  # report, recycling_pickup
+    key = Column(String(100), nullable=False)
+    resource_id = Column(String(50), nullable=False)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+
+    __table_args__ = (UniqueConstraint("user_id", "scope", "key", name="uq_idempotency_user_scope_key"),)

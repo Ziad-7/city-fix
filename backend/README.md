@@ -49,6 +49,8 @@ python -m pytest -q
 | `CORS_ORIGINS` | `http://localhost:3000,http://localhost:3001` | Comma-separated allowed origins (Expo web `:8081` is always allowed) |
 | `CORS_ORIGIN_REGEX` | `^http://(localhost\|127\.0\.0\.1)(:\d+)?$` | Also allow any localhost port; set to your deployed origins (e.g. the Vercel domains) in production |
 | `VERSION` | `0.1.0` | Reported by `/health` |
+| `ALLOW_LOCAL_UPLOAD_STUB` | unset | Local `/uploads/sign` stub that discards files. Unset = allowed on SQLite only; `503` on Postgres without `SUPABASE_*`. `true` forces it (demo), `false` forbids it |
+| `GEMINI_API_KEY`, `GEMINI_PHOTO_ANALYSIS_ENABLED` | empty / `false` | Also gate `/ai/waste-classify` model results (needs `photoConsent: true` per request); otherwise the deterministic fallback answers |
 
 ## Deploy on Vercel (with Supabase Postgres)
 
@@ -89,7 +91,7 @@ Private media is optional: set `app.state.media_storage` to an object with `sign
 - Errors are `{ "detail": "<short Egyptian Arabic>" }`; invalid bodies are `422 {"detail": "البيانات مش مكتملة"}`.
 - Timestamps are stored naive UTC and sent as `...Z`.
 - No PostGIS locally: duplicates use haversine in Python.
-- `/uploads/sign` is a local stub: it returns a URL on this server that accepts a `PUT` and discards the body.
+- `/uploads/sign` without Supabase Storage is a local stub that accepts a `PUT` and discards the body. It is only allowed on SQLite (or `ALLOW_LOCAL_UPLOAD_STUB=true`); otherwise it answers `503`.
 
 ## CityBrain photo and Arabic text triage
 
@@ -122,3 +124,11 @@ ALTER TABLE bin_readings ADD COLUMN clock_unsynced BOOLEAN NULL;
 ```
 
 Do not infer old devices' original timestamps from `recorded_at`: migrated rows retain `device_at = NULL` and `clock_unsynced = NULL` to mean timestamp provenance is unknown. Their original timestamp cannot be compared, so same-sequence retries for those legacy rows return `409` rather than risk acknowledging a changed payload. New rows store `clock_unsynced` as `TRUE` or `FALSE`, and retries compare their exact original timestamp. Existing SQLite databases must be backed up and rebuilt/recreated with the updated schema; old demo data can instead be discarded with the documented reset. Production also needs a persistent PostgreSQL database, HTTPS, secret provisioning, and deployment validation. SQLite on an ephemeral serverless filesystem will lose data.
+
+## CityCycle (recycling) and database migration
+
+Routes: `app/routers/recycling.py` (citizen pickups, collectors, impact), `recycling_admin.py` (Command Center), public bins and `report-full` in `routers/bins.py`, `app/ai/waste.py`. Demo data (`app/seed_citycycle.py`): DEMO prices for `مدينة نصر أول`, open pickups `RCY-3001..3004`, a finished `RCY-3100` for the demo citizen, verified collector `COL-1` (login phone `01022223333`, OTP `123456`), pending `COL-2` (`01033334444`) and seven smart bins `BIN-011..HUB-001` (assigned to the sanitation department).
+
+There is no Alembic. New tables are created by `create_all()` on start (also on Postgres/Supabase), which only adds missing tables. `migrations/001_citycycle.sql` is the same DDL, idempotent (`IF NOT EXISTS`) with Row Level Security enabled and no policies, for running by hand in the Supabase SQL editor before deploying. It needs the existing `profiles`, `incidents` and `smart_bins` tables. The seed runs only on an empty database; on an existing database add demo rows yourself or reset it.
+
+CityCycle `RCY`, `COL` and `WGH` IDs use `readable_id_counters`: each prefix is lazily seeded above the existing numeric maximum, then reserved with an atomic database increment in the caller transaction. Rollback releases the reservation; commits keep it even if no entity was inserted. Apply the counter DDL in `001_citycycle.sql` before upgrading an existing deployment. Counter rows have RLS enabled with no public policies and require the privileged backend database role. Other ID prefixes retain their existing behavior.
