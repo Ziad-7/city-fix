@@ -134,18 +134,18 @@ TriageSuggestion  = {
 ### Triage (CityBrain)
 | Method | Path | Body | Response |
 | --- | --- | --- | --- |
-| POST | `/triage` | `{ description: string, categoryId?, photoUri?, location?: { lat, lng } }` | `TriageSuggestion` |
+| POST | `/triage` | `{ description: string, categoryId?, photoUri?, photoConsent?: boolean, location?: { lat, lng } }` | `TriageSuggestion` |
 
-- Until the AI agent is ready, return a deterministic keyword classifier (port `apps/mobile/src/logic/triage-mock.ts`). Duplicates come from the database (see below).
+- Use structured model suggestions when configured; on missing credentials, timeout, quota, or invalid output, return the deterministic Arabic/English keyword result. Photo analysis is opt-in through `photoConsent` and disabled by default. Duplicates come from the database (see below).
 - Must answer within ~5 s; on model failure return the keyword result rather than an error (manual fallback).
 
-### Photo and voice-note uploads (proposed — needs agreement)
-The mobile app implements this flow in API mode (mock mode keeps local URIs).
+### Photo and voice-note uploads
+The backend signs uploads into a private Supabase Storage bucket. Photo analysis requires a separate per-request `photoConsent: true`; omit it unless the user has explicitly agreed to send the photo to the configured AI provider. Analysis remains disabled by default.
 | Method | Path | Body | Response |
 | --- | --- | --- | --- |
 | POST | `/uploads/sign` | `{ kind: "report_photo" \| "voice_note", contentType }` | `{ uploadUrl, path }` |
 
-`contentType` is `image/jpeg` for photos (the app resizes them to a 1600 px long side, JPEG quality 0.7) and the recorder's audio type for voice notes (`audio/mp4` for `.m4a`; also `audio/mpeg`, `audio/wav`, `audio/webm`, `audio/3gpp`, `audio/x-caf`). The `PUT` must use the same `Content-Type` as signed. The mobile app and the website both `PUT` the file to `uploadUrl` (the URL must accept a browser `PUT` with CORS) (a Supabase Storage signed upload URL), then send `path` in `photoUris`, in `voiceNoteUri`, or (*proposed*) in a tree booking's `details.photoUris`. Values in those fields that are not local URIs are treated as already uploaded, so an offline-queued report that was half prepared is not uploaded twice. A failed `PUT` is retried later by the app's offline queue; a `4xx` from `/uploads/sign` or `/reports` drops the queued report with the server's `detail`. Reads use short-lived signed URLs returned by the API. Faces and plates are blurred before a photo is shown to anyone but the reporter and admins (stretch: run the blur on upload).
+`contentType` is `image/jpeg` for photos and one of `audio/mp4`, `audio/mpeg`, `audio/webm`, or `audio/ogg` for voice notes. The `PUT` must use the same `Content-Type` as signed. Clients `PUT` the file to `uploadUrl`, then send `path` in `photoUris` or `voiceNoteUri`. The backend verifies the user-scoped path, uploaded MIME type, and size before accepting a report. Reads use short-lived signed URLs. The bucket must remain private. Before AI processing, metadata is removed, images are resized, and detected face/plate regions are blurred. The bundled Haar cascades are best-effort and not yet validated for local photos; photo AI stays disabled until that validation and the client consent UI are complete.
 
 ### Staff auth (Command Center) — proposed
 | Method | Path | Body | Response |

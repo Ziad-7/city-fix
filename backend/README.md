@@ -158,10 +158,10 @@ This drops all tables, recreates them, and re-seeds with demo data.
 ## Remaining integration work
 
 - Connect the citizen report, follow, and service-request routers to transactional database repositories in `app.main`.
-- Replace the local SQLite demo setup with agreed migrations and production PostgreSQL/PostGIS, plus real storage and OTP providers.
+- Replace the local SQLite demo setup with agreed migrations and production PostgreSQL/PostGIS, provision private Supabase media storage, and connect a real OTP provider.
 - Replace demo readable-ID allocation with a transactional database sequence before concurrent or multi-worker deployment.
 - Add deployment configuration, production CORS/secrets, and connect the mobile, citizen web, and admin clients to a deployed API.
-- Build and register the CityBrain triage, transcription, photo-blur, and budget-optimization services.
+- Add transcription and budget-optimization services; implement photo face/plate blurring and the client consent flow before enabling image triage.
 
 ## Environment Variables
 
@@ -208,3 +208,11 @@ uv run pytest
 The citizen authentication and report/service route layer is implemented behind repository interfaces. Run the process-local harness with `OTP_MODE=demo python -m uvicorn app.citizen_demo:create_app --factory --host 127.0.0.1`; it is intended for route testing while persistent citizen repositories and storage are integrated into `app.main`.
 
 Install the combined development dependencies with `python -m pip install -r requirements-dev.txt`. The repository CI runs Ruff lint/format, mypy, and pytest from this directory.
+
+## CityBrain photo and Arabic text triage
+
+`POST /triage` is mounted in the main FastAPI app and uses the existing bearer-token `current_user` dependency. Gemini structured suggestions use `GEMINI_API_KEY` and `GEMINI_MODEL`; absent credentials, timeouts, quota errors, and invalid responses fall back to the deterministic Arabic/English classifier. Nearby open incidents are queried from the existing SQLAlchemy models, with the caller's reports separated into `alreadyReported` and followed incidents excluded from duplicate suggestions.
+
+Photo inference is disabled unless `GEMINI_PHOTO_ANALYSIS_ENABLED=true`. Create a **private** Supabase Storage bucket, then configure `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_MEDIA_BUCKET` (default `report-media`) to enable `/uploads/sign`. The adapter refuses public buckets, scopes random object paths to the authenticated user, verifies uploaded MIME type and size, and issues 15-minute read URLs. The `/triage` request must include `photoConsent: true` to read a photo for AI analysis. Before a photo reaches Gemini, the backend strips metadata, caps dimensions, and blurs regions detected by OpenCV's bundled frontal-face and Russian-plate Haar cascades. These detectors can miss faces or Egyptian plates; keep photo inference disabled until they are validated on representative images and the client shows informed consent. Gemini's free tier may use submitted content to improve Google products.
+
+The route uses the existing `/triage` response contract with an optional `photoConsent` request field. A device-local URI or browser data URL is not accepted by the API; clients must upload first and send the returned storage path.

@@ -1,1 +1,1 @@
-"""Backend tests."""
+"""CityBrain backend test support."""

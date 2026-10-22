@@ -1,19 +1,32 @@
 """FastAPI application entry point."""
 
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.config import settings
 from app.db import init_db, SessionLocal
 from app.admin_schemas import HealthResponse
-from app.auth import AuthContext, AuthSettings
+from app.auth import AuthContext, AuthSettings, current_user
 from app.auth_adapters import DatabaseStaffDirectory, DatabaseUserRepository
 from app.map_repository import DatabaseMapRepository
 from app.staff_auth import StaffLoginContext
 from app.routers import auth, admin, map as citizen_map, staff_auth
+from app.routers import uploads
 from app.seed import seed_db
+from app.ai.integrations import find_nearby_incidents
+from app.ai.llm import GeminiClient
+from app.ai.router import create_triage_router
+from app.storage import SupabaseMediaStorage
+
+
+async def load_approved_triage_photo(path: str, user_id: str, consent: bool) -> bytes:
+    """Read only a consented caller-owned photo through the private storage adapter."""
+    storage = getattr(app.state, "media_storage", None)
+    if storage is None or not callable(getattr(storage, "read_approved", None)):
+        raise HTTPException(503, "تحليل الصور مش متاح لحد ما التخزين الخاص يكون جاهز.")
+    return await storage.read_approved(user_id, path, "report_photo", consent)
 
 
 @asynccontextmanager
@@ -37,6 +50,10 @@ async def lifespan(app: FastAPI):
 
     yield
     # Shutdown
+    media_storage = getattr(app.state, "media_storage", None)
+    if isinstance(media_storage, SupabaseMediaStorage):
+        await media_storage.aclose()
+        media_storage.close()
 
 
 app = FastAPI(
@@ -57,6 +74,14 @@ app.state.auth_context = AuthContext(
 )
 app.state.staff_login_context = StaffLoginContext(DatabaseStaffDirectory())
 app.state.citizen_repository = DatabaseMapRepository()
+if settings.supabase_url.strip() and settings.supabase_service_role_key.strip():
+    app.state.media_storage = SupabaseMediaStorage(
+        settings.supabase_url,
+        settings.supabase_service_role_key,
+        settings.supabase_media_bucket,
+    )
+else:
+    app.state.media_storage = None
 
 # CORS middleware for web clients
 cors_origins = [
@@ -90,6 +115,20 @@ async def health_check() -> HealthResponse:
 # ============================================================================
 
 app.include_router(auth.router)
+app.include_router(uploads.router)
+app.include_router(
+    create_triage_router(
+        get_current_user=current_user,
+        load_authorized_photo=load_approved_triage_photo,
+        find_nearby_incidents=find_nearby_incidents,
+        provider=(
+            GeminiClient(api_key=settings.gemini_api_key, model=settings.gemini_model)
+            if settings.gemini_api_key.strip()
+            else None
+        ),
+        photo_analysis_enabled=settings.gemini_photo_analysis_enabled,
+    )
+)
 app.include_router(staff_auth.router)
 app.include_router(citizen_map.router)
 app.include_router(admin.router)
