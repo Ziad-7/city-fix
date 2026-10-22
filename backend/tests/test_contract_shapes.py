@@ -12,7 +12,7 @@ class TestIncidentShape:
 
     def test_admin_incidents_list_has_correct_shape(self, client, db):
         """GET /admin/incidents returns AdminIncident[] with correct keys."""
-        response = client.post("/auth/staff-login", json={"email": "admin@fixthecity.demo", "password": "FixCity2026!"})
+        response = client.post("/auth/staff-login", json={"email": "admin@cityfix.demo", "password": "FixCity2026!"})
         token = response.json()["token"]
 
         response = client.get("/admin/incidents", headers={"Authorization": f"Bearer {token}"})
@@ -81,7 +81,7 @@ class TestIncidentShape:
 
     def test_admin_incident_detail_has_correct_shape(self, client, db):
         """GET /admin/incidents/{id} returns AdminIncident with correct keys."""
-        response = client.post("/auth/staff-login", json={"email": "admin@fixthecity.demo", "password": "FixCity2026!"})
+        response = client.post("/auth/staff-login", json={"email": "admin@cityfix.demo", "password": "FixCity2026!"})
         token = response.json()["token"]
 
         # Get first incident
@@ -128,7 +128,7 @@ class TestWorkOrderShape:
 
     def test_work_orders_list_has_correct_shape(self, client, db):
         """GET /admin/work-orders returns WorkOrder[] with correct keys."""
-        response = client.post("/auth/staff-login", json={"email": "admin@fixthecity.demo", "password": "FixCity2026!"})
+        response = client.post("/auth/staff-login", json={"email": "admin@cityfix.demo", "password": "FixCity2026!"})
         token = response.json()["token"]
 
         response = client.get("/admin/work-orders", headers={"Authorization": f"Bearer {token}"})
@@ -178,7 +178,7 @@ class TestServiceRequestShape:
 
     def test_service_requests_list_has_correct_shape(self, client, db):
         """GET /admin/service-requests returns ServiceRequest[] with location object."""
-        response = client.post("/auth/staff-login", json={"email": "admin@fixthecity.demo", "password": "FixCity2026!"})
+        response = client.post("/auth/staff-login", json={"email": "admin@cityfix.demo", "password": "FixCity2026!"})
         token = response.json()["token"]
 
         response = client.get("/admin/service-requests", headers={"Authorization": f"Bearer {token}"})
@@ -211,7 +211,7 @@ class TestStaffSessionShape:
 
     def test_admin_staff_login_omits_department(self, client, db):
         """POST /auth/staff-login admin response has no department key."""
-        response = client.post("/auth/staff-login", json={"email": "admin@fixthecity.demo", "password": "FixCity2026!"})
+        response = client.post("/auth/staff-login", json={"email": "admin@cityfix.demo", "password": "FixCity2026!"})
         assert response.status_code == 200
         session = response.json()
 
@@ -226,7 +226,7 @@ class TestStaffSessionShape:
 
     def test_staff_staff_login_includes_department(self, client, db):
         """POST /auth/staff-login staff response includes department."""
-        response = client.post("/auth/staff-login", json={"email": "roads@fixthecity.demo", "password": "FixCity2026!"})
+        response = client.post("/auth/staff-login", json={"email": "roads@cityfix.demo", "password": "FixCity2026!"})
         assert response.status_code == 200
         session = response.json()
 
@@ -260,7 +260,7 @@ class TestDashboardShape:
 
     def test_dashboard_has_correct_shape(self, client, db):
         """GET /admin/dashboard returns dashboard with correct shape."""
-        response = client.post("/auth/staff-login", json={"email": "admin@fixthecity.demo", "password": "FixCity2026!"})
+        response = client.post("/auth/staff-login", json={"email": "admin@cityfix.demo", "password": "FixCity2026!"})
         token = response.json()["token"]
 
         response = client.get("/admin/dashboard", headers={"Authorization": f"Bearer {token}"})

@@ -88,7 +88,7 @@ class TestStaffLogin:
         response = client.post(
             "/auth/staff-login",
             json={
-                "email": "roads@fixthecity.demo",
+                "email": "roads@cityfix.demo",
                 "password": "FixCity2026!",
             },
         )
@@ -103,7 +103,7 @@ class TestStaffLogin:
         response = client.post(
             "/auth/staff-login",
             json={
-                "email": "admin@fixthecity.demo",
+                "email": "admin@cityfix.demo",
                 "password": "FixCity2026!",
             },
         )
@@ -116,7 +116,7 @@ class TestStaffLogin:
         response = client.post(
             "/auth/staff-login",
             json={
-                "email": "admin@fixthecity.demo",
+                "email": "admin@cityfix.demo",
                 "password": "wrongpassword",
             },
         )
@@ -127,7 +127,7 @@ class TestStaffLogin:
         response = client.post(
             "/auth/staff-login",
             json={
-                "email": "nonexistent@fixthecity.demo",
+                "email": "nonexistent@cityfix.demo",
                 "password": "FixCity2026!",
             },
         )
@@ -146,7 +146,7 @@ class TestStaffLogin:
         response = client.post(
             "/auth/staff-login",
             json={
-                "email": "admin@fixthecity.demo",
+                "email": "admin@cityfix.demo",
                 "password": "FixCity2026!",
             },
         )
@@ -168,7 +168,7 @@ class TestGetMe:
         login_response = client.post(
             "/auth/staff-login",
             json={
-                "email": "admin@fixthecity.demo",
+                "email": "admin@cityfix.demo",
                 "password": "FixCity2026!",
             },
         )

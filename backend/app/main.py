@@ -40,8 +40,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="FixTheCity Backend",
-    description="API for the FixTheCity citizen and admin apps",
+    title="CityFix Backend",
+    description="API for the CityFix citizen and admin apps",
     version=settings.version,
     lifespan=lifespan,
 )

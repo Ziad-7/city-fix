@@ -51,7 +51,7 @@ export default function IncidentDetailContent({
 
   // Document title
   useEffect(() => {
-    document.title = `FixTheCity — مركز القيادة: ${incident.id}`;
+    document.title = `CityFix — مركز القيادة: ${incident.id}`;
   }, [incident.id]);
 
   const category = getCategory(incident.categoryId);

@@ -56,7 +56,7 @@ export default function ServiceRequestsPage() {
   const [now] = useState(() => Date.now());
 
   useEffect(() => {
-    document.title = 'FixTheCity — مركز القيادة: طلبات الخدمات';
+    document.title = 'CityFix — مركز القيادة: طلبات الخدمات';
   }, []);
 
   const query = useQuery({

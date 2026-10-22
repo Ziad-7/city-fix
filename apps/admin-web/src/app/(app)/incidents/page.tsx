@@ -89,7 +89,7 @@ function IncidentsPageInner() {
 
   // Set document title
   useEffect(() => {
-    document.title = 'FixTheCity — مركز القيادة: البلاغات';
+    document.title = 'CityFix — مركز القيادة: البلاغات';
   }, []);
 
   // Fetch data

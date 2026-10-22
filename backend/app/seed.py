@@ -116,7 +116,7 @@ def seed_db(db: Session) -> None:
     db.add(admin_profile)
     admin_account = StaffAccount(
         profile_id="admin-001",
-        email="admin@fixthecity.demo",
+        email="admin@cityfix.demo",
         password_hash=hash_password("FixCity2026!"),
     )
     db.add(admin_account)
@@ -130,7 +130,7 @@ def seed_db(db: Session) -> None:
     db.add(staff_profile)
     staff_account = StaffAccount(
         profile_id="staff-001",
-        email="roads@fixthecity.demo",
+        email="roads@cityfix.demo",
         password_hash=hash_password("FixCity2026!"),
         department_id="roads",
     )
@@ -138,14 +138,14 @@ def seed_db(db: Session) -> None:
 
     # Additional staff accounts per department
     dept_staff = [
-        ("sanitation", "staff-sanitation", "نادية علي", "sanitation@fixthecity.demo", "القاهرة · حي مدينة نصر أول"),
-        ("lighting", "staff-lighting", "محمود أحمد", "lighting@fixthecity.demo", "القاهرة · حي مدينة نصر أول"),
-        ("sewage", "staff-sewage", "سلام محمد", "sewage@fixthecity.demo", "القاهرة · حي مدينة نصر أول"),
-        ("water", "staff-water", "حسان علي", "water@fixthecity.demo", "القاهرة"),
-        ("electricity", "staff-electricity", "صادق محمود", "electricity@fixthecity.demo", "القاهرة"),
-        ("parks", "staff-parks", "فاطمة الزهراء", "parks@fixthecity.demo", "القاهرة · حي مدينة نصر أول"),
-        ("utilities", "staff-utilities", "عمر كمال", "utilities@fixthecity.demo", "القاهرة · حي مدينة نصر أول"),
-        ("veterinary", "staff-vet", "دينا ياسر", "veterinary@fixthecity.demo", "القاهرة · حي مدينة نصر أول"),
+        ("sanitation", "staff-sanitation", "نادية علي", "sanitation@cityfix.demo", "القاهرة · حي مدينة نصر أول"),
+        ("lighting", "staff-lighting", "محمود أحمد", "lighting@cityfix.demo", "القاهرة · حي مدينة نصر أول"),
+        ("sewage", "staff-sewage", "سلام محمد", "sewage@cityfix.demo", "القاهرة · حي مدينة نصر أول"),
+        ("water", "staff-water", "حسان علي", "water@cityfix.demo", "القاهرة"),
+        ("electricity", "staff-electricity", "صادق محمود", "electricity@cityfix.demo", "القاهرة"),
+        ("parks", "staff-parks", "فاطمة الزهراء", "parks@cityfix.demo", "القاهرة · حي مدينة نصر أول"),
+        ("utilities", "staff-utilities", "عمر كمال", "utilities@cityfix.demo", "القاهرة · حي مدينة نصر أول"),
+        ("veterinary", "staff-vet", "دينا ياسر", "veterinary@cityfix.demo", "القاهرة · حي مدينة نصر أول"),
     ]
 
     for dept_id, profile_id, name, email, district in dept_staff:

@@ -88,7 +88,7 @@ export default function MapPage() {
   const [noMatch, setNoMatch] = useState(false);
 
   useEffect(() => {
-    document.title = 'FixTheCity — مركز القيادة: الخريطة';
+    document.title = 'CityFix — مركز القيادة: الخريطة';
   }, []);
 
   // Filters and selection live in the URL.

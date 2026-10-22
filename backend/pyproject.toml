@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "fixthecity-backend"
 version = "0.1.0"
-description = "FastAPI backend for FixTheCity"
+description = "FastAPI backend for CityFix"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.104.0",

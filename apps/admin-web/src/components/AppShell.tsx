@@ -98,9 +98,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <nav className="ftc-admin-sidebar" aria-label="قائمة مركز القيادة">
         <div className="brand">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/fixthecity-mark.svg" alt="" width={34} height={34} />
+          <img src="/brand/cityfix-mark.svg" alt="" width={34} height={34} />
           <span>
-            <b>FixTheCity</b>
+            <b>سيتي فيكس</b>
             <small>{session.district}</small>
           </span>
         </div>

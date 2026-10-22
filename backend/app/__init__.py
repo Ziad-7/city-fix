@@ -1,1 +1,1 @@
-"""FixTheCity Backend."""
+"""CityFix Backend."""

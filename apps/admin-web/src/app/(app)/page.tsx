@@ -63,7 +63,7 @@ export default function OverviewPage() {
 
   // Update document title
   useEffect(() => {
-    document.title = 'FixTheCity — مركز القيادة: نظرة عامة';
+    document.title = 'CityFix — مركز القيادة: نظرة عامة';
   }, []);
 
   // Extract district name (after the · separator)

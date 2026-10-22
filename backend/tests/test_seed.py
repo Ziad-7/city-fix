@@ -227,7 +227,7 @@ class TestSeedStaffAccounts:
 
     def test_admin_account_exists(self, db: Session):
         """Admin account should be present."""
-        account = db.query(StaffAccount).filter_by(email="admin@fixthecity.demo").first()
+        account = db.query(StaffAccount).filter_by(email="admin@cityfix.demo").first()
         assert account is not None
         profile = db.query(Profile).filter_by(id=account.profile_id).first()
         assert profile.name == "سارة محمود"
@@ -235,7 +235,7 @@ class TestSeedStaffAccounts:
 
     def test_roads_staff_account_exists(self, db: Session):
         """Roads staff account should be present."""
-        account = db.query(StaffAccount).filter_by(email="roads@fixthecity.demo").first()
+        account = db.query(StaffAccount).filter_by(email="roads@cityfix.demo").first()
         assert account is not None
         assert account.department_id == "roads"
         profile = db.query(Profile).filter_by(id=account.profile_id).first()
@@ -245,16 +245,16 @@ class TestSeedStaffAccounts:
     def test_staff_accounts_per_department(self, db: Session):
         """Staff accounts should exist for major departments."""
         expected_dept_emails = [
-            "admin@fixthecity.demo",
-            "roads@fixthecity.demo",
-            "sanitation@fixthecity.demo",
-            "lighting@fixthecity.demo",
-            "sewage@fixthecity.demo",
-            "water@fixthecity.demo",
-            "electricity@fixthecity.demo",
-            "parks@fixthecity.demo",
-            "utilities@fixthecity.demo",
-            "veterinary@fixthecity.demo",
+            "admin@cityfix.demo",
+            "roads@cityfix.demo",
+            "sanitation@cityfix.demo",
+            "lighting@cityfix.demo",
+            "sewage@cityfix.demo",
+            "water@cityfix.demo",
+            "electricity@cityfix.demo",
+            "parks@cityfix.demo",
+            "utilities@cityfix.demo",
+            "veterinary@cityfix.demo",
         ]
         for email in expected_dept_emails:
             account = db.query(StaffAccount).filter_by(email=email).first()
@@ -263,14 +263,14 @@ class TestSeedStaffAccounts:
     def test_staff_login_works(self, db: Session, client):
         """Staff login should work for both demo accounts."""
         # Admin login
-        response = client.post("/auth/staff-login", json={"email": "admin@fixthecity.demo", "password": "FixCity2026!"})
+        response = client.post("/auth/staff-login", json={"email": "admin@cityfix.demo", "password": "FixCity2026!"})
         assert response.status_code == 200
         data = response.json()
         assert data["role"] == "admin"
         assert "token" in data
 
         # Roads staff login
-        response = client.post("/auth/staff-login", json={"email": "roads@fixthecity.demo", "password": "FixCity2026!"})
+        response = client.post("/auth/staff-login", json={"email": "roads@cityfix.demo", "password": "FixCity2026!"})
         assert response.status_code == 200
         data = response.json()
         assert data["role"] == "staff"

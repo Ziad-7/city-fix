@@ -1,8 +1,8 @@
 import { expect, type APIRequestContext, type Page } from '@playwright/test';
 
 export const API = 'http://localhost:8020';
-export const ADMIN = { email: 'admin@fixthecity.demo', password: 'FixCity2026!' };
-export const STAFF = { email: 'roads@fixthecity.demo', password: 'FixCity2026!' };
+export const ADMIN = { email: 'admin@cityfix.demo', password: 'FixCity2026!' };
+export const STAFF = { email: 'roads@cityfix.demo', password: 'FixCity2026!' };
 
 export async function login(page: Page, creds: { email: string; password: string }) {
   await page.goto('/login');

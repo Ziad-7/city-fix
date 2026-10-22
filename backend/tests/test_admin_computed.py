@@ -183,11 +183,11 @@ def test_t7_validation_and_patch_path(client, db, admin_h):
 
 
 def test_t8_session_shapes(client, admin_h, roads_h):
-    creds = {"email": "admin@fixthecity.demo", "password": "FixCity2026!"}
+    creds = {"email": "admin@cityfix.demo", "password": "FixCity2026!"}
     admin = client.post("/auth/staff-login", json=creds).json()
     assert "department" not in admin and admin["name"] == "سارة محمود" and admin["role"] == "admin"
     assert admin["title"] == "مشرفة فرز · حي مدينة نصر"
-    creds = {"email": "roads@fixthecity.demo", "password": "FixCity2026!"}
+    creds = {"email": "roads@cityfix.demo", "password": "FixCity2026!"}
     roads = client.post("/auth/staff-login", json=creds).json()
     assert roads["department"] == "صيانة الطرق" and roads["role"] == "staff"
     me = client.get("/auth/me", headers=admin_h).json()

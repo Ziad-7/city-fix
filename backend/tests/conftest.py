@@ -87,12 +87,12 @@ def citizen_session(client: TestClient, phone: str = DEMO_PHONE) -> dict:
 
 @pytest.fixture
 def admin_h(client):
-    return staff_headers(client, "admin@fixthecity.demo")
+    return staff_headers(client, "admin@cityfix.demo")
 
 
 @pytest.fixture
 def roads_h(client):
-    return staff_headers(client, "roads@fixthecity.demo")
+    return staff_headers(client, "roads@cityfix.demo")
 
 
 @pytest.fixture
