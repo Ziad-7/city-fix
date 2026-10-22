@@ -5,15 +5,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/Toast';
-import { StatusChip, Button, DangerTag, Card, CardHead, KvList } from '@/components/ui';
+import { StatusChip, DangerTag, Card, CardHead, KvList } from '@/components/ui';
 import { Icon } from '@/components/Icon';
-import { Notice, EmptyState, Skeleton } from '@/components/ui/States';
+import { Notice } from '@/components/ui/States';
 import { PriorityBreakdown } from '@/components/ui/PriorityBreakdown';
 import { Timeline } from '@/components/ui/Timeline';
 import { StatusChangeForm } from '@/components/incidents/StatusChangeForm';
 import type { AdminIncident, WorkOrder, Department, Team, StaffSession } from '@/domain/admin-types';
-import type { DuplicateMatch } from '@/domain/types';
-import { formatDateTime, formatWhen, formatEgp, formatNumber, formatCitizens, formatWorkDays, formatDayDM, formatDueLabel, hoursLateOf, shortAddress } from '@/lib/format';
+import { formatWhen, formatEgp, formatCitizens, formatWorkDays, formatDayDM, formatDueLabel, hoursLateOf } from '@/lib/format';
 import { STATUS_LABEL_AR } from '@/domain/types';
 import { SEVERITY_AI_AR } from '@/lib/text';
 import { getCategory } from '@/domain/categories';
@@ -153,7 +152,8 @@ export default function IncidentDetailContent({
 
       toast.success('اتحدّثت الحالة. المواطنين هيشوفوا رسالتك في التتبع.');
     } catch (err) {
-      const errorMsg = (err as any)?.response?.data?.detail || 'حصلت مشكلة. جرّب تاني.';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const errorMsg = ((err as any)?.response?.data?.detail as string) || 'حصلت مشكلة. جرّب تاني.';
       toast.error(errorMsg);
     } finally {
       setStatusFormBusy(false);
@@ -172,7 +172,8 @@ export default function IncidentDetailContent({
       toast.success(`اتدمجت البلاغات في ${targetId}.`);
       router.push(`/incidents/${targetId}`);
     } catch (err) {
-      const errorMsg = (err as any)?.response?.data?.detail || 'حصلت مشكلة. جرّب تاني.';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const errorMsg = ((err as any)?.response?.data?.detail as string) || 'حصلت مشكلة. جرّب تاني.';
       toast.error(errorMsg);
     }
   };

@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useSession } from '@/lib/session';
-import { getIncident, getSimilarIncidents, getWorkOrder } from '@/services/incidents';
+import { getIncident, getSimilarIncidents } from '@/services/incidents';
 import { getWorkOrder as getWorkOrderService } from '@/services/workOrders';
 import { getDepartments, getTeams } from '@/services/departments';
 import { getCategory } from '@/domain/categories';
@@ -36,7 +36,7 @@ export default function IncidentDetailPage({ params }: { params: { id: string } 
 
   const { data: workOrder } = useQuery({
     queryKey: ['work-order', incident?.workOrderId],
-    queryFn: () => (incident?.workOrderId ? getWorkOrderService(incident.workOrderId) : null),
+    queryFn: () => (incident?.workOrderId ? getWorkOrderService(incident.workOrderId) : Promise.resolve(undefined)),
     enabled: !!incident?.workOrderId,
     retry: 1,
   });
@@ -125,7 +125,7 @@ export default function IncidentDetailPage({ params }: { params: { id: string } 
     );
   }
 
-  const canAct = session?.role === 'admin' || incident.department === session?.department;
+  const canAct = (session as any)?.role === 'admin' || incident.department === (session as any)?.department;
 
   return (
     <main className="ftc-admin-main">
@@ -137,7 +137,7 @@ export default function IncidentDetailPage({ params }: { params: { id: string } 
           departments={departments}
           teams={teams}
           canAct={canAct}
-          session={session}
+          session={session as any}
         />
       </div>
     </main>

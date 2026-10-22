@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Modal, Button } from '@/components/ui';
 import { SelectField } from '@/components/ui/FormFields';
-import { Card, CardHead } from '@/components/ui/Card';
-import { Notice } from '@/components/ui/States';
+import { Card } from '@/components/ui/Card';
 import { Icon } from '@/components/Icon';
 import { useToast } from '@/components/ui/Toast';
 import { confirmTriage } from '@/services/incidents';
@@ -50,7 +49,8 @@ export default function AiSuggestionCard({
       toast.success('اتأكّد التصنيف.');
       onTriageConfirmed();
     } catch (err) {
-      const errorMsg = (err as any)?.response?.data?.detail || 'حصلت مشكلة. جرّب تاني.';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const errorMsg = ((err as any)?.response?.data?.detail as string) || 'حصلت مشكلة. جرّب تاني.';
       toast.error(errorMsg);
     } finally {
       setBusy(false);
@@ -70,7 +70,8 @@ export default function AiSuggestionCard({
       toast.success('اتغيّر التصنيف واتأكّد.');
       onTriageConfirmed();
     } catch (err) {
-      const errorMsg = (err as any)?.response?.data?.detail || 'حصلت مشكلة. جرّب تاني.';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const errorMsg = ((err as any)?.response?.data?.detail as string) || 'حصلت مشكلة. جرّب تاني.';
       toast.error(errorMsg);
     } finally {
       setBusy(false);

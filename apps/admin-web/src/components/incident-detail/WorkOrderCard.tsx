@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardHead } from '@/components/ui/Card';
 import { KvList } from '@/components/ui/KvList';
@@ -12,14 +11,14 @@ import { useToast } from '@/components/ui/Toast';
 import { createWorkOrder } from '@/services/workOrders';
 import { formatDayDM, formatDueLabel, hoursLateOf } from '@/lib/format';
 import { WORK_ORDER_LABEL_AR } from '@/lib/text';
-import type { AdminIncident, Department, WorkOrder } from '@/domain/admin-types';
+import type { AdminIncident, Department, WorkOrder, Team } from '@/domain/admin-types';
 import { getCategory } from '@/domain/categories';
 
 interface WorkOrderCardProps {
   incident: AdminIncident;
   workOrder?: WorkOrder;
   departments: Department[];
-  teams: any[];
+  teams: Team[];
   canAct: boolean;
   disabledReason?: string;
 }
@@ -30,9 +29,7 @@ export default function WorkOrderCard({
   departments,
   teams: allTeams,
   canAct,
-  disabledReason,
 }: WorkOrderCardProps) {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const toast = useToast();
   const [formBusy, setFormBusy] = useState(false);
@@ -40,7 +37,6 @@ export default function WorkOrderCard({
   const [selectedTeam, setSelectedTeam] = useState('');
 
   const category = getCategory(incident.categoryId);
-  const dueDate = new Date(incident.dueAt).toISOString().split('T')[0];
 
   // Get teams for selected department
   const departmentTeams = allTeams

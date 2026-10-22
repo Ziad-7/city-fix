@@ -11,16 +11,17 @@ interface LocationCardProps {
 
 export default function LocationCard({ incident }: LocationCardProps) {
   return (
-    <Card
-      labelledBy="h-mp-title"
-      action={
-        <Link href={`/map?focus=${incident.id}`} style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'inherit' }}>
-          الخريطة
-          <Icon name="chevron-left" size={16} />
-        </Link>
-      }
-    >
-      <CardHead id="h-mp-title" title="الموقع" />
+    <Card labelledBy="h-mp-title">
+      <CardHead
+        id="h-mp-title"
+        title="الموقع"
+        action={
+          <Link href={`/map?focus=${incident.id}`} style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'inherit' }}>
+            الخريطة
+            <Icon name="chevron-left" size={16} />
+          </Link>
+        }
+      />
 
       {/* Map placeholder - non-interactive */}
       <div
