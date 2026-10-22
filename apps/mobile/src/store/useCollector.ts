@@ -153,7 +153,7 @@ export const useCollector = create<CollectorState>((set, get) => ({
         // The server answers idempotently: the same clientId never adds a second row.
         const weighings = p.weighings.some((w) => w.clientId === weighing.clientId) ? p.weighings : [...p.weighings, weighing];
         const agg = aggregateWeighings(weighings);
-        return { ...p, status: 'weighed', weighings, totalKg: agg.totalKg, totalValueEgp: agg.valueEgp };
+        return { ...p, status: p.status === 'completed' ? p.status : 'weighed', weighings, totalKg: agg.totalKg, totalValueEgp: agg.valueEgp };
       }),
     }));
     return weighing;
