@@ -1,6 +1,6 @@
 # Mobile app: remaining work
 
-Date: 2026-10-22. Owner: Abood + Claude agents. Status of `apps/mobile` after Phase D, the English layer and the review fixes. Details for each item live in [the mobile README "Known stubs"](../../apps/mobile/README.md), [`progress-log.md`](../progress-log.md), [`api-contract.md`](../api-contract.md) and the [reviews](../reviews/). Tick items off here and add a progress-log entry when one is done.
+Date: 2026-10-22. Owner: Abood + Claude agents. New CityCycle work for the app is planned in [`features/member-1-mobile.md`](../features/member-1-mobile.md); this file covers the existing citizen app. Status of `apps/mobile` after Phase D, the English layer and the review fixes. Details for each item live in [the mobile README "Known stubs"](../../apps/mobile/README.md), [`progress-log.md`](../progress-log.md), [`api-contract.md`](../api-contract.md) and the [reviews](../reviews/). Tick items off here and add a progress-log entry when one is done.
 
 ## 1. Check on real phones (nothing below has been tried on a device)
 

@@ -188,3 +188,156 @@ Proposed additions to `TriageSuggestion`: `source: "model" | "fallback"` and `em
 - **Priority:** deterministic, same formula as `apps/mobile/src/logic/priority.ts` (severity 5/15/28/40; sensitive place +20; reporters `min(20, (n-1)×3)`; age `min(15, round(daysOpen/targetDays×10))`; underserved area +5; cap 100). Recompute when reporters/followers change and daily for age. Return every factor so the UI can explain the score.
 - **Timeline:** every status change writes an `activity_log` row; `Incident.timeline` / `ServiceRequest.timeline` are built from it, oldest first.
 - **Privacy:** citizens never see other citizens' phone numbers or names; anonymous reports hide the reporter from admins too (keep the id for abuse handling only).
+
+## CityCycle — proposed
+
+Waste and recycling pillar ([vision](vision.md), [decision 0004](decisions/0004-citycycle-waste-pillar.md)). **Everything in this section is *proposed*:** agree it by contract PR before building on it. It only **adds** to the contract above; nothing above changes (`ServiceType` stays `bulky_waste | tree_maintenance`). Owner: member 4 (API & DB); AI routes member 5; device (IoT) routes member 6. Feature plan: [`features/`](features/README.md).
+
+### New enums
+
+| Name | Values |
+| --- | --- |
+| `MaterialId` | `pet_plastic` · `paper_cardboard` · `metal_cans` · `glass` · `e_waste` · `cooking_oil` · `organics` |
+| `PickupStatus` | `requested` · `accepted` · `weighed` · `completed` · `cancelled` |
+| `PickupMode` | `free` (give for free) · `paid` (get paid) |
+| `CollectorStatus` | `pending` · `verified` · `suspended` |
+| `BinState` | `ok` · `full` · `hot` · `low_battery` · `offline` |
+| `WeighingSource` | `manual` · `scale_ble` · `scale_api` |
+| role | adds `collector` to the existing roles (`citizen` · `staff` · `admin`) |
+
+### New shapes
+
+```ts
+MaterialPrice = { materialId, district: string, priceEgpPerKg: number | null /* null until set */, updatedAt }
+
+RecyclingPickup = {
+  id /* "RCY-3001" */, citizenId,
+  items: { materialId, estimatedKg: number }[],
+  photoUris: string[],
+  location: Place, day: string /* YYYY-MM-DD */, slot: SlotId,
+  mode: PickupMode,
+  estimatedValueEgp?: number,      // from the district price list; absent if no price is set
+  status: PickupStatus, collectorId?: string, collectorName?: string,
+  weighings: Weighing[], totalKg?: number, totalValueEgp?: number,
+  timeline: TimelineEntry[], createdAt
+}
+NewRecyclingPickupInput = { items, photoUris?, location, day, slot, mode, note? }
+
+Weighing = {
+  id, pickupId, materialId, kg: number, source: WeighingSource, scaleId?: string,
+  priceEgpPerKg: number | null,    // price at the time of weighing
+  valueEgp: number | null, clientId: string /* idempotency key from the app */, at
+}
+
+Collector = {
+  id, name, district, status: CollectorStatus, materials: MaterialId[],
+  vehicle?: string, joinedAt
+}   // phone and national ID are never sent to other users
+
+CollectorJob = {   // a pickup as seen by a verified collector (no citizen phone or exact name)
+  id, items, location: Place /* address and landmark; exact pin after accept */,
+  day, slot, mode, estimatedKg: number, estimatedValueEgp?: number, distanceM?: number
+}
+
+Earnings = {
+  period: { from: string, to: string },
+  totalKg: number, valueEgp: number, paidToHouseholdsEgp: number,
+  byMaterial: { materialId, kg, valueEgp }[], jobs: number
+}
+
+Bin = {
+  id /* "BIN-014" */, name?: string, location: Place, kind: "street" | "hub",
+  fillPct?: number, tempC?: number, batteryV?: number,
+  state: BinState, lastSeenAt?: string
+}
+BinReading = { seq: number, at: string | null, fillPct: number, distanceCm?: number, tempC?: number, batteryV?: number, rssi?: number, fw?: string }
+
+Impact = {
+  totalKg: number, byMaterial: { materialId, kg }[], pickups: number,
+  earnedEgp?: number,               // collectors only
+  co2AvoidedKg?: number             // emission factors to verify before this is shown
+}
+
+WasteClassification = {
+  materials: { materialId, confidence: number }[],   // top 3
+  size: "small" | "medium" | "large", estimatedKgRange?: [number, number],
+  source: "model" | "fallback"                         // a suggestion; the person confirms
+}
+```
+
+### Citizen: recyclables pickup and impact
+
+| Method | Path | Body | Response | Notes |
+| --- | --- | --- | --- | --- |
+| GET | `/recycling/materials` | query `district` | `MaterialPrice[]` | One row per material; `priceEgpPerKg` is `null` where the district has not set a price. |
+| POST | `/recycling/pickups` | `NewRecyclingPickupInput` | `RecyclingPickup` | Creates a pickup (`requested`). Computes `estimatedValueEgp` from the price list. |
+| GET | `/recycling/pickups` | — | `RecyclingPickup[]` | The caller's own pickups. |
+| GET | `/recycling/pickups/{id}` | — | `RecyclingPickup` | 404 if missing, 403 if not the caller's. |
+| POST | `/recycling/pickups/{id}/cancel` | `{ note? }` | `RecyclingPickup` | Only while `requested`. |
+| POST | `/recycling/pickups/{id}/confirm` | — | `RecyclingPickup` | The household confirms the weighing in the app (the pickup then becomes `completed`). |
+| GET | `/me/impact` | — | `Impact` | The caller's own impact (citizen or collector). |
+
+Photos and voice notes use the existing `/uploads/sign` flow (`kind: "report_photo"`).
+
+### Collectors
+
+| Method | Path | Body | Response | Notes |
+| --- | --- | --- | --- | --- |
+| POST | `/collectors/apply` | `{ name, district, materials, vehicle? }` | `Collector` (`pending`) | A signed-in user applies; staff verify in the Command Center. Role `collector` is granted on verification. |
+| GET | `/collectors/me` | — | `Collector` | |
+| GET | `/collector/jobs` | query `lat`, `lng`, `radiusM`, `materialId?` | `CollectorJob[]` | Verified collectors only; open (`requested`) pickups near the point, nearest first. |
+| POST | `/collector/jobs/{id}/accept` | — | `RecyclingPickup` | First accept wins; `409` if already taken. Reveals the exact pin to the collector. |
+| POST | `/collector/jobs/{id}/weighings` | `{ materialId, kg, source, scaleId?, clientId }` | `Weighing` | Idempotent on `clientId` (offline-first sync). Sets the pickup to `weighed`. |
+| POST | `/collector/jobs/{id}/complete` | `{ paidToHouseholdEgp?: number }` | `RecyclingPickup` | Records what was paid in cash (for `mode: "paid"`). The household then confirms. |
+| GET | `/collector/earnings` | query `from`, `to` | `Earnings` | |
+
+### Smart bins and hubs
+
+| Method | Path | Body | Response | Notes |
+| --- | --- | --- | --- | --- |
+| GET | `/bins` | query `bbox` | `Bin[]` | Public fields for the map layer: location, state, fill level. |
+| POST | `/bins/{id}/report-full` | `{ note?, photoUri? }` | `204` | A citizen reports a full bin; creates a FixFirst `garbage` incident linked to the bin. |
+| POST | `/iot/bins/{id}/readings` | `{ readings: BinReading[] }` | `202 { accepted: number[], intervalMin, fullPct, heatC }` | **Device auth:** `X-Device-Key` header, no user token. Idempotent on `(binId, seq)`. Owner member 6 (payload) + member 4 (endpoint). |
+| POST | `/iot/hubs/{id}/weighings` | `{ seq, at, material, kg, pickupId? }` | `202` | Hub scale; same device auth and rules. |
+
+Device keys are per device, stored hashed, revocable; they never grant access to any user endpoint. Detail: [`team/hardware-iot.md`](team/hardware-iot.md).
+
+### Admin (Command Center) — CityCycle
+
+Admin or staff role required; collectors never see these.
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/admin/recycling/summary` | Query `from`, `to`, `district`: tonnes diverted (total, by material, by district), pickups, average response time |
+| GET | `/admin/collectors` | Query `status`, `district`; `PATCH /admin/collectors/{id}` `{ status, note? }` verifies or suspends |
+| GET | `/admin/material-prices` | Query `district` |
+| PUT | `/admin/material-prices` | `{ district, prices: { materialId, priceEgpPerKg }[] }`; admin only; prices are set by the district, not by this repo |
+| GET | `/admin/bins` | With latest readings; `POST /admin/bins` registers a bin and returns its device key **once**; `PATCH /admin/bins/{id}` edits or revokes the key |
+| GET | `/admin/bins/{id}/readings` | Query `from`, `to` |
+| GET | `/admin/bins/forecast` | Fill forecast per bin — owner member 5 |
+| POST | `/admin/recycling/routes/optimize` | `{ date, collectors?, binIds? }` → ordered stops per vehicle — owner member 5 |
+| GET | `/admin/hotspots` | Dumping hotspots with counts and status — owner member 5 (detection), member 4 (storage) |
+| GET | `/admin/payouts` | Query `from`, `to`, `collectorId?`: kg, value at the price list and cash paid to households per collector |
+
+### AI (CityBrain) — CityCycle, owner member 5
+
+| Method | Path | Body | Response |
+| --- | --- | --- | --- |
+| POST | `/ai/waste-classify` | `{ path }` (an uploaded photo) | `WasteClassification` |
+
+Suggestion only: the citizen or collector confirms the materials and the size. On timeout or error return a fallback result with `source: "fallback"`, never an error to the person.
+
+### SMS / USSD reporting gateway — proposed, stretch
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| POST | `/gateway/sms` | Provider webhook: a short coded message (for example a district code + material + "pickup") creates a pickup for a feature phone. Provider and codes to decide; replies in Egyptian Arabic. |
+
+### Rules for CityCycle
+
+- **Prices:** `priceEgpPerKg` comes only from the district price table; never hard-coded in an app. If it is `null`, apps show "السعر هيتحدد" / "price to be set" and no value.
+- **Weighings are the source of truth** for kg and EGP. A manual weight and a scale weight use the same endpoint; the `source` is recorded.
+- **Offline:** collector writes carry a client-generated `clientId`; the server de-duplicates.
+- **Privacy:** a collector sees the address, landmark and materials of an open job, never the citizen's phone or name; the exact pin appears only after accept. A citizen sees the collector's first name, district and verified badge. Earnings are visible to the collector and to admins only. Bin telemetry holds no personal data.
+- **Money** is recorded, not processed: the platform logs cash paid and the value at the price list. No payment-provider integration in the MVP.
+- Timeline entries for pickups use the same `TimelineEntry` shape and `activity_log` table (entity type `recycling_pickup`).
