@@ -10,3 +10,6 @@ web-build/
 coverage/
 ios/
 android/
+
+# Local agent scratch
+.superpowers/
