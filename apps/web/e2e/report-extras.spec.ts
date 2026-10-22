@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { at, latestReportId, queuedCount, serverReportCount, signIn, trackGeocoder } from './helpers';
+import { at, latestReportId, mockServerSeeded, queuedCount, serverReportCount, signIn, trackGeocoder } from './helpers';
 
 let geocoderCalls: string[];
 
@@ -23,7 +23,9 @@ test('a GPS fix is never sent to a street-name service: the address keeps the pl
 
 test('a report written offline is saved and goes out when the connection is back', async ({ page, context }) => {
   await openForm(page);
-  // What the (mock) server holds, read from its database: no waiting for a list to finish painting.
+  // What the (mock) server holds, read from its database. The database is created by the first service call the
+  // page makes (seed: 1 report), so wait for it: a baseline read before that is 0 and then "grows" to 1 by itself.
+  await mockServerSeeded(page);
   const before = await serverReportCount(page);
 
   await page.getByTestId('description-input').fill('حفرة كبيرة قدام باب المدرسة');

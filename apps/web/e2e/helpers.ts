@@ -63,6 +63,14 @@ export async function countReportCreates(context: BrowserContext) {
 
 export const reportCreates = (page: Page) => page.evaluate(() => (window as unknown as { __creates: number }).__creates);
 
+/**
+ * Waits until the mock "server" exists. Its database is created lazily (seeded with the demo report) by the first
+ * service call, so before that `serverReportCount` reads 0 and, once the page seeds it, jumps to 1 on its own:
+ * a "before" taken too early looks like a report that was sent. Take baselines after this.
+ */
+export const mockServerSeeded = (page: Page) =>
+  expect.poll(() => page.evaluate(() => localStorage.getItem('ftc.mock.db.v1') !== null), { message: 'the mock server is seeded' }).toBe(true);
+
 /** Number of reports in the mock "server" right now. */
 export const serverReportCount = (page: Page) =>
   page.evaluate(() => (JSON.parse(localStorage.getItem('ftc.mock.db.v1') ?? '{"reports":[]}') as { reports: unknown[] }).reports.length);

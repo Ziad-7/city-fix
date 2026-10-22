@@ -44,6 +44,15 @@ cd backend && pip install -e ".[dev]" && ruff check . && ruff format --check . &
 node scripts/check-doc-links.mjs
 ```
 
+### Flaky tests
+
+A test that fails and then passes on retry is a bug, not bad luck: find the race (in the test or in the app) and fix it before merging. Playwright keeps one retry in CI only so the failure is reported (`failOnFlakyTests` makes the run red); it never makes a test acceptable. Never merge with a red check, and do not "fix" a flake with more retries, longer timeouts or a looser assertion. Pull requests that touch the website also run the offline and multi-tab specs 10 times per project (the "Flake guard" step). Reproduce locally the same way:
+
+```bash
+cd apps/web && CI=true npx playwright test e2e/report-extras.spec.ts e2e/outbox-tabs.spec.ts --repeat-each=20 --retries=0
+# one project, one test, with a slow CPU to widen races: add --project=phone -g "offline"
+```
+
 ### For the repo admin
 
 Protect `main` (Settings, Rules, Rulesets): require a pull request and require status checks to pass. Caveat: path-filtered workflows do not run at all for PRs that do not touch their folder, and a required check that never reports stays "Expected" and blocks the merge. So do not add every per-app check as required. Either require only the checks that always report, or add a small always-running workflow (no path filter) that reports one summary check and use that as the single required check. Until then, treat per-app checks as "must be green when they appear" in review.

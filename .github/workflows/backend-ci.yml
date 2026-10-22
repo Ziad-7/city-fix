@@ -27,7 +27,7 @@ jobs:
       OTP_MODE: demo
       JWT_SECRET: ci-dummy-secret-not-for-production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Detect backend
         id: guard
         run: |
@@ -37,7 +37,7 @@ jobs:
             echo "No backend/pyproject.toml or requirements*.txt found, skipping."
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         if: steps.guard.outputs.exists == 'true'
         with:
           python-version: '3.12'

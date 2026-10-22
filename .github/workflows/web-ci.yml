@@ -149,8 +149,8 @@ jobs:
       run:
         working-directory: apps/web
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -173,8 +173,8 @@ jobs:
       run:
         working-directory: apps/web
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -184,7 +184,14 @@ jobs:
       - run: npm run test:e2e
         env:
           CI: 'true'
-      - uses: actions/upload-artifact@v4
+      # Flake guard (pull requests): the timing-sensitive specs (offline queue, two tabs) run 10 times on both
+      # projects with no retry, so a race fails on the PR instead of after the merge.
+      - name: Flake guard (offline and multi-tab specs x10)
+        if: github.event_name == 'pull_request'
+        run: npx playwright test e2e/report-extras.spec.ts e2e/outbox-tabs.spec.ts --repeat-each=10 --retries=0
+        env:
+          CI: 'true'
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report

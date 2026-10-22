@@ -39,7 +39,7 @@ jobs:
       run:
         working-directory: .
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Detect app
         id: guard
         run: |
@@ -49,7 +49,7 @@ jobs:
             echo "apps/admin-web/package.json not found, skipping."
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: steps.guard.outputs.exists == 'true'
         with:
           node-version: 22
