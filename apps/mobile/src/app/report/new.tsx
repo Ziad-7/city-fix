@@ -17,7 +17,8 @@ import type { CategoryId, TriageSuggestion } from '@/domain/types';
 import { tr as trNow, useLang, useTr } from '@/i18n';
 import { pickDuplicateView } from '@/logic/duplicates';
 import { detectEmergency } from '@/logic/triage-mock';
-import { services } from '@/services';
+import { API_MODE, services } from '@/services';
+import { prepareTriagePhoto } from '@/services/media';
 import { uploadAndTranscribeVoiceNote, useReports, useSession } from '@/store';
 import { colors } from '@/theme/tokens';
 
@@ -51,6 +52,8 @@ export default function NewReportScreen() {
   const voiceTicket = useRef(0);
   const [blurFaces, setBlurFaces] = useState(true);
   const [anonymous, setAnonymous] = useState(false);
+  const [photoAnalysisConsent, setPhotoAnalysisConsent] = useState(false);
+  const triagePhotoCache = useRef(new Map<string, Promise<{ photoUri?: string; photoConsent: boolean }>>());
   const [manualCategory, setManualCategory] = useState<CategoryId | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -67,10 +70,14 @@ export default function NewReportScreen() {
   const hasInput = photoUris.length > 0 || trimmed.length >= 5;
   const priorCategory = manualCategory ?? paramCategory;
   const mainPhoto = photoUris[0];
+  const onPhotosChange = useCallback((next: PhotoPair) => {
+    setPhotos(next);
+    setPhotoAnalysisConsent(false);
+  }, []);
 
   // Mock AI: runs once there is a photo or a few words; debounced while typing; stale answers are dropped.
   // `done.key` says which inputs the latest answer belongs to, so "loading" is derived rather than stored.
-  const inputKey = [trimmed, mainPhoto ?? '', priorCategory ?? '', place.lat, place.lng, retryTick, lang].join('|');
+  const inputKey = [trimmed, mainPhoto ?? '', photoAnalysisConsent, priorCategory ?? '', place.lat, place.lng, retryTick, lang].join('|');
   const triage = hasInput ? (done?.suggestion ?? null) : null;
   const triageState: TriageState = !hasInput ? 'idle' : done?.key !== inputKey ? 'loading' : done.suggestion ? 'ready' : 'error';
   const categoryId: CategoryId | null = manualCategory ?? triage?.options[0]?.categoryId ?? paramCategory;
@@ -81,11 +88,30 @@ export default function NewReportScreen() {
     const t = setTimeout(async () => {
       let suggestion: TriageSuggestion | null = null;
       try {
+        let triagePhoto: { photoUri?: string; photoConsent: boolean };
+        if (API_MODE === 'mock') {
+          triagePhoto = { photoUri: mainPhoto, photoConsent: false };
+        } else if (photoAnalysisConsent && mainPhoto) {
+          let prepared = triagePhotoCache.current.get(mainPhoto);
+          if (!prepared) {
+            prepared = prepareTriagePhoto(mainPhoto, true, services.uploads.upload);
+            triagePhotoCache.current.set(mainPhoto, prepared);
+            prepared.catch(() => triagePhotoCache.current.delete(mainPhoto));
+          }
+          try {
+            triagePhoto = await prepared;
+          } catch {
+            triagePhoto = { photoConsent: false };
+          }
+        } else {
+          triagePhoto = { photoConsent: false };
+        }
+        if (cancelled) return;
         suggestion = await services.triage.analyze({
           userId: userId ?? '',
           description: trimmed,
           categoryId: priorCategory ?? undefined,
-          photoUri: mainPhoto,
+          ...triagePhoto,
           location: { lat: place.lat, lng: place.lng },
         });
       } catch {
@@ -97,7 +123,7 @@ export default function NewReportScreen() {
       cancelled = true;
       clearTimeout(t);
     };
-  }, [hasInput, inputKey, userId, trimmed, mainPhoto, priorCategory, place.lat, place.lng]);
+  }, [hasInput, inputKey, userId, trimmed, mainPhoto, photoAnalysisConsent, priorCategory, place.lat, place.lng]);
 
   // Only matches of the category that will be submitted count (the AI top pick may differ from a manual pick).
   const dupView = pickDuplicateView(triage, categoryId);
@@ -202,7 +228,7 @@ export default function NewReportScreen() {
           </View>
         }
       >
-        <PhotoSlots photos={photos} onChange={setPhotos} quality={dataSaver ? 0.5 : 0.8} />
+        <PhotoSlots photos={photos} onChange={onPhotosChange} quality={dataSaver ? 0.5 : 0.8} />
 
         {triageState === 'idle' ? (
           <View style={{ gap: 4 }}>
@@ -252,6 +278,7 @@ export default function NewReportScreen() {
           <AppText variant="label">{tr('خصوصيتك', 'Your privacy')}</AppText>
           <ToggleRow testID="toggle-blur" icon="eye-off" title={tr('اخفي الوشوش ونمر العربيات', 'Blur faces and car plates')} subtitle={tr('بنعمل blur تلقائي قبل ما الصورة تتنشر', 'We blur them automatically before the photo is published')} value={blurFaces} onValueChange={setBlurFaces} />
           <ToggleRow testID="toggle-anonymous" icon="shield-check" title={tr('بلّغ من غير اسم', 'Report without my name')} subtitle={tr('الحي مش هيشوف اسمك ولا رقمك', 'The district won’t see your name or number')} value={anonymous} onValueChange={setAnonymous} />
+          {API_MODE === 'api' && mainPhoto ? <ToggleRow testID="toggle-ai-photo-consent" icon="shield-check" title={tr('أوافق على تحليل الصورة بالذكاء الاصطناعي', 'Allow AI photo analysis')} subtitle={tr('هنرفع الصورة بشكل خاص ونبعتها لـ Gemini للتحليل. اختياري؛ تقدر تكمل بالوصف بس.', 'The photo will be uploaded privately and sent to Gemini for analysis. Optional; you can continue with text only.')} value={photoAnalysisConsent} onValueChange={setPhotoAnalysisConsent} /> : null}
         </View>
 
         {dupView.kind === 'own' ? (

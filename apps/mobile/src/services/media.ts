@@ -75,7 +75,19 @@ export async function compressImage(uri: string): Promise<string> {
   }
 }
 
-type Upload = (localUri: string, kind: UploadKind, contentType: string) => Promise<string>;
+export type Upload = (localUri: string, kind: UploadKind, contentType: string) => Promise<string>;
+
+/** Prepare a photo for AI triage only after explicit consent. The API receives a private storage path, never a local URI. */
+export async function prepareTriagePhoto(
+  photoUri: string | undefined,
+  consent: boolean,
+  upload: Upload,
+): Promise<{ photoUri?: string; photoConsent: boolean }> {
+  if (!photoUri || !consent) return { photoConsent: false };
+  if (!needsUpload(photoUri)) return { photoUri, photoConsent: true };
+  const small = await compressImage(photoUri);
+  return { photoUri: await upload(small, 'report_photo', PHOTO_CONTENT_TYPE), photoConsent: true };
+}
 
 /**
  * Prepares a report for POST /reports: compresses local photos and uploads local files, replacing them with the
