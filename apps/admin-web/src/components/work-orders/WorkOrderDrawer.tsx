@@ -16,7 +16,7 @@ import {
 import { useToast } from '@/components/ui/Toast';
 import { Icon } from '@/components/Icon';
 import { StatusChangeForm } from '@/components/incidents/StatusChangeForm';
-import type { WorkOrder } from '@/domain/admin-types';
+import type { WorkOrder, WorkOrderTask } from '@/domain/admin-types';
 import { patchWorkOrder } from '@/services/workOrders';
 import { getTeams } from '@/services/departments';
 import { formatDayWithTime, formatEgp } from '@/lib/format';
@@ -52,14 +52,14 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
   const toast = useToast();
   const queryClient = useQueryClient();
 
-  const { data: teams = [], error: _teamsError } = useQuery({
+  const { data: teams = [] } = useQuery({
     queryKey: ['teams'],
     queryFn: getTeams,
     enabled: open && !!workOrder?.department,
   });
 
   const patchMutation = useMutation({
-    mutationFn: (data: { status?: string; team?: string; teamSize?: number; tasks?: any[] }) =>
+    mutationFn: (data: { status?: string; team?: string; teamSize?: number; tasks?: WorkOrderTask[] }) =>
       patchWorkOrder(workOrder!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['work-order', workOrder!.id] });
@@ -82,7 +82,7 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
       await patchWorkOrder(workOrder.id, { tasks: newTasks });
       queryClient.invalidateQueries({ queryKey: ['work-order', workOrder.id] });
       queryClient.invalidateQueries({ queryKey: ['work-orders'] });
-    } catch (error) {
+    } catch (_error) {
       toast.error('مقدرناش نحفظ المهمة. جرّب تاني.');
     }
   };

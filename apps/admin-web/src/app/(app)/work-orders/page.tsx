@@ -65,14 +65,14 @@ export default function WorkOrdersPage() {
 
   // Filter orders - done ones only from last 7 days
   const filteredOrders = useMemo(() => {
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
     return workOrders.filter((wo) => {
       if (wo.status === 'done') {
         return wo.resolvedAt && new Date(wo.resolvedAt).getTime() > sevenDaysAgo;
       }
       return true;
     });
-  }, [workOrders]);
+  }, [workOrders, now]);
 
   // Group by status and sort
   const grouped = useMemo(() => {
@@ -103,8 +103,6 @@ export default function WorkOrdersPage() {
   const totalCount = filteredOrders.length;
   const lateCount = filteredOrders.filter((wo) => wo.overdue && wo.status !== 'done').length;
   const lateText = lateCount > 0 ? `${formatNumber(lateCount)} متأخرين` : 'مفيش متأخر';
-
-  const deptList = session?.role === 'admin' ? [null, ...departments.map((d) => d.id)] : [null];
 
   const handleOpenWorkOrder = (id: string) => {
     setSelectedId(id);
