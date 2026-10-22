@@ -9,6 +9,7 @@ import type {
   WasteClassification,
   Weighing,
 } from '@/domain/citycycle';
+import { tr } from '@/i18n';
 import type { Incident, MapPin, Report, ServiceRequest, Session, TriageSuggestion } from '@/domain/types';
 import type { Services } from '../interfaces';
 import { ApiError, http, setApiToken } from './http';
@@ -94,7 +95,8 @@ export function createApiServices(): Services {
       get: (id) => orNull(http<RecyclingPickup | null>('GET', `/recycling/pickups/${enc(id)}`)),
       cancel: (_userId, id, note) => http<RecyclingPickup>('POST', `/recycling/pickups/${enc(id)}/cancel`, { note }),
       confirm: (_userId, id) => http<RecyclingPickup>('POST', `/recycling/pickups/${enc(id)}/confirm`),
-      impact: () => http<Impact>('GET', '/me/impact'),
+      // `as=citizen`: one account can be both a citizen and a collector, so the citizen screen names its role.
+      impact: () => http<Impact>('GET', `/me/impact${query({ as: 'citizen' })}`),
     },
     collector: {
       apply: (_userId, input) => http<Collector>('POST', '/collectors/apply', input),
@@ -105,7 +107,7 @@ export function createApiServices(): Services {
       addWeighing: (_userId, id, input) => http<Weighing>('POST', `/collector/jobs/${enc(id)}/weighings`, input),
       complete: (_userId, id, paidToHouseholdEgp) => http<RecyclingPickup>('POST', `/collector/jobs/${enc(id)}/complete`, { paidToHouseholdEgp }),
       earnings: (_userId, range) => http<Earnings>('GET', `/collector/earnings${query({ from: range.from, to: range.to })}`),
-      simulateVerify: () => Promise.reject(new Error('simulateVerify متاح في وضع mock بس')),
+      simulateVerify: () => Promise.reject(new Error(tr('simulateVerify متاح في وضع mock بس', 'simulateVerify is only available in mock mode'))),
     },
     bins: {
       list: () => http<Bin[]>('GET', '/bins'),

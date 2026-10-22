@@ -279,7 +279,7 @@ WasteClassification = {
 | GET | `/recycling/pickups/{id}` | — | `RecyclingPickup` | 404 if missing, 403 if not the caller's. |
 | POST | `/recycling/pickups/{id}/cancel` | `{ note? }` | `RecyclingPickup` | Only while `requested`. |
 | POST | `/recycling/pickups/{id}/confirm` | — | `RecyclingPickup` | The household confirms the weighing in the app (the pickup then becomes `completed`). |
-| GET | `/me/impact` | — | `Impact` | The caller's own impact (citizen or collector). |
+| GET | `/me/impact` | query `as` = `citizen` \| `collector` (default `citizen`) | `Impact` | The caller's own impact in that role. One account can be both, so the app names the role: the citizen screen sends `as=citizen`. |
 
 Photos and voice notes use the existing `/uploads/sign` flow (`kind: "report_photo"`).
 
@@ -343,7 +343,7 @@ Suggestion only: the citizen or collector confirms the materials and the size. O
 - **Prices:** `priceEgpPerKg` comes only from the district price table; never hard-coded in an app. If it is `null`, apps show "السعر هيتحدد" / "price to be set" and no value.
 - **Weighings are the source of truth** for kg and EGP. A manual weight and a scale weight use the same endpoint; the `source` is recorded.
 - **Offline:** collector writes carry a client-generated `clientId`; the server de-duplicates.
-- **Privacy:** a collector sees the address, landmark and materials of an open job, never the citizen's phone or name; the exact pin appears only after accept. A citizen sees the collector's first name, district and verified badge. Earnings are visible to the collector and to admins only. Bin telemetry holds no personal data.
+- **Privacy:** a collector sees the address, landmark and materials of an open job, never the citizen's phone or name; the exact pin appears only after accept. A citizen sees the collector's first name only. An open job shows the street-level address (no building number), the landmark and an approximate pin; the exact pin arrives with accept. Earnings are visible to the collector and to admins only. Bin telemetry holds no personal data.
 - **Money** is recorded, not processed: the platform logs cash paid and the value at the price list. No payment-provider integration in the MVP.
 - Timeline entries for pickups use the same `TimelineEntry` shape and `activity_log` table (entity type `recycling_pickup`).
 

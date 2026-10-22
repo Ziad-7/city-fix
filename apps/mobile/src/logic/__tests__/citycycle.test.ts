@@ -45,7 +45,9 @@ describe('list helpers', () => {
   it('sorts pickups under the same chips as other requests', () => {
     expect(pickupInFilter('requested', 'open')).toBe(true);
     expect(pickupInFilter('completed', 'open')).toBe(false);
-    expect(pickupInFilter('cancelled', 'fixed')).toBe(true);
+    expect(pickupInFilter('completed', 'fixed')).toBe(false);
+    expect(pickupInFilter('cancelled', 'fixed')).toBe(false);
+    expect(pickupInFilter('completed', 'recycling')).toBe(true);
     expect(pickupInFilter('requested', 'reports')).toBe(false);
     expect(pickupInFilter('requested', 'services')).toBe(false);
     expect(pickupInFilter('requested', 'recycling')).toBe(true);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { MaterialBadge } from '@/components/citycycle';
+import { DemoPricesNote, MaterialBadge } from '@/components/citycycle';
 import { StateMessage } from '@/components/requests';
 import { AppText, Card, Chip, Screen, ScreenHeader } from '@/components/ui';
 import { formatEgp, formatKg, materialLabel, type EarningsPeriod } from '@/domain/citycycle';
@@ -48,6 +48,7 @@ export default function CollectorEarningsScreen() {
             </View>
           ))}
         </Card>
+        <DemoPricesNote />
       </>
     );
 
