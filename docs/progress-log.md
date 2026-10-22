@@ -102,7 +102,7 @@ Newest first. Each entry: what was done, how to test it, known issues.
 - Documented [two-person ownership](team/backend-split.md): Moataz owns citizen API/auth; teammate owns database, operations and deployment. AI remains a separate role.
 - Added citizen demo OTP request/verification matching existing camelCase auth responses; JWT issue/validation with expiry, issuer and audience; shared current-user, role and department checks.
 - Added an injectable user repository contract and an explicitly enabled local in-memory harness so auth can be tested before the database adapter lands.
-- Added tests, a Python 3.12 CI workflow, [run/integration instructions](../backend/README.md), and a [PR description](../backend/PR-auth.md).
+- Added tests, a Python 3.12 CI workflow, [run/integration instructions](../backend/README.md). (The PR description file was dropped when PR #34 superseded #32.)
 
 **How to test**
 - From `backend/`, install `requirements-dev.txt`, then run `python -m pytest -q`, `python -m ruff check app tests`, and `python -m mypy app --ignore-missing-imports`.
