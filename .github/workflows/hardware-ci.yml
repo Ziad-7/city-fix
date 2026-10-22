@@ -1,0 +1,54 @@
+name: hardware-ci
+
+on:
+  push:
+    paths:
+      - 'hardware/**'
+      - '.github/workflows/hardware-ci.yml'
+  pull_request:
+    paths:
+      - 'hardware/**'
+      - '.github/workflows/hardware-ci.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# Skipped cleanly (job still reports green) until hardware/firmware/platformio.ini exists.
+# Builds the ESP32 firmware only; flashing and bench tests are manual (docs/team/hardware-iot.md).
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect firmware project
+        id: guard
+        run: |
+          if [ -f hardware/firmware/platformio.ini ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hardware/firmware/platformio.ini not found, skipping."
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-python@v5
+        if: steps.guard.outputs.exists == 'true'
+        with:
+          python-version: '3.12'
+      - name: Install PlatformIO
+        if: steps.guard.outputs.exists == 'true'
+        run: pip install platformio
+      - name: Prepare placeholder secrets
+        if: steps.guard.outputs.exists == 'true'
+        working-directory: hardware/firmware
+        run: |
+          if [ -f include/secrets.example.h ] && [ ! -f include/secrets.h ]; then
+            cp include/secrets.example.h include/secrets.h
+          fi
+      - name: Build firmware
+        if: steps.guard.outputs.exists == 'true'
+        working-directory: hardware/firmware
+        run: pio run
