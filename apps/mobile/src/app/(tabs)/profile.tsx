@@ -2,6 +2,7 @@ import Constants from 'expo-constants';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { EmergencyRow } from '@/components';
+import { CollectorModeCard } from '@/components/collector';
 import { Icon } from '@/components/Icon';
 import { StatsCard } from '@/components/profile';
 import { AppText, Button, Card, ChoiceChip, Screen, ScreenHeader, SelectField, TextField, ToggleRow, confirmAction } from '@/components/ui';
@@ -91,6 +92,8 @@ export default function ProfileScreen() {
         {dirty ? <Button label={tr('حفظ الاسم', 'Save name')} size="sm" onPress={saveName} testID="save-name" /> : null}
         {saved && !dirty ? <AppText variant="caption" color={colors.statusResolved} accessibilityLiveRegion="polite">{tr('اتحفظ الاسم', 'Name saved')}</AppText> : null}
       </Card>
+
+      <CollectorModeCard />
 
       <Card rounded="lg" padding={16} style={styles.section}>
         <AppText style={styles.heading} accessibilityRole="header">{tr('منطقتك', 'Your area')}</AppText>

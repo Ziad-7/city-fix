@@ -90,5 +90,22 @@ The app is Arabic-first. English is a full second language that people switch to
 | الأثر (كجم اتحوّلت لإعادة تدوير) | Impact (kg recycled) |
 | أرباحي | My earnings |
 | CO₂ اتفادى (تقديري) | CO₂ avoided (estimate) |
+| اشتغل كجامع | Work as a collector |
+| ارجع لوضع المواطن | Back to citizen mode |
+| الشغل / الخريطة / الأرباح / حسابي (تابات الجامع) | Jobs / Map / Earnings / Account (collector tabs) |
+| طلبات قريبة منك | Jobs near you |
+| اقبل الشغل | Accept job |
+| حد سبقك عليه | Someone already took it |
+| المكان تقريبي (العنوان بالظبط بعد القبول) | Approximate area (exact address after you accept) |
+| أنا في الطريق | On my way |
+| وصلت، ابدأ الوزن | I'm here, start weighing |
+| أضف الوزن / خلّصت الوزن | Add weight / Done weighing |
+| اقرا من ميزان المركز (محاكاة) | Read from hub scale (simulated) |
+| كام دفعت للأسرة؟ | How much did you pay the household? |
+| الشغل خلص، تسلم إيدك | Job done. Thank you for your work |
+| مستني النت | Waiting for internet |
+| جرّب ابعت دلوقتي | Try sending now |
+| صافي ربحك (قيمة الخامات − اللي اتدفع للأسر) | Your net earnings (value of materials − cash paid to households) |
+| الأسرة بتدّيهم مجانًا / الأسرة عايزة مقابل | Household gives it for free / Household wants to be paid |
 
 Statuses, severities, categories, departments, hotlines, places, services and medals: `apps/mobile/src/i18n/labels.ts`.

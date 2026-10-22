@@ -15,9 +15,10 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { colors } from '@/theme/tokens';
+import { ModeRedirect } from '@/components/collector';
 import { OutboxToast } from '@/components/OutboxToast';
 import { onNotificationTapped, setupOsNotifications } from '@/notifications/os';
-import { refreshAll, startNotificationSync, useIsSignedIn, useOutboxSync, useSessionHydrated } from '@/store';
+import { refreshAll, startNotificationSync, useIsSignedIn, useMode, useOutboxSync, useSessionHydrated } from '@/store';
 import { isRtlLang, useLang } from '@/i18n';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -26,6 +27,7 @@ export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts();
   const hydrated = useSessionHydrated();
   const signedIn = useIsSignedIn();
+  const collectorMode = useMode() === 'collector';
   const ready = (fontsLoaded || !!fontError) && hydrated;
 
   const lang = useLang();
@@ -85,7 +87,12 @@ export default function RootLayout() {
           <Stack.Screen name="services/garbage-schedule" />
           <Stack.Screen name="notifications" />
         </Stack.Protected>
+        {/* CityCycle collector mode: its own tabs and job flow, reachable only while the mode is on. */}
+        <Stack.Protected guard={signedIn && collectorMode}>
+          <Stack.Screen name="collector" />
+        </Stack.Protected>
       </Stack>
+      <ModeRedirect enabled={signedIn} />
       <OutboxToast />
     </View>
   );

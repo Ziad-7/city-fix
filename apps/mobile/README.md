@@ -112,10 +112,12 @@ function MyCard() {
 
 ```
 src/
-  app/          routes only (Expo Router): _layout, sign-in, (tabs)/*, report/*, requests/[id], services/*
+  app/          routes only (Expo Router): _layout, sign-in, (tabs)/*, report/*, requests/[id], services/*,
+                collector/ ((tabs)/ jobs, map, earnings, account; job/[id]), CityCycle collector mode
   components/   Icon, TabBar, Hotlines, ui/ (AppText, Button, Card, Chip, ChoiceChip, StatusChip, TextField,
                 SelectField, ToggleRow, ProgressBar, Screen, ScreenHeader, InlineNotice, confirm),
-                brand/ (LogoMark, LogoLockup, LogoPill, Skyline, Medal), map/ (IncidentMap .native/.web)
+                brand/ (LogoMark, LogoLockup, LogoPill, Skyline, Medal), map/ (IncidentMap .native/.web),
+                collector/ (collector tab bar, job cards, number pad, JobsMap .native/.web, offline queue, mode redirect + pure helpers)
   domain/       types, categories (12), hotlines, locations, services-catalog, zod schemas,
                 CityCycle: citycycle (types), materials (catalogue, DEMO prices, value and impact maths), bins (states, thresholds)
   i18n/         tr / useTr / useLang / useIsRTL, labels.ts (English domain labels)
@@ -129,6 +131,21 @@ src/
   theme/        tokens.ts (light theme from docs/design/tokens.json)
   utils/        digits (Arabic-Indic / Western, phone), time (Arabic and English dates, relative time), geo (haversine, distance)
 ```
+
+## Collector mode (CityCycle)
+
+Profile → "اشتغل كجامع / Work as a collector" (mock mode: always offered, signed in as the demo collector Mahmoud Saeed,
+COL-101; API mode: only with the `collector` role) switches `useSession.mode` to `collector`. The root layout then exposes
+`src/app/collector/*` (guarded by the mode) and `ModeRedirect` moves the person from a citizen tab to `/collector`; Account →
+"ارجع لوضع المواطن / Back to citizen mode" goes back. Sign-out resets the mode. Deep links to other routes are not touched.
+
+- Routes: `/collector` (jobs), `/collector/map`, `/collector/earnings`, `/collector/account`, `/collector/job/[id]`
+  (way there, weigh, pay, done in one screen, by step).
+- Weighing and "complete" are offline-first: `components/collector/useCollectorQueue.ts` keeps them in AsyncStorage
+  (`ftc.collector.queue.v1`), shows "مستني النت / Waiting for internet" and sends them on reconnect, foreground and "Try now".
+  Weighings carry a `clientId`, so a retry never duplicates a row. Accepting a job is not queued: first accept wins, so it needs the internet.
+- The hub-scale button is a **simulation** (mock mode only, clearly labelled); real BLE is out of scope.
+- Prices are demo prices: every price or value shows the "Demo prices" label.
 
 ## Known stubs
 
