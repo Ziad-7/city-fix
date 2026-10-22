@@ -11,7 +11,7 @@ import {
   getPickups,
   getRecyclingSummary,
   patchCollector,
-  patchPickup,
+  cancelPickup,
   putMaterialPrices,
 } from '@/services/citycycle';
 import { getSmartBins } from '@/services/bins';
@@ -19,11 +19,6 @@ import { COLLECTOR_STATUS_LABEL_AR, MATERIAL_LABEL_AR, PICKUP_STATUS_LABEL_AR } 
 import { formatNumber } from '@/lib/format';
 
 const mat = (id: string) => MATERIAL_LABEL_AR[id] ?? id;
-const NEXT: Partial<Record<PickupStatus, { to: PickupStatus; label: string }>> = {
-  requested: { to: 'accepted', label: 'قبول' },
-  accepted: { to: 'weighed', label: 'تم الوزن' },
-  weighed: { to: 'completed', label: 'إتمام' },
-};
 
 function Loading() {
   return <Skeleton variant="block" height={160} />;
@@ -35,9 +30,9 @@ export function PickupsSection() {
   const [filter, setFilter] = useState<PickupStatus | ''>('');
   const q = useQuery({ queryKey: ['cc-pickups', filter], queryFn: () => getPickups(filter || undefined) });
   const m = useMutation({
-    mutationFn: (v: { id: string; status: PickupStatus; note?: string }) => patchPickup(v.id, { status: v.status, note: v.note }),
+    mutationFn: (id: string) => cancelPickup(id, 'اتلغى من مركز القيادة'),
     onSuccess: () => {
-      toast.success('اتحدّثت حالة الطلب');
+      toast.success('اتلغى الطلب');
       void qc.invalidateQueries({ queryKey: ['cc-pickups'] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -64,7 +59,6 @@ export function PickupsSection() {
             </thead>
             <tbody>
               {rows.map((p) => {
-                const next = NEXT[p.status];
                 return (
                   <tr key={p.id}>
                     <td dir="ltr">{p.id}</td>
@@ -73,12 +67,9 @@ export function PickupsSection() {
                     <td dir="ltr">{p.day}</td>
                     <td>{p.collectorName ?? '—'}</td>
                     <td>{PICKUP_STATUS_LABEL_AR[p.status]}</td>
-                    <td style={{ display: 'flex', gap: 6 }}>
-                      {next && (
-                        <Button size="sm" disabled={m.isPending} onClick={() => m.mutate({ id: p.id, status: next.to })}>{next.label}</Button>
-                      )}
+                    <td>
                       {(p.status === 'requested' || p.status === 'accepted') && (
-                        <Button size="sm" variant="secondary" disabled={m.isPending} onClick={() => m.mutate({ id: p.id, status: 'cancelled', note: 'اتلغى من مركز القيادة' })}>إلغاء</Button>
+                        <Button size="sm" variant="secondary" disabled={m.isPending} onClick={() => m.mutate(p.id)}>إلغاء</Button>
                       )}
                     </td>
                   </tr>

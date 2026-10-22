@@ -11,30 +11,47 @@ import type {
 import { MATERIAL_IDS } from '@/domain/citycycle-types';
 
 /**
- * CityCycle admin API. Routes marked "assumed" are not in docs/api-contract.md yet
+ * CityCycle admin API. Routes marked "" are not in docs/api-contract.md yet
  * (the contract lists the pickups queue as "admin view"); when the server answers
  * 404/405/501 the service falls back to an in-memory demo so the pages still work.
  */
-let demoMode = false;
-export const isCityCycleDemo = (): boolean => demoMode;
+type Resource = 'pickups' | 'collectors' | 'prices' | 'summary';
+const demo = new Set<Resource>();
+const listeners = new Set<() => void>();
+export const isCityCycleDemo = (): boolean => demo.size > 0;
+export const subscribeCityCycleDemo = (fn: () => void): (() => void) => {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+};
 export const resetCityCycleDemo = (): void => {
-  demoMode = false;
+  demo.clear();
   mock = seed();
+  listeners.forEach((fn) => fn());
 };
 
 const MISSING = new Set([404, 405, 501]);
 
-async function withFallback<T>(live: () => Promise<T>, demo: () => T): Promise<T> {
+/**
+ * List GETs decide demo mode once per resource: only when the route itself is missing
+ * (404/405/501). Everything else (403, 5xx, network) surfaces as an error.
+ */
+async function listOrDemo<T>(res: Resource, live: () => Promise<T>, fake: () => T): Promise<T> {
+  if (demo.has(res)) return fake();
   try {
-    const r = await live();
-    return r;
+    return await live();
   } catch (e) {
     if (e instanceof ApiError && MISSING.has(e.status)) {
-      demoMode = true;
-      return demo();
+      demo.add(res);
+      listeners.forEach((fn) => fn());
+      return fake();
     }
     throw e;
   }
+}
+
+/** Mutations use the demo store only when that resource's list already switched to demo; never otherwise. */
+async function mutate<T>(res: Resource, live: () => Promise<T>, fake: () => T): Promise<T> {
+  return demo.has(res) ? fake() : live();
 }
 
 // ---- demo store -------------------------------------------------------------
@@ -62,30 +79,32 @@ function seed(): Store {
 }
 let mock: Store = seed();
 
-// ---- pickups (assumed routes) -----------------------------------------------
+// ---- pickups (W3: GET and PATCH /admin/recycling/pickups) ---------------------
 export async function getPickups(status?: PickupStatus): Promise<RecyclingPickup[]> {
   const qs = status ? `?status=${status}` : '';
-  return withFallback(
+  return listOrDemo(
+    'pickups',
     async () => (await http<RecyclingPickup[]>('GET', `/admin/recycling/pickups${qs}`)) ?? [],
     () => mock.pickups.filter((p) => !status || p.status === status),
   );
 }
 
-export async function patchPickup(
-  id: string,
-  body: { status: PickupStatus; collectorId?: string; note?: string },
-): Promise<RecyclingPickup> {
-  return withFallback(
+/** Staff can only cancel (requested/accepted); the other transitions belong to collectors and households. */
+export async function cancelPickup(id: string, note?: string): Promise<RecyclingPickup> {
+  return mutate(
+    'pickups',
     async () => {
-      const r = await http<RecyclingPickup>('PATCH', `/admin/recycling/pickups/${encodeURIComponent(id)}`, body);
+      const r = await http<RecyclingPickup>('PATCH', `/admin/recycling/pickups/${encodeURIComponent(id)}`, {
+        status: 'cancelled',
+        note,
+      });
       if (!r) throw new ApiError(500, 'empty');
       return r;
     },
     () => {
       const p = mock.pickups.find((x) => x.id === id);
       if (!p) throw new ApiError(404, 'مش موجود');
-      p.status = body.status;
-      if (body.note) p.note = body.note;
+      p.status = 'cancelled';
       return { ...p };
     },
   );
@@ -94,14 +113,16 @@ export async function patchPickup(
 // ---- collectors -------------------------------------------------------------
 export async function getCollectors(status?: CollectorStatus): Promise<Collector[]> {
   const qs = status ? `?status=${status}` : '';
-  return withFallback(
+  return listOrDemo(
+    'collectors',
     async () => (await http<Collector[]>('GET', `/admin/collectors${qs}`)) ?? [],
     () => mock.collectors.filter((c) => !status || c.status === status),
   );
 }
 
 export async function patchCollector(id: string, body: { status: CollectorStatus; note?: string }): Promise<Collector> {
-  return withFallback(
+  return mutate(
+    'collectors',
     async () => {
       const r = await http<Collector>('PATCH', `/admin/collectors/${encodeURIComponent(id)}`, body);
       if (!r) throw new ApiError(500, 'empty');
@@ -119,7 +140,8 @@ export async function patchCollector(id: string, body: { status: CollectorStatus
 // ---- price list -------------------------------------------------------------
 export async function getMaterialPrices(district?: string): Promise<MaterialPrice[]> {
   const qs = district ? `?district=${encodeURIComponent(district)}` : '';
-  return withFallback(
+  return listOrDemo(
+    'prices',
     async () => (await http<MaterialPrice[]>('GET', `/admin/material-prices${qs}`)) ?? [],
     () => mock.prices.map((p) => ({ ...p })),
   );
@@ -129,7 +151,8 @@ export async function putMaterialPrices(
   district: string,
   prices: { materialId: MaterialId; priceEgpPerKg: number }[],
 ): Promise<void> {
-  await withFallback(
+  await mutate(
+    'prices',
     async () => {
       await http('PUT', '/admin/material-prices', { district, prices });
     },
@@ -148,13 +171,14 @@ export async function putMaterialPrices(
 
 // ---- impact -----------------------------------------------------------------
 export async function getRecyclingSummary(): Promise<RecyclingSummary> {
-  return withFallback(
+  return listOrDemo(
+    'summary',
     async () => {
-      const r = await http<Partial<RecyclingSummary> & { totalTonnes?: number }>('GET', '/admin/recycling/summary');
+      const r = await http<Partial<RecyclingSummary>>('GET', '/admin/recycling/summary');
       return {
-        totalKg: r?.totalKg ?? (r?.totalTonnes != null ? r.totalTonnes * 1000 : 0),
+        totalKg: r?.totalKg ?? 0,
         pickups: r?.pickups ?? 0,
-        avgResponseMinutes: r?.avgResponseMinutes,
+        avgResponseMinutes: r?.avgResponseMinutes ?? null,
         byMaterial: r?.byMaterial ?? [],
         byDistrict: r?.byDistrict ?? [],
       };

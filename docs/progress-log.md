@@ -463,3 +463,14 @@ Newest first. Each entry: what was done, how to test it, known issues.
 
 **Known issues**
 - GitHub push access for Claude is not set up on `Ziad-7/fix-city` yet; work is committed locally until it is.
+
+## 2026-10-23 — Admin web: CityCycle views
+
+**Done**
+- `apps/admin-web` route `/citycycle` (sidebar "إعادة التدوير"): pickups queue (read-only, admin/staff can cancel requested or accepted ones), collectors verify/suspend, district price list (only `admin` edits), bin alerts, impact stats.
+- Services call the `/admin/*` CityCycle routes in `docs/api-contract.md` and the backend's `GET/PATCH /admin/recycling/pickups`. If a list route answers 404/405/501 that resource switches to in-memory demo data with a visible notice; 403, 5xx and network errors are shown as errors, and mutations never fall back while the backend is live.
+- Admin web stays Arabic-only.
+
+**Known issues**
+- Not built yet: route optimizer, dumping hotspots, payouts report, bin registration.
+- `next build` for admin-web needs network access for Google Fonts.

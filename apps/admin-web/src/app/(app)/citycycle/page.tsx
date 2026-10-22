@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Button, Notice, PageHead } from '@/components/ui';
 import {
   BinAlertsSection,
@@ -9,7 +9,7 @@ import {
   PickupsSection,
   PricesSection,
 } from '@/components/citycycle/sections';
-import { isCityCycleDemo } from '@/services/citycycle';
+import { isCityCycleDemo, subscribeCityCycleDemo } from '@/services/citycycle';
 import { useSession } from '@/lib/session';
 
 const TABS = [
@@ -23,18 +23,16 @@ const TABS = [
 export default function CityCyclePage() {
   const session = useSession();
   const [tab, setTab] = useState<(typeof TABS)[number]['id']>('pickups');
-  const [, bump] = useState(0);
+  const demo = useSyncExternalStore(subscribeCityCycleDemo, isCityCycleDemo, () => false);
 
   useEffect(() => {
     document.title = 'CityFix — مركز القيادة: إعادة التدوير';
-    const t = setInterval(() => bump((n) => n + 1), 1500);
-    return () => clearInterval(t);
   }, []);
 
   return (
     <main>
       <PageHead title="إعادة التدوير" subtitle="طلبات الجمع والجامعون وقائمة الأسعار وتنبيهات الحاويات وأثر البرنامج." />
-      {isCityCycleDemo() && (
+      {demo && (
         <Notice tone="gold" className="mb-3">
           السيرفر لسه مفعّلش مسارات إعادة التدوير، فالبيانات هنا تجريبية.
         </Notice>

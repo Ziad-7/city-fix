@@ -59,7 +59,7 @@ export interface MaterialPrice {
 export interface RecyclingSummary {
   totalKg: number;
   pickups: number;
-  avgResponseMinutes?: number;
+  avgResponseMinutes?: number | null;
   byMaterial: { materialId: MaterialId; kg: number }[];
   byDistrict: { district: string; kg: number }[];
 }
