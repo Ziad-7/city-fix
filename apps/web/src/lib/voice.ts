@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { API_MODE } from '@/services';
 import { uploadAndTranscribeVoiceNote } from '@/store';
+import { MAX_VOICE_SECONDS } from '@/shared/components/report/voice';
 
 // "سجّل بصوتك": the citizen speaks and the words land in the description box.
 // - API mode with MediaRecorder: record, upload as a voice note, POST /ai/transcribe (the contract's path;
@@ -11,7 +12,7 @@ import { uploadAndTranscribeVoiceNote } from '@/store';
 //   no backend, so it also works in mock mode.
 // - Neither available (e.g. Firefox in mock mode): the row says so and the citizen types.
 
-export const MAX_SECONDS = 60;
+export const MAX_SECONDS = MAX_VOICE_SECONDS;
 
 type Recognition = {
   lang: string;

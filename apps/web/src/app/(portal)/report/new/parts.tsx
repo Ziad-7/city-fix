@@ -9,6 +9,7 @@ import { reportedByAr } from '@/components/report/text';
 import { API_MODE } from '@/services';
 import type { LocationState } from '@/lib/location';
 import { MAX_SECONDS, useVoiceNote } from '@/lib/voice';
+import { formatTimer } from '@/shared/components/report/voice';
 import { toArabicDigits } from '@/utils/digits';
 import { formatDistanceAr } from '@/utils/geo';
 import { radioKeys } from '@/ui/controls';
@@ -178,7 +179,7 @@ export function VoiceRow({ highlight, onText, onVoiceNote }: { highlight?: boole
   const clock = `${toArabicDigits(Math.floor(seconds / 60))}:${toArabicDigits(String(seconds % 60).padStart(2, '0'))}`;
   const title = recording ? 'بنسمعك…' : state === 'working' ? 'بنكتب كلامك…' : 'سجّل بصوتك';
   const sub = recording
-    ? `دوس تاني لما تخلص · ${clock} من ${toArabicDigits(MAX_SECONDS / 60)}:٠٠`
+    ? `دوس تاني لما تخلص · ${clock} من ${formatTimer(MAX_SECONDS)}`
     : engine
       ? 'قول المشكلة بالعامية وإحنا نكتبها'
       : 'المتصفح ده مش بيدعم التسجيل. اكتب الوصف تحت.';

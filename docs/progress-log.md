@@ -1,5 +1,11 @@
 # Progress log
 
+## 2026-10-22 — AI voice-note input limits
+
+- Aligned mobile and web recording controls and backend media checks to the plan's 5 MB / 30 second voice-note limit.
+- Added pre-transcription audio-container duration validation with a bounded `ffprobe` call and a backend Dockerfile that installs it.
+- Added tests for oversized and long recordings plus ffprobe parsing; pytest is not installed in this workspace, so these tests have not run here. A one-second M4A duration probe and compile checks passed.
+
 Newest first. Each entry: what was done, how to test it, known issues.
 
 ## 2026-10-22 — CityBrain photo + Arabic text triage (`feat/ai-photo-triage-api`)

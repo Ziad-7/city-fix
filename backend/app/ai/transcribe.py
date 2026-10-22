@@ -4,8 +4,13 @@ import asyncio
 import base64
 import json
 import logging
+import math
 import re
+import shutil
+import subprocess
+import tempfile
 from collections.abc import Awaitable, Callable
+from pathlib import Path
 from typing import Any, Protocol
 
 import httpx
@@ -17,6 +22,60 @@ from app.ai.schemas import ApiModel, ProviderError
 logger = logging.getLogger(__name__)
 TRANSCRIPTION_DEADLINE_SECONDS = 5.0
 MAX_TRANSCRIPTION_CHARS = 2000
+MAX_TRANSCRIPTION_AUDIO_BYTES = 5 * 1024 * 1024
+MAX_TRANSCRIPTION_DURATION_SECONDS = 30
+FFPROBE_TIMEOUT_SECONDS = 1.25
+AUDIO_SUFFIXES = {
+    "audio/mp4": ".m4a",
+    "audio/mpeg": ".mp3",
+    "audio/webm": ".webm",
+    "audio/ogg": ".ogg",
+}
+
+
+def get_audio_duration_seconds(audio: bytes, mime_type: str) -> float:
+    """Read container duration with ffprobe; never decode or persist the recording."""
+    executable = shutil.which("ffprobe")
+    suffix = AUDIO_SUFFIXES.get(mime_type)
+    if executable is None:
+        raise RuntimeError("ffprobe is required for voice-note validation")
+    if suffix is None:
+        raise ValueError("unsupported voice-note media type")
+
+    try:
+        with tempfile.TemporaryDirectory(prefix="voice-check-") as directory:
+            path = Path(directory) / f"voice{suffix}"
+            path.write_bytes(audio)
+            result = subprocess.run(
+                [
+                    executable,
+                    "-v",
+                    "error",
+                    "-show_entries",
+                    "format=duration",
+                    "-of",
+                    "json",
+                    "-i",
+                    str(path),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                stdin=subprocess.DEVNULL,
+                timeout=FFPROBE_TIMEOUT_SECONDS,
+                shell=False,
+            )
+            if result.returncode != 0:
+                raise ValueError("invalid voice-note audio")
+            duration = json.loads(result.stdout)["format"]["duration"]
+            seconds = float(duration)
+    except subprocess.TimeoutExpired as error:
+        raise ValueError("voice-note duration could not be checked") from error
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+        raise ValueError("voice-note duration could not be checked") from error
+    if not math.isfinite(seconds) or seconds <= 0:
+        raise ValueError("voice-note duration could not be checked")
+    return seconds
 
 
 class TranscriptionRequest(ApiModel):
@@ -195,6 +254,29 @@ def create_transcription_router(
                 "Could not load caller-owned voice note (%s)", type(error).__name__
             )
             raise HTTPException(404, "التسجيل مش متاح.") from error
+        if len(audio) > MAX_TRANSCRIPTION_AUDIO_BYTES:
+            raise HTTPException(413, "حجم التسجيل أكبر من المسموح (٥ ميجابايت).")
+        try:
+            remaining = max(0.01, deadline - loop.time())
+            duration = await asyncio.wait_for(
+                asyncio.to_thread(get_audio_duration_seconds, audio, mime_type),
+                timeout=min(FFPROBE_TIMEOUT_SECONDS + 0.25, remaining),
+            )
+            if duration > MAX_TRANSCRIPTION_DURATION_SECONDS:
+                raise HTTPException(
+                    413, "مدة التسجيل لازم تكون ٣٠ ثانية أو أقل."
+                )
+        except HTTPException:
+            raise
+        except asyncio.TimeoutError as error:
+            raise HTTPException(
+                422, "مقدرناش نتحقق من مدة التسجيل؛ سجّل مقطع أقصر."
+            ) from error
+        except ValueError as error:
+            raise HTTPException(422, "ملف التسجيل غير صالح أو مدته غير واضحة.") from error
+        except RuntimeError as error:
+            logger.error("Voice duration validation is not configured")
+            raise HTTPException(503, "التحقق من التسجيل مش متاح دلوقتي.") from error
         try:
             result = await asyncio.wait_for(
                 provider.transcribe(audio, mime_type),

@@ -7,7 +7,7 @@ import httpx
 from fastapi import HTTPException
 
 MAX_PHOTO_BYTES = 5 * 1024 * 1024
-MAX_VOICE_BYTES = 15 * 1024 * 1024
+MAX_VOICE_BYTES = 5 * 1024 * 1024
 MEDIA_TYPES = {
     "report_photo": {"image/jpeg", "image/png", "image/webp"},
     "voice_note": {
