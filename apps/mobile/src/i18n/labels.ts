@@ -2,6 +2,22 @@
  * English names for domain data. The Arabic stays in the domain files (and in data from the server);
  * these helpers return the label for the current language. Keep wording in sync with docs/mobile/english-glossary.md.
  */
+import { BIN_STATE_LABEL_AR, type BinDisplayState } from '@/domain/bins';
+import {
+  COLLECTOR_STATUS_LABEL_AR,
+  PICKUP_MODE_LABEL_AR,
+  PICKUP_STATUS_LABEL_AR,
+  WASTE_SIZE_LABEL_AR,
+  WEIGHING_SOURCE_LABEL_AR,
+  type BinKind,
+  type CollectorStatus,
+  type MaterialId,
+  type PickupMode,
+  type PickupStatus,
+  type WasteSize,
+  type WeighingSource,
+} from '@/domain/citycycle';
+import { getMaterial } from '@/domain/materials';
 import type { CategoryId, IncidentStatus, PaymentMethod, ServiceType, Severity, SlotId } from '@/domain/types';
 import { usePrefs } from '@/store/usePrefs';
 
@@ -167,3 +183,82 @@ export const itemLabel = (ar: string): string => pick(ar, ITEM_EN[ar]);
 export const slotLabel = (s: { id: SlotId; labelAr: string }): string => pick(s.labelAr, SLOT_EN[s.id]);
 export const paymentLabelFor = (p: { id: PaymentMethod; labelAr: string }): string => pick(p.labelAr, PAYMENT_EN[p.id]);
 export const medalTitle = (ar: string): string => pick(ar, MEDAL_EN[ar]);
+
+// ---- CityCycle (waste and recycling) ----
+
+export const MATERIAL_EN: Record<MaterialId, string> = {
+  pet_plastic: 'Plastic bottles (PET)',
+  paper_cardboard: 'Paper & cardboard',
+  metal_cans: 'Metal & cans',
+  glass: 'Glass',
+  e_waste: 'Old electronics',
+  cooking_oil: 'Used cooking oil',
+  organics: 'Food scraps',
+};
+
+export const MATERIAL_TIP_EN: Record<MaterialId, string> = {
+  pet_plastic: 'Water and juice bottles. Best empty and flattened.',
+  paper_cardboard: 'Boxes, paper and newspapers. Best dry and flat.',
+  metal_cans: 'Food and drink cans. Best empty and rinsed.',
+  glass: 'Bottles and jars. Best unbroken, in a separate bag.',
+  e_waste: 'Phones, chargers, cables and small devices. Please don’t break or open them.',
+  cooking_oil: 'In a closed bottle, not mixed with water.',
+  organics: 'Food and vegetable scraps in a separate bag, handed over the same day.',
+};
+
+export const PICKUP_STATUS_EN: Record<PickupStatus, string> = {
+  requested: 'Waiting for a collector',
+  accepted: 'Accepted, on the way',
+  weighed: 'Weighed',
+  completed: 'Done',
+  cancelled: 'Cancelled',
+};
+
+export const PICKUP_MODE_EN: Record<PickupMode, string> = { free: 'Give for free', paid: 'Get paid' };
+
+export const COLLECTOR_STATUS_EN: Record<CollectorStatus, string> = {
+  pending: 'We’re reviewing the application',
+  verified: 'Verified',
+  suspended: 'Suspended',
+};
+
+export const WEIGHING_SOURCE_EN: Record<WeighingSource, string> = { manual: 'Typed in', scale_ble: 'Bluetooth scale', scale_api: 'Hub scale' };
+
+export const WASTE_SIZE_EN: Record<WasteSize, string> = { small: 'Small', medium: 'Medium', large: 'Large' };
+
+export const BIN_STATE_EN: Record<BinDisplayState, string> = {
+  ok: 'OK',
+  filling: 'Filling up',
+  full: 'Full',
+  hot: 'Heat alert',
+  low_battery: 'Low battery',
+  offline: 'Offline',
+};
+
+export const BIN_KIND_EN: Record<BinKind, string> = { street: 'Street bin', hub: 'Collection hub' };
+
+/** Names that appear in mock/seed data and in the app copy. */
+export const CITYCYCLE_EN = {
+  pillar: 'CityCycle',
+  pillarSub: 'Recycling',
+  demoPrices: 'Demo prices',
+  priceToBeSet: 'Price to be set',
+  alreadyTaken: 'Already taken',
+} as const;
+
+export const materialLabel = (id: MaterialId): string => pick(getMaterial(id).labelAr, MATERIAL_EN[id]);
+export const materialTip = (id: MaterialId): string => pick(getMaterial(id).tipAr, MATERIAL_TIP_EN[id]);
+export const pickupStatusLabel = (s: PickupStatus): string => pick(PICKUP_STATUS_LABEL_AR[s], PICKUP_STATUS_EN[s]);
+export const pickupModeLabel = (m: PickupMode): string => pick(PICKUP_MODE_LABEL_AR[m], PICKUP_MODE_EN[m]);
+export const collectorStatusLabel = (s: CollectorStatus): string => pick(COLLECTOR_STATUS_LABEL_AR[s], COLLECTOR_STATUS_EN[s]);
+export const weighingSourceLabel = (s: WeighingSource): string => pick(WEIGHING_SOURCE_LABEL_AR[s], WEIGHING_SOURCE_EN[s]);
+export const wasteSizeLabel = (s: WasteSize): string => pick(WASTE_SIZE_LABEL_AR[s], WASTE_SIZE_EN[s]);
+/** Label for a bin state, with "filling" included. */
+export const binStateLabel = (s: BinDisplayState): string => pick(BIN_STATE_LABEL_AR[s], BIN_STATE_EN[s]);
+export const binKindLabel = (k: BinKind): string => pick(k === 'hub' ? 'مركز تجميع' : 'صندوق شارع', BIN_KIND_EN[k]);
+/** The small label shown next to every price or value that comes from demo prices. */
+export const demoPricesLabel = (): string => pick('أسعار تجريبية', CITYCYCLE_EN.demoPrices);
+/** Shown instead of a value when the district has no price for a material. */
+export const priceToBeSetLabel = (): string => pick('السعر هيتحدد', CITYCYCLE_EN.priceToBeSet);
+/** 409 on accept: another collector was first. */
+export const alreadyTakenLabel = (): string => pick('اتاخد خلاص', CITYCYCLE_EN.alreadyTaken);

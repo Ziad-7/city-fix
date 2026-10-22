@@ -1,4 +1,21 @@
 import type {
+  Bin,
+  Collector,
+  CollectorJob,
+  CollectorJobsQuery,
+  CompletePickupInput,
+  Earnings,
+  EarningsQuery,
+  Impact,
+  MaterialPrice,
+  NewRecyclingPickupInput,
+  RecyclingPickup,
+  ReportFullBinInput,
+  WasteClassification,
+  Weighing,
+  WeighingInput,
+} from '@/domain/citycycle';
+import type {
   CategoryId,
   Incident,
   LatLng,
@@ -82,6 +99,52 @@ export interface TranscriptionService {
   transcribe(path: string): Promise<Transcript>;
 }
 
+/** Citizen side of CityCycle: price list, recyclables pickups, impact, smart bins, AI photo check. Contract: docs/api-contract.md#citycycle--proposed */
+export interface CityCycleService {
+  /** GET /recycling/materials?district= . One row per material; `priceEgpPerKg` is null where no price is set. */
+  listPrices(district: string): Promise<MaterialPrice[]>;
+  /** POST /recycling/pickups (status `requested`; `estimatedValueEgp` computed from the price list). */
+  createPickup(userId: string, input: NewRecyclingPickupInput): Promise<RecyclingPickup>;
+  /** GET /recycling/pickups (mine), newest first. */
+  listMyPickups(userId: string): Promise<RecyclingPickup[]>;
+  /** GET /recycling/pickups/{id}. null when missing or not the caller's. */
+  getPickup(id: string): Promise<RecyclingPickup | null>;
+  /** POST /recycling/pickups/{id}/cancel . Only while `requested`. */
+  cancelPickup(userId: string, id: string, note?: string): Promise<RecyclingPickup>;
+  /** POST /recycling/pickups/{id}/confirm . The household acknowledges the weighing (sets `confirmedAt`). */
+  confirmPickup(userId: string, id: string): Promise<RecyclingPickup>;
+  /** GET /me/impact . The caller's own impact. */
+  getMyImpact(userId: string): Promise<Impact>;
+  /** GET /bins . Mock: fill levels drift up a little on every call, so the map feels alive. */
+  listBins(): Promise<Bin[]>;
+  /** POST /bins/{id}/report-full . Creates a garbage report linked to the bin. */
+  reportFullBin(userId: string, binId: string, input?: ReportFullBinInput): Promise<void>;
+  /** POST /ai/waste-classify with an uploaded photo path. A suggestion; never throws (falls back to `source: "fallback"`). */
+  classifyWaste(path: string): Promise<WasteClassification>;
+  /** Dev only: advance a pickup to its next status as the demo collector would. */
+  simulatePickupProgress(id: string): Promise<RecyclingPickup>;
+}
+
+/** Collector mode. Contract: `/collectors/*` and `/collector/*`. In API mode the backend knows the caller from the token. */
+export interface CollectorService {
+  /** GET /collectors/me . Rejects when the caller has no collector profile. */
+  getProfile(userId: string): Promise<Collector>;
+  /** GET /collector/jobs . Open pickups near a point, nearest first, without citizen details (approximate pin). */
+  listNearbyJobs(userId: string, query: CollectorJobsQuery): Promise<CollectorJob[]>;
+  /** Proposed: GET /collector/pickups . The caller's accepted jobs (active first) and finished ones, with exact pins. */
+  listMyJobs(userId: string): Promise<RecyclingPickup[]>;
+  /** POST /collector/jobs/{id}/accept . First accept wins: rejects with `AlreadyTakenError` (409). */
+  acceptJob(userId: string, jobId: string): Promise<RecyclingPickup>;
+  /** Proposed: POST /collector/jobs/{id}/start . "On my way": adds a timeline entry and `startedAt`. */
+  startJob(userId: string, jobId: string): Promise<RecyclingPickup>;
+  /** POST /collector/jobs/{id}/weighings . Idempotent on `clientId`. Sets the pickup to `weighed`. */
+  recordWeighing(userId: string, jobId: string, input: WeighingInput): Promise<Weighing>;
+  /** POST /collector/jobs/{id}/complete . Needs at least one weighing. Omit the amount for a free pickup. */
+  completeJob(userId: string, jobId: string, input?: CompletePickupInput): Promise<RecyclingPickup>;
+  /** GET /collector/earnings?from&to */
+  getEarnings(userId: string, query: EarningsQuery): Promise<Earnings>;
+}
+
 export type Services = {
   auth: AuthService;
   incidents: IncidentService;
@@ -89,4 +152,6 @@ export type Services = {
   triage: TriageService;
   uploads: UploadService;
   transcription: TranscriptionService;
+  cityCycle: CityCycleService;
+  collector: CollectorService;
 };

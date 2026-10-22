@@ -3,6 +3,7 @@ import { findDistrict } from '@/domain/locations';
 import type { CategoryId, Incident, IncidentStatus, Report, ServiceRequest, Severity } from '@/domain/types';
 import { nextWorkingDays } from '@/domain/services-catalog';
 import { computePriority } from '@/logic/priority';
+import { buildCityCycleSeed, type DbBin, type DbBinReport, type DbCollector, type DbPickup } from './citycycle-seed';
 import { etaFor, incidentTimelineEntry, serviceTimelineEntry, STATUS_ORDER, type DbTimelineEntry } from './timeline';
 
 export const DEMO_USER_ID = 'demo-user';
@@ -22,6 +23,13 @@ export type MockDb = {
   /** userId -> incident ids the user follows */
   following: Record<string, string[]>;
   counters: { incident: number; report: number; service: number };
+  /** CityCycle (a database saved by an older build gets these from the seed: see `withEnglish`). */
+  pickups: DbPickup[];
+  bins: DbBin[];
+  collectors: DbCollector[];
+  binReports: DbBinReport[];
+  /** Next pickup number (RCY-…). */
+  pickupCounter: number;
 };
 
 const HOUR = 3_600_000;
@@ -150,6 +158,7 @@ export function buildSeed(now: number = Date.now()): MockDb {
     serviceRequests,
     following: {},
     counters: { incident: 511, report: 1043, service: 2002 },
+    ...buildCityCycleSeed(now),
   };
 }
 
@@ -159,6 +168,12 @@ export function buildSeed(now: number = Date.now()): MockDb {
  */
 export function withEnglish(db: MockDb): MockDb {
   const seed = buildSeed();
+  // CityCycle arrived after the first release: an older saved database gets its seed data once.
+  db.pickups ??= seed.pickups;
+  db.bins ??= seed.bins;
+  db.collectors ??= seed.collectors;
+  db.binReports ??= [];
+  db.pickupCounter ??= seed.pickupCounter;
   for (const i of db.incidents) {
     const s = i.titleEn ? undefined : seed.incidents.find((x) => x.id === i.id);
     if (s) {

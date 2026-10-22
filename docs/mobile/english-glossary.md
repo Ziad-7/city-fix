@@ -58,5 +58,37 @@ The app is Arabic-first. English is a full second language that people switch to
 | الجهة المسؤولة | Handled by |
 | الجاية (garbage) | Next pickup |
 | العربية بتعدّي … | Pickup time: … |
+| سيتي سايكل (إعادة التدوير) | CityCycle (recycling) |
+| طلب فرز / استلام خامات | Recycling pickup |
+| الخامات | Materials |
+| بلاستيك (إزايز) | Plastic bottles (PET) |
+| ورق وكرتون | Paper & cardboard |
+| معادن وعلب | Metal & cans |
+| إزاز | Glass |
+| إلكترونيات قديمة | Old electronics |
+| زيت طبيخ مستعمل | Used cooking oil |
+| فضلات أكل | Food scraps |
+| الجامع (الزبّال) | Collector |
+| وضع الجامع / وضع المواطن | Collector mode / Citizen mode |
+| مستني حد يقبله | Waiting for a collector |
+| اتقبل وفي الطريق | Accepted, on the way |
+| اتوزن | Weighed |
+| خلص | Done |
+| مجانًا / بمقابل فلوس | Give for free / Get paid |
+| أسعار تجريبية | Demo prices |
+| السعر هيتحدد | Price to be set |
+| اتاخد خلاص | Already taken |
+| سعر الكيلو | Price per kg |
+| القيمة التقديرية | Estimated value |
+| الوزن الفعلي | Weighed amount |
+| صندوق شارع / مركز تجميع | Street bin / Collection hub |
+| تمام / بيمتلي / ممتلي | OK / Filling up / Full |
+| حرارة عالية | Heat alert |
+| البطارية ضعيفة | Low battery |
+| مش بيبعت | Offline |
+| بلّغ إن الصندوق ممتلي | Report a full bin |
+| الأثر (كجم اتحوّلت لإعادة تدوير) | Impact (kg recycled) |
+| أرباحي | My earnings |
+| CO₂ اتفادى (تقديري) | CO₂ avoided (estimate) |
 
 Statuses, severities, categories, departments, hotlines, places, services and medals: `apps/mobile/src/i18n/labels.ts`.

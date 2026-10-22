@@ -2,17 +2,41 @@ import { tr } from '@/i18n';
 import { services } from '@/services';
 import { setUnauthorizedHandler } from '@/services/api/http';
 import { voiceContentType } from '@/services/media';
+import type { AppMode } from '@/domain/citycycle';
 import { expectOwnChange, useNotifications } from './useNotifications';
+import { useCityCycle } from './useCityCycle';
+import { useCollector } from './useCollector';
 import { useReports } from './useReports';
 import { useServiceRequests } from './useServiceRequests';
 import { usePrefs } from './usePrefs';
-import { useSession } from './useSession';
+import { collectorModeAvailable, useSession } from './useSession';
 
 export const SESSION_EXPIRED_MSG = 'الجلسة خلصت، سجّل دخول تاني.';
 
-/** Loads reports, incidents and service requests (call once the user is signed in). */
+/**
+ * Loads reports, incidents, service requests and CityCycle data (call once the user is signed in).
+ * Collector data is loaded only in collector mode.
+ */
 export async function refreshAll(): Promise<void> {
-  await Promise.all([useReports.getState().refresh(), useServiceRequests.getState().refresh()]);
+  const collector = useSession.getState().mode === 'collector';
+  await Promise.all([
+    useReports.getState().refresh(),
+    useServiceRequests.getState().refresh(),
+    useCityCycle.getState().refresh(),
+    collector ? useCollector.getState().refresh() : Promise.resolve(),
+  ]);
+}
+
+/**
+ * Switches between citizen and collector mode and loads that mode's data. Returns false (and changes nothing) when the
+ * account cannot use collector mode.
+ */
+export async function switchMode(mode: AppMode): Promise<boolean> {
+  const { roles, setMode } = useSession.getState();
+  if (mode === 'collector' && !collectorModeAvailable(roles)) return false;
+  setMode(mode);
+  await (mode === 'collector' ? useCollector.getState().refresh() : useCityCycle.getState().refresh());
+  return true;
 }
 
 export async function signOutAll(): Promise<void> {
@@ -22,6 +46,8 @@ export async function signOutAll(): Promise<void> {
     useReports.getState().reset();
     useNotifications.getState().reset();
     useServiceRequests.getState().reset();
+    useCityCycle.getState().reset();
+    useCollector.getState().reset();
     useSession.getState().clear();
   }
 }

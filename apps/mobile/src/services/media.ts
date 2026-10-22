@@ -77,6 +77,15 @@ export async function compressImage(uri: string): Promise<string> {
 
 type Upload = (localUri: string, kind: UploadKind, contentType: string) => Promise<string>;
 
+/** Compresses and uploads local photos (already-uploaded paths are kept). Used by the pickup request and the AI photo check. */
+export async function preparePhotoUris(uris: readonly string[], upload: Upload): Promise<string[]> {
+  const out: string[] = [];
+  for (const uri of uris) {
+    out.push(needsUpload(uri) ? await upload(await compressImage(uri), 'report_photo', PHOTO_CONTENT_TYPE) : uri);
+  }
+  return out;
+}
+
 /**
  * Prepares a report for POST /reports: compresses local photos and uploads local files, replacing them with the
  * returned paths. Already-uploaded paths are left alone, so calling it again on a half-prepared input is safe.

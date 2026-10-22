@@ -22,7 +22,9 @@ export type IconName =
   | 'pin' | 'shield-check' | 'wifi' | 'users' | 'share' | 'check' | 'plus'
   | 'search' | 'clock' | 'zap' | 'droplets' | 'pipe' | 'manhole' | 'pothole'
   | 'cone' | 'paw' | 'sidewalk' | 'more' | 'phone' | 'sparkles' | 'eye-off'
-  | 'whatsapp' | 'x' | 'image' | 'locate' | 'info' | 'flame' | 'calendar' | 'refresh';
+  | 'whatsapp' | 'x' | 'image' | 'locate' | 'info' | 'flame' | 'calendar' | 'refresh'
+  // CityCycle: materials and collector mode
+  | 'recycle' | 'bottle' | 'package' | 'can' | 'glass' | 'cpu' | 'droplet' | 'leaf' | 'truck' | 'scale' | 'banknote' | 'navigation';
 
 export type LatLng = { lat: number; lng: number };
 
@@ -214,6 +216,11 @@ export type Session = {
   name?: string;
   /** Bearer token from /auth/verify (API mode). Persisted with the session. */
   token?: string;
+  /**
+   * Roles from /auth/verify (`citizen`, and `collector` once verified). Proposed use: collector mode is offered only
+   * when `collector` is present (API mode). The mock grants it to the demo user.
+   */
+  roles?: string[];
 };
 
 export type OtpChannel = 'sms' | 'whatsapp';

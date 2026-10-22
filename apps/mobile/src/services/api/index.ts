@@ -1,17 +1,9 @@
 import type { Incident, MapPin, Report, ServiceRequest, Session, TriageSuggestion } from '@/domain/types';
 import type { Services } from '../interfaces';
-import { ApiError, http, setApiToken } from './http';
+import { createApiCityCycleService, createApiCollectorService } from './citycycle';
+import { http, setApiToken } from './http';
+import { orNull } from './orNull';
 import { createUploadService } from './uploads';
-
-/** GET by id: 404 (missing) or 403 (someone else's) means "not found" on the detail screen, not a load error with a retry. */
-async function orNull<T>(p: Promise<T | null>): Promise<T | null> {
-  try {
-    return (await p) ?? null;
-  } catch (e) {
-    if (e instanceof ApiError && (e.status === 404 || e.status === 403)) return null;
-    throw e;
-  }
-}
 
 /**
  * Real backend (FastAPI), following docs/api-contract.md.
@@ -66,5 +58,7 @@ export function createApiServices(): Services {
     uploads: createUploadService(),
     // POST /ai/transcribe (proposed, member 5) with the uploaded voice-note path.
     transcription: { transcribe: (path) => http('POST', '/ai/transcribe', { path }) },
+    cityCycle: createApiCityCycleService(),
+    collector: createApiCollectorService(),
   };
 }
