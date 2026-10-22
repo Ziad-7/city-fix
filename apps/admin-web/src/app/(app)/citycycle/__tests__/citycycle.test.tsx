@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '@/components/ui';
 import { ApiError } from '@/lib/http';
-import { PricesSection } from '@/components/citycycle/sections';
+import { PickupsSection, PricesSection } from '@/components/citycycle/sections';
 import {
   cancelPickup,
   getPickups,
@@ -93,5 +93,29 @@ describe('prices', () => {
     await waitFor(() => expect(screen.getAllByRole('textbox').length).toBeGreaterThan(0));
     for (const input of screen.getAllByRole('textbox')) expect(input).toHaveAttribute('readonly');
     expect(screen.queryByText('حفظ الأسعار')).not.toBeInTheDocument();
+  });
+});
+
+describe('staff view', () => {
+  it('hides Cancel for non-admin and tolerates a redacted address', async () => {
+    vi.stubGlobal('fetch', vi.fn(reply(200, [
+      { id: 'RCY-1', items: [], day: '2030-01-01', slot: 'morning', mode: 'free', status: 'requested', createdAt: '', location: {} },
+      { id: 'RCY-2', items: [], day: '2030-01-01', slot: 'morning', mode: 'free', status: 'requested', createdAt: '' },
+    ])));
+    wrap(<PickupsSection isAdmin={false} />);
+    await waitFor(() => expect(screen.getByText('RCY-2')).toBeInTheDocument());
+    expect(screen.queryByText('إلغاء')).not.toBeInTheDocument();
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('shows Cancel for admin', async () => {
+    wrap(<PickupsSection isAdmin />);
+    await waitFor(() => expect(screen.getAllByText('إلغاء').length).toBeGreaterThan(0));
+  });
+
+  it('disables price save when the list is empty', async () => {
+    vi.stubGlobal('fetch', vi.fn(reply(200, [])));
+    wrap(<PricesSection isAdmin />);
+    await waitFor(() => expect(screen.getByText('حفظ الأسعار')).toBeDisabled());
   });
 });

@@ -24,7 +24,7 @@ export type CollectorStatus = 'pending' | 'verified' | 'suspended';
 export interface RecyclingPickup {
   id: string;
   items: { materialId: MaterialId; estimatedKg: number }[];
-  location: { address: string; lat?: number; lng?: number; landmark?: string };
+  location?: { address?: string; lat?: number; lng?: number; landmark?: string };
   day: string;
   slot: string;
   mode: 'free' | 'paid';

@@ -44,7 +44,7 @@ export default function CityCyclePage() {
           </Button>
         ))}
       </div>
-      {tab === 'pickups' && <PickupsSection />}
+      {tab === 'pickups' && <PickupsSection isAdmin={session?.role === 'admin'} />}
       {tab === 'collectors' && <CollectorsSection />}
       {tab === 'prices' && <PricesSection isAdmin={session?.role === 'admin'} />}
       {tab === 'bins' && <BinAlertsSection />}

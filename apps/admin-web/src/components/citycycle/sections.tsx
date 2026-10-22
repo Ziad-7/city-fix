@@ -24,7 +24,7 @@ function Loading() {
   return <Skeleton variant="block" height={160} />;
 }
 
-export function PickupsSection() {
+export function PickupsSection({ isAdmin = false }: { isAdmin?: boolean }) {
   const qc = useQueryClient();
   const toast = useToast();
   const [filter, setFilter] = useState<PickupStatus | ''>('');
@@ -63,12 +63,12 @@ export function PickupsSection() {
                   <tr key={p.id}>
                     <td dir="ltr">{p.id}</td>
                     <td>{p.items.map((i) => `${mat(i.materialId)} ${formatNumber(i.estimatedKg)} كجم`).join('، ')}</td>
-                    <td>{p.location.address}</td>
+                    <td>{p.location?.address || '—'}</td>
                     <td dir="ltr">{p.day}</td>
                     <td>{p.collectorName ?? '—'}</td>
                     <td>{PICKUP_STATUS_LABEL_AR[p.status]}</td>
                     <td>
-                      {(p.status === 'requested' || p.status === 'accepted') && (
+                      {isAdmin && (p.status === 'requested' || p.status === 'accepted') && (
                         <Button size="sm" variant="secondary" disabled={m.isPending} onClick={() => m.mutate(p.id)}>إلغاء</Button>
                       )}
                     </td>
@@ -132,6 +132,7 @@ export function PricesSection({ isAdmin }: { isAdmin: boolean }) {
     mutationFn: async () => {
       const rows = q.data ?? [];
       const district = rows[0]?.district ?? '';
+      if (rows.length === 0 || !district) throw new Error('قائمة الأسعار فاضية');
       const prices = rows
         .filter((r) => draft[r.materialId] !== undefined && draft[r.materialId].trim() !== '')
         .map((r) => ({ materialId: r.materialId as MaterialId, priceEgpPerKg: Number(draft[r.materialId]) }));
@@ -167,7 +168,7 @@ export function PricesSection({ isAdmin }: { isAdmin: boolean }) {
       </div>
       {isAdmin && (
         <div style={{ marginTop: 12 }}>
-          <Button loading={m.isPending} disabled={Object.keys(draft).length === 0} onClick={() => m.mutate()}>حفظ الأسعار</Button>
+          <Button loading={m.isPending} disabled={Object.keys(draft).length === 0 || rows.length === 0 || !rows[0]?.district} onClick={() => m.mutate()}>حفظ الأسعار</Button>
         </div>
       )}
     </section>
