@@ -8,6 +8,10 @@ web-build/
 .env
 .env.local
 coverage/
+.pio/
+*.ino.cpp
+__pycache__/
+hardware/wokwi/.data/
 ios/
 android/
 

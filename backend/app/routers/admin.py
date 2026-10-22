@@ -1,7 +1,7 @@
 """Staff / admin API (Command Center)."""
 
 from datetime import UTC, datetime
-from typing import Literal
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -40,6 +40,7 @@ from app.logic.status import (
     change_service_request_status,
     change_work_order_status,
 )
+from app.media import MediaStorage, get_media, sign_linked_report_photos
 from app.models import (
     AISuggestion,
     BudgetPlan,
@@ -174,8 +175,16 @@ def list_incidents(
 
 
 @router.get("/incidents/{incident_id}")
-def get_incident(incident_id: str, payload: dict = Depends(require_staff), db: Session = Depends(get_db)):
-    return _one(db, _incident_or_404(db, incident_id, payload))
+def get_incident(
+    incident_id: str,
+    storage: Annotated[MediaStorage | None, Depends(get_media)],
+    payload: dict = Depends(require_staff),
+    db: Session = Depends(get_db),
+):
+    """One AdminIncident; linked reports carry short-lived signed ``photoUrls`` (detail view only)."""
+    inc = _incident_or_404(db, incident_id, payload)
+    ctx = load_ctx(db, [inc])
+    return sign_linked_report_photos(admin_incident(ctx, inc), ctx.reports.get(inc.id, []), storage)
 
 
 def _patch_incident(db: Session, incident_id: str, u: PatchIncidentRequest, payload: dict) -> dict:

@@ -110,4 +110,15 @@ Voice notes are limited to 5 MB and 30 seconds by the clients and enforced again
 - `GET /admin/bins` and `GET /admin/bins/{binId}/readings` require staff/admin auth. Department staff only see their department's bins plus unassigned bins. The authenticated Command Center shows status, current sensor values, alerts, and saved reading history at **الحاويات الذكية**.
 - `GET /admin/bins/{binId}/latest` returns the latest recorded reading. Bins with no recent sample (twice their configured interval, with a five-minute minimum) are shown as offline.
 
-The public Vercel demo at `/smart-bin-simulator.html` is a browser-only simulation: scenarios, sample fleet, charts, and injected faults are stored in that browser and do not reach this API. Use the local Python simulator in real mode to send data into an API deployment. `create_all()` creates these tables on a fresh database; an existing production database needs a reviewed migration before rollout. Production also needs a persistent PostgreSQL database, HTTPS, secret provisioning, and deployment validation. SQLite on an ephemeral serverless filesystem will lose data.
+Reading temperature and battery are nullable measurements; a missing temperature never triggers heat. The history response keeps `recordedAt` as its effective display time, the actual receive time in `receivedAt`, the original nullable device timestamp in `deviceAt`, and `clockUnsynced` to identify readings recorded without a device clock. Sequence retries compare the original nullable timestamp and every measurement exactly. Latest fleet state advances with a conditional database update, and the `(bin_id, seq)` unique key makes retries safe across workers.
+
+The public Vercel demo at `/smart-bin-simulator.html` is a browser-only simulation: scenarios, sample fleet, charts, and injected faults are stored in that browser and do not reach this API. Use the local Python simulator in real mode to send data into an API deployment. `create_all()` creates these tables on a fresh database; it does not alter existing tables. Before upgrading an existing PostgreSQL database, apply a reviewed migration equivalent to:
+
+```sql
+ALTER TABLE bin_readings ALTER COLUMN temp_c DROP NOT NULL;
+ALTER TABLE bin_readings ALTER COLUMN battery_v DROP NOT NULL;
+ALTER TABLE bin_readings ADD COLUMN device_at TIMESTAMP NULL;
+ALTER TABLE bin_readings ADD COLUMN clock_unsynced BOOLEAN NULL;
+```
+
+Do not infer old devices' original timestamps from `recorded_at`: migrated rows retain `device_at = NULL` and `clock_unsynced = NULL` to mean timestamp provenance is unknown. Their original timestamp cannot be compared, so same-sequence retries for those legacy rows return `409` rather than risk acknowledging a changed payload. New rows store `clock_unsynced` as `TRUE` or `FALSE`, and retries compare their exact original timestamp. Existing SQLite databases must be backed up and rebuilt/recreated with the updated schema; old demo data can instead be discarded with the documented reset. Production also needs a persistent PostgreSQL database, HTTPS, secret provisioning, and deployment validation. SQLite on an ephemeral serverless filesystem will lose data.

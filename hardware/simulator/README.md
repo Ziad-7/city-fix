@@ -1,6 +1,6 @@
 # CityCycle smart-bin simulator
 
-This folder contains a PC simulator for smart-bin telemetry. It runs a local browser panel and durable SQLite outbox. By default it uses a local mock receiver; in `real` mode it sends device-authenticated readings to the CityFix API, where staff can inspect bins and history in the Command Center at **الحاويات الذكية**. The browser-only fleet demo is served publicly at `/smart-bin-simulator.html` when the `apps/web` site is deployed to Vercel. It uses sample data in that visitor's browser and never writes to the API.
+This folder contains the PC simulator for smart-bin telemetry. Separate free-plan ESP32 firmware prototypes are documented in [hardware/wokwi](../wokwi/README.md); they do not change this PC simulator. It runs a local browser panel and durable SQLite outbox. By default it uses a local mock receiver; in `real` mode it sends device-authenticated readings to the CityFix API, where staff can inspect bins and history in the Command Center at **الحاويات الذكية**. The browser-only fleet demo is served publicly at `/smart-bin-simulator.html` when the `apps/web` site is deployed to Vercel. It uses sample data in that visitor's browser and never writes to the API.
 
 ## Start it
 

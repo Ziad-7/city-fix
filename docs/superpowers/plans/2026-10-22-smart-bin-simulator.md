@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking. The user chose one GPT-6 Luna implementation worker and GPT-6.1 Sol review; do not spawn additional workers or insert approval gates.
 
-**Goal:** Deliver a one-command PC smart-bin simulator, connect real-mode device readings to the backend and Command Center, and provide a free static online demo.
+**Goal:** Deliver a one-command PC smart-bin demonstration with a browser panel, durable queue, actual HTTP mock delivery, and explicit simulation labeling.
 
-**Architecture:** Python standard-library launcher runs a loopback panel, mock receiver, and device worker. Real mode posts to a device-key-protected FastAPI route. SQLAlchemy stores a fleet and immutable reading history for authenticated Command Center views. The public Vercel page is a separate static browser simulation using localStorage, with no anonymous backend writes.
+**Architecture:** Python standard-library launcher runs a loopback control panel, separate loopback mock receiver, and one simulator worker. SQLite stores device sequence/outbox/settings and receiver idempotency independently. Transport can later target a provisioned real endpoint without changing sampling/queue logic.
 
 **Tech Stack:** Python 3.12+, SQLite, http.server, urllib, unittest, plain HTML/CSS/JavaScript; no third-party runtime or test dependencies.
 
@@ -12,9 +12,9 @@
 
 ## Global Constraints
 
-- The original simulator-only scope is complete; the follow-on scope also includes `backend/`, `apps/admin-web/`, `apps/web/`, and `docs/api-contract.md`.
+- Work only in `hardware/simulator/`, `.github/workflows/hardware-ci.yml`, `docs/progress-log.md`, and these design/plan artifacts.
 - Python 3.12+ standard-library runtime; one bin, no pip installs needed for operators; Windows/macOS/Linux compatible paths and shutdown. The user authorizes useful tool installation, including external browser verification tooling.
-- The smart-bin API is implemented on this feature branch. Existing production databases still need migrations before rollout.
+- CityCycle endpoints remain proposed; no existing backend/admin/mobile edits or claims of integration.
 - Defaults are demo examples: interval 30 minutes, full 80%, heat 60 °C, batch 50, request/response 64 KiB, HTTP timeout 3 seconds.
 - Retry minutes: 1, 2, 4, 8, 16 cap; no unacknowledged row eviction; no device keys in persistence/state/logs. Only the same-origin web `/api/state` intentionally exposes `controlToken`; engine snapshots/logs never do.
 - Both listeners bind IPv4 loopback only; real mode requires explicit URL/key and HTTPS except loopback.
@@ -139,16 +139,7 @@ From repo root, launch with a fresh temporary data directory. Open the printed U
 
 The implementation and review are already authorized. This plan is the execution handoff, not an additional user approval request.
 
-## Follow-on: backend, Command Center, and public online demo
 
-The scope was expanded after the original local simulator was completed. The following is the current implementation in `feat/smart-bin-demo-enhancements`:
+## Follow-on integration delivered in PR #43
 
-- [x] Add SQLAlchemy fleet and telemetry tables, device-key registration, and idempotent `POST /iot/bins/{binId}/readings` ingestion. Match optional hardware fields (`distanceCm`, `rssi`, `fw`) and permit an unsynced clock timestamp.
-- [x] Add staff-scoped list/history APIs and an admin-only bin provisioning API. Store only a SHA-256 device-key digest.
-- [x] Add the Arabic Command Center fleet page with status/alert counts, multi-bin selection, reading history chart, and sensor history.
-- [x] Add a Vercel static public simulator with four sample bins, named scenarios, fill history, and switchable offline/sensor/receiver faults. Keep its data in visitor browser storage; never send its demo values to production.
-- [x] Add a public website footer link, update API contract and user-facing setup docs, and identify hosting/database requirements.
-- [x] Verify against the latest `main`: backend 295 tests, admin-web 195 tests, citizen web 222 tests, frontend typechecks/lint/shared-code checks/builds, backend Ruff/scoped mypy, and documentation checks pass.
-- [ ] Validate the public Vercel preview and a real-mode simulator reading displayed in the hosted Command Center.
-
-The public static demo needs only the existing Vercel website deployment and has no paid runtime/model dependency. Live API integration requires a separately deployed FastAPI service and persistent database. The current SQLite default is for local development; do not deploy this live data path on ephemeral serverless storage. Confirm free-tier availability/limits with the selected backend/database host before promising always-on service.
+After this local simulator plan was completed, the project added backend telemetry ingestion, staff-scoped Command Center views, and a separate static browser demo. The follow-on is recorded in the progress log and implemented in `backend/`, `apps/admin-web/`, and `apps/web/`; those changes do not alter this plan's original PC simulator checkpoints.
