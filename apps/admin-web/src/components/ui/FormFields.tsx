@@ -73,6 +73,9 @@ export interface SelectFieldProps extends FieldBase {
   onChange: (v: string) => void;
   options: { value: string; label: string; disabled?: boolean }[];
   variant?: 'field' | 'pill';
+  required?: boolean;
+  readOnly?: boolean;
+  dir?: 'ltr' | 'rtl';
 }
 
 export function SelectField({
@@ -86,22 +89,32 @@ export function SelectField({
   error,
   hideLabel,
   disabled,
+  required,
+  readOnly,
+  dir,
 }: SelectFieldProps) {
   if (variant === 'pill') {
     return (
-      <select
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
-        className="ftc-select"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value} disabled={o.disabled}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+      <>
+        <label htmlFor={id} className="sr-only">
+          {label}
+        </label>
+        <select
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled || readOnly}
+          required={required}
+          dir={dir}
+          className="ftc-select"
+        >
+          {options.map((o) => (
+            <option key={o.value} value={o.value} disabled={o.disabled}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </>
     );
   }
 
@@ -114,7 +127,9 @@ export function SelectField({
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
+        disabled={disabled || readOnly}
+        required={required}
+        dir={dir}
         aria-invalid={!!error}
         aria-describedby={error ? `${id}-msg` : help ? `${id}-help` : undefined}
         className="ftc-select"

@@ -514,6 +514,9 @@
   .drawer { position: fixed; top: 0; bottom: 0; inset-inline-end: 0; z-index: 1600; width: 420px; max-width: 100%; background: var(--ftc-surface); box-shadow: var(--ftc-shadow-float); border-start-start-radius: var(--ftc-radius-md); border-end-start-radius: var(--ftc-radius-md); padding: 20px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
   .drawer .close { width: 40px; height: 40px; border: 0; background: var(--ftc-paper); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--ftc-ink); cursor: pointer; flex: none; }
 
+  .ftc-card.is-unpadded { padding: 0; }
+  .textarea-wrap { display: flex; flex-direction: column; gap: 4px; }
+
   /* ---------- Responsive ---------- */
   /* Desktop target is 1280-1440. Sticky sidebar only where it sits beside the content. */
   @media (min-width: 901px) {

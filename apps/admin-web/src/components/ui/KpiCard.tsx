@@ -16,8 +16,8 @@ export function KpiCard({ label, value, valueTone, note, noteTone = 'mute', size
     return (
       <div className={classes}>
         <span className="l">{label}</span>
-        <span className="ftc-skel ftc-skel--metric" />
         <span className="ftc-skel ftc-skel--line" style={{ width: '55%' }} />
+        <span className="ftc-skel ftc-skel--line" style={{ width: '40%' }} />
       </div>
     );
   }

@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from './Button';
+import { useFocusTrap } from './useFocusTrap';
 
 export interface ModalProps {
   open: boolean;
@@ -11,61 +12,49 @@ export interface ModalProps {
   children: React.ReactNode;
   actions: React.ReactNode;
   dismissible?: boolean;
+  busy?: boolean;
 }
 
-export function Modal({ open, onClose, title, children, actions, dismissible = true }: ModalProps) {
+export function Modal({ open, onClose, title, children, actions, dismissible = true, busy = false }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const titleId = useId();
 
+  // Prevent body scroll when modal is open
   useEffect(() => {
-    if (!open) return;
-
-    previousFocusRef.current = document.activeElement as HTMLElement;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && dismissible) {
-        onClose();
-      } else if (e.key === 'Tab' && modalRef.current) {
-        const focusables = modalRef.current.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-        );
-        const first = focusables[0] as HTMLElement;
-        const last = focusables[focusables.length - 1] as HTMLElement;
-
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    document.body.style.overflow = 'hidden';
-
-    // Focus confirm button
-    const confirmBtn = modalRef.current?.querySelector('button:first-of-type') as HTMLElement;
-    if (confirmBtn) {
-      setTimeout(() => confirmBtn.focus(), 0);
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+    if (!open) {
       document.body.style.overflow = '';
-      previousFocusRef.current?.focus();
+      return;
+    }
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
     };
-  }, [open, dismissible, onClose]);
+  }, [open]);
+
+  // Use focus trap, but ignore Esc if busy
+  useFocusTrap(modalRef, open, {
+    onEscape: () => {
+      if (!busy && dismissible) {
+        onClose();
+      }
+    },
+  });
 
   if (!open) return null;
 
   return createPortal(
     <>
-      <div className="ftc-scrim" onClick={dismissible ? onClose : undefined} />
+      <div className="ftc-scrim" onClick={dismissible && !busy ? onClose : undefined} />
       <div className="ftc-modal-wrap">
-        <div ref={modalRef} className="ftc-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-          <h2 id="modal-title">{title}</h2>
+        <div
+          ref={modalRef}
+          className="ftc-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          aria-busy={busy}
+        >
+          <h2 id={titleId}>{title}</h2>
           {children}
           <div className="actions">{actions}</div>
         </div>
@@ -102,6 +91,7 @@ export function ConfirmModal({
       onClose={onCancel}
       title={title}
       dismissible={!busy}
+      busy={busy}
       actions={
         <>
           <Button variant="primary" loading={busy} onClick={onConfirm}>

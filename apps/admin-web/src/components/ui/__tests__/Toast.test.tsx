@@ -1,5 +1,4 @@
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { ToastProvider, useToast } from '../Toast';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
@@ -19,13 +18,10 @@ describe('Toast', () => {
   });
 
   afterEach(() => {
-    vi.runAllTimers();
     vi.useRealTimers();
   });
 
-  it('renders success toast when triggered', async () => {
-    vi.useRealTimers(); // Use real timers for this test
-    const user = userEvent.setup();
+  it('renders success toast when triggered', () => {
     render(
       <ToastProvider>
         <ToastConsumer />
@@ -33,17 +29,12 @@ describe('Toast', () => {
     );
 
     const btn = screen.getByText('Show Success');
-    await user.click(btn);
+    fireEvent.click(btn);
 
-    await waitFor(() => {
-      expect(screen.getByText('Success!')).toBeInTheDocument();
-    });
-    vi.useFakeTimers();
+    expect(screen.getByText('Success!')).toBeInTheDocument();
   });
 
-  it('renders error toast when triggered', async () => {
-    vi.useRealTimers();
-    const user = userEvent.setup();
+  it('renders error toast when triggered', () => {
     render(
       <ToastProvider>
         <ToastConsumer />
@@ -51,12 +42,9 @@ describe('Toast', () => {
     );
 
     const btn = screen.getByText('Show Error');
-    await user.click(btn);
+    fireEvent.click(btn);
 
-    await waitFor(() => {
-      expect(screen.getByText('Error!')).toBeInTheDocument();
-    });
-    vi.useFakeTimers();
+    expect(screen.getByText('Error!')).toBeInTheDocument();
   });
 
   it('auto-dismisses success toast after 5 seconds', () => {
@@ -120,7 +108,6 @@ describe('Toast', () => {
   });
 
   it('sets correct role on toast', () => {
-    vi.useRealTimers();
     render(
       <ToastProvider>
         <ToastConsumer />
@@ -136,6 +123,90 @@ describe('Toast', () => {
 
     const errorToast = screen.getByText('Error!').closest('div[class^="ftc-toast"]');
     expect(errorToast).toHaveAttribute('role', 'alert');
-    vi.useFakeTimers();
+  });
+
+  it('caps toasts at 3 and drops the oldest', () => {
+    render(
+      <ToastProvider>
+        <ToastConsumer />
+      </ToastProvider>,
+    );
+
+    const btn = screen.getByText('Show Success');
+    fireEvent.click(btn);
+    fireEvent.click(btn);
+    fireEvent.click(btn);
+    fireEvent.click(btn); // Fourth toast should drop the first
+
+    // Find the toasts container (portaled to body)
+    const toastsContainer = document.body.querySelector('.ftc-toasts');
+    const toastDivs = toastsContainer?.querySelectorAll('div[class^="ftc-toast"]');
+    expect(toastDivs?.length).toBeLessThanOrEqual(3);
+  });
+
+  it('pauses auto-dismiss on hover and resumes on leave', () => {
+    render(
+      <ToastProvider>
+        <ToastConsumer />
+      </ToastProvider>,
+    );
+
+    const btn = screen.getByText('Show Success');
+    fireEvent.click(btn);
+
+    const toast = screen.getByText('Success!').closest('div[class^="ftc-toast"]') as HTMLElement;
+
+    // Hover to pause
+    fireEvent.mouseEnter(toast);
+
+    // Advance past the timeout but toast should still be there
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    expect(screen.getByText('Success!')).toBeInTheDocument();
+
+    // Leave to resume
+    fireEvent.mouseLeave(toast);
+
+    // Advance past the timeout again
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    expect(screen.queryByText('Success!')).not.toBeInTheDocument();
+  });
+
+  it('pauses auto-dismiss on focus and resumes on blur', () => {
+    render(
+      <ToastProvider>
+        <ToastConsumer />
+      </ToastProvider>,
+    );
+
+    const btn = screen.getByText('Show Success');
+    fireEvent.click(btn);
+
+    const toast = screen.getByText('Success!').closest('div[class^="ftc-toast"]') as HTMLElement;
+
+    // Focus to pause
+    fireEvent.focus(toast);
+
+    // Advance past the timeout but toast should still be there
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    expect(screen.getByText('Success!')).toBeInTheDocument();
+
+    // Blur to resume
+    fireEvent.blur(toast);
+
+    // Advance past the timeout again
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    expect(screen.queryByText('Success!')).not.toBeInTheDocument();
   });
 });

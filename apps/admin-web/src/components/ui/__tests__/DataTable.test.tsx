@@ -76,7 +76,7 @@ describe('DataTable', () => {
     expect(onSortChange).toHaveBeenCalledWith({ id: 'id', dir: 'desc' });
   });
 
-  it('sets aria-sort on header based on sort state', () => {
+  it('sets aria-sort on sortable header based on sort state', () => {
     const { container } = render(
       <DataTable<TestRow>
         ariaLabel="Test table"
@@ -88,8 +88,28 @@ describe('DataTable', () => {
     );
 
     const headers = container.querySelectorAll('th');
+    // Only sortable columns (those with sortValue) should have aria-sort
     expect(headers[0]).toHaveAttribute('aria-sort', 'ascending');
-    expect(headers[1]).toHaveAttribute('aria-sort', 'none');
+    // Non-sortable column should not have aria-sort attribute
+    expect(headers[1]).not.toHaveAttribute('aria-sort');
+  });
+
+  it('only selected row has is-selected class', () => {
+    const { container } = render(
+      <DataTable<TestRow>
+        ariaLabel="Test table"
+        columns={columns}
+        rows={rows}
+        getRowId={(r) => r.id}
+        onSelect={() => {}}
+        selectedId="1"
+      />,
+    );
+
+    const tbody = container.querySelector('tbody');
+    const trs = tbody?.querySelectorAll('tr');
+    expect(trs?.[0]).toHaveClass('is-selected');
+    expect(trs?.[1]).not.toHaveClass('is-selected');
   });
 
   it('clicking row calls onSelect and sets aria-selected', () => {

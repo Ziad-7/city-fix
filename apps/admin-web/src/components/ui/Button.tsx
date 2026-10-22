@@ -28,8 +28,16 @@ const ButtonBase = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps
     const iconNode = loading ? <span className="ftc-spinner" aria-hidden /> : icon ? <Icon name={icon} size={size === 'sm' ? 16 : 20} /> : null;
 
     if ('href' in props && props.href) {
+      // For Link, only pass safe props (not button-specific event handlers/attributes)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { disabled, ...linkPropsRest } = props;
       return (
-        <Link ref={ref as React.Ref<HTMLAnchorElement>} href={props.href} className={classes}>
+        <Link
+          ref={ref as React.Ref<HTMLAnchorElement>}
+          href={props.href}
+          className={classes}
+          onClick={('onClick' in linkPropsRest && linkPropsRest.onClick) as React.MouseEventHandler<HTMLAnchorElement> | undefined}
+        >
           {iconNode}
           {children}
         </Link>
@@ -37,7 +45,13 @@ const ButtonBase = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps
     }
 
     return (
-      <button ref={ref as React.Ref<HTMLButtonElement>} className={classes} disabled={loading} {...props}>
+      <button
+        ref={ref as React.Ref<HTMLButtonElement>}
+        className={classes}
+        {...props}
+        aria-busy={loading}
+        disabled={loading || props.disabled}
+      >
         {iconNode}
         {children}
       </button>

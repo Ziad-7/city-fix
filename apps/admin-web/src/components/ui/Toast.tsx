@@ -30,6 +30,8 @@ export function useToast(): ToastContextType {
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const timerRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const pausedRef = useRef<Set<string>>(new Set());
+  const counterRef = useRef<number>(0);
 
   const dismiss = useCallback((id: string) => {
     // Clear any pending timeout for this toast
@@ -38,12 +40,27 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(timerId);
       timerRef.current.delete(id);
     }
+    pausedRef.current.delete(id);
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
   const add = useCallback((kind: 'success' | 'error', msg: string) => {
-    const id = Math.random().toString(36).slice(2);
-    setToasts((prev) => [...prev, { id, kind, msg }].slice(-3)); // max 3
+    const id = (++counterRef.current).toString();
+    setToasts((prev) => {
+      const updated = [...prev, { id, kind, msg }];
+      // If we exceed 3, clear timer and remove the oldest one
+      if (updated.length > 3) {
+        const oldest = updated[0];
+        const timerId = timerRef.current.get(oldest.id);
+        if (timerId) {
+          clearTimeout(timerId);
+          timerRef.current.delete(oldest.id);
+        }
+        pausedRef.current.delete(oldest.id);
+        return updated.slice(1);
+      }
+      return updated;
+    });
 
     const timeout = kind === 'success' ? 5000 : 8000;
     const timerId = setTimeout(() => dismiss(id), timeout);
@@ -71,24 +88,55 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     add('error', msg);
   }, [add]);
 
+  const handlePause = (id: string) => {
+    pausedRef.current.add(id);
+    const timerId = timerRef.current.get(id);
+    if (timerId) {
+      clearTimeout(timerId);
+    }
+  };
+
+  const handleResume = (id: string) => {
+    pausedRef.current.delete(id);
+    const kind = toasts.find((t) => t.id === id)?.kind;
+    if (!kind) return;
+
+    const timeout = kind === 'success' ? 5000 : 8000;
+    const timerId = setTimeout(() => dismiss(id), timeout);
+    timerRef.current.set(id, timerId);
+  };
+
   return (
     <ToastContext.Provider value={{ success, error }}>
       {children}
-      {toasts.length > 0 &&
-        createPortal(
-          <div className="ftc-toasts" aria-live="polite">
-            {toasts.map((t) => (
-              <div key={t.id} className={`ftc-toast ftc-toast--${t.kind}`} role={t.kind === 'error' ? 'alert' : 'status'}>
-                <Icon name={t.kind === 'error' ? 'alert-triangle' : 'check'} size={20} />
-                <span>{t.msg}</span>
-                <button type="button" aria-label="اقفل" onClick={() => dismiss(t.id)}>
-                  <Icon name="x" size={16} />
-                </button>
-              </div>
-            ))}
-          </div>,
-          document.body,
-        )}
+      {typeof document !== 'undefined' && createPortal(
+        <div
+          className="ftc-toasts"
+          role="status"
+          aria-live="polite"
+          aria-atomic="false"
+        >
+          {toasts.map((t) => (
+            <div
+              key={t.id}
+              className={`ftc-toast ftc-toast--${t.kind}`}
+              role={t.kind === 'error' ? 'alert' : 'status'}
+              onMouseEnter={() => handlePause(t.id)}
+              onMouseLeave={() => handleResume(t.id)}
+              onFocus={() => handlePause(t.id)}
+              onBlur={() => handleResume(t.id)}
+            >
+              <Icon name={t.kind === 'error' ? 'alert-triangle' : 'check'} size={20} />
+              <span>{t.msg}</span>
+              <button type="button" aria-label="اقفل" onClick={() => dismiss(t.id)}>
+                <Icon name="x" size={16} />
+              </button>
+            </div>
+          ))}
+        </div>,
+        document.body,
+      )}
     </ToastContext.Provider>
   );
 }
+

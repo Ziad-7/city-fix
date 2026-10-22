@@ -64,7 +64,8 @@ export function DataTable<T>({
   };
 
   return (
-    <div className="tablewrap">
+    <div className="tablewrap" aria-busy={loading} role={loading ? 'status' : undefined}>
+      {loading && <span className="sr-only">جاري التحميل…</span>}
       <table
         className={['ftc-table', onSelect && 'is-clickable', tableClassName].filter(Boolean).join(' ')}
         style={{ minWidth }}
@@ -76,13 +77,11 @@ export function DataTable<T>({
               <th
                 key={c.id}
                 scope="col"
-                aria-sort={
-                  sort && sort.id === c.id
-                    ? sort.dir === 'asc'
-                      ? 'ascending'
-                      : 'descending'
-                    : 'none'
-                }
+                {...(c.sortValue
+                  ? {
+                      'aria-sort': sort && sort.id === c.id ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none',
+                    }
+                  : {})}
               >
                 {c.sortValue ? (
                   <button
@@ -125,7 +124,7 @@ export function DataTable<T>({
                   key={id}
                   tabIndex={onSelect ? 0 : undefined}
                   aria-selected={onSelect ? selected : undefined}
-                  className={['is-selected', selected && 'is-selected', rowClassName?.(r)].filter(Boolean).join(' ')}
+                  className={[selected && 'is-selected', rowClassName?.(r)].filter(Boolean).join(' ')}
                   onClick={() => onSelect?.(r)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
