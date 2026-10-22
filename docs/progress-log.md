@@ -1,6 +1,157 @@
 # Progress log
 
+## 2026-10-22 — CityBrain status and remaining work
+
+- Added [`AI status and remaining work`](ai-status.md) as the current reference for delivered features, test evidence, privacy/quota gates, production integration, and the free-hosting limitations.
+- Marked the hosted implementation plan as a proposal whose provider/checklist details may be stale. The current transcription provider is Gemini; OCR remains out of scope at the user's request.
+
+## 2026-10-22 — Streamed WebM duration validation
+
+- Fixed audio validation to measure decoded FFmpeg frames in a bounded 30.001-second pass instead of relying on optional or editable container duration metadata. This accepts browser-style streamed WebM and rejects clips longer than the 30-second limit even when their headers claim a shorter duration.
+- Added regressions for missing and forged duration metadata. The AI suite passes 53 tests with one OpenCV-dependent skip; real FFmpeg-generated streamed WebM checks cover 1-second and 35-second clips.
+
+## 2026-10-22 — AI transcription audio validation
+
+- Added one bounded FFmpeg pass that rejects malformed media, clips over 30 seconds, and near-silence (peak at or below -75 dBFS) before Gemini. Quiet speech above the threshold continues to transcription; stored recordings remain untouched.
+- Added focused unit tests for parser behavior and route decisions. All 52 backend AI tests pass (one skipped); generated silent/quiet M4A and silent MP3, WebM, and OGG samples also passed the real FFmpeg check. Ruff and Python compilation pass.
+
+## 2026-10-22 — AI voice-note input limits
+
+- Aligned mobile and web recording controls and backend media checks to the plan's 5 MB / 30 second voice-note limit.
+- Added pre-transcription audio-container duration validation with a bounded `ffprobe` call and a backend Dockerfile that installs it.
+- Added tests for oversized and long recordings plus bounded FFmpeg inspection; a generated one-second M4A duration probe and compile checks passed.
+
 Newest first. Each entry: what was done, how to test it, known issues.
+
+## 2026-10-22 — PR #34 supersedes #32 (branch `feat/admin-dashboard`)
+
+**Done**
+- Merged Moataz's `feat/api-auth` (PR #32: citizen routes and auth slice, staff login, tests, backend split doc, integration review) into `feat/admin-dashboard` so that PR #34 replaces it with no conflicts. Both branches had implemented the citizen routes and auth; one implementation remains: ours (database-backed, contract-shaped, rewritten admin layer, pyproject + uv, CityFix rebrand, Playwright). PR #32's in-memory demo store and local harness are not kept.
+- Ported from PR #32: the shared auth boundary that reloads role and department scope from the database on every request (`app/auth.py`, `auth_adapters.py`, `admin_auth.py`; deactivated or changed staff lose access immediately); `require_role` / `require_department`; missing-scope denial and safe admin reassignment (a work order for another department moves the incident); `DEMO_RESET_ENABLED=true` required for `POST /admin/demo/reset`; staff login with Argon2 or PBKDF2 hashes, an attempt limiter and equalised timing for unknown accounts; optional private-media storage and anonymous reporter masking; citizen validation (link rules, real calendar days, bulky-waste Sunday–Thursday, bbox and enum checks); the readable-ID digit-boundary fix, invalid work-order resource/date validation, self-merge prevention, SQLite timestamp and timezone-offset handling and canonical service statuses (already present in our admin layer and now covered by PR #32's admin tests, `tests/test_admin_pr32.py`); the admin-web 404 test.
+- Tooling: `requirements.txt` / `requirements-dev.txt` mirror `pyproject.toml` / `uv.lock`; `backend-ci.yml` runs ruff, scoped mypy (auth boundary) and pytest. The production `npm run build` failure tracked in issue 33 no longer occurs on this tree.
+- PR #32's tests `test_auth`, `test_staff_auth`, `test_auth_integration`, `test_citizen_api` and `test_ids` now run against the final app. Where they disagreed with `docs/api-contract.md` the contract won: `StaffSession` has `title` and an Arabic `department` (not `departmentId`); malformed phone and bbox are `400`; `name` is optional in the verify response; work orders need at least one target (both allowed); the local upload stub accepts non-URL paths when no storage is configured.
+- Then merged `origin/main` (CityCycle contract and hardware docs): only README, `docs/api-contract.md` and this log conflicted; both sides kept.
+
+**How to test**
+- `cd backend && uv run pytest -q && uvx ruff check . && uvx ruff format --check .` (or `python -m pip install -r requirements-dev.txt && python -m pytest -q`)
+- `cd apps/admin-web && npm ci && npm run check:shared && npm run typecheck && npm run lint && npm test && npm run build && npx playwright test`
+- `node scripts/check-doc-links.mjs`
+
+**Known issues**
+- PR #32's older admin-web response-shape adapters were not kept: the backend now returns the contract shapes.
+- The auth boundary opens a short database session per request for the user lookup; fine for SQLite, revisit with a pooled Postgres deployment.
+- Mypy covers the auth boundary files only; whole-backend typing is incomplete.
+
+## 2026-10-22 — Command Center and backend (branch `feat/admin-dashboard`)
+
+**Done**
+- **Backend** (`backend/`, FastAPI + SQLAlchemy 2, SQLite): the citizen contract (auth with demo OTP, incidents, reports, service requests, uploads stub) plus the `/admin/*` routes: staff login, dashboard stats, work orders, service-request schedule, budget plan, demo reset. Priority score and duplicate detection are computed server side. Seed mirrors the mobile mock data. 132 pytest tests, ruff clean.
+- **Admin web** (`apps/admin-web`, Next.js 16): login, overview with KPIs, incident queue with filters and side panel, incident detail (status change with required note, work-order panel, timeline, priority factors), work-order kanban, service requests, city map, budget planner. Department staff see only their data. Arabic RTL, design tokens from `ftc.css`.
+- Shared mobile code is copied unchanged (`check:shared`); the admin web is renamed to CityFix / سيتي فيكس with the `cityfix-*.svg` assets; demo accounts are `@cityfix.demo`.
+- Merged `origin/main` (CityFix rename, optional payment for free services, reopen, uploads). CI: `admin-web-ci.yml` and `backend-ci.yml` run against the real folders.
+- Checks: backend 132 pytest, ruff check and format; admin web typecheck, lint, 189 Vitest tests, build, 13 Playwright tests; mobile typecheck and tests unchanged.
+
+**How to test**
+- `cd backend && uv run pytest -q && uvx ruff check . && uvx ruff format --check .`
+- `cd apps/admin-web && npm ci && npm run check:shared && npm run typecheck && npm run lint && npm test && npm run build && npx playwright test`
+- By hand: start the backend, `npm run dev` in `apps/admin-web`, sign in as `admin@cityfix.demo` / `FixCity2026!`, change a status with a note; the citizen sees it in the timeline.
+
+**Known issues**
+- Photos are placeholders (no real files are stored); `POST /uploads` is a stub.
+- `/ai/transcribe` and the garbage-schedule endpoints are not implemented in the backend.
+- SQLite plus haversine distance instead of Supabase/PostGIS; no migrations, delete the DB file after model changes.
+- Budget planner: the "بدون حد" preset is disabled.
+- The incident detail page has a location card without a map.
+- `NEXT_PUBLIC_API_URL` is inlined at build time. Port `3001` may be taken by another app on your machine; use `next dev -p 3002`.
+
+## 2026-10-22 — CityBrain photo + Arabic text triage (`feat/ai-photo-triage-api`)
+
+**Done**
+- Integrated CityBrain into the existing FastAPI backend and its `current_user` bearer-auth dependency. `/triage` keeps the agreed response shape; the contract's proposed `source` and `emergency` fields stay internal.
+- Added Gemini structured suggestions with Arabic/English deterministic fallback, independent emergency rules, image bounds/metadata removal, a four-second model deadline, and nearby incident matches against the backend's SQLAlchemy models.
+- Added a private Supabase Storage adapter for signed uploads, user-scoped random paths, upload type/size verification, and short-lived signed reads. Before model calls, local OpenCV cascades detect candidate faces/plates and Pillow blurs the regions; failures stop image triage. The mobile and web consent UI is present; photo inference remains disabled by default pending local-image validation.
+- Mobile and web API-mode triage requests have 6-second deadlines; transcription requests have 25-second deadlines. On API failure, both report forms use the local keyword fallback when text or the citizen's category gives evidence, label it as a non-model result, and return no duplicate suggestions. Photo-only and unrecognized descriptions do not get a guessed category.
+- Added backend runtime dependencies, server-only Gemini env settings, integration notes, and AI/database route tests.
+- Checks: 46 focused storage, AI, route, and database tests pass; one bundled-OpenCV integration test is skipped because OpenCV could not be installed in this network-restricted workspace. Ruff and repository CI mypy pass. The full backend suite hangs at a synchronous TestClient test in this environment.
+
+**Still open**
+- Provision a private Supabase bucket and credentials, then validate detector recall with OpenCV installed on representative local photos (especially Egyptian plates) before enabling photo inference.
+- The consent-enabled mobile and web flows upload a photo privately before triage and send its storage path; production photo inference remains disabled until representative Egyptian privacy validation passes.
+- Confirm the model/free quota against a live, sanitized Google project request; no provider key was available for that check.
+
+## 2026-10-22 — Backend and admin integration review
+
+**Branch:** `feat/api-auth`, incorporating `feat/admin-dashboard`. This combines the two owners' existing work and repairs the integration after an independent code review.
+
+**Scope**
+- Retain the shared JWT boundary with persisted user roles and departments; connect staff login, admin operations and database-backed map pins.
+- Repair SQLite timestamp handling, service-request status validation, persisted scheduling and AI-confirmation edits, and readable-ID digit boundaries.
+- Enforce department access on triage and work-order creation; deny unscoped staff access and scope insights to the staff department.
+- Require explicit local configuration before the destructive demo-reset endpoint is available.
+- Repair admin response-shape assumptions, department identity handling, duplicate merge direction, table sorting, and asynchronous status errors.
+- Reconcile admin component callers with their typed interfaces and run the admin build, typecheck, lint and regression tests.
+
+**How to test**
+- `backend/`: install `requirements-dev.txt`; run `python -m pytest -q`, `python -m ruff check .`, `python -m ruff format --check .` and the scoped mypy command in `backend-ci.yml`.
+- `apps/admin-web/`: run `npm ci`, `npm run typecheck`, `npm run lint`, `npm test`, and `npm run build`.
+- Repository root: run `node scripts/check-doc-links.mjs` and `git diff --check`.
+- Against the local demo API, sign in as admin, open an incident with AI/duplicate suggestions, confirm triage, create a work order, and change its status with a note. Schedule a service request and reload to verify persistence. Roads staff should be denied changes to other departments.
+
+**Validation**
+- Backend: 132 tests pass on Python 3.14; Ruff lint/format and the configured auth-boundary mypy check pass. Six dependency/deprecation warnings remain.
+- Admin: 161 tests pass; typecheck and lint pass (25 unused-variable warnings remain). The default production build is unresolved and tracked in [issue 33](https://github.com/Ziad-7/fix-city/issues/33); no alternate-bundler or font workaround is retained. A diagnostic build is not a passing check for the final PR tree.
+- Documentation links and Git whitespace checks pass. Independent agent review verified the confirmed fixes. Remote CI results must be checked on the pushed commit.
+
+**Known limitations**
+- `app.main` is a local SQLite demo assembly. Persistent citizen report/follow/booking repositories, private media storage, real OTP, production migrations/PostGIS and deployment are still pending.
+- Readable IDs still need transactional sequences before concurrent deployment. Demo credentials, fixed OTP and example secrets must not be used as production authentication.
+- Whole-backend ORM typing is incomplete; the passing mypy check covers the configured authentication/integration boundary.
+- Independent agent review supplements the team's review; teammate acceptance and remote CI remain separate checks.
+
+## 2026-10-22 — Citizen API route slice
+
+**Branch:** `feat/api-auth` (extends the documented backend split/auth work).
+
+**Done**
+- Added contract-shaped report create/list/detail, incident list/detail/follow, map filters, and service-request create/list/detail routes behind an injectable `CitizenRepository`.
+- Added validation and access control, admin masking for anonymous reporters, media ownership hooks, and future Sunday–Thursday bulky-waste day checks.
+- Added opt-in staff login with Argon2 verification and local attempt limiting, plus an opt-in signed-upload endpoint. Both proposed routes await agreement before production registration.
+- Added a local in-memory HTTP harness and adapter for parallel work before database setup; documented how the teammate plugs in persistent repository/storage implementations.
+
+**How to test**
+- From `backend/`, install `requirements-dev.txt`, then run `python -m pytest -q`, `python -m ruff check app tests`, `python -m ruff format --check app tests`, and `python -m mypy app --ignore-missing-imports`.
+- Run `OTP_MODE=demo python -m uvicorn app.citizen_demo:create_app --factory --host 127.0.0.1` from Git Bash and exercise `/docs`.
+
+**Validation**
+- 35 tests pass; Ruff lint, Ruff formatting, mypy, and `git diff --check` pass locally on Python 3.14. Python 3.12 GitHub Actions has not run remotely. Starlette emits an upstream TestClient/httpx deprecation warning.
+
+**Still needs teammate or team agreement**
+- Database-backed `UserRepository` and `CitizenRepository`, migrations, transactional persistence, production priority and PostGIS duplicate logic, shared app assembly, deployment.
+- Actual private-bucket storage adapter and client agreement for the proposed upload route; client agreement for the proposed staff-login route.
+- Real OTP delivery, distributed abuse limits and token refresh/revocation.
+
+## 2026-10-21 — Backend split and citizen auth
+
+**Branch:** `feat/api-auth` (based on local `main` at `5345972`).
+
+**Done**
+- Documented [two-person ownership](team/backend-split.md): Moataz owns citizen API/auth; teammate owns database, operations and deployment. AI remains a separate role.
+- Added citizen demo OTP request/verification matching existing camelCase auth responses; JWT issue/validation with expiry, issuer and audience; shared current-user, role and department checks.
+- Added an injectable user repository contract and an explicitly enabled local in-memory harness so auth can be tested before the database adapter lands.
+- Added tests, a Python 3.12 CI workflow, [run/integration instructions](../backend/README.md). (The PR description file was dropped when PR #34 superseded #32.)
+
+**How to test**
+- From `backend/`, install `requirements-dev.txt`, then run `python -m pytest -q`, `python -m ruff check app tests`, and `python -m mypy app --ignore-missing-imports`.
+- Git Bash: `OTP_MODE=demo python -m uvicorn app.auth_demo:create_app --factory --host 127.0.0.1`; use `/docs` to request/verify `01012345678` with `123456`.
+
+**Validation**
+- Local checks: 20 tests pass; Ruff lint and mypy pass. Tests ran outside the Windows sandbox because asyncio's internal socket-pair setup stalled inside it. One upstream Starlette warning notes that its httpx test adapter is deprecated; tests still pass.
+- Remote CI, teammate review and comparison with latest remote main are pending; this is not a merged or deployed stage.
+
+**Known limitations / next steps**
+- In-memory users and signing key reset on restart. This harness is local only; teammate must supply persistence and application assembly.
+- Real OTP, attempt/rate limits, staff login, token refresh/revocation, and other citizen endpoints are not implemented in this first slice. Proposed staff/upload contracts still require agreement.
+- Local runtime is Python 3.14; CI targets the planned Python 3.12.
 
 ## 2026-10-22 — Mobile app: CityCycle features (branch `feat/mobile-citycycle`)
 

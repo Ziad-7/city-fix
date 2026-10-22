@@ -12,6 +12,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { AppText, InlineNotice } from '@/components/ui';
 import { useTr, tr as trNow } from '@/i18n';
+import { API_MODE } from '@/services';
 import { colors, radius } from '@/theme/tokens';
 import { MAX_VOICE_SECONDS, formatTimer } from './voice';
 import type { VoiceNoteProps } from './VoiceNote.types';
@@ -134,6 +135,7 @@ export function VoiceNote({ highlight, status, onRecorded, onRemoved }: VoiceNot
           <AppText variant="caption" color={colors.inkMuted}>{tr('لحد ', 'Up to ')}{formatTimer(MAX_VOICE_SECONDS)}</AppText>
         </Pressable>
       ) : null}
+      {API_MODE === 'api' ? <AppText variant="caption" color={colors.inkMuted}>{tr('التسجيل هيرتفع بشكل خاص ويتبعت لـ Gemini لتحويله لنص. النسخة المجانية ممكن تستخدم التسجيلات لتحسين منتجات Google؛ التسجيل اختياري وتقدر تكتب بدلًا منه.', 'The recording is uploaded privately and sent to Gemini for transcription. Google may use content submitted on its free tier to improve its products. Recording is optional; you can type instead.')}</AppText> : null}
 
       {phase === 'recording' ? (
         <View testID="voice-recording" accessibilityLabel={tr('بنسجّل', 'Recording')} accessibilityLiveRegion="polite" style={[styles.row, { borderColor: colors.red }]}>

@@ -66,6 +66,11 @@ export function AiSuggestion({ state, suggestion, selected, onSelect, onPickOthe
       </View>
 
       <AppText variant="small">{suggestion.summary}</AppText>
+      {suggestion.source === 'fallback' ? (
+        <AppText testID="ai-fallback-label" variant="caption" color={colors.inkMuted}>
+          {tr('اقتراح محلي من الكلمات، مش نتيجة نموذج ذكاء اصطناعي.', 'Local keyword fallback; no AI model was used.')}
+        </AppText>
+      ) : null}
 
       <View accessibilityRole="radiogroup" style={styles.options}>
         <AppText variant="caption" color={colors.inkMuted}>{tr('اختار التصنيف الصح', 'Choose the right type')}</AppText>

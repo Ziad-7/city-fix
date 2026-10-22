@@ -31,6 +31,8 @@ Every app starts on **mock data** behind the contract, so nobody waits for anybo
 
 ## The 6 roles
 
+Role 4 is now shared by **Moataz (citizen API/auth)** and **a teammate (database/operations/deployment; name pending)**. Follow the [two-person backend ownership and hand-off plan](backend-split.md). Role 5 remains separate.
+
 **Put your name in the Owner column** in your first PR.
 
 | # | Role | Owner | Owns (folders) | Branch prefix | Brief (read this) |
@@ -38,7 +40,7 @@ Every app starts on **mock data** behind the contract, so nobody waits for anybo
 | 1 | **Citizen mobile app** | Abood + Claude agents | `apps/mobile/` | `feat/mobile-…` | [`mobile/implementation-spec.md`](../mobile/implementation-spec.md) |
 | 2 | **Citizen website (client portal)** | _[name]_ | `apps/web/` | `feat/web-…` | [`citizen-web-portal.md`](citizen-web-portal.md) |
 | 3 | **Admin web (City Command Center)** | _[name]_ | `apps/admin-web/` | `feat/admin-…` | [`admin-web.md`](admin-web.md) |
-| 4 | **Backend API & database** | _[name]_ | `backend/` (except the AI folders), `supabase/` migrations, backend deploy | `feat/api-…` | [`api-database.md`](api-database.md) |
+| 4 | **Backend API & database** | Moataz (citizen API/auth) + teammate (DB/operations; name pending) | `backend/` except AI; [ownership split](backend-split.md) | `feat/api-…` | [`api-database.md`](api-database.md) |
 | 5 | **AI & smart features (CityBrain)** | _[name]_ | `backend/app/ai/`, `backend/app/optimizer/`, `backend/app/routers/{triage,ai,budget}.py`, `backend/ai-eval/` | `feat/ai-…` | [`ai-features.md`](ai-features.md) |
 | 6 | **Hardware & IoT (CityCycle smart bin)** | _[name]_ | `hardware/` (`firmware/`, `schematics/`, `enclosure/`, `bom/`) | `feat/hw-…` | [`hardware-iot.md`](hardware-iot.md) |
 

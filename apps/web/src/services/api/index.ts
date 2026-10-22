@@ -80,13 +80,20 @@ export function createApiServices(): Services {
     triage: {
       async analyze({ userId: _userId, ...body }) {
         // The backend knows the caller from the token and leaves out their own and followed incidents.
-        const res = await http<TriageSuggestion>('POST', '/triage', body);
+        const res = await http<TriageSuggestion>(
+          'POST',
+          '/triage',
+          body,
+          { timeoutMs: 6000 },
+        );
         return { ...res, duplicates: res.duplicates ?? [], alreadyReported: res.alreadyReported ?? [] };
       },
     },
     uploads: createUploadService(),
     // POST /ai/transcribe (proposed, member 5) with the uploaded voice-note path.
-    transcription: { transcribe: (path) => http('POST', '/ai/transcribe', { path }) },
+    transcription: {
+      transcribe: (path) => http('POST', '/ai/transcribe', { path }, { timeoutMs: 25000 }),
+    },
     // CityCycle (contract: "CityCycle — proposed"). The caller is known from the token, so `userId` is not sent.
     recycling: {
       materials: (district) => http<MaterialPrice[]>('GET', `/recycling/materials${query({ district })}`),

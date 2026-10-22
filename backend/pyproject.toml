@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fixthecity-backend"
+version = "0.1.0"
+description = "FastAPI backend for CityFix"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115,<1",
+    "httpx>=0.28,<1",
+    "numpy>=1.26,<3",
+    "opencv-python-headless>=4.11,<5",
+    "Pillow>=11.3,<12",
+    "uvicorn[standard]>=0.30,<1",
+    "sqlalchemy>=2,<3",
+    "pydantic>=2.8,<3",
+    "pydantic-settings>=2.5,<3",
+    "pyjwt>=2.10,<3",
+    "pwdlib[argon2]>=0.2,<1",
+    "tzdata>=2025.1,<2027",
+]
+
+# Keep in sync with requirements.txt (runtime) and requirements-dev.txt (dev).
+[project.optional-dependencies]
+dev = [
+    "pytest>=8,<10",
+    "pytest-asyncio>=0.21.0",
+    "httpx>=0.27,<1",
+    "ruff>=0.11,<1",
+    "mypy>=1.15,<3",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "ai_tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]

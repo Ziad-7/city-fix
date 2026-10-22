@@ -82,3 +82,44 @@ describe('http client', () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('AI API request deadlines', () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    fetchMock.mockReset();
+    (globalThis as { fetch: unknown }).fetch = fetchMock;
+    process.env.NEXT_PUBLIC_API_URL = 'http://api.test';
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const abortingFetch = (_url: string, options: RequestInit) =>
+    new Promise<Response>((_resolve, reject) => {
+      options.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+    });
+
+  it.each([
+    ['triage', 6000],
+    ['transcription', 25000],
+  ] as const)('%s aborts its request at %i ms', async (kind, timeoutMs) => {
+    fetchMock.mockImplementation(abortingFetch);
+    const { createApiServices } = await import('../api');
+    const services = createApiServices();
+    const request =
+      kind === 'triage'
+        ? services.triage.analyze({ userId: 'citizen-1', description: 'حفرة في الشارع' })
+        : services.transcription.transcribe('citizen-1/voice.m4a');
+    const requestFailure = fail(request);
+    const signal = (fetchMock.mock.calls[0][1] as RequestInit).signal;
+
+    await vi.advanceTimersByTimeAsync(timeoutMs - 1);
+    expect(signal?.aborted).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    await expect(requestFailure).resolves.toMatchObject({ status: 0 });
+    expect(signal?.aborted).toBe(true);
+  });
+});

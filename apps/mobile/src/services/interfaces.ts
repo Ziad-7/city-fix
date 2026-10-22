@@ -80,6 +80,8 @@ export interface TriageService {
     description: string;
     categoryId?: CategoryId;
     photoUri?: string;
+    /** Explicit user opt-in before sending the photo to the configured AI provider. */
+    photoConsent?: boolean;
     location?: LatLng;
   }): Promise<TriageSuggestion>;
 }

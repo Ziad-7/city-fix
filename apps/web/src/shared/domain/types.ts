@@ -145,9 +145,9 @@ export type TriageSuggestion = {
   duplicates: DuplicateMatch[];
   /** Nearby incidents the caller reported themselves (shown as "البلاغ ده متسجّل باسمك بالفعل", not as a join offer). */
   alreadyReported?: AlreadyReported[];
-  /** "model" or "fallback" (keyword classifier). Proposed contract field. */
+  /** "model" or "fallback" (keyword classifier). */
   source?: 'model' | 'fallback';
-  /** The text mentions gas, fire, injury or a collapse: show the emergency numbers first. Proposed contract field. */
+  /** The text mentions gas, fire, injury or a collapse: show the emergency numbers first. */
   emergency?: boolean;
 };
 

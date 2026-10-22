@@ -134,18 +134,18 @@ TriageSuggestion  = {
 ### Triage (CityBrain)
 | Method | Path | Body | Response |
 | --- | --- | --- | --- |
-| POST | `/triage` | `{ description: string, categoryId?, photoUri?, location?: { lat, lng } }` | `TriageSuggestion` |
+| POST | `/triage` | `{ description: string, categoryId?, photoUri?, photoConsent?: boolean, location?: { lat, lng } }` | `TriageSuggestion` |
 
-- Until the AI agent is ready, return a deterministic keyword classifier (port `apps/mobile/src/logic/triage-mock.ts`). Duplicates come from the database (see below).
+- Use structured model suggestions when configured; on missing credentials, timeout, quota, or invalid output, return the deterministic Arabic/English keyword result. Photo analysis is opt-in through `photoConsent` and disabled by default. Duplicates come from the database (see below).
 - Must answer within ~5 s; on model failure return the keyword result rather than an error (manual fallback).
 
-### Photo and voice-note uploads (proposed — needs agreement)
-The mobile app implements this flow in API mode (mock mode keeps local URIs).
+### Photo and voice-note uploads
+The backend signs uploads into a private Supabase Storage bucket. Photo analysis requires a separate per-request `photoConsent: true`; omit it unless the user has explicitly agreed to send the photo to the configured AI provider. Analysis remains disabled by default.
 | Method | Path | Body | Response |
 | --- | --- | --- | --- |
 | POST | `/uploads/sign` | `{ kind: "report_photo" \| "voice_note", contentType }` | `{ uploadUrl, path }` |
 
-`contentType` is `image/jpeg` for photos (the app resizes them to a 1600 px long side, JPEG quality 0.7) and the recorder's audio type for voice notes (`audio/mp4` for `.m4a`; also `audio/mpeg`, `audio/wav`, `audio/webm`, `audio/3gpp`, `audio/x-caf`). The `PUT` must use the same `Content-Type` as signed. The mobile app and the website both `PUT` the file to `uploadUrl` (the URL must accept a browser `PUT` with CORS) (a Supabase Storage signed upload URL), then send `path` in `photoUris`, in `voiceNoteUri`, or (*proposed*) in a tree booking's `details.photoUris`. Values in those fields that are not local URIs are treated as already uploaded, so an offline-queued report that was half prepared is not uploaded twice. A failed `PUT` is retried later by the app's offline queue; a `4xx` from `/uploads/sign` or `/reports` drops the queued report with the server's `detail`. Reads use short-lived signed URLs returned by the API. Faces and plates are blurred before a photo is shown to anyone but the reporter and admins (stretch: run the blur on upload).
+`contentType` is `image/jpeg` for photos and one of `audio/mp4`, `audio/mpeg`, `audio/webm`, or `audio/ogg` for voice notes. The `PUT` must use the same `Content-Type` as signed. Clients `PUT` the file to `uploadUrl`, then send `path` in `photoUris` or `voiceNoteUri`. The backend verifies the user-scoped path, uploaded MIME type, and size before accepting a report. Voice notes are limited to 5 MB and 30 seconds, including a server-side duration check before transcription. Reads use short-lived signed URLs. The bucket must remain private. Before AI processing, metadata is removed, images are resized, and detected face/plate regions are blurred. The bundled Haar cascades are best-effort and not yet validated for local photos; photo AI stays disabled until that validation and the client consent UI are complete.
 
 ### Staff auth (Command Center) — proposed
 | Method | Path | Body | Response |
@@ -172,14 +172,14 @@ From the plan (§7). Admin role required.
 
 `GET /incidents` and `GET /incidents/{id}` with a staff token also return `linkedReports` (anonymised: `reporter: "مواطن" | "بلاغ بدون اسم"`) and the stored triage suggestion — *proposed*.
 
-### AI (CityBrain) — proposed, owner member 5
+### AI (CityBrain)
 | Method | Path | Body | Response |
 | --- | --- | --- | --- |
 | POST | `/ai/transcribe` | `{ path }` (an uploaded voice note) | `{ text, language: "ar-EG", confidence }` |
 
-The app calls `/ai/transcribe` right after uploading a recording and appends `text` to the description (still editable); it ignores `language`. Any error just leaves the description for the citizen to type. The voice note itself is sent with the report as `voiceNoteUri` even when transcription failed.
+The app calls `/ai/transcribe` after the citizen records a voice note and appends `text` to the description (still editable); it ignores `language`. The authenticated API reads only a caller-owned `voice_note` from private storage. Any provider or storage error leaves the citizen free to type the description; the voice note itself is still sent with the report as `voiceNoteUri`. In API mode, the recording control discloses that the file is uploaded privately and sent to Gemini; the free tier may use submitted content to improve Google products.
 
-Proposed additions to `TriageSuggestion`: `source: "model" | "fallback"` and `emergency?: boolean` (true when the text mentions gas, fire, injury or collapse; clients then show the emergency numbers first).
+`TriageSuggestion` includes `source: "model" | "fallback"` and `emergency: boolean`. When `emergency` is true, clients display emergency contact options before the AI suggestion; client-side keyword detection remains a safety fallback while triage is loading or unavailable.
 
 ## Business rules the backend owns
 
@@ -188,6 +188,97 @@ Proposed additions to `TriageSuggestion`: `source: "model" | "fallback"` and `em
 - **Priority:** deterministic, same formula as `apps/mobile/src/logic/priority.ts` (severity 5/15/28/40; sensitive place +20; reporters `min(20, (n-1)×3)`; age `min(15, round(daysOpen/targetDays×10))`; underserved area +5; cap 100). Recompute when reporters/followers change and daily for age. Return every factor so the UI can explain the score.
 - **Timeline:** every status change writes an `activity_log` row; `Incident.timeline` / `ServiceRequest.timeline` are built from it, oldest first.
 - **Privacy:** citizens never see other citizens' phone numbers or names; anonymous reports hide the reporter from admins too (keep the id for abuse handling only).
+
+
+## Command Center (admin web) — implemented in `backend/`
+
+Status of the staff/admin API used by `apps/admin-web`. Everything below is **implemented** unless marked otherwise. Staff tokens (`role: "staff"`) only see and change their own department (403 `"مش مسموح"` otherwise); `budget/*` and `demo/reset` are admin only; a citizen token on `/admin/*` is 403. Invalid enum values in any body are `422 {"detail": "البيانات مش مكتملة"}`.
+
+### Admin shapes
+
+```ts
+StaffSession = { userId, name, title, role: 'staff'|'admin', department?: string /* Arabic name, absent for admin */, district, token }
+// GET /auth/me returns the same without `token`.
+Department = { id, nameAr, external: boolean, externalHotline?: string }
+LinkedReport = { id, reporter: 'مواطن'|'بلاغ بدون اسم', description, source: 'app'|'web', photoCount, createdAt }
+
+AdminIncident = Incident & {
+  linkedReports: LinkedReport[],
+  triage?: TriageSuggestion & { source: 'model'|'fallback', confirmed: boolean },
+  dueAt: string,            // createdAt + category targetDays (calendar days)
+  overdue: boolean,         // open && now > dueAt
+  external: boolean, externalHotline?: string,
+  inBudgetPlan: boolean,    // selected in the last saved budget plan
+  lastReviewedBy?: string, lastReviewedAt?: string
+}
+
+WorkOrderTask = { label: string, done: boolean }
+WorkOrderUpdate = { status: WorkOrderStatus, note: string, actor: string, at: string }
+WorkOrderStatus = 'open'|'assigned'|'in_progress'|'done'
+WorkOrder = {
+  id, incidentId?, serviceRequestId?, title, address, department, external: boolean, externalHotline?,
+  team?, teamSize?, supervisor?, status: WorkOrderStatus, dueAt, overdue: boolean, estimatedCostEgp: number,
+  priorityScore?, followers?, tasks: WorkOrderTask[], updates: WorkOrderUpdate[], createdAt, updatedAt, resolvedAt?
+}
+AdminServiceRequest = ServiceRequest & { department: string, paid: boolean, assignee?: string, workOrderId?: string }
+
+DashboardStats = {
+  open, openDelta, overdue, resolvedThisWeek, resolvedDelta, avgResolutionDays, avgResolutionDeltaDays,
+  byCategory: { categoryId, count }[],               // open only, desc
+  byStatus: { status, count }[],                     // the 4 open statuses (current) + resolved within the range
+  overdueList: { incidentId, title, department, address, priorityScore, dueAt, hoursLate, external, externalHotline? }[],
+  overdueTotal, departments: { department, external, externalHotline?, open, overdue, avgResolutionDays, loadPct }[],
+  activity: { actor, text, entityId?, status?, at }[], nav: { incidentsOpen, serviceRequestsOpen }
+}
+BudgetItem = { incidentId, title, categoryId, costEgp, priorityScore, followers, reason }
+BudgetPlan = { budgetEgp, selected: BudgetItem[], skipped: BudgetItem[], totalCost, remaining, coveredPriority, totalPriority, citizensServed, citizensTotal }
+Insights = { summary, hotspots: { address, count }[], risingCategories: { categoryId, delta }[], overdueDepartments: string[] }
+```
+
+Optional keys are omitted, never `null`. Dashboard semantics: `open` is always the current open count (never range-filtered); `range` (`today|7d|30d`, default `7d`) windows `resolvedThisWeek`, `openDelta` (created in window minus resolved in window), `avgResolutionDays` (mean days created to resolved, 1 decimal) and the `*Delta` values (current window minus the previous equal window). `overdue`/`overdueTotal` count open incidents past `dueAt`; `overdueList` also includes those due within 12 h (`hoursLate` is negative then), priority desc, max 5. Staff dashboards count only their department.
+
+### Endpoints (all implemented)
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| POST | `/auth/staff-login` | `{email,password}` to `StaffSession`; 401 `"البريد أو كلمة السر غلط"` |
+| GET | `/auth/me` | `StaffSession` without token |
+| GET | `/admin/departments`, `/admin/teams` | `Department[]`; `{ name, department, size }[]` |
+| GET | `/admin/dashboard?range=` | `DashboardStats` |
+| GET | `/admin/incidents?status=&categoryId=&department=&critical=&overdue=&q=` | `AdminIncident[]`, priority desc. No `status` filter returns open + resolved + closed. `department` takes an id or the Arabic name; `q` searches title, address, id |
+| GET | `/admin/incidents/{id}` | `AdminIncident` |
+| PATCH | `/incidents/{id}` | `{status?, severity?, categoryId?, department?, note?}`. `note` required on a real status change (400 `"اكتب رسالة للمواطنين"`); a note alone appends a timeline entry with the current status. Severity/category change recomputes priority; a category change also moves the department unless `department` is given. `/admin/incidents/{id}` PATCH is an alias. `GET /incidents/{id}` (citizen) shares the path |
+| POST | `/admin/incidents/{id}/triage/confirm` | `{categoryId?, severity?}`; records reviewer, marks triage confirmed, moves only `received` to `triaged` (note `"اتأكّد التصنيف: <label>"`) |
+| GET | `/admin/incidents/{id}/similar` | `DuplicateMatch[]` (open, same category, 250 m, not itself, nearest first) |
+| POST | `/admin/incidents/{id}/merge` | `{intoIncidentId}`; moves reports and followers, closes the source with a note, returns the target |
+| GET | `/admin/work-orders?status=&department=`, `/admin/work-orders/{id}` | `WorkOrder[]` newest first |
+| POST | `/admin/work-orders` | `{incidentId?, serviceRequestId?, department (id or Arabic name), team?, teamSize?, supervisor?, dueAt?, tasks?: string[]}`; at least one target; 409 if it already has a work order. Tasks default from the category; moves the incident to `assigned` only from `received`/`triaged` |
+| PATCH | `/admin/work-orders/{id}` | `{status?, team?, teamSize?, supervisor?, dueAt?, tasks?: WorkOrderTask[], note?}`; `in_progress`/`done` need a note (400) and move the linked incident/request to `in_progress`/`resolved` |
+| GET | `/admin/service-requests?status=&serviceType=&day=&payment=` | `AdminServiceRequest[]`, day asc then slot; `assignee` is admin-only (not in citizen `details`) |
+| PATCH | `/admin/service-requests/{id}` | `{status?, day?, slot?, assignee?, note?}`; note required on status change |
+| POST | `/admin/budget/optimize` | admin; `{budgetEgp > 0, incidentIds?}`; 0/1 knapsack, exact over 100 EGP units (costs rounded up), ties by followers; empty `incidentIds` means all open; saved as the current plan |
+| POST | `/admin/budget/commit` | admin; `{incidentIds}` creates `WorkOrder[]` (same creation path as `POST /admin/work-orders`) |
+| GET | `/admin/insights` | `Insights` (deterministic, computed from data) |
+| POST | `/admin/demo/reset` | admin; re-seeds |
+
+### Citizen endpoints (implemented)
+
+`POST/GET /reports`, `GET /reports/{id}` (403 for another citizen's, admins read all), `GET /incidents`, `GET /incidents/{id}` (staff tokens also get the AdminIncident fields), `POST /incidents/{id}/follow` (idempotent), `POST /incidents/{id}/reopen` (reporter/follower, only from `resolved`, else 403/409), `GET /map/incidents` (`status`, `categoryId`, `bbox`), `POST/GET /service-requests`, `GET /service-requests/{id}`, `POST /triage`, `POST /ai/transcribe`, `POST /uploads/sign`. Not implemented yet: `/services/garbage-schedule`.
+
+### Deviations from the text above
+
+- `POST /auth/otp` answers `204` with an empty body.
+- `GET /map/incidents` needs a Bearer token like every other non-auth route.
+- Duplicates use haversine in Python (no PostGIS locally); same 250 m rule.
+- `POST /triage` also returns `source: "fallback"` (and `emergency: true` on gas/fire/injury/collapse words) and always includes `alreadyReported` (empty array when none).
+- A new incident also stores a keyword triage suggestion (`source: "fallback"`, `confirmed: false`) so the admin AI card has data.
+- `POST /uploads/sign` is a local stub: `uploadUrl` points to `/uploads/local/{path}` on the API, which accepts a `PUT` and discards it.
+- `StaffSession.department` is the Arabic department name; the JWT carries the department id.
+- Timeline `actor` for staff changes is the staff member's display name.
+- **Auth boundary (backend):** the JWT carries only the user id; the role and department scope are reloaded from the database on every request, so a demoted, re-assigned or removed staff member loses access immediately (staff without a department get `403`). Outside `OTP_MODE=demo`, `POST /auth/otp` and `/auth/verify` answer `503`. Staff login is limited to 5 attempts per e-mail per minute (`429`, `Retry-After`).
+- `POST /admin/demo/reset` answers `404` unless the server runs with `DEMO_RESET_ENABLED=true`.
+- Citizen validation: a report linking to an incident (`linkToIncidentId`) must match its category, be open and be within 250 m (`409` otherwise); service `day` must be a real date, and `bulky_waste` needs a future Sunday–Thursday (Cairo time), else `422`; `GET /map/incidents` rejects bad or out-of-range `bbox` with `400` and unknown `status`/`categoryId` with `422`.
+- `POST /uploads/sign` can be backed by a private storage (`app.state.media_storage`): report photo/voice paths must then have been uploaded by the caller (`403`), reads are signed, and the reporter id of an anonymous report is hidden from everyone but its author.
 
 ## CityCycle — proposed
 
