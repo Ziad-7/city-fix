@@ -40,3 +40,27 @@ export function scoreTone(score: number): 'urgent' | 'high' | 'low' {
   if (score >= 65) return 'high';
   return 'low';
 }
+
+export const MATERIAL_LABEL_AR: Record<string, string> = {
+  pet_plastic: 'بلاستيك PET',
+  paper_cardboard: 'ورق وكرتون',
+  metal_cans: 'علب معدنية',
+  glass: 'زجاج',
+  e_waste: 'إلكترونيات',
+  cooking_oil: 'زيت طبخ مستعمل',
+  organics: 'عضوي',
+};
+
+export const PICKUP_STATUS_LABEL_AR: Record<string, string> = {
+  requested: 'مطلوب',
+  accepted: 'اتقبل',
+  weighed: 'اتوزن',
+  completed: 'مكتمل',
+  cancelled: 'ملغي',
+};
+
+export const COLLECTOR_STATUS_LABEL_AR: Record<string, string> = {
+  pending: 'منتظر المراجعة',
+  verified: 'موثّق',
+  suspended: 'موقوف',
+};
