@@ -8,12 +8,13 @@ import pytest
 
 from app.ai.schemas import ProviderError
 from app.ai.transcribe import (
+    AudioAnalysis,
     MAX_TRANSCRIPTION_AUDIO_BYTES,
     MAX_TRANSCRIPTION_DURATION_SECONDS,
     GeminiAudioTranscriber,
     Transcription,
     create_transcription_router,
-    get_audio_duration_seconds,
+    inspect_audio,
 )
 
 
@@ -24,7 +25,14 @@ class User:
 
 @pytest.mark.anyio
 async def test_transcription_route_reads_only_the_callers_voice_note(monkeypatch):
-    monkeypatch.setattr("app.ai.transcribe.get_audio_duration_seconds", lambda *_: 2.0)
+    async def inspect_in_process(callback, *args):
+        return callback(*args)
+
+    monkeypatch.setattr("app.ai.transcribe.asyncio.to_thread", inspect_in_process)
+    monkeypatch.setattr(
+        "app.ai.transcribe.inspect_audio",
+        lambda *_: AudioAnalysis(duration_seconds=2.0, peak_dbfs=-30.0),
+    )
     calls = []
 
     async def authenticate():
@@ -128,7 +136,14 @@ async def test_transcription_route_rejects_oversized_audio_before_provider():
 
 @pytest.mark.anyio
 async def test_transcription_route_rejects_long_audio_before_provider(monkeypatch):
-    monkeypatch.setattr("app.ai.transcribe.get_audio_duration_seconds", lambda *_: 31.0)
+    async def inspect_in_process(callback, *args):
+        return callback(*args)
+
+    monkeypatch.setattr("app.ai.transcribe.asyncio.to_thread", inspect_in_process)
+    monkeypatch.setattr(
+        "app.ai.transcribe.inspect_audio",
+        lambda *_: AudioAnalysis(duration_seconds=31.0, peak_dbfs=-30.0),
+    )
 
     async def authenticate():
         return User("citizen-1")
@@ -158,36 +173,33 @@ async def test_transcription_route_rejects_long_audio_before_provider(monkeypatc
     assert response.status_code == 413
 
 
-def test_audio_duration_uses_ffprobe_with_bounded_arguments(monkeypatch):
+def test_audio_analysis_uses_bounded_ffmpeg(monkeypatch):
     calls = []
 
     def run(command, **kwargs):
         calls.append((command, kwargs))
-        return SimpleNamespace(returncode=0, stdout='{"format":{"duration":"12.5"}}')
+        return SimpleNamespace(
+            returncode=0,
+            stderr="Duration: 00:00:12.50, start: 0.000000\nmax_volume: -55.0 dB",
+        )
 
-    monkeypatch.setattr("app.ai.transcribe.shutil.which", lambda _name: "/usr/bin/ffprobe")
+    monkeypatch.setattr("app.ai.transcribe.shutil.which", lambda _name: "/usr/bin/ffmpeg")
     monkeypatch.setattr("app.ai.transcribe.subprocess.run", run)
 
-    assert get_audio_duration_seconds(b"voice", "audio/mp4") == 12.5
+    analysis = inspect_audio(b"voice", "audio/mp4")
+    assert analysis == AudioAnalysis(duration_seconds=12.5, peak_dbfs=-55.0)
     command, options = calls[0]
-    assert command[:4] == ["/usr/bin/ffprobe", "-v", "error", "-show_entries"]
+    assert command[0] == "/usr/bin/ffmpeg"
+    assert "volumedetect" in command
     assert options["timeout"] <= 2
     assert options["shell"] is False
     assert command[command.index("-i") + 1].endswith(".m4a")
 
 
-def test_audio_duration_rejects_unavailable_or_invalid_probe(monkeypatch):
+def test_audio_analysis_rejects_missing_ffmpeg(monkeypatch):
     monkeypatch.setattr("app.ai.transcribe.shutil.which", lambda _name: None)
-    with pytest.raises(RuntimeError, match="ffprobe is required"):
-        get_audio_duration_seconds(b"voice", "audio/mp4")
-
-    monkeypatch.setattr("app.ai.transcribe.shutil.which", lambda _name: "/usr/bin/ffprobe")
-    monkeypatch.setattr(
-        "app.ai.transcribe.subprocess.run",
-        lambda *_args, **_kwargs: SimpleNamespace(returncode=0, stdout="{}"),
-    )
-    with pytest.raises(ValueError, match="duration"):
-        get_audio_duration_seconds(b"voice", "audio/mp4")
+    with pytest.raises(RuntimeError, match="ffmpeg is required"):
+        inspect_audio(b"voice", "audio/mp4")
 
 
 def test_transcription_limits_match_recorder_contract():

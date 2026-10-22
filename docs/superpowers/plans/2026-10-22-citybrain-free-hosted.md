@@ -181,10 +181,11 @@ Do not build a second unrelated API just for AI. Until backend query hooks exist
 
 **Interface:** `transcribe(path: str, user_id: str) -> TranscriptResponse` with `text`, `language`, and nullable `confidence`.
 
-- [ ] Write tests asserting no provider call for another user's path, oversized or >30-second audio, invalid file content, and silence; provider 429/timeout returns a typed error and preserves the stored recording.
+- [x] Write tests asserting no provider call for another user's path, oversized or >30-second audio, invalid file content, and silence.
+- [ ] Test that provider 429/timeout returns a typed error and preserves the stored recording.
 - [ ] Run `python -m pytest tests/test_ai_transcribe.py -q` from `backend`; confirm expected failures.
 - [ ] Send audio bytes from private storage to Groq's transcription endpoint using `whisper-large-v3-turbo`, Arabic language, and no translation. Cap provider work at 20 seconds and one request; do not manufacture confidence from language probability.
-- [x] Support the existing recorder MIME formats from the contract; validate decoded duration, not merely extension. Use bounded ffprobe/FFmpeg if needed, with argument arrays and temporary files, not shell interpolation. Implemented with a 1.25-second ffprobe timeout, temporary files removed after inspection, and Docker packaging for the hosted API.
+- [x] Support the existing recorder MIME formats from the contract; validate decoded duration, not merely extension. Use bounded ffprobe/FFmpeg if needed, with argument arrays and temporary files, not shell interpolation. Implemented with a 1.75-second FFmpeg timeout, no shell, protocol allowlisting, temporary files removed after inspection, and Docker packaging for the hosted API.
 - [ ] Enforce 5 transcription requests/minute and 20/day per demo user, plus the actual organization audio quota. Delete temporary decoded files immediately; persistent raw audio follows a documented retention rule coordinated with Member 4 (demo proposal: 24 hours).
 - [ ] Verify tests and run the 10-recording benchmark; publish WER/CER and latency, and choose turbo versus large-v3 by observed results. Commit.
 

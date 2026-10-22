@@ -1,10 +1,15 @@
 # Progress log
 
+## 2026-10-22 — AI transcription audio validation
+
+- Added one bounded FFmpeg pass that rejects malformed media, clips over 30 seconds, and near-silence (peak at or below -75 dBFS) before Gemini. Quiet speech above the threshold continues to transcription; stored recordings remain untouched.
+- Added focused unit tests for parser behavior and route decisions. All 52 backend AI tests pass (one skipped); generated silent/quiet M4A and silent MP3, WebM, and OGG samples also passed the real FFmpeg check. Ruff and Python compilation pass.
+
 ## 2026-10-22 — AI voice-note input limits
 
 - Aligned mobile and web recording controls and backend media checks to the plan's 5 MB / 30 second voice-note limit.
 - Added pre-transcription audio-container duration validation with a bounded `ffprobe` call and a backend Dockerfile that installs it.
-- Added tests for oversized and long recordings plus ffprobe parsing; pytest is not installed in this workspace, so these tests have not run here. A one-second M4A duration probe and compile checks passed.
+- Added tests for oversized and long recordings plus bounded FFmpeg inspection; a generated one-second M4A duration probe and compile checks passed.
 
 Newest first. Each entry: what was done, how to test it, known issues.
 

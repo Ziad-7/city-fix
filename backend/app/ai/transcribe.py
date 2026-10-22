@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import tempfile
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -24,7 +25,8 @@ TRANSCRIPTION_DEADLINE_SECONDS = 5.0
 MAX_TRANSCRIPTION_CHARS = 2000
 MAX_TRANSCRIPTION_AUDIO_BYTES = 5 * 1024 * 1024
 MAX_TRANSCRIPTION_DURATION_SECONDS = 30
-FFPROBE_TIMEOUT_SECONDS = 1.25
+FFMPEG_TIMEOUT_SECONDS = 1.75
+SILENCE_PEAK_DBFS = -75.0
 AUDIO_SUFFIXES = {
     "audio/mp4": ".m4a",
     "audio/mpeg": ".mp3",
@@ -33,12 +35,18 @@ AUDIO_SUFFIXES = {
 }
 
 
-def get_audio_duration_seconds(audio: bytes, mime_type: str) -> float:
-    """Read container duration with ffprobe; never decode or persist the recording."""
-    executable = shutil.which("ffprobe")
+@dataclass(frozen=True)
+class AudioAnalysis:
+    duration_seconds: float
+    peak_dbfs: float
+
+
+def inspect_audio(audio: bytes, mime_type: str) -> AudioAnalysis:
+    """Boundedly decode audio to validate duration and reject effectively silent clips."""
+    executable = shutil.which("ffmpeg")
     suffix = AUDIO_SUFFIXES.get(mime_type)
     if executable is None:
-        raise RuntimeError("ffprobe is required for voice-note validation")
+        raise RuntimeError("ffmpeg is required for voice-note validation")
     if suffix is None:
         raise ValueError("unsupported voice-note media type")
 
@@ -49,33 +57,66 @@ def get_audio_duration_seconds(audio: bytes, mime_type: str) -> float:
             result = subprocess.run(
                 [
                     executable,
+                    "-hide_banner",
+                    "-nostdin",
                     "-v",
-                    "error",
-                    "-show_entries",
-                    "format=duration",
-                    "-of",
-                    "json",
+                    "info",
+                    "-protocol_whitelist",
+                    "file,pipe,data",
+                    "-probesize",
+                    "1M",
+                    "-analyzeduration",
+                    "1M",
+                    "-threads",
+                    "1",
+                    "-t",
+                    str(MAX_TRANSCRIPTION_DURATION_SECONDS),
                     "-i",
                     str(path),
+                    "-map",
+                    "0:a:0",
+                    "-af",
+                    "volumedetect",
+                    "-filter_threads",
+                    "1",
+                    "-f",
+                    "null",
+                    "-",
                 ],
                 check=False,
                 capture_output=True,
                 text=True,
                 stdin=subprocess.DEVNULL,
-                timeout=FFPROBE_TIMEOUT_SECONDS,
+                timeout=FFMPEG_TIMEOUT_SECONDS,
                 shell=False,
             )
             if result.returncode != 0:
-                raise ValueError("invalid voice-note audio")
-            duration = json.loads(result.stdout)["format"]["duration"]
-            seconds = float(duration)
+                raise ValueError("voice note is not valid audio")
+            duration_match = re.search(
+                r"Duration:\s*(\d+):(\d{2}):(\d{2}(?:\.\d+)?)", result.stderr
+            )
+            peak_match = re.search(
+                r"max_volume:\s*(-?inf|[-+]?\d+(?:\.\d+)?)\s*dB",
+                result.stderr,
+                flags=re.IGNORECASE,
+            )
+            if duration_match is None or peak_match is None:
+                raise ValueError("voice-note audio details could not be checked")
+            hours, minutes, seconds = duration_match.groups()
+            duration = int(hours) * 3600 + int(minutes) * 60 + float(seconds)
+            peak_dbfs = float(peak_match.group(1))
     except subprocess.TimeoutExpired as error:
-        raise ValueError("voice-note duration could not be checked") from error
-    except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
-        raise ValueError("voice-note duration could not be checked") from error
-    if not math.isfinite(seconds) or seconds <= 0:
-        raise ValueError("voice-note duration could not be checked")
-    return seconds
+        raise ValueError("voice-note audio check timed out") from error
+    except (OSError, TypeError) as error:
+        raise ValueError("voice-note audio details could not be checked") from error
+    if (
+        not math.isfinite(duration)
+        or duration <= 0
+        or math.isnan(peak_dbfs)
+        or peak_dbfs == math.inf
+    ):
+        raise ValueError("voice-note audio details could not be checked")
+    return AudioAnalysis(duration_seconds=duration, peak_dbfs=peak_dbfs)
 
 
 class TranscriptionRequest(ApiModel):
@@ -258,19 +299,21 @@ def create_transcription_router(
             raise HTTPException(413, "حجم التسجيل أكبر من المسموح (٥ ميجابايت).")
         try:
             remaining = max(0.01, deadline - loop.time())
-            duration = await asyncio.wait_for(
-                asyncio.to_thread(get_audio_duration_seconds, audio, mime_type),
-                timeout=min(FFPROBE_TIMEOUT_SECONDS + 0.25, remaining),
+            analysis = await asyncio.wait_for(
+                asyncio.to_thread(inspect_audio, audio, mime_type),
+                timeout=min(FFMPEG_TIMEOUT_SECONDS + 0.25, remaining),
             )
-            if duration > MAX_TRANSCRIPTION_DURATION_SECONDS:
+            if analysis.duration_seconds > MAX_TRANSCRIPTION_DURATION_SECONDS:
                 raise HTTPException(
                     413, "مدة التسجيل لازم تكون ٣٠ ثانية أو أقل."
                 )
+            if analysis.peak_dbfs <= SILENCE_PEAK_DBFS:
+                raise HTTPException(422, "مستوى الصوت واطي جدًا؛ اكتب الوصف بنفسك.")
         except HTTPException:
             raise
         except asyncio.TimeoutError as error:
             raise HTTPException(
-                422, "مقدرناش نتحقق من مدة التسجيل؛ سجّل مقطع أقصر."
+                422, "مقدرناش نتحقق من التسجيل؛ جرّب مقطع أقصر أو اكتب الوصف."
             ) from error
         except ValueError as error:
             raise HTTPException(422, "ملف التسجيل غير صالح أو مدته غير واضحة.") from error
