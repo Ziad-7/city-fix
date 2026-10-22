@@ -7,6 +7,7 @@ import { CATEGORIES, getCategory } from '@/domain/categories';
 import type { CategoryId, TriageSuggestion } from '@/domain/types';
 import { validateReportForm, type ReportFormErrors } from '@/components/report/validation';
 import { pickDuplicateView } from '@/logic/duplicates';
+import { detectEmergency } from '@/logic/triage-mock';
 import { useAreaCenter } from '@/lib/area';
 import { useReportLocation } from '@/lib/location';
 import { compressImage } from '@/lib/photo';
@@ -17,6 +18,7 @@ import { isQueuedOnDevice } from '@/store/outboxTabs';
 import { useOutbox } from '@/store/useOutbox';
 import { toArabicDigits } from '@/utils/digits';
 import { CategoryPicker } from '@/ui/CategoryGrid';
+import { EmergencyBox } from '@/ui/Hotlines';
 import { ToggleRow } from '@/ui/controls';
 import { QueuedNotice } from '@/ui/QueuedNotice';
 import { Icon } from '@/ui/Icon';
@@ -247,6 +249,7 @@ export function ReportForm() {
             ) : (
               <AiSuggestion state={triageState} suggestion={triage} selected={categoryId} onSelect={pickCategory} onPickOther={() => setPickerOpen(true)} onRetry={() => setRetryTick((n) => n + 1)} />
             )}
+            {!triage?.emergency && detectEmergency(trimmed) ? <EmergencyBox /> : null}
             {errors.categoryId ? <span className="a-err" role="alert">{errors.categoryId}</span> : null}
           </section>
 

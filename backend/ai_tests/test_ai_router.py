@@ -71,8 +71,8 @@ async def test_route_requires_auth_and_returns_camel_case_contract():
     assert response.status_code == 200
     body = response.json()
     assert body["options"][0]["categoryId"] == "pothole"
-    assert "source" not in body
-    assert "emergency" not in body
+    assert body["source"] == "model"
+    assert body["emergency"] is False
     assert body["duplicates"] == []
 
     unauthenticated, _ = make_client(user_id=None)
@@ -82,6 +82,21 @@ async def test_route_requires_auth_and_returns_camel_case_contract():
         assert (
             await client.post("/triage", json={"description": "حفرة"})
         ).status_code == 401
+
+
+@pytest.mark.anyio
+async def test_route_returns_emergency_flag_for_urgent_description():
+    app, _ = make_client(provider=FakeProvider(model_suggestion()))
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.post(
+            "/triage", json={"description": "فيه ريحة غاز في العمارة"}
+        )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["emergency"] is True
+    assert body["severity"] == "critical"
 
 
 @pytest.mark.anyio

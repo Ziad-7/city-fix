@@ -50,7 +50,6 @@ def create_triage_router(
         "/triage",
         response_model=TriageSuggestion,
         response_model_by_alias=True,
-        response_model_exclude={"source", "emergency"},
     )
     async def triage(
         request: TriageRequest,
