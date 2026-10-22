@@ -1,11 +1,10 @@
 """Tests for priority calculation logic."""
 
 from app.logic.priority import (
+    MAX,
     compute_priority,
     priority_level,
-    MAX,
 )
-
 
 base = {
     "severity": "medium",
@@ -40,16 +39,10 @@ class TestComputePriority:
         """Score should increase for higher severity, sensitive place, more reporters, older age, underserved."""
         s0 = compute_priority(base)["score"]
         assert compute_priority({**base, "severity": "critical"})["score"] > s0
-        assert (
-            compute_priority({**base, "near_sensitive_place": True})["score"]
-            == s0 + MAX["sensitive"]
-        )
+        assert compute_priority({**base, "near_sensitive_place": True})["score"] == s0 + MAX["sensitive"]
         assert compute_priority({**base, "reporters": 7})["score"] == s0 + (7 - 1) * 3
         assert compute_priority({**base, "days_open": 5})["score"] == s0 + 10
-        assert (
-            compute_priority({**base, "area_underserved": True})["score"]
-            == s0 + MAX["equity"]
-        )
+        assert compute_priority({**base, "area_underserved": True})["score"] == s0 + MAX["equity"]
 
     def test_caps_factors_and_total(self):
         """Each factor and total should be capped."""

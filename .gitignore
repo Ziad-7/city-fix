@@ -10,6 +10,9 @@ web-build/
 coverage/
 ios/
 android/
+
+# Local agent scratch
+.superpowers/
 .venv/
 __pycache__/
 .pytest_cache/

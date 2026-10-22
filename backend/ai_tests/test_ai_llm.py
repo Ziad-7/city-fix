@@ -60,9 +60,7 @@ async def test_gemini_sends_text_image_and_strict_schema_to_selected_free_model(
     assert seen["key"] == "server-secret"
     config = seen["body"]["generationConfig"]
     assert config["responseMimeType"] == "application/json"
-    assert config["responseSchema"]["properties"]["options"]["items"]["properties"][
-        "categoryId"
-    ]["enum"]
+    assert config["responseSchema"]["properties"]["options"]["items"]["properties"]["categoryId"]["enum"]
     parts = seen["body"]["contents"][0]["parts"]
     assert "حفرة قدام المدرسة" in parts[0]["text"]
     assert "untrusted" in parts[0]["text"]

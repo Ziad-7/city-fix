@@ -1,4 +1,4 @@
-# Runtime dependencies for the citizen/auth backend slice; merge with the DB stack.
+# Runtime dependencies. Keep in sync with [project].dependencies in pyproject.toml.
 fastapi>=0.115,<1
 httpx>=0.28,<1
 numpy>=1.26,<3

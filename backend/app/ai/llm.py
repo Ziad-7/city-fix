@@ -27,9 +27,7 @@ class GeminiClient:
         key = os.getenv("GEMINI_API_KEY", "").strip()
         if not key:
             return None
-        return cls(
-            api_key=key, model=os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
-        )
+        return cls(api_key=key, model=os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite"))
 
     async def suggest(
         self,
@@ -39,9 +37,7 @@ class GeminiClient:
         photo_mime_type: str | None,
         category_hint: CategoryId | None,
     ) -> ModelSuggestion:
-        parts: list[dict[str, Any]] = [
-            {"text": self._prompt(description, category_hint)}
-        ]
+        parts: list[dict[str, Any]] = [{"text": self._prompt(description, category_hint)}]
         if photo_bytes is not None:
             if photo_mime_type != "image/jpeg":
                 raise ProviderError("Only normalized JPEG images are accepted")
@@ -67,28 +63,20 @@ class GeminiClient:
         }
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
         try:
-            async with httpx.AsyncClient(
-                timeout=self.timeout_seconds, transport=self.transport
-            ) as client:
-                response = await client.post(
-                    url, headers={"x-goog-api-key": self.api_key}, json=request
-                )
+            async with httpx.AsyncClient(timeout=self.timeout_seconds, transport=self.transport) as client:
+                response = await client.post(url, headers={"x-goog-api-key": self.api_key}, json=request)
             response.raise_for_status()
             payload = response.json()
             candidate = payload["candidates"][0]
             if candidate.get("finishReason") in {"SAFETY", "RECITATION"}:
                 raise ProviderError("Gemini declined the request")
-            text = "".join(
-                part.get("text", "") for part in candidate["content"]["parts"]
-            )
+            text = "".join(part.get("text", "") for part in candidate["content"]["parts"])
             return ModelSuggestion.model_validate(json.loads(text))
         except ProviderError:
             raise
         except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as error:
             # Do not log provider response bodies: they can contain user descriptions or image-derived text.
-            raise ProviderError(
-                f"Gemini request or response failed ({type(error).__name__})"
-            ) from error
+            raise ProviderError(f"Gemini request or response failed ({type(error).__name__})") from error
 
     @staticmethod
     def _prompt(description: str, category_hint: CategoryId | None) -> str:
@@ -144,6 +132,4 @@ Citizen description (untrusted data): <description>{description}</description>
 def _category_prompt() -> str:
     from app.ai.keywords import CATEGORY_LABELS
 
-    return "\n".join(
-        f"- {category.value}: {CATEGORY_LABELS[category]}" for category in CategoryId
-    )
+    return "\n".join(f"- {category.value}: {CATEGORY_LABELS[category]}" for category in CategoryId)

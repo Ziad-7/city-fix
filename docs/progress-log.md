@@ -1,5 +1,11 @@
 # Progress log
 
+## 2026-10-22 — PR #43 aligned with the latest Command Center/backend merge
+
+- Merged `main` at `770efef` (PR #34) into the smart-bin feature branch. Preserved its database-backed citizen routes, auth, serialization, shared client types, and updated admin UI; mounted the device and staff bin routes alongside them.
+- Migrated smart-bin schemas to the current `app.schemas.CamelModel` and retained the new telemetry tables. Added four API integration tests covering device authentication, retry deduplication, atomic batch rejection, offline backlog ordering, clock-unsynced samples, and department/citizen access boundaries.
+- Verification: backend **295 tests passed**, Ruff lint/format and the scoped seven-file mypy check passed; admin **195 tests passed**, citizen web **222 tests passed**. Both frontends passed typecheck, lint, shared-code checks, and production builds. Documentation links and Git whitespace checks passed. Existing dependency deprecation and React test warnings remain; live hosted-device validation is still pending.
+
 ## 2026-10-22 — PR #43 CI fixes
 
 - Fixed the missing `async` on the admin smart-bin history service and applied Ruff's required schema formatting.
@@ -41,6 +47,47 @@
 - Added tests for oversized and long recordings plus bounded FFmpeg inspection; a generated one-second M4A duration probe and compile checks passed.
 
 Newest first. Each entry: what was done, how to test it, known issues.
+
+## 2026-10-22 — PR #34 supersedes #32 (branch `feat/admin-dashboard`)
+
+**Done**
+- Merged Moataz's `feat/api-auth` (PR #32: citizen routes and auth slice, staff login, tests, backend split doc, integration review) into `feat/admin-dashboard` so that PR #34 replaces it with no conflicts. Both branches had implemented the citizen routes and auth; one implementation remains: ours (database-backed, contract-shaped, rewritten admin layer, pyproject + uv, CityFix rebrand, Playwright). PR #32's in-memory demo store and local harness are not kept.
+- Ported from PR #32: the shared auth boundary that reloads role and department scope from the database on every request (`app/auth.py`, `auth_adapters.py`, `admin_auth.py`; deactivated or changed staff lose access immediately); `require_role` / `require_department`; missing-scope denial and safe admin reassignment (a work order for another department moves the incident); `DEMO_RESET_ENABLED=true` required for `POST /admin/demo/reset`; staff login with Argon2 or PBKDF2 hashes, an attempt limiter and equalised timing for unknown accounts; optional private-media storage and anonymous reporter masking; citizen validation (link rules, real calendar days, bulky-waste Sunday–Thursday, bbox and enum checks); the readable-ID digit-boundary fix, invalid work-order resource/date validation, self-merge prevention, SQLite timestamp and timezone-offset handling and canonical service statuses (already present in our admin layer and now covered by PR #32's admin tests, `tests/test_admin_pr32.py`); the admin-web 404 test.
+- Tooling: `requirements.txt` / `requirements-dev.txt` mirror `pyproject.toml` / `uv.lock`; `backend-ci.yml` runs ruff, scoped mypy (auth boundary) and pytest. The production `npm run build` failure tracked in issue 33 no longer occurs on this tree.
+- PR #32's tests `test_auth`, `test_staff_auth`, `test_auth_integration`, `test_citizen_api` and `test_ids` now run against the final app. Where they disagreed with `docs/api-contract.md` the contract won: `StaffSession` has `title` and an Arabic `department` (not `departmentId`); malformed phone and bbox are `400`; `name` is optional in the verify response; work orders need at least one target (both allowed); the local upload stub accepts non-URL paths when no storage is configured.
+- Then merged `origin/main` (CityCycle contract and hardware docs): only README, `docs/api-contract.md` and this log conflicted; both sides kept.
+
+**How to test**
+- `cd backend && uv run pytest -q && uvx ruff check . && uvx ruff format --check .` (or `python -m pip install -r requirements-dev.txt && python -m pytest -q`)
+- `cd apps/admin-web && npm ci && npm run check:shared && npm run typecheck && npm run lint && npm test && npm run build && npx playwright test`
+- `node scripts/check-doc-links.mjs`
+
+**Known issues**
+- PR #32's older admin-web response-shape adapters were not kept: the backend now returns the contract shapes.
+- The auth boundary opens a short database session per request for the user lookup; fine for SQLite, revisit with a pooled Postgres deployment.
+- Mypy covers the auth boundary files only; whole-backend typing is incomplete.
+
+## 2026-10-22 — Command Center and backend (branch `feat/admin-dashboard`)
+
+**Done**
+- **Backend** (`backend/`, FastAPI + SQLAlchemy 2, SQLite): the citizen contract (auth with demo OTP, incidents, reports, service requests, uploads stub) plus the `/admin/*` routes: staff login, dashboard stats, work orders, service-request schedule, budget plan, demo reset. Priority score and duplicate detection are computed server side. Seed mirrors the mobile mock data. 132 pytest tests, ruff clean.
+- **Admin web** (`apps/admin-web`, Next.js 16): login, overview with KPIs, incident queue with filters and side panel, incident detail (status change with required note, work-order panel, timeline, priority factors), work-order kanban, service requests, city map, budget planner. Department staff see only their data. Arabic RTL, design tokens from `ftc.css`.
+- Shared mobile code is copied unchanged (`check:shared`); the admin web is renamed to CityFix / سيتي فيكس with the `cityfix-*.svg` assets; demo accounts are `@cityfix.demo`.
+- Merged `origin/main` (CityFix rename, optional payment for free services, reopen, uploads). CI: `admin-web-ci.yml` and `backend-ci.yml` run against the real folders.
+- Checks: backend 132 pytest, ruff check and format; admin web typecheck, lint, 189 Vitest tests, build, 13 Playwright tests; mobile typecheck and tests unchanged.
+
+**How to test**
+- `cd backend && uv run pytest -q && uvx ruff check . && uvx ruff format --check .`
+- `cd apps/admin-web && npm ci && npm run check:shared && npm run typecheck && npm run lint && npm test && npm run build && npx playwright test`
+- By hand: start the backend, `npm run dev` in `apps/admin-web`, sign in as `admin@cityfix.demo` / `FixCity2026!`, change a status with a note; the citizen sees it in the timeline.
+
+**Known issues**
+- Photos are placeholders (no real files are stored); `POST /uploads` is a stub.
+- `/ai/transcribe` and the garbage-schedule endpoints are not implemented in the backend.
+- SQLite plus haversine distance instead of Supabase/PostGIS; no migrations, delete the DB file after model changes.
+- Budget planner: the "بدون حد" preset is disabled.
+- The incident detail page has a location card without a map.
+- `NEXT_PUBLIC_API_URL` is inlined at build time. Port `3001` may be taken by another app on your machine; use `next dev -p 3002`.
 
 ## 2026-10-22 — CityBrain photo + Arabic text triage (`feat/ai-photo-triage-api`)
 
@@ -116,7 +163,7 @@ Newest first. Each entry: what was done, how to test it, known issues.
 - Documented [two-person ownership](team/backend-split.md): Moataz owns citizen API/auth; teammate owns database, operations and deployment. AI remains a separate role.
 - Added citizen demo OTP request/verification matching existing camelCase auth responses; JWT issue/validation with expiry, issuer and audience; shared current-user, role and department checks.
 - Added an injectable user repository contract and an explicitly enabled local in-memory harness so auth can be tested before the database adapter lands.
-- Added tests, a Python 3.12 CI workflow, [run/integration instructions](../backend/README.md), and a [PR description](../backend/PR-auth.md).
+- Added tests, a Python 3.12 CI workflow, [run/integration instructions](../backend/README.md). (The PR description file was dropped when PR #34 superseded #32.)
 
 **How to test**
 - From `backend/`, install `requirements-dev.txt`, then run `python -m pytest -q`, `python -m ruff check app tests`, and `python -m mypy app --ignore-missing-imports`.
@@ -130,6 +177,7 @@ Newest first. Each entry: what was done, how to test it, known issues.
 - In-memory users and signing key reset on restart. This harness is local only; teammate must supply persistence and application assembly.
 - Real OTP, attempt/rate limits, staff login, token refresh/revocation, and other citizen endpoints are not implemented in this first slice. Proposed staff/upload contracts still require agreement.
 - Local runtime is Python 3.14; CI targets the planned Python 3.12.
+
 ## 2026-10-22 — Mobile app: CityCycle features (branch `feat/mobile-citycycle`)
 
 **Done**
@@ -163,6 +211,7 @@ Newest first. Each entry: what was done, how to test it, known issues.
 **Open**
 - Material prices, CO₂ factors, bin thresholds and every BOM price are unknown on purpose and must be filled from real sources.
 - The CityCycle contract section needs agreement from members 1–4 by PR before anyone builds on it. The `hardware/` folder does not exist yet.
+
 ## 2026-10-22 — Citizen website review fixes (branch `fix/citizen-web-review`)
 
 **Done** ([review](reviews/2026-10-21-citizen-web-review.md), every finding has a Resolution)

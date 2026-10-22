@@ -21,16 +21,16 @@ const STATUS_LABELS: Record<WorkOrderStatus, string> = {
   in_progress: 'شغالين عليه',
   done: 'اتحلّت',
 };
-const INITIAL_NOW = Date.now();
 
 export default function WorkOrdersPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const session = useSession();
-  const openParam = searchParams?.get('open');
-  const selectedId = openParam;
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
-  const [now, setNow] = useState(INITIAL_NOW);
+  const [now, setNow] = useState(() => Date.now());
+  // Deep link: ?wo=<id> (spec name); ?open=<id> accepted as alias
+  const selectedId = searchParams?.get('wo') ?? searchParams?.get('open') ?? null;
+
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 30000);
     return () => clearInterval(interval);
@@ -50,10 +50,9 @@ export default function WorkOrdersPage() {
     queryFn: getDepartments,
     staleTime: Infinity,
   });
-
-  const { data: selectedWorkOrder } = useQuery({
+  const { data: selectedWorkOrder } = useQuery<WorkOrder | undefined>({
     queryKey: ['work-order', selectedId],
-    queryFn: () => (selectedId ? getWorkOrder(selectedId) : null),
+    queryFn: () => (selectedId ? getWorkOrder(selectedId) : undefined),
     enabled: !!selectedId,
   });
 
@@ -98,20 +97,18 @@ export default function WorkOrdersPage() {
   const lateCount = filteredOrders.filter((wo) => wo.overdue && wo.status !== 'done').length;
   const lateText = lateCount > 0 ? `${formatNumber(lateCount)} متأخرين` : 'مفيش متأخر';
 
-  const deptList = session?.role === 'admin' ? [null, ...departments.map((d) => d.id)] : [null];
-
   const handleOpenWorkOrder = (id: string) => {
-    router.push(`?open=${id}`);
+    router.push(`?wo=${id}`);
   };
 
   const handleCloseDrawer = () => {
-    router.push('');
+    router.push('/work-orders');
   };
 
   if (!session) return null;
 
   return (
-    <main className="ftc-admin-main">
+    <div className="ftc-admin-main">
       <div className="page">
         <PageHead
           title="أوامر الشغل"
@@ -191,10 +188,10 @@ export default function WorkOrdersPage() {
         {/* Drawer */}
         <WorkOrderDrawer
           open={!!selectedId && !!selectedWorkOrder}
-          workOrder={selectedWorkOrder ?? undefined}
+          workOrder={selectedWorkOrder}
           onClose={handleCloseDrawer}
         />
       </div>
-    </main>
+    </div>
   );
 }

@@ -10,8 +10,8 @@ from sqlalchemy.orm import Session
 
 from app.admin_auth import require_admin, require_staff
 from app.bin_schemas import (
-    BinReadingsBatch,
     BinReadingResponse,
+    BinReadingsBatch,
     BinResponse,
     CreateBinInput,
 )
@@ -81,11 +81,7 @@ def ingest_readings(
     if len(seqs) != len(set(seqs)):
         raise HTTPException(422, "reading sequence must be unique within a batch")
 
-    existing_rows = (
-        db.query(BinReading)
-        .filter(BinReading.bin_id == bin_id, BinReading.seq.in_(seqs))
-        .all()
-    )
+    existing_rows = db.query(BinReading).filter(BinReading.bin_id == bin_id, BinReading.seq.in_(seqs)).all()
     existing = {row.seq: row for row in existing_rows}
     for reading in batch.readings:
         stored = existing.get(reading.seq)
@@ -98,9 +94,7 @@ def ingest_readings(
             or stored.rssi != reading.rssi
             or stored.firmware != reading.fw
         ):
-            raise HTTPException(
-                409, "reading sequence already exists with different data"
-            )
+            raise HTTPException(409, "reading sequence already exists with different data")
 
     accepted: list[int] = []
     for reading in batch.readings:
@@ -142,15 +136,10 @@ def ingest_readings(
 
 
 @admin_router.get("")
-def list_bins(
-    claims: dict = Depends(require_staff), db: Session = Depends(get_db)
-) -> list[BinResponse]:
+def list_bins(claims: dict = Depends(require_staff), db: Session = Depends(get_db)) -> list[BinResponse]:
     query = db.query(SmartBin).order_by(SmartBin.district, SmartBin.name)
     if claims.get("role") == "staff" and claims.get("department"):
-        query = query.filter(
-            (SmartBin.department_id == claims["department"])
-            | (SmartBin.department_id.is_(None))
-        )
+        query = query.filter((SmartBin.department_id == claims["department"]) | (SmartBin.department_id.is_(None)))
     bins = query.all()
     return [
         BinResponse.model_validate(
@@ -197,8 +186,7 @@ def list_bin_readings(
     bin_query = db.query(SmartBin).filter_by(id=bin_id)
     if claims.get("role") == "staff" and claims.get("department"):
         bin_query = bin_query.filter(
-            (SmartBin.department_id == claims["department"])
-            | (SmartBin.department_id.is_(None))
+            (SmartBin.department_id == claims["department"]) | (SmartBin.department_id.is_(None))
         )
     if not bin_query.first():
         raise HTTPException(404, "bin not found")
@@ -260,17 +248,11 @@ def latest_bin_reading(
     bin_query = db.query(SmartBin).filter_by(id=bin_id)
     if claims.get("role") == "staff" and claims.get("department"):
         bin_query = bin_query.filter(
-            (SmartBin.department_id == claims["department"])
-            | (SmartBin.department_id.is_(None))
+            (SmartBin.department_id == claims["department"]) | (SmartBin.department_id.is_(None))
         )
     if not bin_query.first():
         raise HTTPException(404, "bin not found")
-    row = (
-        db.query(BinReading)
-        .filter(BinReading.bin_id == bin_id)
-        .order_by(BinReading.seq.desc())
-        .first()
-    )
+    row = db.query(BinReading).filter(BinReading.bin_id == bin_id).order_by(BinReading.seq.desc()).first()
     if row is None:
         raise HTTPException(404, "reading not found")
     return _reading_payload(row)

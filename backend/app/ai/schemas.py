@@ -43,6 +43,7 @@ class Severity(StrEnum):
 class Location(ApiModel):
     lat: float = Field(ge=-90, le=90)
     lng: float = Field(ge=-180, le=180)
+    address: str | None = Field(default=None, max_length=300)  # clients send the picked address too
 
 
 class TriageRequest(ApiModel):

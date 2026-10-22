@@ -24,15 +24,9 @@ class SuggestionProvider(Protocol):
     ) -> ModelSuggestion | dict[str, Any]: ...
 
 
-def _validate_model_result(
-    result: ModelSuggestion | dict[str, Any], description: str
-) -> TriageSuggestion:
+def _validate_model_result(result: ModelSuggestion | dict[str, Any], description: str) -> TriageSuggestion:
     # Revalidate even injected/provider objects: a malformed provider response must never leak through.
-    payload = (
-        result.model_dump(mode="json", by_alias=True)
-        if isinstance(result, ModelSuggestion)
-        else result
-    )
+    payload = result.model_dump(mode="json", by_alias=True) if isinstance(result, ModelSuggestion) else result
     result = ModelSuggestion.model_validate(payload)
     top = result.options[0].category_id
     severity = result.severity

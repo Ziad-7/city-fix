@@ -1,186 +1,140 @@
-"""Budget optimization using 0/1 knapsack DP."""
+"""Budget optimiser: 0/1 knapsack, exact over cost in units of 100 EGP (costs rounded up)."""
 
+from dataclasses import dataclass
 from math import ceil
+
 from sqlalchemy.orm import Session
-from app.models import Incident, Category, WorkOrder
+
+from app.logic.status import OPEN_STATUSES
+from app.models import Category, Incident, WorkOrder
+
+UNIT_EGP = 100
+SENSITIVE_KINDS = ("مدرسة", "مستشفى", "حديقة")
 
 
-def optimize_budget(
-    db: Session, budget_egp: int, incident_ids: list[str] = None
-) -> dict:
+@dataclass(frozen=True)
+class Candidate:
+    incident_id: str
+    title: str
+    category_id: str
+    category_label: str
+    cost_egp: int
+    priority: int
+    followers: int
+    sensitive_place: str | None = None
+
+    @property
+    def units(self) -> int:
+        return ceil(self.cost_egp / UNIT_EGP)
+
+
+def knapsack(items: list[Candidate], budget_egp: int) -> list[int]:
+    """Indices of the best subset: max sum of priority, ties broken by sum of followers.
+
+    DP, exact over 100 EGP units (costs rounded up; value is the tuple (priority, followers), compared lexicographically).
+    Total cost in units never exceeds budget_egp // 100, so cost never exceeds the budget.
     """
-    Optimize budget allocation using 0/1 knapsack DP.
-
-    Uses units of 100 EGP. When there are ties in value, prefer higher follower count.
-    Each selected incident gets a one-line Arabic reason.
-
-    Args:
-        db: Database session
-        budget_egp: Total budget in EGP
-        incident_ids: Optional list of incident IDs to consider (if None, use all open)
-
-    Returns:
-        dict with {budgetEgp, selected[], skipped[], totalCost, remaining, coveredPriority, totalPriority, citizensServed, citizensTotal}
-    """
-    # Get candidate incidents (open, without done work order)
-    open_statuses = {"received", "triaged", "assigned", "in_progress"}
-    candidates = []
-
-    if incident_ids:
-        # Filter to specific incidents
-        for inc_id in incident_ids:
-            incident = db.query(Incident).filter_by(id=inc_id).first()
-            if incident and incident.status in open_statuses:
-                # Check if it already has a done work order
-                wo = db.query(WorkOrder).filter_by(incident_id=inc_id).first()
-                if not wo or wo.status != "done":
-                    candidates.append(incident)
-    else:
-        # All open incidents
-        for incident in (
-            db.query(Incident).filter(Incident.status.in_(open_statuses)).all()
-        ):
-            wo = db.query(WorkOrder).filter_by(incident_id=incident.id).first()
-            if not wo or wo.status != "done":
-                candidates.append(incident)
-
-    # Prepare items: (cost_units, priority, followers, incident)
-    # I6: cost_units = ceil(cost / 100 EGP)
-    items = []
-    for incident in candidates:
-        category = db.query(Category).filter_by(id=incident.category_id).first()
-        cost = category.estimated_cost_egp if category else 1000
-        cost_units = ceil(cost / 100)  # I6: Use ceil instead of floor
-        items.append(
-            (cost_units, incident.priority_score, incident.followers_count, incident)
-        )
-
-    # DP knapsack: dp[w] = max (priority_score, total_followers, items_indices)
-    capacity = budget_egp // 100
-    dp = {}
-
-    # Base case
-    dp[0] = (0, 0, [])  # (total_priority, total_followers, indices)
-
-    # Fill DP table
-    for i, (cost_units, priority, followers, incident) in enumerate(items):
-        # Traverse in reverse to avoid using the same item twice
-        new_dp = dict(dp)
-        for w in range(capacity, cost_units - 1, -1):
-            if (w - cost_units) in dp:
-                prev_priority, prev_followers, prev_indices = dp[w - cost_units]
-                new_priority = prev_priority + priority
-                new_followers = prev_followers + followers
-                new_indices = prev_indices + [i]
-
-                if w not in dp:
-                    # No item at this weight yet
-                    new_dp[w] = (new_priority, new_followers, new_indices)
-                else:
-                    # Compare: prioritize priority, then followers
-                    old_priority, old_followers, old_indices = dp[w]
-                    if (new_priority, new_followers) > (old_priority, old_followers):
-                        new_dp[w] = (new_priority, new_followers, new_indices)
-        dp = new_dp
-
-    # Find best solution
-    best_w = 0
-    best_priority = 0
-    best_followers = 0
-    best_indices = []
-
-    for w in range(capacity + 1):
-        if w in dp:
-            priority, followers, indices = dp[w]
-            if (priority, followers) > (best_priority, best_followers):
-                best_w = w
-                best_priority = priority
-                best_followers = followers
-                best_indices = indices
-
-    # Build result
-    selected_items = [items[i] for i in best_indices]
-    selected_incidents = [items[i][3] for i in best_indices]
-
-    # Calculate reasons for selected items
-    selected_list = []
-    for cost_units, priority, followers, incident in selected_items:
-        cost_egp = cost_units * 100
-        category = db.query(Category).filter_by(id=incident.category_id).first()
-        cat_label = category.label_ar if category else "مشكلة"
-
-        # Format: "أولوية 78 · قريب من مدرسة · 1,800 جنيه"
-        reason_parts = [f"أولوية {priority}"]
-
-        # Add category/sensitive place info
-        if incident.sensitive_place:
-            reason_parts.append(f"قريب من {incident.sensitive_place}")
-        else:
-            reason_parts.append(cat_label)
-
-        # Add cost with thousands separator
-        cost_str = f"{cost_egp:,}".replace(",", ",")  # Use Arabic thousands
-        reason_parts.append(f"{cost_str} جنيه")
-
-        reason = " · ".join(reason_parts)
-
-        selected_list.append(
-            {
-                "incidentId": incident.id,
-                "title": incident.title,
-                "categoryId": incident.category_id,
-                "costEgp": cost_egp,
-                "priorityScore": priority,
-                "followers": followers,
-                "reason": reason,
-            }
-        )
-
-    # Calculate reasons for skipped items
-    skipped_list = []
-    for cost_units, priority, followers, incident in items:
-        if incident not in selected_incidents:
-            cost_egp = cost_units * 100
-            category = db.query(Category).filter_by(id=incident.category_id).first()
-            cat_label = category.label_ar if category else "مشكلة"
-
-            # Check if it's a priority issue or budget issue
-            # For now: if remaining budget < cost, it's budget; else it's priority
-            remaining = (capacity - best_w) * 100
-            if remaining < cost_egp:
-                # "الميزانية مش مكفّية: محتاج 7,500 جنيه والمتبقي 2,100"
-                reason = f"الميزانية مش مكفّية: محتاج {cost_egp:,} جنيه والمتبقي {remaining:,}"
+    cap = min(budget_egp // UNIT_EGP, sum(i.units for i in items))
+    if cap < 0 or not items:
+        return []
+    zero = (0, 0)
+    # best[i][w] = best value using the first i items with capacity w
+    best = [[zero] * (cap + 1) for _ in range(len(items) + 1)]
+    for i, it in enumerate(items, start=1):
+        gain = (it.priority, it.followers)
+        for w in range(cap + 1):
+            skip = best[i - 1][w]
+            if it.units <= w:
+                prev = best[i - 1][w - it.units]
+                take = (prev[0] + gain[0], prev[1] + gain[1])
+                best[i][w] = max(skip, take)
             else:
-                # "أولوية أقل من البدائل بنفس التكلفة"
-                reason = "أولوية أقل من البدائل بنفس التكلفة"
+                best[i][w] = skip
+    chosen, w = [], cap
+    for i in range(len(items), 0, -1):
+        if best[i][w] != best[i - 1][w]:
+            chosen.append(i - 1)
+            w -= items[i - 1].units
+    return sorted(chosen)
 
-            skipped_list.append(
-                {
-                    "incidentId": incident.id,
-                    "title": incident.title,
-                    "categoryId": incident.category_id,
-                    "costEgp": cost_egp,
-                    "priorityScore": priority,
-                    "followers": followers,
-                    "reason": reason,
-                }
-            )
 
-    total_cost = best_w * 100
+def _selected_reason(c: Candidate) -> str:
+    if c.sensitive_place:
+        kind = next((k for k in SENSITIVE_KINDS if c.sensitive_place.startswith(k)), c.sensitive_place)
+        middle = f"قريب من {kind}"
+    else:
+        middle = c.category_label
+    return f"أولوية {c.priority} · {middle} · {c.cost_egp:,} جنيه"
+
+
+def build_plan(items: list[Candidate], budget_egp: int) -> dict:
+    """BudgetPlan dict for the candidates under the budget."""
+    picked = set(knapsack(items, budget_egp))
+    total_cost = sum(items[i].cost_egp for i in picked)
     remaining = budget_egp - total_cost
 
-    # Calculate citizens served (sum of followers of selected incidents)
-    citizens_served = sum(inc.followers_count for inc in selected_incidents)
-    citizens_total = sum(inc.followers_count for inc in candidates)
+    def entry(c: Candidate, reason: str) -> dict:
+        return {
+            "incidentId": c.incident_id,
+            "title": c.title,
+            "categoryId": c.category_id,
+            "costEgp": c.cost_egp,
+            "priorityScore": c.priority,
+            "followers": c.followers,
+            "reason": reason,
+        }
+
+    selected = [entry(items[i], _selected_reason(items[i])) for i in sorted(picked, key=lambda i: -items[i].priority)]
+    skipped = []
+    for i, c in enumerate(items):
+        if i in picked:
+            continue
+        if c.cost_egp > remaining:
+            reason = f"الميزانية مش مكفّية: محتاج {c.cost_egp:,} جنيه والمتبقي {remaining:,}"
+        else:
+            reason = "أولوية أقل من البدائل بنفس التكلفة"
+        skipped.append(entry(c, reason))
+    skipped.sort(key=lambda e: -e["priorityScore"])
 
     return {
         "budgetEgp": budget_egp,
-        "selected": selected_list,
-        "skipped": skipped_list,
+        "selected": selected,
+        "skipped": skipped,
         "totalCost": total_cost,
         "remaining": remaining,
-        "coveredPriority": best_priority,
-        "totalPriority": sum(priority for _, priority, _, _ in items),
-        "citizensServed": citizens_served,
-        "citizensTotal": citizens_total,
+        "coveredPriority": sum(items[i].priority for i in picked),
+        "totalPriority": sum(c.priority for c in items),
+        "citizensServed": sum(items[i].followers for i in picked),
+        "citizensTotal": sum(c.followers for c in items),
     }
+
+
+def load_candidates(db: Session, incident_ids: list[str] | None = None) -> list[Candidate]:
+    """Open incidents whose work order (if any) is not done; empty/None ids = all."""
+    q = db.query(Incident).filter(Incident.status.in_(OPEN_STATUSES))
+    if incident_ids:
+        q = q.filter(Incident.id.in_(incident_ids))
+    cats = {c.id: c for c in db.query(Category).all()}
+    done = {w.incident_id for w in db.query(WorkOrder).filter(WorkOrder.status == "done") if w.incident_id}
+    out = []
+    for i in q.order_by(Incident.id).all():
+        if i.id in done:
+            continue
+        cat = cats.get(i.category_id)
+        out.append(
+            Candidate(
+                incident_id=i.id,
+                title=i.title,
+                category_id=i.category_id,
+                category_label=cat.label_ar if cat else "مشكلة",
+                cost_egp=i.estimated_cost_egp or 0,
+                priority=i.priority_score,
+                followers=i.followers_count,
+                sensitive_place=i.sensitive_place,
+            )
+        )
+    return out
+
+
+def optimize_budget(db: Session, budget_egp: int, incident_ids: list[str] | None = None) -> dict:
+    return build_plan(load_candidates(db, incident_ids), budget_egp)

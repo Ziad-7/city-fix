@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ToastProvider } from '@/components/ui/Toast';
 import type { AdminIncident } from '@/domain/admin-types';
 
 const mockIncidents: AdminIncident[] = [
@@ -100,6 +101,12 @@ const mockWorkOrder = {
   dueAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
 };
 
+let search = '';
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => new URLSearchParams(search),
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
 vi.mock('@/services/incidents', () => ({
   getIncidents: vi.fn().mockResolvedValue(mockIncidents),
   patchIncident: vi.fn().mockResolvedValue({}),
@@ -133,7 +140,7 @@ function createWrapper() {
   return function Wrapper({ children }: { children: React.ReactNode }) {
     return (
       <QueryClientProvider client={queryClient}>
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </QueryClientProvider>
     );
   };
@@ -142,6 +149,7 @@ function createWrapper() {
 describe('IncidentsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    search = '';
   });
 
   it('renders incidents sorted by priority descending', async () => {
@@ -152,7 +160,6 @@ describe('IncidentsPage', () => {
       expect(screen.getByText('بلاغ عالي الأولوية')).toBeInTheDocument();
     });
 
-    const rows = screen.getAllByRole('row');
     // Verify incidents are present
     expect(screen.getByText('بلاغ عالي الأولوية')).toBeInTheDocument(); // score 95
     expect(screen.getByText('بلاغ متأخر')).toBeInTheDocument(); // score 70
@@ -222,8 +229,8 @@ describe('IncidentsPage', () => {
   });
 
   it('shows only open incidents with default status filter', async () => {
-    const mockOpenIncident = { ...mockIncidents[0], status: 'received' as const };
-    const mockResolvedIncident = { ...mockIncidents[0], id: 'inc-resolved', status: 'resolved' as const };
+    const mockOpenIncident = { ...mockIncidents[0], status: 'received' } as AdminIncident;
+    const mockResolvedIncident = { ...mockIncidents[0], id: 'inc-resolved', status: 'resolved' } as AdminIncident;
     const { getIncidents } = await import('@/services/incidents');
     vi.mocked(getIncidents).mockResolvedValue([mockOpenIncident, mockResolvedIncident]);
 
@@ -236,17 +243,16 @@ describe('IncidentsPage', () => {
 
     // By default, should show only open status
     expect(screen.getByText('بلاغ عالي الأولوية')).toBeInTheDocument();
-    // Resolved should be filtered out on client side
+    expect(screen.queryByText('inc-resolved')).not.toBeInTheDocument();
   });
 
   it('shows all incidents when كل الحالات filter is selected', async () => {
-    const mockOpenIncident = { ...mockIncidents[0], status: 'received' as const };
-    const mockResolvedIncident = { ...mockIncidents[0], id: 'inc-resolved', status: 'resolved' as const, title: 'بلاغ اتحلّ' };
+    const mockOpenIncident = { ...mockIncidents[0], status: 'received' } as AdminIncident;
+    const mockResolvedIncident = { ...mockIncidents[0], id: 'inc-resolved', status: 'resolved', title: 'بلاغ اتحلّ' } as AdminIncident;
     const { getIncidents } = await import('@/services/incidents');
     vi.mocked(getIncidents).mockResolvedValue([mockOpenIncident, mockResolvedIncident]);
 
     const { default: IncidentsPage } = await import('../page');
-    const user = userEvent.setup();
     render(<IncidentsPage />, { wrapper: createWrapper() });
 
     await waitFor(() => {
@@ -283,5 +289,39 @@ describe('IncidentsPage', () => {
     if (deptSelect) {
       expect(deptSelect).not.toBeDisabled();
     }
+  });
+
+  it('reads ?view=overdue from the URL and asks the API for overdue incidents', async () => {
+    search = 'view=overdue';
+    const { getIncidents } = await import('@/services/incidents');
+    const { default: IncidentsPage } = await import('../page');
+    render(<IncidentsPage />, { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(getIncidents).toHaveBeenCalledWith(expect.objectContaining({ overdue: true }));
+    });
+    expect(screen.getByRole('button', { name: /متأخرة/ })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('selecting a row shows the side panel; status change needs a note then patches', async () => {
+    const { getIncidents, patchIncident } = await import('@/services/incidents');
+    vi.mocked(getIncidents).mockResolvedValue(mockIncidents);
+    const { default: IncidentsPage } = await import('../page');
+    render(<IncidentsPage />, { wrapper: createWrapper() });
+
+    const title = await screen.findByText('بلاغ عالي الأولوية');
+    fireEvent.click(title.closest('tr')!);
+    const submit = await screen.findByRole('button', { name: /حدّث الحالة وابلّغ المواطنين/ });
+
+    fireEvent.change(screen.getByLabelText('الحالة الجديدة'), { target: { value: 'assigned' } });
+    fireEvent.click(submit);
+    expect(await screen.findByText('اكتب رسالة للمواطنين')).toBeInTheDocument();
+    expect(patchIncident).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByRole('textbox', { name: /رسالة للمواطنين/ }), { target: { value: 'تمام' } });
+    fireEvent.click(submit);
+    await waitFor(() =>
+      expect(patchIncident).toHaveBeenCalledWith('inc-1', { status: 'assigned', note: 'تمام' }),
+    );
   });
 });

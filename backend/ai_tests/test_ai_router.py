@@ -1,14 +1,14 @@
 from dataclasses import dataclass
 
+import pytest
 from fastapi import FastAPI, HTTPException
 from httpx import ASGITransport, AsyncClient
-import pytest
 
-from app.ai.router import create_triage_router
-from app.ai.image import PrivacyFilterUnavailable, prepare_photo
-from app.ai.schemas import CategoryId
 from ai_tests.test_ai_image import encoded_image
 from ai_tests.test_ai_triage import FakeProvider, model_suggestion
+from app.ai.image import PrivacyFilterUnavailable, prepare_photo
+from app.ai.router import create_triage_router
+from app.ai.schemas import CategoryId
 
 
 @dataclass
@@ -62,12 +62,8 @@ def make_client(
 @pytest.mark.anyio
 async def test_route_requires_auth_and_returns_camel_case_contract():
     app, _ = make_client(provider=FakeProvider(model_suggestion()))
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
-        response = await client.post(
-            "/triage", json={"description": "فيه حفرة في الشارع"}
-        )
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.post("/triage", json={"description": "فيه حفرة في الشارع"})
     assert response.status_code == 200
     body = response.json()
     assert body["options"][0]["categoryId"] == "pothole"
@@ -76,23 +72,15 @@ async def test_route_requires_auth_and_returns_camel_case_contract():
     assert body["duplicates"] == []
 
     unauthenticated, _ = make_client(user_id=None)
-    async with AsyncClient(
-        transport=ASGITransport(app=unauthenticated), base_url="http://test"
-    ) as client:
-        assert (
-            await client.post("/triage", json={"description": "حفرة"})
-        ).status_code == 401
+    async with AsyncClient(transport=ASGITransport(app=unauthenticated), base_url="http://test") as client:
+        assert (await client.post("/triage", json={"description": "حفرة"})).status_code == 401
 
 
 @pytest.mark.anyio
 async def test_route_returns_emergency_flag_for_urgent_description():
     app, _ = make_client(provider=FakeProvider(model_suggestion()))
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
-        response = await client.post(
-            "/triage", json={"description": "فيه ريحة غاز في العمارة"}
-        )
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.post("/triage", json={"description": "فيه ريحة غاز في العمارة"})
     assert response.status_code == 200
     body = response.json()
     assert body["emergency"] is True
@@ -102,9 +90,7 @@ async def test_route_returns_emergency_flag_for_urgent_description():
 @pytest.mark.anyio
 async def test_route_loads_photo_only_after_user_scoped_storage_check():
     app, calls = make_client(provider=FakeProvider(model_suggestion()))
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         response = await client.post(
             "/triage",
             json={
@@ -121,12 +107,8 @@ async def test_route_loads_photo_only_after_user_scoped_storage_check():
 async def test_route_omits_photo_from_model_when_free_tier_photo_analysis_is_disabled():
     provider = FakeProvider(model_suggestion())
     app, calls = make_client(provider=provider, photo_analysis_enabled=False)
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
-        response = await client.post(
-            "/triage", json={"description": "حفرة", "photoUri": "report_photos/a.jpg"}
-        )
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.post("/triage", json={"description": "حفرة", "photoUri": "report_photos/a.jpg"})
     assert response.status_code == 200
     assert calls["photo"] == []
     assert provider.calls == 1
@@ -136,12 +118,8 @@ async def test_route_omits_photo_from_model_when_free_tier_photo_analysis_is_dis
 async def test_route_requires_explicit_photo_consent_when_analysis_is_enabled():
     provider = FakeProvider(model_suggestion())
     app, calls = make_client(provider=provider)
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
-        response = await client.post(
-            "/triage", json={"description": "حفرة", "photoUri": "citizen-1/a.jpg"}
-        )
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.post("/triage", json={"description": "حفرة", "photoUri": "citizen-1/a.jpg"})
     assert response.status_code == 403
     assert calls["photo"] == []
     assert provider.calls == 0
@@ -154,9 +132,7 @@ async def test_route_fails_closed_if_privacy_filter_is_unavailable():
 
     provider = FakeProvider(model_suggestion())
     app, calls = make_client(provider=provider, photo_preparer=unavailable)
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         response = await client.post(
             "/triage",
             json={
@@ -174,9 +150,7 @@ async def test_route_fails_closed_if_privacy_filter_is_unavailable():
 async def test_route_rejects_arbitrary_urls_before_storage_or_provider_call():
     provider = FakeProvider(model_suggestion())
     app, calls = make_client(provider=provider)
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         response = await client.post(
             "/triage",
             json={"description": "حفرة", "photoUri": "https://example.com/a.jpg"},
@@ -193,9 +167,7 @@ async def test_route_does_not_call_model_when_photo_is_not_owned():
 
     provider = FakeProvider(model_suggestion())
     app, _ = make_client(loader=forbidden, provider=provider)
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         response = await client.post(
             "/triage",
             json={
@@ -211,9 +183,7 @@ async def test_route_does_not_call_model_when_photo_is_not_owned():
 @pytest.mark.anyio
 async def test_route_applies_geo_duplicate_lookup_to_suggested_categories():
     app, calls = make_client(provider=FakeProvider(model_suggestion()))
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         response = await client.post(
             "/triage",
             json={"description": "حفرة", "location": {"lat": 30.05, "lng": 31.3}},

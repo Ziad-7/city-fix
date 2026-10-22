@@ -97,8 +97,8 @@ export default function LoginPage() {
         <div className="top">
           <div className="lockup">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/fixthecity-mark.svg" alt="" width={48} height={48} />
-            <b>FixTheCity</b>
+            <img src="/brand/cityfix-mark.svg" alt="" width={48} height={48} />
+            <b>سيتي فيكس</b>
           </div>
           <h1>مركز القيادة</h1>
           <p>من البلاغ لحد ما يتصلّح. افرز، وزّع، وتابع شغل الحي من مكان واحد.</p>

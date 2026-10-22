@@ -1,28 +1,29 @@
 """Database models using SQLAlchemy 2.0."""
 
-from datetime import datetime, timezone
+import enum
+from datetime import UTC, datetime
+
 from sqlalchemy import (
-    Boolean,
+    JSON,
     BigInteger,
+    Boolean,
     Column,
+    DateTime,
+    Enum,
     Float,
     ForeignKey,
     Index,
     Integer,
-    JSON,
     String,
     Text,
-    DateTime,
-    Enum,
     UniqueConstraint,
 )
 from sqlalchemy.orm import declarative_base
-import enum
 
 
 def utc_now():
     """Get current time as timezone-aware UTC."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 Base = declarative_base()
@@ -121,9 +122,7 @@ class Incident(Base):
     area_underserved = Column(Boolean, default=False)
     work_order_id = Column(String(50), nullable=True)
     eta = Column(String(255), nullable=True)
-    last_reviewed_by = Column(
-        String(255), nullable=True
-    )  # I1: staff who confirmed triage
+    last_reviewed_by = Column(String(255), nullable=True)  # I1: staff who confirmed triage
     last_reviewed_at = Column(DateTime, nullable=True)  # I1: when triage was confirmed
     created_at = Column(DateTime, default=utc_now)
     updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
@@ -194,9 +193,7 @@ class WorkOrder(Base):
 
     id = Column(String(50), primary_key=True)  # WO-318, etc.
     incident_id = Column(String(50), ForeignKey("incidents.id"), nullable=True)
-    service_request_id = Column(
-        String(50), ForeignKey("service_requests.id"), nullable=True
-    )
+    service_request_id = Column(String(50), ForeignKey("service_requests.id"), nullable=True)
     department_id = Column(String(100), ForeignKey("departments.id"), nullable=False)
     team = Column(String(255), nullable=True)
     team_size = Column(Integer, nullable=True)
@@ -216,9 +213,7 @@ class ActivityLog(Base):
     __tablename__ = "activity_log"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    entity_type = Column(
-        String(50), nullable=False
-    )  # incident, service_request, work_order
+    entity_type = Column(String(50), nullable=False)  # incident, service_request, work_order
     entity_id = Column(String(50), nullable=False)
     status = Column(String(50), nullable=True)
     note = Column(Text, nullable=True)

@@ -70,13 +70,12 @@ export function TextField({
 
 export interface SelectFieldProps extends FieldBase {
   value: string;
-  onChange?: (v: string) => void;
+  onChange: (v: string) => void;
   options: { value: string; label: string; disabled?: boolean }[];
   variant?: 'field' | 'pill';
   required?: boolean;
   readOnly?: boolean;
   dir?: 'ltr' | 'rtl';
-  style?: React.CSSProperties;
 }
 
 export function SelectField({
@@ -93,7 +92,6 @@ export function SelectField({
   required,
   readOnly,
   dir,
-  style,
 }: SelectFieldProps) {
   if (variant === 'pill') {
     return (
@@ -104,7 +102,7 @@ export function SelectField({
         <select
           id={id}
           value={value}
-          onChange={(e) => onChange?.(e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
           disabled={disabled || readOnly}
           required={required}
           dir={dir}
@@ -121,14 +119,14 @@ export function SelectField({
   }
 
   return (
-    <div className={`ftc-field ${error ? 'has-error' : ''}`} style={style}>
+    <div className={`ftc-field ${error ? 'has-error' : ''}`}>
       <label htmlFor={id} className={hideLabel ? 'sr-only' : 'ftc-label'}>
         {label}
       </label>
       <select
         id={id}
         value={value}
-        onChange={(e) => onChange?.(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         disabled={disabled || readOnly}
         required={required}
         dir={dir}
@@ -160,7 +158,6 @@ export interface TextAreaProps extends FieldBase {
   rows?: number;
   maxLength?: number;
   placeholder?: string;
-  onBlur?: () => void;
 }
 
 export function TextArea({
@@ -175,7 +172,6 @@ export function TextArea({
   error,
   hideLabel,
   disabled,
-  onBlur,
 }: TextAreaProps) {
   return (
     <div className={`ftc-field ${error ? 'has-error' : ''}`}>
@@ -191,7 +187,6 @@ export function TextArea({
           maxLength={maxLength}
           placeholder={placeholder}
           disabled={disabled}
-          onBlur={onBlur}
           aria-invalid={!!error}
           aria-describedby={error ? `${id}-msg` : help ? `${id}-help` : undefined}
           className="ftc-textarea"

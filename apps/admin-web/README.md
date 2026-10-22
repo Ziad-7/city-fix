@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CityFix — City Command Center (`apps/admin-web`)
 
-## Getting Started
+The desktop dashboard for district staff: overview, incident queue sorted by priority, incident detail (status change with a note the citizen reads), work orders, service requests, live map and the repair budget planner. Arabic (Egyptian), right to left. It talks to the FastAPI backend in `backend/` (`/auth/staff-login`, `/incidents`, `/admin/*`, see [`docs/api-contract.md`](../../docs/api-contract.md)).
 
-First, run the development server:
+Next.js 16 (App Router) · TypeScript · Tailwind v4 + the design tokens in `src/app/ftc.css` · TanStack Query · Leaflet · zod · zustand (shared `usePrefs`) · Vitest · Playwright.
+
+## Run it
+
+Start the backend first (it seeds demo data on an empty DB):
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd backend && uv sync && uv run uvicorn app.main:app --reload --port 8000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then the dashboard:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd apps/admin-web
+npm ci
+npm run dev        # http://localhost:3001
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Port `3001` is the documented default. If something else already holds it, run `npx next dev -p 3002` instead (the backend accepts any localhost port for CORS).
 
-## Learn More
+| Env var | Default | Meaning |
+| --- | --- | --- |
+| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | Backend base URL, inlined at build time |
 
-To learn more about Next.js, take a look at the following resources:
+### Demo accounts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Who | Sign in | Sees |
+| --- | --- | --- |
+| Admin (سارة محمود) | `admin@cityfix.demo` / `FixCity2026!` | everything, budget, demo reset |
+| Roads staff (م. هشام عادل) | `roads@cityfix.demo` / `FixCity2026!` | only `صيانة الطرق` data |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Other departments: `sanitation@`, `lighting@`, `sewage@`, `water@`, `electricity@`, `parks@`, `utilities@`, `veterinary@` (`@cityfix.demo`, same password). The citizen demo account for the round trip is `01012345678` / code `123456`.
 
-## Deploy on Vercel
+## Commands
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Dev server on 3001 |
+| `npm run build && npm start` | Production build and server |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run lint` | ESLint (Next rules) |
+| `npm test` | Vitest (189 tests: logic, services, components, pages) |
+| `npm run e2e` | Playwright (13 tests), see below |
+| `npm run check:shared` | Fails if the copied mobile code drifted from `apps/mobile/src` |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## End-to-end tests
+
+`npx playwright test` starts its own backend (port 8020, throwaway `backend/_e2e.db`, needs `uv`) and its own web server (`next dev -p 3120`; on CI `next build && next start`). Install the browser once with `npx playwright install chromium`. Do not run `npm run dev` from this folder at the same time as the e2e run: Next allows one dev server per directory.
+
+## Shared code
+
+`src/domain/{types,categories}.ts`, `src/logic/priority.ts`, `src/utils/{time,geo,digits}.ts` are **unchanged copies** from `apps/mobile/src`, together with the two small files they import (`src/store/usePrefs.ts`, `src/i18n/labels.ts`). Change them in the mobile app first, then copy again; `npm run check:shared` (run by CI) reports drift. `src/platform/async-storage.ts` stands in for the React Native storage package (aliased in `tsconfig.json` and `vitest.config.ts`). Admin-only types live in `src/domain/admin-types.ts`.
+
+## Brand
+
+Name and logo follow [ADR 0003](../../docs/decisions/0003-rename-to-cityfix.md): CityFix / سيتي فيكس, assets in `public/brand/cityfix-*.svg`. The internal `--ftc-` CSS prefix stays on purpose.

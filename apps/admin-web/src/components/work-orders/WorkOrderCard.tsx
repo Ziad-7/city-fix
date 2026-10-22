@@ -43,14 +43,20 @@ function handleLinkClick(e: React.MouseEvent) {
 
 export function WorkOrderCard({ wo, selected, now, onOpen }: WorkOrderCardProps) {
   const late = wo.overdue && wo.status !== 'done';
-  const hoursLate = late ? Math.max(0, Math.round((now - new Date(wo.dueAt).getTime()) / (1000 * 60 * 60))) : 0;
-  const classes = ['wo', late && 'is-late', selected && 'is-open'].filter(Boolean).join(' ');
+  const hoursLate = late ? Math.round((now - new Date(wo.dueAt).getTime()) / (1000 * 60 * 60)) : 0;
+
+  const classes = ['wo'];
+  if (late) classes.push('is-late');
+  if (selected) classes.push('is-open');
+
+  const dueClasses = ['due'];
+  if (late) dueClasses.push('late');
 
   return (
     <div
       role="button"
       tabIndex={0}
-      className={classes}
+      className={classes.join(' ')}
       onClick={() => onOpen(wo.id)}
       onKeyDown={(e) => handleKeyDown(e, onOpen, wo.id)}
       aria-label={`أمر الشغل ${wo.id}: ${wo.title}`}
@@ -84,7 +90,7 @@ export function WorkOrderCard({ wo, selected, now, onOpen }: WorkOrderCardProps)
       </span>
       <span className="row">
         <Icon name={wo.status === 'done' ? 'check' : 'calendar'} size={14} />
-        <span className={['due', late && 'late'].filter(Boolean).join(' ')}>{dueLine(wo, now)}</span>
+        <span className={dueClasses.join(' ')}>{dueLine(wo, now)}</span>
       </span>
     </div>
   );

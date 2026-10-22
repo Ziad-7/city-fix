@@ -1,20 +1,22 @@
 """Tests for seed data integrity and completeness."""
 
-from datetime import timezone, timedelta
+from datetime import UTC, timedelta
+
 from sqlalchemy.orm import Session
+
+from app.helpers import now_utc
 from app.models import (
+    ActivityLog,
+    AISuggestion,
+    Category,
+    Department,
     Incident,
+    Profile,
     Report,
     ServiceRequest,
-    Department,
-    Profile,
     StaffAccount,
     WorkOrder,
-    Category,
-    AISuggestion,
-    ActivityLog,
 )
-from app.helpers import now_utc
 
 
 class TestSeedIncidents:
@@ -50,21 +52,12 @@ class TestSeedIncidents:
 
         incident_categories = set(i.category_id for i in db.query(Incident).all())
         # All 12 categories should be used
-        assert len(incident_categories) == 12, (
-            f"Expected 12 incident categories, got {len(incident_categories)}"
-        )
+        assert len(incident_categories) == 12, f"Expected 12 incident categories, got {len(incident_categories)}"
 
     def test_all_statuses_covered(self, db: Session):
         """All 6 incident statuses should be represented."""
         statuses = {i.status for i in db.query(Incident).all()}
-        expected_statuses = {
-            "received",
-            "triaged",
-            "assigned",
-            "in_progress",
-            "resolved",
-            "closed",
-        }
+        expected_statuses = {"received", "triaged", "assigned", "in_progress", "resolved", "closed"}
         for status in expected_statuses:
             assert status in statuses, f"Status '{status}' not found in incidents"
 
@@ -84,7 +77,7 @@ class TestSeedIncidents:
                 created_at = incident.created_at
                 # Ensure timezone awareness for comparison
                 if created_at.tzinfo is None:
-                    created_at = created_at.replace(tzinfo=timezone.utc)
+                    created_at = created_at.replace(tzinfo=UTC)
 
                 deadline = created_at + timedelta(days=category.target_days)
                 if now > deadline:
@@ -97,9 +90,7 @@ class TestSeedIncidents:
     def test_critical_severity_incidents(self, db: Session):
         """At least 2 incidents should have critical severity."""
         critical = [i for i in db.query(Incident).all() if i.severity == "critical"]
-        assert len(critical) >= 2, (
-            f"Expected >=2 critical incidents, got {len(critical)}"
-        )
+        assert len(critical) >= 2, f"Expected >=2 critical incidents, got {len(critical)}"
 
     def test_resolved_in_last_7_days(self, db: Session):
         """At least 4 incidents should be resolved within last 7 days (from activity_log timestamp)."""
@@ -118,7 +109,7 @@ class TestSeedIncidents:
             # Ensure timezone awareness
             at = activity.at
             if at.tzinfo is None:
-                at = at.replace(tzinfo=timezone.utc)
+                at = at.replace(tzinfo=UTC)
 
             if seven_days_ago <= at <= now:
                 resolved_within_7d.append(activity.entity_id)
@@ -146,7 +137,7 @@ class TestSeedIncidents:
             # Ensure timezone awareness
             at = activity.at
             if at.tzinfo is None:
-                at = at.replace(tzinfo=timezone.utc)
+                at = at.replace(tzinfo=UTC)
 
             if fourteen_days_ago <= at < seven_days_ago:
                 resolved_7_to_14d_ago.append(activity.entity_id)
@@ -236,9 +227,7 @@ class TestSeedStaffAccounts:
 
     def test_admin_account_exists(self, db: Session):
         """Admin account should be present."""
-        account = (
-            db.query(StaffAccount).filter_by(email="admin@fixthecity.demo").first()
-        )
+        account = db.query(StaffAccount).filter_by(email="admin@cityfix.demo").first()
         assert account is not None
         profile = db.query(Profile).filter_by(id=account.profile_id).first()
         assert profile.name == "سارة محمود"
@@ -246,9 +235,7 @@ class TestSeedStaffAccounts:
 
     def test_roads_staff_account_exists(self, db: Session):
         """Roads staff account should be present."""
-        account = (
-            db.query(StaffAccount).filter_by(email="roads@fixthecity.demo").first()
-        )
+        account = db.query(StaffAccount).filter_by(email="roads@cityfix.demo").first()
         assert account is not None
         assert account.department_id == "roads"
         profile = db.query(Profile).filter_by(id=account.profile_id).first()
@@ -258,16 +245,16 @@ class TestSeedStaffAccounts:
     def test_staff_accounts_per_department(self, db: Session):
         """Staff accounts should exist for major departments."""
         expected_dept_emails = [
-            "admin@fixthecity.demo",
-            "roads@fixthecity.demo",
-            "sanitation@fixthecity.demo",
-            "lighting@fixthecity.demo",
-            "sewage@fixthecity.demo",
-            "water@fixthecity.demo",
-            "electricity@fixthecity.demo",
-            "parks@fixthecity.demo",
-            "utilities@fixthecity.demo",
-            "veterinary@fixthecity.demo",
+            "admin@cityfix.demo",
+            "roads@cityfix.demo",
+            "sanitation@cityfix.demo",
+            "lighting@cityfix.demo",
+            "sewage@cityfix.demo",
+            "water@cityfix.demo",
+            "electricity@cityfix.demo",
+            "parks@cityfix.demo",
+            "utilities@cityfix.demo",
+            "veterinary@cityfix.demo",
         ]
         for email in expected_dept_emails:
             account = db.query(StaffAccount).filter_by(email=email).first()
@@ -276,20 +263,14 @@ class TestSeedStaffAccounts:
     def test_staff_login_works(self, db: Session, client):
         """Staff login should work for both demo accounts."""
         # Admin login
-        response = client.post(
-            "/auth/staff-login",
-            json={"email": "admin@fixthecity.demo", "password": "FixCity2026!"},
-        )
+        response = client.post("/auth/staff-login", json={"email": "admin@cityfix.demo", "password": "FixCity2026!"})
         assert response.status_code == 200
         data = response.json()
         assert data["role"] == "admin"
         assert "token" in data
 
         # Roads staff login
-        response = client.post(
-            "/auth/staff-login",
-            json={"email": "roads@fixthecity.demo", "password": "FixCity2026!"},
-        )
+        response = client.post("/auth/staff-login", json={"email": "roads@cityfix.demo", "password": "FixCity2026!"})
         assert response.status_code == 200
         data = response.json()
         assert data["role"] == "staff"
@@ -325,7 +306,7 @@ class TestSeedWorkOrders:
             # Ensure timezone awareness for comparison
             due_at = wo.due_at
             if due_at.tzinfo is None:
-                due_at = due_at.replace(tzinfo=timezone.utc)
+                due_at = due_at.replace(tzinfo=UTC)
 
             if due_at < now:
                 overdue_wos.append(wo)
@@ -350,32 +331,20 @@ class TestSeedAISuggestions:
 
             has_triage = False
             for report in reports:
-                suggestions = (
-                    db.query(AISuggestion)
-                    .filter_by(report_id=report.id, kind="triage")
-                    .all()
-                )
+                suggestions = db.query(AISuggestion).filter_by(report_id=report.id, kind="triage").all()
 
                 if suggestions:
                     has_triage = True
                     for suggestion in suggestions:
                         payload = suggestion.payload or {}
-                        assert payload.get("confirmed") is False, (
-                            f"Suggestion for {incident.id} has confirmed != False"
-                        )
+                        assert payload.get("confirmed") is False, f"Suggestion for {incident.id} has confirmed != False"
                         confidences = payload.get("confidences", {})
-                        total_confidence = (
-                            sum(confidences.values())
-                            if isinstance(confidences, dict)
-                            else 0
-                        )
+                        total_confidence = sum(confidences.values()) if isinstance(confidences, dict) else 0
                         assert total_confidence <= 1.0, (
                             f"Suggestion for {incident.id} has sum(confidences)={total_confidence} > 1"
                         )
 
-            assert has_triage, (
-                f"Incident {incident.id} (with {len(reports)} reports) has no triage suggestion"
-            )
+            assert has_triage, f"Incident {incident.id} (with {len(reports)} reports) has no triage suggestion"
 
 
 class TestMobileIncidentsSync:
@@ -522,35 +491,17 @@ class TestMobileIncidentsSync:
             assert incident is not None, f"INC-{expected['n']} not found"
 
             # Compare fields
-            assert incident.title == expected["title"], (
-                f"INC-{expected['n']} title mismatch"
-            )
-            assert incident.address == expected["address"], (
-                f"INC-{expected['n']} address mismatch"
-            )
-            assert abs(incident.lat - expected["lat"]) < 0.0001, (
-                f"INC-{expected['n']} lat mismatch"
-            )
-            assert abs(incident.lng - expected["lng"]) < 0.0001, (
-                f"INC-{expected['n']} lng mismatch"
-            )
-            assert incident.status == expected["status"], (
-                f"INC-{expected['n']} status mismatch"
-            )
-            assert incident.severity == expected["severity"], (
-                f"INC-{expected['n']} severity mismatch"
-            )
-            assert incident.followers_count == expected["followers"], (
-                f"INC-{expected['n']} followers mismatch"
-            )
+            assert incident.title == expected["title"], f"INC-{expected['n']} title mismatch"
+            assert incident.address == expected["address"], f"INC-{expected['n']} address mismatch"
+            assert abs(incident.lat - expected["lat"]) < 0.0001, f"INC-{expected['n']} lat mismatch"
+            assert abs(incident.lng - expected["lng"]) < 0.0001, f"INC-{expected['n']} lng mismatch"
+            assert incident.status == expected["status"], f"INC-{expected['n']} status mismatch"
+            assert incident.severity == expected["severity"], f"INC-{expected['n']} severity mismatch"
+            assert incident.followers_count == expected["followers"], f"INC-{expected['n']} followers mismatch"
 
             # Check reporters count
-            reporters_count = (
-                db.query(Report).filter_by(incident_id=incident.id).count()
-            )
-            assert reporters_count == expected["reporters"], (
-                f"INC-{expected['n']} reporters count mismatch"
-            )
+            reporters_count = db.query(Report).filter_by(incident_id=incident.id).count()
+            assert reporters_count == expected["reporters"], f"INC-{expected['n']} reporters count mismatch"
 
             # Check sensitive place
             assert incident.sensitive_place == expected["sensitivePlace"], (
@@ -558,9 +509,7 @@ class TestMobileIncidentsSync:
             )
 
             # Check work order
-            assert incident.work_order_id == expected["workOrder"], (
-                f"INC-{expected['n']} workOrder mismatch"
-            )
+            assert incident.work_order_id == expected["workOrder"], f"INC-{expected['n']} workOrder mismatch"
 
 
 class TestSeedInvariants:
@@ -572,18 +521,14 @@ class TestSeedInvariants:
         for i in incidents:
             assert i.department_id is not None
             dept = db.query(Department).filter_by(id=i.department_id).first()
-            assert dept is not None, (
-                f"Incident {i.id} has invalid department {i.department_id}"
-            )
+            assert dept is not None, f"Incident {i.id} has invalid department {i.department_id}"
 
     def test_work_order_incident_links(self, db: Session):
         """Work orders with incident_id should have valid incidents."""
-        orders = db.query(WorkOrder).filter(WorkOrder.incident_id.is_not(None)).all()
+        orders = db.query(WorkOrder).filter(WorkOrder.incident_id.isnot(None)).all()
         for wo in orders:
             incident = db.query(Incident).filter_by(id=wo.incident_id).first()
-            assert incident is not None, (
-                f"Work order {wo.id} links to non-existent incident {wo.incident_id}"
-            )
+            assert incident is not None, f"Work order {wo.id} links to non-existent incident {wo.incident_id}"
 
     def test_priority_factors_structure(self, db: Session):
         """Priority factors should have correct structure."""

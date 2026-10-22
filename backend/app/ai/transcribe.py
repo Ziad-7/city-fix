@@ -122,12 +122,7 @@ def inspect_audio(audio: bytes, mime_type: str) -> AudioAnalysis:
         raise ValueError("voice-note audio check timed out") from error
     except (OSError, TypeError) as error:
         raise ValueError("voice-note audio details could not be checked") from error
-    if (
-        not math.isfinite(duration)
-        or duration <= 0
-        or math.isnan(peak_dbfs)
-        or peak_dbfs == math.inf
-    ):
+    if not math.isfinite(duration) or duration <= 0 or math.isnan(peak_dbfs) or peak_dbfs == math.inf:
         raise ValueError("voice-note audio details could not be checked")
     return AudioAnalysis(duration_seconds=duration, peak_dbfs=peak_dbfs)
 
@@ -229,33 +224,22 @@ class GeminiAudioTranscriber:
                 },
             },
         }
-        url = (
-            "https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{self.model}:generateContent"
-        )
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
         try:
-            async with httpx.AsyncClient(
-                timeout=self.timeout_seconds, transport=self.transport
-            ) as client:
-                response = await client.post(
-                    url, headers={"x-goog-api-key": self.api_key}, json=request
-                )
+            async with httpx.AsyncClient(timeout=self.timeout_seconds, transport=self.transport) as client:
+                response = await client.post(url, headers={"x-goog-api-key": self.api_key}, json=request)
             response.raise_for_status()
             payload = response.json()
             candidate = payload["candidates"][0]
             if candidate.get("finishReason") in {"SAFETY", "RECITATION"}:
                 raise ProviderError("Gemini declined the transcription request")
-            text = "".join(
-                part.get("text", "") for part in candidate["content"]["parts"]
-            )
+            text = "".join(part.get("text", "") for part in candidate["content"]["parts"])
             return Transcription.model_validate(json.loads(text))
         except ProviderError:
             raise
         except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as error:
             # Provider bodies may contain user audio or text; never log them.
-            raise ProviderError(
-                f"Gemini transcription failed ({type(error).__name__})"
-            ) from error
+            raise ProviderError(f"Gemini transcription failed ({type(error).__name__})") from error
 
 
 CurrentUserDependency = Callable[..., Any]
@@ -279,11 +263,7 @@ def create_transcription_router(
         request: TranscriptionRequest,
         current_user: Any = Depends(get_current_user),
     ) -> Transcription:
-        user_id = (
-            current_user
-            if isinstance(current_user, str)
-            else getattr(current_user, "id", None)
-        )
+        user_id = current_user if isinstance(current_user, str) else getattr(current_user, "id", None)
         if not isinstance(user_id, str) or not user_id.strip():
             raise HTTPException(401, "محتاج تسجل دخول الأول")
         if provider is None:
@@ -298,13 +278,9 @@ def create_transcription_router(
         except HTTPException:
             raise
         except asyncio.TimeoutError as error:
-            raise HTTPException(
-                504, "التسجيل طويل أو الخدمة اتأخرت؛ اكتب الوصف بنفسك."
-            ) from error
+            raise HTTPException(504, "التسجيل طويل أو الخدمة اتأخرت؛ اكتب الوصف بنفسك.") from error
         except Exception as error:
-            logger.warning(
-                "Could not load caller-owned voice note (%s)", type(error).__name__
-            )
+            logger.warning("Could not load caller-owned voice note (%s)", type(error).__name__)
             raise HTTPException(404, "التسجيل مش متاح.") from error
         if len(audio) > MAX_TRANSCRIPTION_AUDIO_BYTES:
             raise HTTPException(413, "حجم التسجيل أكبر من المسموح (٥ ميجابايت).")
@@ -321,13 +297,9 @@ def create_transcription_router(
         except HTTPException:
             raise
         except asyncio.TimeoutError as error:
-            raise HTTPException(
-                422, "مقدرناش نتحقق من التسجيل؛ جرّب مقطع أقصر أو اكتب الوصف."
-            ) from error
+            raise HTTPException(422, "مقدرناش نتحقق من التسجيل؛ جرّب مقطع أقصر أو اكتب الوصف.") from error
         except ValueError as error:
-            raise HTTPException(
-                422, "ملف التسجيل غير صالح أو مدته غير واضحة."
-            ) from error
+            raise HTTPException(422, "ملف التسجيل غير صالح أو مدته غير واضحة.") from error
         except RuntimeError as error:
             logger.error("Voice duration validation is not configured")
             raise HTTPException(503, "التحقق من التسجيل مش متاح دلوقتي.") from error
@@ -336,17 +308,11 @@ def create_transcription_router(
                 provider.transcribe(audio, mime_type),
                 timeout=max(0.01, deadline - loop.time()),
             )
-            return Transcription.model_validate(
-                result.model_dump(mode="json", by_alias=True)
-            )
+            return Transcription.model_validate(result.model_dump(mode="json", by_alias=True))
         except asyncio.TimeoutError as error:
-            raise HTTPException(
-                504, "التسجيل طويل أو الخدمة اتأخرت؛ اكتب الوصف بنفسك."
-            ) from error
+            raise HTTPException(504, "التسجيل طويل أو الخدمة اتأخرت؛ اكتب الوصف بنفسك.") from error
         except Exception as error:
             logger.warning("Voice transcription unavailable (%s)", type(error).__name__)
-            raise HTTPException(
-                503, "مقدرناش نحوّل التسجيل لنص؛ اكتب الوصف بنفسك."
-            ) from error
+            raise HTTPException(503, "مقدرناش نحوّل التسجيل لنص؛ اكتب الوصف بنفسك.") from error
 
     return router

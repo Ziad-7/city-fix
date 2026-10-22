@@ -1,6 +1,5 @@
 'use client';
 
-import { Icon } from '@/components/Icon';
 import type { WorkOrderStatus } from '@/domain/admin-types';
 
 export interface KanbanColumnProps {

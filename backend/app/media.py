@@ -1,31 +1,30 @@
-"""Storage adapter contract: no service-role keys or bucket URLs in routes."""
+"""Optional private-media storage adapter (signed uploads and short-lived signed reads).
+
+When ``app.state.media_storage`` is None (the local demo), uploads use the local stub in
+``app.routers.uploads`` and stored paths are returned unchanged. When a storage is configured,
+paths sent with a report must have been uploaded by the caller, and reads are signed.
+No service-role keys or bucket URLs belong in route code.
+"""
 
 from typing import Protocol
 
 from fastapi import HTTPException, Request
 
-from app.auth import User
-from app.schemas.citizen import Report
-
 
 class MediaStorage(Protocol):
-    def sign_upload(
-        self, user_id: str, kind: str, content_type: str
-    ) -> tuple[str, str]:
+    def sign_upload(self, user_id: str, kind: str, content_type: str) -> tuple[str, str]:
         """Return (HTTPS upload URL, new owner-scoped random path), no overwrite."""
         ...
 
     def require_uploaded(self, user_id: str, path: str, kind: str) -> None:
-        """Verify ownership, completed upload, MIME/size and safe path; else 4xx."""
+        """Verify ownership, completed upload, MIME/size and safe path; else raise 4xx."""
         ...
 
     def sign_read(self, user_id: str, path: str) -> str:
         """Return a short-lived HTTPS read URL after route-level authorization."""
         ...
 
-    async def read_approved(
-        self, user_id: str, path: str, kind: str, consent: bool
-    ) -> bytes:
+    async def read_approved(self, user_id: str, path: str, kind: str, consent: bool) -> bytes:
         """Verify ownership and consent; the caller must redact before any model call."""
         ...
 
@@ -40,33 +39,27 @@ def require_media(storage: MediaStorage | None) -> MediaStorage:
     return storage
 
 
-def validate_media(
-    user: User, photos: list[str], voice: str | None, storage: MediaStorage | None
-) -> None:
+def validate_media(user_id: str, photos: list[str], voice: str | None, storage: MediaStorage | None) -> None:
+    """With a storage configured, every photo/voice path must be an upload owned by the caller."""
+    if storage is None:
+        return
     for path in photos:
-        require_media(storage).require_uploaded(user.id, path, "report_photo")
+        storage.require_uploaded(user_id, path, "report_photo")
     if voice:
-        require_media(storage).require_uploaded(user.id, voice, "voice_note")
+        storage.require_uploaded(user_id, voice, "voice_note")
 
 
-def report_for_reader(
-    report: Report, user: User, storage: MediaStorage | None
-) -> Report:
-    # Called only after ownership/admin checks. Never mutate persisted paths.
-    photos = [
-        require_media(storage).sign_read(user.id, path) for path in report.photo_uris
-    ]
-    voice = (
-        require_media(storage).sign_read(user.id, report.voice_note_uri)
-        if report.voice_note_uri
-        else None
-    )
-    return report.model_copy(
-        update={
-            "photo_uris": photos,
-            "voice_note_uri": voice,
-            "reporter_id": ""
-            if report.anonymous and user.id != report.reporter_id
-            else report.reporter_id,
-        }
-    )
+def report_for_reader(view: dict, reader_id: str, storage: MediaStorage | None) -> dict:
+    """Contract ``Report`` for a reader already authorized (owner or admin).
+
+    Signs media reads when a storage is configured, and hides the reporter id of an anonymous
+    report from everyone except its author. Never mutates the persisted paths.
+    """
+    out = dict(view)
+    if storage is not None:
+        out["photoUris"] = [storage.sign_read(reader_id, path) for path in view.get("photoUris", [])]
+        if view.get("voiceNoteUri"):
+            out["voiceNoteUri"] = storage.sign_read(reader_id, view["voiceNoteUri"])
+    if view.get("anonymous") and view.get("reporterId") != reader_id:
+        out["reporterId"] = ""
+    return out

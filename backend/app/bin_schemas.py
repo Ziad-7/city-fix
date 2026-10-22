@@ -6,14 +6,13 @@ from typing import Literal
 from pydantic import ConfigDict, Field, StringConstraints
 from typing_extensions import Annotated
 
-from app.admin_schemas import CamelCaseModel
+from app.schemas import CamelModel
 
 
-class BinReadingInput(CamelCaseModel):
+class BinReadingInput(CamelModel):
     model_config = ConfigDict(
         alias_generator=lambda value: "".join(
-            word.capitalize() if index else word
-            for index, word in enumerate(value.split("_"))
+            word.capitalize() if index else word for index, word in enumerate(value.split("_"))
         ),
         populate_by_name=True,
         extra="forbid",
@@ -29,20 +28,18 @@ class BinReadingInput(CamelCaseModel):
     fw: Annotated[str, StringConstraints(min_length=1, max_length=40)] | None = None
 
 
-class BinReadingsBatch(CamelCaseModel):
+class BinReadingsBatch(CamelModel):
     model_config = ConfigDict(populate_by_name=True, extra="forbid")
 
     readings: list[BinReadingInput] = Field(min_length=1, max_length=50)
 
 
-class CreateBinInput(CamelCaseModel):
+class CreateBinInput(CamelModel):
     model_config = ConfigDict(populate_by_name=True, extra="forbid")
 
     id: Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9_-]{1,64}$")]
     name: Annotated[str, StringConstraints(min_length=1, max_length=255)]
-    district: Annotated[str, StringConstraints(min_length=1, max_length=100)] = (
-        "القاهرة"
-    )
+    district: Annotated[str, StringConstraints(min_length=1, max_length=100)] = "القاهرة"
     department_id: str | None = None
     lat: float = Field(ge=-90, le=90, allow_inf_nan=False)
     lng: float = Field(ge=-180, le=180, allow_inf_nan=False)
@@ -52,7 +49,7 @@ class CreateBinInput(CamelCaseModel):
     interval_min: int = Field(default=30, ge=1, le=1440)
 
 
-class BinReadingResponse(CamelCaseModel):
+class BinReadingResponse(CamelModel):
     id: int
     bin_id: str
     seq: int
@@ -68,7 +65,7 @@ class BinReadingResponse(CamelCaseModel):
     is_hot: bool
 
 
-class BinResponse(CamelCaseModel):
+class BinResponse(CamelModel):
     id: str
     name: str
     district: str

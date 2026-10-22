@@ -9,7 +9,6 @@ import { getDepartments, getTeams } from '@/services/departments';
 import { ErrorState, Skeleton } from '@/components/ui/States';
 import { Card } from '@/components/ui/Card';
 import IncidentDetailContent from '@/components/incident-detail/IncidentDetailContent';
-import { ApiError } from '@/lib/http';
 
 export default function IncidentDetailPage() {
   const params = useParams<{ id: string }>();
@@ -30,7 +29,7 @@ export default function IncidentDetailPage() {
 
   const { data: workOrder } = useQuery({
     queryKey: ['work-order', incident?.workOrderId],
-    queryFn: () => (incident?.workOrderId ? getWorkOrderService(incident.workOrderId) : null),
+    queryFn: () => (incident?.workOrderId ? getWorkOrderService(incident.workOrderId) : Promise.resolve(undefined)),
     enabled: !!incident?.workOrderId,
     retry: 1,
   });
@@ -50,39 +49,37 @@ export default function IncidentDetailPage() {
   });
 
   if (error) {
-    const status = error instanceof ApiError
-      ? error.status
-      : (error as Error & { response?: { status?: number } })?.response?.status;
+    const status = (error as { status?: number }).status;
     if (status === 404) {
       return (
-        <main className="ftc-admin-main">
+        <div className="ftc-admin-main">
           <div className="page">
             <ErrorState variant="notfound" onRetry={() => refetch()} />
           </div>
-        </main>
+        </div>
       );
     }
     if (status === 403) {
       return (
-        <main className="ftc-admin-main">
+        <div className="ftc-admin-main">
           <div className="page">
             <ErrorState variant="forbidden" />
           </div>
-        </main>
+        </div>
       );
     }
     return (
-      <main className="ftc-admin-main">
+      <div className="ftc-admin-main">
         <div className="page">
           <ErrorState variant="error" onRetry={() => refetch()} />
         </div>
-      </main>
+      </div>
     );
   }
 
   if (isLoading) {
     return (
-      <main className="ftc-admin-main">
+      <div className="ftc-admin-main">
         <div className="page" aria-busy="true">
           <nav className="crumbs">
             <Skeleton variant="line" width="200px" />
@@ -90,7 +87,7 @@ export default function IncidentDetailPage() {
           <h1>
             <Skeleton variant="title" width="300px" />
           </h1>
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 380px', gap: '24px', maxWidth: '100%' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 380px', gap: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <Card>
                 <Skeleton variant="block" height={300} />
@@ -106,37 +103,35 @@ export default function IncidentDetailPage() {
             </div>
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 
   if (!incident) {
     return (
-      <main className="ftc-admin-main">
+      <div className="ftc-admin-main">
         <div className="page">
           <ErrorState variant="notfound" />
         </div>
-      </main>
+      </div>
     );
   }
 
-  const canAct = session?.role === 'admin' || departments.some(
-    (department) => department.id === session?.department && department.nameAr === incident.department,
-  );
+  const canAct = session?.role === 'admin' || incident.department === session?.department;
 
   return (
-    <main className="ftc-admin-main">
+    <div className="ftc-admin-main">
       <div className="page">
         <IncidentDetailContent
           incident={incident}
           similarIncidents={similarIncidents}
-          workOrder={workOrder ?? undefined}
+          workOrder={workOrder}
           departments={departments}
           teams={teams}
           canAct={canAct}
           session={session ?? undefined}
         />
       </div>
-    </main>
+    </div>
   );
 }

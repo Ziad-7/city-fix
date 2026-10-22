@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardHead } from '@/components/ui/Card';
 import { KvList } from '@/components/ui/KvList';
@@ -12,7 +11,7 @@ import { useToast } from '@/components/ui/Toast';
 import { createWorkOrder } from '@/services/workOrders';
 import { formatDayDM, formatDueLabel, hoursLateOf } from '@/lib/format';
 import { WORK_ORDER_LABEL_AR } from '@/lib/text';
-import type { AdminIncident, Department, Team, WorkOrder } from '@/domain/admin-types';
+import type { AdminIncident, Department, WorkOrder, Team } from '@/domain/admin-types';
 import { getCategory } from '@/domain/categories';
 
 interface WorkOrderCardProps {
@@ -30,9 +29,7 @@ export default function WorkOrderCard({
   departments,
   teams: allTeams,
   canAct,
-  disabledReason,
 }: WorkOrderCardProps) {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const toast = useToast();
   const [formBusy, setFormBusy] = useState(false);
@@ -42,10 +39,8 @@ export default function WorkOrderCard({
   const category = getCategory(incident.categoryId);
 
   // Get teams for selected department
-  const selectedDept = departments.find((d) => d.id === selectedDepartment || d.nameAr === selectedDepartment);
-  const selectedDepartmentId = selectedDept?.id ?? selectedDepartment;
   const departmentTeams = allTeams
-    .filter((t) => t.department === selectedDepartmentId || t.department === selectedDept?.nameAr)
+    .filter((t) => t.department === selectedDepartment)
     .map((t) => ({
       name: t.name,
       size: t.size,
@@ -58,70 +53,35 @@ export default function WorkOrderCard({
     return `${dept.nameAr} (الحي)`;
   };
 
+  const selectedDept = departments.find((d) => d.nameAr === selectedDepartment);
+
   const handleCreateWorkOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const selectedDept = departments.find((d) => d.id === selectedDepartmentId || d.nameAr === selectedDepartment);
-    if (!selectedDept) return;
-
-    if (selectedDept.external) {
-      // External department - no form needed
-      try {
-        setFormBusy(true);
-        const result = await createWorkOrder({
-          incidentId: incident.id,
-          department: selectedDepartmentId,
-          dueAt: incident.dueAt,
-        });
-
+    if (formBusy) return;
+    const team = selectedDept?.external ? undefined : allTeams.find((t) => t.name === selectedTeam);
+    try {
+      setFormBusy(true);
+      const result = await createWorkOrder({
+        incidentId: incident.id,
+        department: selectedDepartment,
+        ...(team ? { team: team.name, teamSize: team.size } : {}),
+        dueAt: incident.dueAt,
+      });
+      await queryClient.invalidateQueries({ queryKey: ['incident', incident.id] });
+      await queryClient.invalidateQueries({ queryKey: ['work-order'] });
+      await queryClient.invalidateQueries({ queryKey: ['incidents'] });
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      toast.success(`اتعمل أمر الشغل ${result.id}.`);
+    } catch (err) {
+      const status = (err as { status?: number }).status;
+      if (status === 409) {
+        toast.error('البلاغ ده ليه أمر شغل بالفعل');
         await queryClient.invalidateQueries({ queryKey: ['incident', incident.id] });
-        await queryClient.invalidateQueries({ queryKey: ['incidents'] });
-        await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-
-        toast.success(`اتعمل أمر الشغل ${result.id}.`);
-      } catch (err) {
-        const errorMsg = (err instanceof Error ? err.message : null) || 'حصلت مشكلة. جرّب تاني.';
-        if (errorMsg.includes('بالفعل')) {
-          toast.error(errorMsg);
-          await queryClient.invalidateQueries({ queryKey: ['incident', incident.id] });
-        } else {
-          toast.error(errorMsg);
-        }
-      } finally {
-        setFormBusy(false);
+      } else {
+        toast.error((err as Error).message || 'حصلت مشكلة. جرّب تاني.');
       }
-    } else {
-      // Internal department - requires team selection
-      if (!selectedTeam) {
-        toast.error('اختار فريق');
-        return;
-      }
-
-      try {
-        setFormBusy(true);
-        const result = await createWorkOrder({
-          incidentId: incident.id,
-          department: selectedDepartmentId,
-          team: selectedTeam,
-          dueAt: incident.dueAt,
-        });
-
-        await queryClient.invalidateQueries({ queryKey: ['incident', incident.id] });
-        await queryClient.invalidateQueries({ queryKey: ['incidents'] });
-        await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-
-        toast.success(`اتعمل أمر الشغل ${result.id}.`);
-      } catch (err) {
-        const errorMsg = (err instanceof Error ? err.message : null) || 'حصلت مشكلة. جرّب تاني.';
-        if (errorMsg.includes('بالفعل')) {
-          toast.error(errorMsg);
-          await queryClient.invalidateQueries({ queryKey: ['incident', incident.id] });
-        } else {
-          toast.error(errorMsg);
-        }
-      } finally {
-        setFormBusy(false);
-      }
+    } finally {
+      setFormBusy(false);
     }
   };
 
@@ -145,7 +105,7 @@ export default function WorkOrderCard({
             { label: 'المهام', value: `${workOrder.tasks.filter((t) => t.done).length} من ${workOrder.tasks.length}` },
           ]}
         />
-        <Button variant="secondary" block size="sm" href={`/work-orders?open=${workOrder.id}`} style={{ marginTop: '16px' }}>
+        <Button variant="secondary" block size="sm" href={`/work-orders?wo=${workOrder.id}`} style={{ marginTop: '16px' }}>
           افتح أمر الشغل
         </Button>
       </Card>
@@ -160,10 +120,10 @@ export default function WorkOrderCard({
         <SelectField
           id="dep"
           label="الجهة"
-          value={selectedDepartmentId}
+          value={selectedDepartment}
           onChange={setSelectedDepartment}
           options={departments.map((d) => ({
-            value: d.id,
+            value: d.nameAr,
             label: getDepartmentLabel(d),
           }))}
           disabled={!canAct}

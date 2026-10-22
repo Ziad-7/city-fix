@@ -26,9 +26,11 @@ async def find_nearby_incidents(
     user_id: str,
 ) -> dict[str, list[dict]]:
     """Find nearby open incidents, separating the caller's reports from join suggestions."""
-    return await asyncio.to_thread(
-        _find_nearby_with_session, category_id, lat, lng, radius_m, user_id
-    )
+    return await asyncio.to_thread(_find_nearby_with_session, category_id, lat, lng, radius_m, user_id)
+
+
+def find_nearby_incidents_with_session(db: Session, *args, **kwargs):
+    return _find_nearby(db, *args, **kwargs)
 
 
 def _find_nearby_with_session(
@@ -59,22 +61,15 @@ def _find_nearby(
         .all()
     )
 
-    nearby = [
-        (incident, haversine_m(lat, lng, incident.lat, incident.lng))
-        for incident in candidates
-    ]
-    nearby = [
-        (incident, distance) for incident, distance in nearby if distance <= radius_m
-    ]
+    nearby = [(incident, haversine_m(lat, lng, incident.lat, incident.lng)) for incident in candidates]
+    nearby = [(incident, distance) for incident, distance in nearby if distance <= radius_m]
     if not nearby:
         return {"duplicates": [], "alreadyReported": []}
 
     incident_ids = [incident.id for incident, _ in nearby]
     own_reports = {
         report.incident_id: report
-        for report in db.query(Report)
-        .filter(Report.reporter_id == user_id, Report.incident_id.in_(incident_ids))
-        .all()
+        for report in db.query(Report).filter(Report.reporter_id == user_id, Report.incident_id.in_(incident_ids)).all()
     }
     followed_ids = {
         row.incident_id

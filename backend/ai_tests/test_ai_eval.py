@@ -1,5 +1,5 @@
-from app.ai.schemas import TriageSuggestion
 from ai_eval.run_eval import score_cases
+from app.ai.schemas import TriageSuggestion
 
 
 def test_score_cases_reports_top_one_top_three_severity_and_fallback():

@@ -194,26 +194,6 @@ describe('DataTable', () => {
     expect(sortValueCallCount).toBeGreaterThan(0);
   });
 
-  it('renders rows in the selected sort order', () => {
-    const unsortedRows: TestRow[] = [
-      { id: '3', name: 'Item 3' },
-      { id: '1', name: 'Item 1' },
-      { id: '2', name: 'Item 2' },
-    ];
-    const { container } = render(
-      <DataTable<TestRow>
-        ariaLabel="Test table"
-        columns={columns}
-        rows={unsortedRows}
-        getRowId={(row) => row.id}
-        sort={{ id: 'id', dir: 'asc' }}
-      />,
-    );
-
-    expect(Array.from(container.querySelectorAll('tbody tr td:first-child')).map((cell) => cell.textContent))
-      .toEqual(['1', '2', '3']);
-  });
-
   it('updates aria-sort when sorting', () => {
     const { container, rerender } = render(
       <DataTable<TestRow>

@@ -1,14 +1,14 @@
+import sys
 from io import BytesIO
 from statistics import pstdev
-import sys
 from types import SimpleNamespace
 
 import pytest
 from PIL import Image
 
 from app.ai.image import (
-    InvalidPhotoError,
     MAX_IMAGE_SIDE,
+    InvalidPhotoError,
     detect_faces_and_plates,
     prepare_photo,
 )
@@ -31,9 +31,7 @@ def test_prepare_photo_normalizes_png_to_small_jpeg_without_exif():
 
 
 def test_prepare_photo_normalizes_webp_to_jpeg():
-    normalized = prepare_photo(
-        encoded_image(image_format="WEBP"), region_detector=lambda _: []
-    )
+    normalized = prepare_photo(encoded_image(image_format="WEBP"), region_detector=lambda _: [])
     with Image.open(BytesIO(normalized)) as image:
         assert image.format == "JPEG"
 
@@ -47,9 +45,7 @@ def test_prepare_photo_blurs_detected_sensitive_region():
     source = BytesIO()
     image.save(source, format="JPEG", quality=100)
 
-    normalized = prepare_photo(
-        source.getvalue(), region_detector=lambda _: [(30, 20, 50, 40)]
-    )
+    normalized = prepare_photo(source.getvalue(), region_detector=lambda _: [(30, 20, 50, 40)])
     with Image.open(BytesIO(normalized)) as redacted:
         before = image.crop((35, 25, 75, 55)).convert("L")
         after = redacted.crop((35, 25, 75, 55)).convert("L")
@@ -88,16 +84,16 @@ def test_face_and_plate_cascades_return_regions(monkeypatch):
 
 
 def test_prepare_photo_downscales_long_edge():
-    normalized = prepare_photo(
-        encoded_image(size=(2000, 1000)), region_detector=lambda _: []
-    )
+    normalized = prepare_photo(encoded_image(size=(2000, 1000)), region_detector=lambda _: [])
     with Image.open(BytesIO(normalized)) as image:
         assert max(image.size) == MAX_IMAGE_SIDE
         assert image.size == (MAX_IMAGE_SIDE, 800)
 
 
 @pytest.mark.parametrize(
-    "data", [b"", b"not an image", b"\xff\xd8\xff" + b"x" * (5 * 1024 * 1024)]
+    "data",
+    [b"", b"not an image", b"\xff\xd8\xff" + b"x" * (5 * 1024 * 1024)],
+    ids=["empty", "not-an-image", "oversized"],  # a 5 MB test id overflows Windows env vars
 )
 def test_prepare_photo_rejects_invalid_or_oversized_input(data):
     with pytest.raises(InvalidPhotoError):

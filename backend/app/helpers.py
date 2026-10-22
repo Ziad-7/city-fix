@@ -1,16 +1,16 @@
 """Helper functions."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 
 def now_utc() -> datetime:
     """Get current time as timezone-aware UTC."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def iso_z(dt: datetime) -> str:
     """Convert datetime to ISO 8601 UTC string with Z suffix."""
     if dt.tzinfo is None:
         # Assume naive datetime is UTC
-        dt = dt.replace(tzinfo=timezone.utc)
+        dt = dt.replace(tzinfo=UTC)
     return dt.isoformat(timespec="seconds").replace("+00:00", "Z")

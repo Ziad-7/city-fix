@@ -16,9 +16,7 @@ logger = logging.getLogger(__name__)
 CurrentUserDependency = Callable[..., Any]
 PhotoLoader = Callable[[str, str, bool], Awaitable[bytes]]
 PhotoPreparer = Callable[[bytes], bytes]
-NearbyLookup = Callable[
-    [CategoryId, float, float, float, str], Awaitable[dict[str, list[dict]]]
-]
+NearbyLookup = Callable[[CategoryId, float, float, float, str], Awaitable[dict[str, list[dict]]]]
 TRIAGE_DEADLINE_SECONDS = 4.0
 
 
@@ -42,9 +40,7 @@ def create_triage_router(
     model_provider = provider if provider is not None else GeminiClient.from_env()
     analyze_photos = photo_analysis_enabled
     if analyze_photos is None:
-        analyze_photos = (
-            os.getenv("GEMINI_PHOTO_ANALYSIS_ENABLED", "false").lower() == "true"
-        )
+        analyze_photos = os.getenv("GEMINI_PHOTO_ANALYSIS_ENABLED", "false").lower() == "true"
 
     @router.post(
         "/triage",
@@ -55,11 +51,7 @@ def create_triage_router(
         request: TriageRequest,
         current_user: Any = Depends(get_current_user),
     ) -> TriageSuggestion:
-        user_id = (
-            current_user
-            if isinstance(current_user, str)
-            else getattr(current_user, "id", None)
-        )
+        user_id = current_user if isinstance(current_user, str) else getattr(current_user, "id", None)
         if not isinstance(user_id, str) or not user_id.strip():
             raise HTTPException(status_code=401, detail="محتاج تسجل دخول الأول")
 
@@ -72,29 +64,21 @@ def create_triage_router(
                     detail="لازم توافق على تحليل الصورة بالذكاء الاصطناعي.",
                 )
             try:
-                raw_photo = await load_authorized_photo(
-                    request.photo_uri, user_id, request.photo_consent
-                )
+                raw_photo = await load_authorized_photo(request.photo_uri, user_id, request.photo_consent)
                 photo_bytes = prepare_authorized_photo(raw_photo)
                 photo_mime_type = "image/jpeg"
             except HTTPException:
                 raise
             except InvalidPhotoError as error:
-                raise HTTPException(
-                    status_code=400, detail="الصورة مش واضحة أو حجمها كبير"
-                ) from error
+                raise HTTPException(status_code=400, detail="الصورة مش واضحة أو حجمها كبير") from error
             except PrivacyFilterUnavailable as error:
-                raise HTTPException(
-                    status_code=503, detail="فلتر خصوصية الصور مش متاح دلوقتي."
-                ) from error
+                raise HTTPException(status_code=503, detail="فلتر خصوصية الصور مش متاح دلوقتي.") from error
             except Exception as error:
                 logger.warning(
                     "Could not load caller-owned triage photo (%s)",
                     type(error).__name__,
                 )
-                raise HTTPException(
-                    status_code=404, detail="الصورة مش متاحة"
-                ) from error
+                raise HTTPException(status_code=404, detail="الصورة مش متاحة") from error
 
         loop = asyncio.get_running_loop()
         deadline = loop.time() + TRIAGE_DEADLINE_SECONDS
@@ -136,17 +120,11 @@ def create_triage_router(
                     for item in result.get("alreadyReported", []):
                         already_reported[item["incidentId"]] = item
                 except Exception as error:
-                    logger.warning(
-                        "Nearby incident lookup unavailable (%s)", type(error).__name__
-                    )
+                    logger.warning("Nearby incident lookup unavailable (%s)", type(error).__name__)
                     break
 
-        duplicate_items = sorted(
-            duplicates.values(), key=lambda item: item["distanceM"]
-        )
-        own_items = sorted(
-            already_reported.values(), key=lambda item: item["distanceM"]
-        )
+        duplicate_items = sorted(duplicates.values(), key=lambda item: item["distanceM"])
+        own_items = sorted(already_reported.values(), key=lambda item: item["distanceM"])
         values = suggestion.model_dump()
         values["duplicates"] = duplicate_items
         values["already_reported"] = own_items

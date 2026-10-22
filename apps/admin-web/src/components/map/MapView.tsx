@@ -2,10 +2,10 @@
 
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvent, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Tooltip, AttributionControl, useMap, Circle } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import 'leaflet/dist/leaflet.css';
-import { pinIcon } from './map-icons';
-import type { MapPinModel } from './map-utils';
+import { pinIcon, clusterIcon, type MapPinModel } from './map-utils';
 
 export interface MapViewProps {
   pins: MapPinModel[];
@@ -25,8 +25,9 @@ function MapContent({
   onSelect,
   circle,
   interactive,
+  cluster = true,
   onMapReady,
-}: Omit<MapViewProps, 'center' | 'zoom'> & { cluster?: boolean }) {
+}: Omit<MapViewProps, 'center' | 'zoom'>) {
   const map = useMap();
   const selectedRef = useRef<MapPinModel | null>(null);
 
@@ -43,11 +44,23 @@ function MapContent({
     }
   }, [selected, map]);
 
-  // Handle keyboard navigation
-  useMapEvent('keydown', () => {
-    if (!interactive) return;
-    // Implementation for marker focus would go here
-  });
+  const markers = pins
+    .filter((p) => p.id !== selectedId)
+    .map((p) => (
+      <Marker
+        key={p.id}
+        position={[p.lat, p.lng]}
+        icon={pinIcon(p.kind, false, p.near)}
+        title={`${p.id} · ${p.title}`}
+        zIndexOffset={p.kind === 'critical' ? 1000 : 0}
+        keyboard={interactive}
+        eventHandlers={interactive ? { click: () => onSelect?.(p.id) } : {}}
+      >
+        <Tooltip direction="top" offset={[0, -34]} className="ftc-tip">
+          {p.id} · {p.title}
+        </Tooltip>
+      </Marker>
+    ));
 
   return (
     <>
@@ -56,6 +69,8 @@ function MapContent({
         maxZoom={19}
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
       />
+
+      <AttributionControl position="bottomleft" prefix={false} />
 
       {circle && (
         <Circle
@@ -71,25 +86,20 @@ function MapContent({
         />
       )}
 
-      {pins.filter(p => p.id !== selectedId).map(p => (
-        <Marker
-          key={p.id}
-          position={[p.lat, p.lng]}
-          icon={pinIcon(p.kind, false, p.near)}
-          title={`${p.id} · ${p.title}`}
-          zIndexOffset={p.kind === 'critical' ? 1000 : 0}
-          eventHandlers={
-            interactive
-              ? {
-                  click: () => onSelect?.(p.id),
-                }
-              : {}
-          }
-          keyboard={interactive}
+      {cluster ? (
+        <MarkerClusterGroup
+          chunkedLoading
+          maxClusterRadius={48}
+          showCoverageOnHover={false}
+          spiderfyOnMaxZoom
+          disableClusteringAtZoom={17}
+          iconCreateFunction={clusterIcon}
         >
-          <Popup className="ftc-tip">{p.id} · {p.title}</Popup>
-        </Marker>
-      ))}
+          {markers}
+        </MarkerClusterGroup>
+      ) : (
+        markers
+      )}
 
       {selected && (
         <Marker position={[selected.lat, selected.lng]} icon={pinIcon(selected.kind, true)} zIndexOffset={2000} />
@@ -105,6 +115,7 @@ export function MapView({
   center = [30.056, 31.33],
   zoom = 15,
   interactive = true,
+  cluster = true,
   circle,
   onMapReady,
 }: MapViewProps) {
@@ -120,7 +131,7 @@ export function MapView({
         keyboard={interactive}
         style={{ height: '100%', width: '100%' }}
       >
-        <MapContent pins={pins} selectedId={selectedId} onSelect={onSelect} circle={circle} interactive={interactive} onMapReady={onMapReady} />
+        <MapContent pins={pins} selectedId={selectedId} onSelect={onSelect} circle={circle} interactive={interactive} cluster={cluster} onMapReady={onMapReady} />
       </MapContainer>
     </div>
   );

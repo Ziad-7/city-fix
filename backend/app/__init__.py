@@ -1,1 +1,1 @@
-"""FixTheCity backend modules."""
+"""CityFix Backend."""

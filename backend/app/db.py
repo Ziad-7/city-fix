@@ -1,16 +1,15 @@
 """Database connection and session management."""
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session, sessionmaker
+
 from app.config import settings
 from app.models import Base
 
 # SQLAlchemy engine
 engine = create_engine(
     settings.database_url,
-    connect_args={"check_same_thread": False}
-    if "sqlite" in settings.database_url
-    else {},
+    connect_args={"check_same_thread": False} if "sqlite" in settings.database_url else {},
     echo=False,
 )
 
@@ -32,15 +31,22 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
 
-def reset_db():
-    """Drop and recreate all tables, then seed."""
-    Base.metadata.drop_all(bind=engine)
-    init_db()
-    # Seed after reset
+def reset_session(db: Session) -> None:
+    """Delete every row on this session's database and re-seed it (demo reset)."""
     from app.seed import seed_db
 
+    for table in reversed(Base.metadata.sorted_tables):
+        db.execute(table.delete())
+    db.commit()
+    seed_db(db)
+
+
+def reset_db():
+    """Drop and recreate all tables, then seed (CLI / scripts)."""
+    Base.metadata.drop_all(bind=engine)
+    init_db()
     db = SessionLocal()
     try:
-        seed_db(db)
+        reset_session(db)
     finally:
         db.close()

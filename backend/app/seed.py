@@ -1,23 +1,25 @@
 """Database seeding with realistic demo data."""
 
 from datetime import datetime, timedelta
+
 from sqlalchemy.orm import Session
-from app.models import (
-    Profile,
-    Department,
-    Category,
-    Incident,
-    Report,
-    ServiceRequest,
-    WorkOrder,
-    ActivityLog,
-    StaffAccount,
-    AISuggestion,
-)
+
+from app.auth import hash_password
+from app.helpers import now_utc
 from app.logic.priority import compute_priority
 from app.logic.timeline import incident_timeline_entry, service_timeline_entry
-from app.staff_auth import password_hash
-from app.helpers import now_utc
+from app.models import (
+    ActivityLog,
+    AISuggestion,
+    Category,
+    Department,
+    Incident,
+    Profile,
+    Report,
+    ServiceRequest,
+    StaffAccount,
+    WorkOrder,
+)
 
 # ========================================================================
 # Teams constant (exported for GET /admin/teams)
@@ -48,46 +50,15 @@ def seed_db(db: Session) -> None:
     # Departments
     # ========================================================================
     departments = [
-        Department(
-            id="roads", name_ar="صيانة الطرق", district="القاهرة · حي مدينة نصر أول"
-        ),
-        Department(
-            id="sanitation",
-            name_ar="هيئة النظافة والتجميل",
-            district="القاهرة · حي مدينة نصر أول",
-        ),
-        Department(
-            id="lighting", name_ar="إنارة الحي", district="القاهرة · حي مدينة نصر أول"
-        ),
-        Department(
-            id="sewage",
-            name_ar="الصرف الصحي",
-            district="القاهرة · حي مدينة نصر أول",
-            external_hotline="175",
-        ),
-        Department(
-            id="water",
-            name_ar="شركة مياه الشرب",
-            district="القاهرة",
-            external_hotline="125",
-        ),
-        Department(
-            id="electricity",
-            name_ar="شركة الكهرباء",
-            district="القاهرة",
-            external_hotline="121",
-        ),
-        Department(
-            id="veterinary",
-            name_ar="الطب البيطري",
-            district="القاهرة · حي مدينة نصر أول",
-        ),
-        Department(
-            id="parks", name_ar="حدائق الحي", district="القاهرة · حي مدينة نصر أول"
-        ),
-        Department(
-            id="utilities", name_ar="مرافق الحي", district="القاهرة · حي مدينة نصر أول"
-        ),
+        Department(id="roads", name_ar="صيانة الطرق", district="القاهرة · حي مدينة نصر أول"),
+        Department(id="sanitation", name_ar="هيئة النظافة والتجميل", district="القاهرة · حي مدينة نصر أول"),
+        Department(id="lighting", name_ar="إنارة الحي", district="القاهرة · حي مدينة نصر أول"),
+        Department(id="sewage", name_ar="الصرف الصحي", district="القاهرة · حي مدينة نصر أول", external_hotline="175"),
+        Department(id="water", name_ar="شركة مياه الشرب", district="القاهرة", external_hotline="125"),
+        Department(id="electricity", name_ar="شركة الكهرباء", district="القاهرة", external_hotline="121"),
+        Department(id="veterinary", name_ar="الطب البيطري", district="القاهرة · حي مدينة نصر أول"),
+        Department(id="parks", name_ar="حدائق الحي", district="القاهرة · حي مدينة نصر أول"),
+        Department(id="utilities", name_ar="مرافق الحي", district="القاهرة · حي مدينة نصر أول"),
     ]
     for d in departments:
         db.add(d)
@@ -109,15 +80,7 @@ def seed_db(db: Session) -> None:
         ("broken_sidewalk", "رصيف مكسور", False, "low", "roads", 7, 3500),
         ("other", "حاجة تانية", False, "low", "utilities", 7, 1000),
     ]
-    for (
-        cat_id,
-        label,
-        danger,
-        default_sev,
-        dept_id,
-        target_days,
-        cost,
-    ) in categories_data:
+    for cat_id, label, danger, default_sev, dept_id, target_days, cost in categories_data:
         cat = Category(
             id=cat_id,
             label_ar=label,
@@ -134,15 +97,11 @@ def seed_db(db: Session) -> None:
     # ========================================================================
     # Citizen profiles (demo user + anonymous)
     # ========================================================================
-    demo_citizen = Profile(
-        id="citizen-001", phone="+201012345678", name="أحمد محمد", role="citizen"
-    )
+    demo_citizen = Profile(id="citizen-001", phone="+201012345678", name="أحمد محمد", role="citizen")
     db.add(demo_citizen)
 
     # Anonymous reporter profile for anonymous reports
-    anonymous_citizen = Profile(
-        id="citizen-anonymous", phone=None, name="بلاغ بدون اسم", role="citizen"
-    )
+    anonymous_citizen = Profile(id="citizen-anonymous", phone=None, name="بلاغ بدون اسم", role="citizen")
     db.add(anonymous_citizen)
 
     # ========================================================================
@@ -157,8 +116,8 @@ def seed_db(db: Session) -> None:
     db.add(admin_profile)
     admin_account = StaffAccount(
         profile_id="admin-001",
-        email="admin@fixthecity.demo",
-        password_hash=password_hash.hash("FixCity2026!"),
+        email="admin@cityfix.demo",
+        password_hash=hash_password("FixCity2026!"),
     )
     db.add(admin_account)
 
@@ -171,64 +130,22 @@ def seed_db(db: Session) -> None:
     db.add(staff_profile)
     staff_account = StaffAccount(
         profile_id="staff-001",
-        email="roads@fixthecity.demo",
-        password_hash=password_hash.hash("FixCity2026!"),
+        email="roads@cityfix.demo",
+        password_hash=hash_password("FixCity2026!"),
         department_id="roads",
     )
     db.add(staff_account)
 
     # Additional staff accounts per department
     dept_staff = [
-        (
-            "sanitation",
-            "staff-sanitation",
-            "نادية علي",
-            "sanitation@fixthecity.demo",
-            "القاهرة · حي مدينة نصر أول",
-        ),
-        (
-            "lighting",
-            "staff-lighting",
-            "محمود أحمد",
-            "lighting@fixthecity.demo",
-            "القاهرة · حي مدينة نصر أول",
-        ),
-        (
-            "sewage",
-            "staff-sewage",
-            "سلام محمد",
-            "sewage@fixthecity.demo",
-            "القاهرة · حي مدينة نصر أول",
-        ),
-        ("water", "staff-water", "حسان علي", "water@fixthecity.demo", "القاهرة"),
-        (
-            "electricity",
-            "staff-electricity",
-            "صادق محمود",
-            "electricity@fixthecity.demo",
-            "القاهرة",
-        ),
-        (
-            "parks",
-            "staff-parks",
-            "فاطمة الزهراء",
-            "parks@fixthecity.demo",
-            "القاهرة · حي مدينة نصر أول",
-        ),
-        (
-            "utilities",
-            "staff-utilities",
-            "عمر كمال",
-            "utilities@fixthecity.demo",
-            "القاهرة · حي مدينة نصر أول",
-        ),
-        (
-            "veterinary",
-            "staff-vet",
-            "دينا ياسر",
-            "veterinary@fixthecity.demo",
-            "القاهرة · حي مدينة نصر أول",
-        ),
+        ("sanitation", "staff-sanitation", "نادية علي", "sanitation@cityfix.demo", "القاهرة · حي مدينة نصر أول"),
+        ("lighting", "staff-lighting", "محمود أحمد", "lighting@cityfix.demo", "القاهرة · حي مدينة نصر أول"),
+        ("sewage", "staff-sewage", "سلام محمد", "sewage@cityfix.demo", "القاهرة · حي مدينة نصر أول"),
+        ("water", "staff-water", "حسان علي", "water@cityfix.demo", "القاهرة"),
+        ("electricity", "staff-electricity", "صادق محمود", "electricity@cityfix.demo", "القاهرة"),
+        ("parks", "staff-parks", "فاطمة الزهراء", "parks@cityfix.demo", "القاهرة · حي مدينة نصر أول"),
+        ("utilities", "staff-utilities", "عمر كمال", "utilities@cityfix.demo", "القاهرة · حي مدينة نصر أول"),
+        ("veterinary", "staff-vet", "دينا ياسر", "veterinary@cityfix.demo", "القاهرة · حي مدينة نصر أول"),
     ]
 
     for dept_id, profile_id, name, email, district in dept_staff:
@@ -242,7 +159,7 @@ def seed_db(db: Session) -> None:
         staff_acct = StaffAccount(
             profile_id=profile_id,
             email=email,
-            password_hash=password_hash.hash("FixCity2026!"),
+            password_hash=hash_password("FixCity2026!"),
             department_id=dept_id,
         )
         db.add(staff_acct)
@@ -768,21 +685,7 @@ def seed_db(db: Session) -> None:
     ]
 
     for row in incidents_data:
-        (
-            n,
-            cat_id,
-            title,
-            address,
-            lat,
-            lng,
-            status,
-            severity,
-            age_h,
-            followers,
-            reporters,
-            sensitive,
-            wo_id,
-        ) = row
+        n, cat_id, title, address, lat, lng, status, severity, age_h, followers, reporters, sensitive, wo_id = row
         created = now - timedelta(hours=age_h)
         days_open = max(0, int(age_h / 24))
 
@@ -802,14 +705,7 @@ def seed_db(db: Session) -> None:
 
         # Build timeline
         timeline = []
-        status_order = [
-            "received",
-            "triaged",
-            "assigned",
-            "in_progress",
-            "resolved",
-            "closed",
-        ]
+        status_order = ["received", "triaged", "assigned", "in_progress", "resolved", "closed"]
         up_to = status_order.index(status) if status in status_order else 0
         for i, st in enumerate(status_order[: up_to + 1]):
             # For resolved incidents, use specific resolution times instead of proportional
@@ -828,12 +724,8 @@ def seed_db(db: Session) -> None:
                 elif n == 534:
                     at = now - timedelta(days=5)
             else:
-                at = created + timedelta(
-                    seconds=(now - created).total_seconds() * i / max(1, up_to)
-                )
-            entry = incident_timeline_entry(
-                st, cat.label_ar, severity, dept.name_ar, at
-            )
+                at = created + timedelta(seconds=(now - created).total_seconds() * i / max(1, up_to))
+            entry = incident_timeline_entry(st, cat.label_ar, severity, dept.name_ar, at)
             timeline.append(entry)
 
         incident = Incident(
@@ -902,9 +794,7 @@ def seed_db(db: Session) -> None:
                 reporter_id=reporter_id,
                 incident_id=incident.id,
                 category_id=cat_id,
-                description="البلاغ عن هذه المشكلة"
-                if not is_anonymous
-                else "بلاغ بدون اسم",
+                description="البلاغ عن هذه المشكلة" if not is_anonymous else "بلاغ بدون اسم",
                 photo_paths=[],
                 lat=lat,
                 lng=lng,
@@ -979,39 +869,9 @@ def seed_db(db: Session) -> None:
             6000,
         ),
         # Status: assigned (5)
-        (
-            "WO-321",
-            "INC-502",
-            "الصرف الصحي",
-            "فريق الصرف 1",
-            5,
-            "محمد سالم",
-            "assigned",
-            now + timedelta(days=1),
-            1800,
-        ),
-        (
-            "WO-324",
-            "INC-505",
-            "الصرف الصحي",
-            "فريق الصرف 2",
-            5,
-            "خالد حسن",
-            "assigned",
-            now,
-            6000,
-        ),
-        (
-            "WO-328",
-            "INC-518",
-            "الصرف الصحي",
-            "فريق الصرف 2",
-            5,
-            "خالد حسن",
-            "assigned",
-            now + timedelta(days=2),
-            6000,
-        ),
+        ("WO-321", "INC-502", "الصرف الصحي", "فريق الصرف 1", 5, "محمد سالم", "assigned", now + timedelta(days=1), 1800),
+        ("WO-324", "INC-505", "الصرف الصحي", "فريق الصرف 2", 5, "خالد حسن", "assigned", now, 6000),
+        ("WO-328", "INC-518", "الصرف الصحي", "فريق الصرف 2", 5, "خالد حسن", "assigned", now + timedelta(days=2), 6000),
         (
             "WO-329",
             "INC-521",
@@ -1035,17 +895,7 @@ def seed_db(db: Session) -> None:
             7500,
         ),
         # Status: open (2 with incidents assigned)
-        (
-            "WO-335",
-            "INC-531",
-            "صيانة الطرق",
-            "فريق الطرق 3",
-            6,
-            "فاطمة محمود",
-            "open",
-            now + timedelta(days=3),
-            3500,
-        ),
+        ("WO-335", "INC-531", "صيانة الطرق", "فريق الطرق 3", 6, "فاطمة محمود", "open", now + timedelta(days=3), 3500),
         (
             "WO-336",
             "INC-527",
@@ -1058,39 +908,9 @@ def seed_db(db: Session) -> None:
             2000,
         ),
         # Status: done (3 linked to resolved incidents)
-        (
-            "WO-310",
-            "INC-503",
-            "إنارة الحي",
-            "فريق الإنارة 1",
-            3,
-            "صالح محمد",
-            "done",
-            now - timedelta(days=3),
-            900,
-        ),
-        (
-            "WO-311",
-            "INC-508",
-            "حدائق الحي",
-            "فريق الحدائق 1",
-            4,
-            "أمينة علي",
-            "done",
-            now - timedelta(days=5),
-            2200,
-        ),
-        (
-            "WO-312",
-            "INC-528",
-            "صيانة الطرق",
-            "فريق الطرق 1",
-            4,
-            "م. هشام عادل",
-            "done",
-            now - timedelta(days=6),
-            4500,
-        ),
+        ("WO-310", "INC-503", "إنارة الحي", "فريق الإنارة 1", 3, "صالح محمد", "done", now - timedelta(days=3), 900),
+        ("WO-311", "INC-508", "حدائق الحي", "فريق الحدائق 1", 4, "أمينة علي", "done", now - timedelta(days=5), 2200),
+        ("WO-312", "INC-528", "صيانة الطرق", "فريق الطرق 1", 4, "م. هشام عادل", "done", now - timedelta(days=6), 4500),
     ]
 
     for idx, wo_data in enumerate(work_orders_data):
@@ -1107,13 +927,12 @@ def seed_db(db: Session) -> None:
         # Find department by name
         dept = db.query(Department).filter_by(name_ar=dept_name).first()
 
+        # Determine if external
+
         tasks = []
         if "طرق" in dept_name or "صيانة" in dept_name:
             tasks = [
-                {
-                    "label": "تأمين الموقع وتحويل المرور",
-                    "done": status in ["in_progress", "done"],
-                },
+                {"label": "تأمين الموقع وتحويل المرور", "done": status in ["in_progress", "done"]},
                 {"label": "تكسير الحفرة وتنضيفها", "done": status == "done"},
                 {"label": "ردم وسفلتة", "done": status == "done"},
                 {"label": "رفع صور بعد الإصلاح", "done": status == "done"},
@@ -1193,12 +1012,7 @@ def seed_db(db: Session) -> None:
             "SRV-1998",
             "citizen-004",
             "bulky_waste",
-            {
-                "items": ["كنبة قديمة"],
-                "day": days[0].isoformat(),
-                "slot": "morning",
-                "payment": "cash",
-            },
+            {"items": ["كنبة قديمة"], "day": days[0].isoformat(), "slot": "morning", "payment": "cash"},
             "resolved",
             now - timedelta(days=1),
             True,
@@ -1207,12 +1021,7 @@ def seed_db(db: Session) -> None:
             "SRV-2001",
             "citizen-001",
             "bulky_waste",
-            {
-                "items": ["كنبة", "تلاجة قديمة"],
-                "day": days[0].isoformat(),
-                "slot": "morning",
-                "payment": "cash",
-            },
+            {"items": ["كنبة", "تلاجة قديمة"], "day": days[0].isoformat(), "slot": "morning", "payment": "cash"},
             "assigned",
             now - timedelta(hours=5),
             False,
@@ -1221,12 +1030,7 @@ def seed_db(db: Session) -> None:
             "SRV-2002",
             "citizen-002",
             "tree_maintenance",
-            {
-                "items": ["قص فروع الشجرة"],
-                "day": days[1].isoformat(),
-                "slot": "afternoon",
-                "payment": "fawry",
-            },
+            {"items": ["قص فروع الشجرة"], "day": days[1].isoformat(), "slot": "afternoon", "payment": "fawry"},
             "received",
             now - timedelta(hours=3),
             True,
@@ -1235,12 +1039,7 @@ def seed_db(db: Session) -> None:
             "SRV-2003",
             "citizen-003",
             "bulky_waste",
-            {
-                "items": ["خزانة", "مرتبة قديمة"],
-                "day": days[1].isoformat(),
-                "slot": "morning",
-                "payment": "instapay",
-            },
+            {"items": ["خزانة", "مرتبة قديمة"], "day": days[1].isoformat(), "slot": "morning", "payment": "instapay"},
             "in_progress",
             now - timedelta(hours=2),
             True,
@@ -1249,12 +1048,7 @@ def seed_db(db: Session) -> None:
             "SRV-2004",
             "citizen-005",
             "tree_maintenance",
-            {
-                "items": ["قص وتشذيب"],
-                "day": days[2].isoformat(),
-                "slot": "morning",
-                "payment": "wallet",
-            },
+            {"items": ["قص وتشذيب"], "day": days[2].isoformat(), "slot": "morning", "payment": "wallet"},
             "assigned",
             now - timedelta(hours=1),
             False,
@@ -1263,12 +1057,7 @@ def seed_db(db: Session) -> None:
             "SRV-2005",
             "citizen-006",
             "bulky_waste",
-            {
-                "items": ["ثلاجة", "غسالة"],
-                "day": days[3].isoformat(),
-                "slot": "afternoon",
-                "payment": "cash",
-            },
+            {"items": ["ثلاجة", "غسالة"], "day": days[3].isoformat(), "slot": "afternoon", "payment": "cash"},
             "received",
             now - timedelta(hours=8),
             False,
@@ -1277,12 +1066,7 @@ def seed_db(db: Session) -> None:
             "SRV-2006",
             "citizen-007",
             "tree_maintenance",
-            {
-                "items": ["إزالة شجرة"],
-                "day": days[4].isoformat(),
-                "slot": "morning",
-                "payment": "fawry",
-            },
+            {"items": ["إزالة شجرة"], "day": days[4].isoformat(), "slot": "morning", "payment": "fawry"},
             "in_progress",
             now - timedelta(hours=6),
             True,
@@ -1291,12 +1075,7 @@ def seed_db(db: Session) -> None:
             "SRV-2007",
             "citizen-008",
             "bulky_waste",
-            {
-                "items": ["خشب", "معادن"],
-                "day": days[5].isoformat(),
-                "slot": "afternoon",
-                "payment": "instapay",
-            },
+            {"items": ["خشب", "معادن"], "day": days[5].isoformat(), "slot": "afternoon", "payment": "instapay"},
             "assigned",
             now - timedelta(hours=4),
             True,
@@ -1305,27 +1084,14 @@ def seed_db(db: Session) -> None:
             "SRV-2008",
             "citizen-009",
             "tree_maintenance",
-            {
-                "items": ["صيانة الحديقة"],
-                "day": days[0].isoformat(),
-                "slot": "morning",
-                "payment": "cash",
-            },
+            {"items": ["صيانة الحديقة"], "day": days[0].isoformat(), "slot": "morning", "payment": "cash"},
             "received",
             now - timedelta(hours=2),
             False,
         ),
     ]
 
-    for (
-        srv_id,
-        citizen_id,
-        srv_type,
-        details,
-        status,
-        created,
-        paid,
-    ) in service_requests_data:
+    for srv_id, citizen_id, srv_type, details, status, created, paid in service_requests_data:
         citizen = db.query(Profile).filter_by(id=citizen_id).first()
         if not citizen:
             citizen = Profile(id=citizen_id, role="citizen")
@@ -1376,12 +1142,7 @@ def seed_db(db: Session) -> None:
 
     for incident in received_incidents:
         # Get first linked report for this incident
-        first_report = (
-            db.query(Report)
-            .filter_by(incident_id=incident.id)
-            .order_by(Report.created_at)
-            .first()
-        )
+        first_report = db.query(Report).filter_by(incident_id=incident.id).order_by(Report.created_at).first()
 
         actual_cat = incident.category_id
         category = db.query(Category).filter_by(id=actual_cat).first()
@@ -1411,12 +1172,7 @@ def seed_db(db: Session) -> None:
         ai_suggestion_counter[0] += 1
 
     for incident in triaged_to_confirm:
-        first_report = (
-            db.query(Report)
-            .filter_by(incident_id=incident.id)
-            .order_by(Report.created_at)
-            .first()
-        )
+        first_report = db.query(Report).filter_by(incident_id=incident.id).order_by(Report.created_at).first()
 
         actual_cat = incident.category_id
         category = db.query(Category).filter_by(id=actual_cat).first()

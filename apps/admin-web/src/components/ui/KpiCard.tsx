@@ -3,15 +3,13 @@ export interface KpiCardProps {
   value: React.ReactNode;
   valueTone?: 'default' | 'urgent';
   note?: React.ReactNode;
-  sub?: React.ReactNode;
   noteTone?: 'bad' | 'good' | 'mute';
   size?: 'lg' | 'md';
   footer?: React.ReactNode;
   loading?: boolean;
 }
 
-export function KpiCard({ label, value, valueTone, note, sub, noteTone = 'mute', size = 'lg', footer, loading }: KpiCardProps) {
-  note = note ?? sub;
+export function KpiCard({ label, value, valueTone, note, noteTone = 'mute', size = 'lg', footer, loading }: KpiCardProps) {
   const classes = ['ftc-card', 'kpi', size === 'md' && 'kpi--md'].filter(Boolean).join(' ');
 
   if (loading) {

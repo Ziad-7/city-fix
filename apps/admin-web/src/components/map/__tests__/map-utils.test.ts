@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pinKind, incidentToPin, filterPins, clusterPins } from '../map-utils';
+import { pinKind, incidentToPin, filterPins, pinSvg, isCriticalOpen } from '../map-utils';
 import type { AdminIncident } from '@/domain/admin-types';
 
 const mockIncident = (overrides?: Partial<AdminIncident>): AdminIncident => ({
@@ -119,22 +119,23 @@ describe('filterPins', () => {
   });
 });
 
-describe('clusterPins', () => {
-  it('should not cluster at high zoom level', () => {
-    const pins = [
-      { id: '1', lat: 30.0, lng: 31.0, kind: 'received' as const, title: 'Test' },
-      { id: '2', lat: 30.001, lng: 31.001, kind: 'received' as const, title: 'Test' },
-    ];
-    const clusters = clusterPins(pins, 17);
-    expect(clusters).toHaveLength(2);
+describe('critical detection', () => {
+  it('treats severity=critical with a low score as critical when open', () => {
+    const inc = mockIncident({ severity: 'critical', priority: { score: 30, factors: [] }, status: 'assigned' });
+    expect(isCriticalOpen(inc)).toBe(true);
+    expect(pinKind(inc)).toBe('critical');
   });
 
-  it('should cluster nearby pins at lower zoom', () => {
-    const pins = [
-      { id: '1', lat: 30.0, lng: 31.0, kind: 'received' as const, title: 'Test' },
-      { id: '2', lat: 30.002, lng: 31.002, kind: 'received' as const, title: 'Test' },
-    ];
-    const clusters = clusterPins(pins, 14);
-    expect(clusters.length).toBeGreaterThanOrEqual(1);
+  it('never marks resolved incidents critical', () => {
+    const inc = mockIncident({ severity: 'critical', status: 'closed' });
+    expect(isCriticalOpen(inc)).toBe(false);
+  });
+});
+
+describe('pinSvg', () => {
+  it('uses the spec colour for each kind', () => {
+    expect(pinSvg('critical')).toContain('#A50E25');
+    expect(pinSvg('resolved')).toContain('#1F6B33');
+    expect(pinSvg('progress')).toContain('#D4A20B');
   });
 });

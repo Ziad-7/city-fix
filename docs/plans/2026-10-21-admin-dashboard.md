@@ -89,7 +89,7 @@ Staff/admin (role `staff` or `admin` unless noted):
 - `PATCH /admin/work-orders/{id}` `{ status?, team?, teamSize?, supervisor?, dueAt?, tasks?: WorkOrderTask[], note? }` → `WorkOrder`; status `in_progress`/`done` also moves the linked incident to `in_progress`/`resolved` (note required → 400) with the same note.
 - `GET /admin/service-requests?status=&serviceType=&day=&payment=` → `AdminServiceRequest[]` (day asc).
 - `PATCH /admin/service-requests/{id}` `{ status?, day?, slot?, assignee?, note? }` → `AdminServiceRequest` (note required on status change).
-- `POST /admin/budget/optimize` `{ budgetEgp, incidentIds? }` → `BudgetPlan` (admin only). Exact 0/1 knapsack (DP over cost in units of 100 EGP) maximising sum of priority score over open incidents whose work order is not `done`; ties broken by followers. Each item gets a one-line Arabic reason (selected: e.g. `"أولوية 78 · قريب من مدرسة · 1,800 جنيه"`; skipped: `"الميزانية مش مكفّية: محتاج 7,500 جنيه والمتبقي 2,100"` or `"أولوية أقل من البدائل بنفس التكلفة"`). Saves the plan (so `inBudgetPlan` works).
+- `POST /admin/budget/optimize` `{ budgetEgp, incidentIds? }` → `BudgetPlan` (admin only). 0/1 knapsack (DP, exact over 100 EGP units; costs rounded up) maximising sum of priority score over open incidents whose work order is not `done`; ties broken by followers. Each item gets a one-line Arabic reason (selected: e.g. `"أولوية 78 · قريب من مدرسة · 1,800 جنيه"`; skipped: `"الميزانية مش مكفّية: محتاج 7,500 جنيه والمتبقي 2,100"` or `"أولوية أقل من البدائل بنفس التكلفة"`). Saves the plan (so `inBudgetPlan` works).
 - `POST /admin/budget/commit` `{ incidentIds }` → `WorkOrder[]` created for each selected incident without a work order (admin only).
 - `GET /admin/insights` → `Insights` (deterministic, computed from data).
 - `POST /admin/demo/reset` (admin only) → re-seeds the DB.
@@ -156,3 +156,4 @@ Playwright (`apps/admin-web/e2e/`) running against a real backend started from `
 - A3. `PATCH /admin/service-requests/{id}` and `PATCH /incidents/{id}` with only `note` (no status) append a timeline entry with the current status and that note.
 - A4. Priority factor "why" texts are generated client-side (design spec `factorWhy`); backend unchanged.
 - A5. Photos stay placeholders (no photo URLs on `LinkedReport`).
+- A6. Amendment A6 (rebrand): demo emails are now `@cityfix.demo` (e.g. `admin@cityfix.demo`, `roads@cityfix.demo`); any `@fixthecity.demo` address earlier in this plan means the `@cityfix.demo` one.

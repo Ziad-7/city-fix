@@ -148,6 +148,7 @@ The scope was expanded after the original local simulator was completed. The fol
 - [x] Add the Arabic Command Center fleet page with status/alert counts, multi-bin selection, reading history chart, and sensor history.
 - [x] Add a Vercel static public simulator with four sample bins, named scenarios, fill history, and switchable offline/sensor/receiver faults. Keep its data in visitor browser storage; never send its demo values to production.
 - [x] Add a public website footer link, update API contract and user-facing setup docs, and identify hosting/database requirements.
-- [ ] User verification: backend test suite, admin-web typecheck/build, public Vercel preview, and a real-mode simulator reading displayed in the Command Center.
+- [x] Verify against the latest `main`: backend 295 tests, admin-web 195 tests, citizen web 222 tests, frontend typechecks/lint/shared-code checks/builds, backend Ruff/scoped mypy, and documentation checks pass.
+- [ ] Validate the public Vercel preview and a real-mode simulator reading displayed in the hosted Command Center.
 
 The public static demo needs only the existing Vercel website deployment and has no paid runtime/model dependency. Live API integration requires a separately deployed FastAPI service and persistent database. The current SQLite default is for local development; do not deploy this live data path on ephemeral serverless storage. Confirm free-tier availability/limits with the selected backend/database host before promising always-on service.

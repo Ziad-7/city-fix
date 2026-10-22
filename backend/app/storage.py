@@ -74,23 +74,16 @@ class SupabaseMediaStorage:
             bucket_config = response.json()
         except (httpx.HTTPError, ValueError) as error:
             raise HTTPException(503, "مخزن الصور الخاص مش متاح أو غير مُعدّ.") from error
-        if (
-            not isinstance(bucket_config, dict)
-            or bucket_config.get("public") is not False
-        ):
+        if not isinstance(bucket_config, dict) or bucket_config.get("public") is not False:
             raise HTTPException(503, "لازم يكون مخزن الصور خاص.")
         self._private_bucket_verified = True
 
-    def sign_upload(
-        self, user_id: str, kind: str, content_type: str
-    ) -> tuple[str, str]:
+    def sign_upload(self, user_id: str, kind: str, content_type: str) -> tuple[str, str]:
         self._validate_kind_type(kind, content_type)
         self._validate_user_id(user_id)
         self._ensure_private_bucket()
         path = f"{user_id}/{uuid4().hex}{EXTENSIONS[content_type]}"
-        endpoint = (
-            f"/object/upload/sign/{self._quoted_bucket}/{self._quoted_path(path)}"
-        )
+        endpoint = f"/object/upload/sign/{self._quoted_bucket}/{self._quoted_path(path)}"
         try:
             response = self._client.post(
                 endpoint,
@@ -149,11 +142,7 @@ class SupabaseMediaStorage:
         if signed.startswith("https://"):
             resolved = httpx.URL(signed)
             base = httpx.URL(self._base_url)
-            if (
-                resolved.host != base.host
-                or resolved.port != base.port
-                or resolved.scheme != "https"
-            ):
+            if resolved.host != base.host or resolved.port != base.port or resolved.scheme != "https":
                 raise HTTPException(502, "رابط التخزين غير صالح.")
             return str(resolved)
         suffix = signed if signed.startswith("/") else "/" + signed
@@ -168,9 +157,7 @@ class SupabaseMediaStorage:
         value = payload.get("signedURL", payload.get("signedUrl", payload.get("url")))
         return value if isinstance(value, str) else None
 
-    async def read_approved(
-        self, user_id: str, path: str, kind: str, consent: bool = False
-    ) -> bytes:
+    async def read_approved(self, user_id: str, path: str, kind: str, consent: bool = False) -> bytes:
         """Require explicit AI consent and return an owned source photo for local redaction."""
         if kind != "report_photo":
             raise HTTPException(400, "تحليل الصور متاح لصور البلاغات فقط.")
@@ -228,10 +215,7 @@ class SupabaseMediaStorage:
             bucket_config = response.json()
         except (httpx.HTTPError, ValueError) as error:
             raise HTTPException(503, "مخزن الصور الخاص مش متاح أو غير مُعدّ.") from error
-        if (
-            not isinstance(bucket_config, dict)
-            or bucket_config.get("public") is not False
-        ):
+        if not isinstance(bucket_config, dict) or bucket_config.get("public") is not False:
             raise HTTPException(503, "لازم يكون مخزن الصور خاص.")
         self._async_private_bucket_verified = True
 
@@ -266,18 +250,11 @@ class SupabaseMediaStorage:
 
     @staticmethod
     def _quoted_path(path: str) -> str:
-        return "/".join(
-            httpx.URL("/" + segment).raw_path.decode().lstrip("/")
-            for segment in path.split("/")
-        )
+        return "/".join(httpx.URL("/" + segment).raw_path.decode().lstrip("/") for segment in path.split("/"))
 
     @staticmethod
     def _validate_user_id(user_id: str) -> None:
-        if (
-            not user_id
-            or any(char in user_id for char in "/\\%")
-            or user_id in {".", ".."}
-        ):
+        if not user_id or any(char in user_id for char in "/\\%") or user_id in {".", ".."}:
             raise HTTPException(400, "معرّف الحساب غير صالح.")
 
     @classmethod

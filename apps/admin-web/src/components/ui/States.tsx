@@ -130,14 +130,12 @@ export function ErrorState({
 }
 
 export interface SkeletonProps {
-  variant: 'line' | 'title' | 'metric' | 'block' | 'table';
-  rows?: number;
+  variant: 'line' | 'title' | 'metric' | 'block';
   width?: string | number;
   height?: number;
 }
 
-export function Skeleton({ variant, width, height, rows = 6 }: SkeletonProps) {
-  if (variant === 'table') return <div aria-hidden>{Array.from({ length: rows }, (_, index) => <Skeleton key={index} variant="line" />)}</div>;
+export function Skeleton({ variant, width, height }: SkeletonProps) {
   const style: React.CSSProperties = {};
   if (width) style.width = typeof width === 'number' ? `${width}px` : width;
   if (height) style.height = `${height}px`;

@@ -5,47 +5,39 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button, ConfirmModal } from '@/components/ui';
 import { Icon } from '@/components/Icon';
-import { useToast } from '@/components/ui/Toast';
-import type { AdminIncident, SimilarIncidentMatch } from '@/domain/admin-types';
+import type { AdminIncident } from '@/domain/admin-types';
+import type { DuplicateMatch } from '@/domain/types';
 
 interface DuplicateCardProps {
   current: AdminIncident;
-  matches: SimilarIncidentMatch[];
+  matches: (DuplicateMatch & { createdAt?: string })[];
   canAct: boolean;
-  onMerge: (targetId: string) => Promise<void>;
+  onMerge: (sourceId: string, targetId: string) => Promise<void>;
 }
 
 export default function DuplicateCard({ current, matches, canAct, onMerge }: DuplicateCardProps) {
   const [mergeModalOpen, setMergeModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const toast = useToast();
 
   if (!matches.length) return null;
 
   const firstMatch = matches[0];
   const otherCount = matches.length - 1;
 
-  // The API returns candidates without creation dates. Keep the current incident
-  // as the source and merge it into the explicitly suggested candidate.
-  const targetId = firstMatch.incidentId;
-  const sourceId = current.id;
+  // Determine which is older and should be the merge target
+  const currentIsOlder =
+    !firstMatch.createdAt || new Date(current.createdAt) <= new Date(firstMatch.createdAt);
+  const targetId = currentIsOlder ? current.id : firstMatch.incidentId;
+  const sourceId = currentIsOlder ? firstMatch.incidentId : current.id;
 
   const handleMergeConfirm = async () => {
     try {
       setBusy(true);
-      await onMerge(targetId);
+      await onMerge(sourceId, targetId);
       setMergeModalOpen(false);
     } finally {
       setBusy(false);
-    }
-  };
-
-  const handleMergeConfirmSafely = async () => {
-    try {
-      await handleMergeConfirm();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'حصلت مشكلة. جرّب تاني.');
     }
   };
 
@@ -80,7 +72,7 @@ export default function DuplicateCard({ current, matches, canAct, onMerge }: Dup
           · {firstMatch.title}
           <br />
           <span style={{ fontSize: '12px', color: 'var(--ftc-ink-muted)' }}>
-            {firstMatch.address} · على بعد {firstMatch.distance} م · {firstMatch.followersCount} مواطنين بيتابعوه · نفس النوع
+            على بعد {firstMatch.distanceM} م · {firstMatch.followers} مواطنين بيتابعوه · نفس النوع
           </span>
         </div>
 
@@ -116,7 +108,7 @@ export default function DuplicateCard({ current, matches, canAct, onMerge }: Dup
         body={`هيتدمج ${sourceId} في ${targetId}. المتابعين والبلاغات المربوطة هتتنقل للبلاغ الأقدم، والبلاغ التاني هيتقفل برسالة للمواطنين. الدمج بيتسجّل باسمك ومينفعش يتراجع.`}
         confirmLabel="أكّد الدمج"
         busy={busy}
-        onConfirm={handleMergeConfirmSafely}
+        onConfirm={handleMergeConfirm}
         onCancel={() => setMergeModalOpen(false)}
       />
 

@@ -27,22 +27,14 @@ def detect_faces_and_plates(image: Image.Image) -> list[Region]:
         import numpy as np
 
         cascade_root = cv2.data.haarcascades
-        face_detector = cv2.CascadeClassifier(
-            f"{cascade_root}haarcascade_frontalface_default.xml"
-        )
-        plate_detector = cv2.CascadeClassifier(
-            f"{cascade_root}haarcascade_russian_plate_number.xml"
-        )
+        face_detector = cv2.CascadeClassifier(f"{cascade_root}haarcascade_frontalface_default.xml")
+        plate_detector = cv2.CascadeClassifier(f"{cascade_root}haarcascade_russian_plate_number.xml")
         if face_detector.empty() or plate_detector.empty():
             raise PrivacyFilterUnavailable("OpenCV privacy cascades are missing")
         pixels = np.asarray(image.convert("RGB"))
         grayscale = cv2.cvtColor(pixels, cv2.COLOR_RGB2GRAY)
-        faces = face_detector.detectMultiScale(
-            grayscale, scaleFactor=1.1, minNeighbors=5, minSize=(24, 24)
-        )
-        plates = plate_detector.detectMultiScale(
-            grayscale, scaleFactor=1.05, minNeighbors=3, minSize=(48, 14)
-        )
+        faces = face_detector.detectMultiScale(grayscale, scaleFactor=1.1, minNeighbors=5, minSize=(24, 24))
+        plates = plate_detector.detectMultiScale(grayscale, scaleFactor=1.05, minNeighbors=3, minSize=(48, 14))
         return [tuple(map(int, box)) for box in (*faces, *plates)]
     except PrivacyFilterUnavailable:
         raise
@@ -71,9 +63,7 @@ def blur_regions(image: Image.Image, regions: list[Region]) -> Image.Image:
     return redacted
 
 
-def prepare_photo(
-    data: bytes, *, region_detector: RegionDetector = detect_faces_and_plates
-) -> bytes:
+def prepare_photo(data: bytes, *, region_detector: RegionDetector = detect_faces_and_plates) -> bytes:
     if not data or len(data) > MAX_PHOTO_BYTES:
         raise InvalidPhotoError("Photo must be between 1 byte and 5 MB")
     try:

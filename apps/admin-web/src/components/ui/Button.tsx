@@ -6,9 +6,6 @@ import type { AdminIconName } from '../admin-icon-shapes';
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'gold' | 'ghost';
   size?: 'md' | 'sm';
-  primary?: boolean;
-  secondary?: boolean;
-  sm?: boolean;
   block?: boolean;
   loading?: boolean;
   icon?: AdminIconName;
@@ -16,9 +13,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const ButtonBase = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(
-  ({ variant: variantProp, size: sizeProp, primary, secondary, sm, block, loading, icon, className = '', children, ...props }, ref) => {
-    const variant = variantProp ?? (secondary ? 'secondary' : 'primary');
-    const size = sizeProp ?? (sm ? 'sm' : 'md');
+  ({ variant = 'primary', size = 'md', block, loading, icon, className = '', children, ...props }, ref) => {
     const classes = [
       'ftc-btn',
       `ftc-btn--${variant}`,

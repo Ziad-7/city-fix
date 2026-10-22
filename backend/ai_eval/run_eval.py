@@ -18,40 +18,29 @@ DATASET = Path(__file__).parent / "dataset" / "triage.jsonl"
 
 def load_cases(path: Path = DATASET) -> list[dict[str, str]]:
     cases = []
-    for line_number, line in enumerate(
-        path.read_text(encoding="utf-8").splitlines(), 1
-    ):
+    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         if not line.strip() or line.lstrip().startswith("#"):
             continue
         try:
             case = json.loads(line)
         except json.JSONDecodeError as error:
-            raise ValueError(
-                f"Invalid JSON on line {line_number}: {error.msg}"
-            ) from error
+            raise ValueError(f"Invalid JSON on line {line_number}: {error.msg}") from error
         if not isinstance(case, dict) or not all(
-            isinstance(case.get(key), str) and case[key].strip()
-            for key in ("description", "categoryId", "severity")
+            isinstance(case.get(key), str) and case[key].strip() for key in ("description", "categoryId", "severity")
         ):
-            raise ValueError(
-                f"Line {line_number} needs description, categoryId, and severity"
-            )
+            raise ValueError(f"Line {line_number} needs description, categoryId, and severity")
         try:
             CategoryId(case["categoryId"])
             Severity(case["severity"])
         except ValueError as error:
-            raise ValueError(
-                f"Line {line_number} has an unknown category or severity"
-            ) from error
+            raise ValueError(f"Line {line_number} has an unknown category or severity") from error
         cases.append(case)
     if not cases:
         raise ValueError(f"No evaluation cases found in {path}")
     return cases
 
 
-def score_cases(
-    cases: list[dict[str, str]], predictions: list[TriageSuggestion]
-) -> dict[str, Any]:
+def score_cases(cases: list[dict[str, str]], predictions: list[TriageSuggestion]) -> dict[str, Any]:
     if len(cases) != len(predictions) or not cases:
         raise ValueError("Cases and predictions must have the same non-zero length")
     top1 = 0
@@ -108,9 +97,7 @@ async def run(cases: list[dict[str, str]], use_model: bool) -> dict[str, Any]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--model", action="store_true", help="Call Gemini using GEMINI_API_KEY"
-    )
+    parser.add_argument("--model", action="store_true", help="Call Gemini using GEMINI_API_KEY")
     parser.add_argument("--dataset", type=Path, default=DATASET)
     args = parser.parse_args()
     report = asyncio.run(run(load_cases(args.dataset), args.model))

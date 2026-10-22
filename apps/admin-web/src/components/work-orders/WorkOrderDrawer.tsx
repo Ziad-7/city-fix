@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import {
   Drawer,
@@ -17,11 +17,11 @@ import { useToast } from '@/components/ui/Toast';
 import { Icon } from '@/components/Icon';
 import { StatusChangeForm } from '@/components/incidents/StatusChangeForm';
 import type { WorkOrder } from '@/domain/admin-types';
-import type { IncidentStatus } from '@/domain/types';
 import { patchWorkOrder } from '@/services/workOrders';
 import { getTeams } from '@/services/departments';
 import { formatDayWithTime, formatEgp } from '@/lib/format';
 import { priorityLevel } from '@/logic/priority';
+import type { IncidentStatus } from '@/domain/types';
 
 const WORK_ORDER_STATUSES: Record<string, string> = {
   open: 'اتسلّم',
@@ -30,15 +30,22 @@ const WORK_ORDER_STATUSES: Record<string, string> = {
   done: 'اتحلّت',
 };
 
+/** Current status first, then only the later ones (open -> assigned -> in_progress -> done). */
+function forwardStatuses(current: string): [string, string][] {
+  const all = Object.entries(WORK_ORDER_STATUSES);
+  const idx = all.findIndex(([value]) => value === current);
+  return idx < 0 ? all : all.slice(idx);
+}
+
 function previewStatusFor(status: string): IncidentStatus {
   // Map work order status to incident status for preview
-  const map: Record<string, string> = {
+  const map: Record<string, IncidentStatus> = {
     open: 'received',
     assigned: 'assigned',
     in_progress: 'in_progress',
     done: 'resolved',
   };
-  return (map[status] ?? 'received') as IncidentStatus;
+  return map[status] || 'received';
 }
 
 export interface WorkOrderDrawerProps {
@@ -58,21 +65,9 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
     enabled: open && !!workOrder?.department,
   });
 
-  const patchMutation = useMutation({
-    mutationFn: (data: Parameters<typeof patchWorkOrder>[1]) => patchWorkOrder(workOrder!.id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['work-order', workOrder!.id] });
-      queryClient.invalidateQueries({ queryKey: ['work-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['incidents'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      toast.success(`اتحدّث أمر الشغل ${workOrder!.id}.`);
-    },
-  });
-
   const handleTaskToggle = async (index: number) => {
     if (!workOrder) return;
-    const newTasks = [...workOrder.tasks];
-    newTasks[index].done = !newTasks[index].done;
+    const newTasks = workOrder.tasks.map((t, i) => (i === index ? { ...t, done: !t.done } : t));
 
     try {
       await patchWorkOrder(workOrder.id, { tasks: newTasks });
@@ -85,7 +80,7 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
 
   const handleStatusChange = async ({ status, note }: { status: string; note: string }) => {
     if (!workOrder) return;
-    const updateData: Parameters<typeof patchWorkOrder>[1] = { status, note };
+    const updateData: { status: string; team?: string; teamSize?: number; note: string } = { status, note };
     if (selectedTeam && status === 'assigned') {
       const team = teams.find((t) => t.name === selectedTeam);
       if (team) {
@@ -93,7 +88,9 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
         updateData.teamSize = team.size;
       }
     }
-    await patchMutation.mutateAsync(updateData);
+    await patchWorkOrder(workOrder.id, updateData);
+    await queryClient.invalidateQueries({ queryKey: ['work-order', workOrder.id] });
+    await queryClient.invalidateQueries({ queryKey: ['work-orders'] });
   };
 
   if (!workOrder) return null;
@@ -101,16 +98,13 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
   const departmentTeams = teams.filter((t) => t.department === workOrder.department);
   const isOpenStatus = workOrder.status === 'open';
   const isDone = workOrder.status === 'done';
-  const relatedRecordHref = workOrder.incidentId
-    ? `/incidents/${workOrder.incidentId}`
-    : `/service-requests?open=${encodeURIComponent(workOrder.serviceRequestId ?? '')}`;
 
   const kvItems = [
     {
       label: workOrder.incidentId ? 'البلاغ' : 'الطلب',
       value: (
         <div>
-          <Link href={relatedRecordHref}>
+          <Link href={workOrder.incidentId ? `/incidents/${workOrder.incidentId}` : `/service-requests/${workOrder.serviceRequestId}`}>
             {workOrder.incidentId ?? workOrder.serviceRequestId}
           </Link>
           {workOrder.followers && <span> · {workOrder.followers} مواطنين</span>}
@@ -174,7 +168,7 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
 
         {/* Chips and Status */}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '12px 0' }}>
-          <StatusChip status={workOrder.status} workorder />
+          <StatusChip kind="workorder" status={workOrder.status} />
           {workOrder.priorityScore && (
             <Tag tone={priorityLevel(workOrder.priorityScore) === 'critical' ? 'danger' : 'gold'}>
               أولوية {priorityLevel(workOrder.priorityScore)} · {workOrder.priorityScore}
@@ -213,9 +207,10 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
           <Notice>الأمر ده اتحلّ خلاص.</Notice>
         ) : (
           <StatusChangeForm
+            key={`${workOrder.id}:${workOrder.status}`}
             kind="workorder"
             currentStatus={workOrder.status}
-            options={Object.entries(WORK_ORDER_STATUSES).map(([value, label]) => ({
+            options={forwardStatuses(workOrder.status).map(([value, label]) => ({
               value,
               label,
             }))}
@@ -228,17 +223,18 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
 
         {/* Team selection for open orders */}
         {isOpenStatus && !workOrder.external && (
-          <SelectField
-            id="team"
-            label="الفريق"
-            value={selectedTeam || ''}
-            onChange={setSelectedTeam}
-            options={[
-              { value: '', label: 'من غير فريق' },
-              ...departmentTeams.map((t) => ({ value: t.name, label: t.name })),
-            ]}
-            style={{ marginTop: 12 }}
-          />
+          <div style={{ marginTop: 12 }}>
+            <SelectField
+              id="team"
+              label="الفريق"
+              value={selectedTeam || ''}
+              onChange={setSelectedTeam}
+              options={[
+                { value: '', label: 'من غير فريق' },
+                ...departmentTeams.map((t) => ({ value: t.name, label: t.name })),
+              ]}
+            />
+          </div>
         )}
 
         {/* Updates Timeline */}
@@ -247,8 +243,8 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
             <hr className="ftc-divider hr0" style={{ margin: '16px 0' }} />
             <h3 style={{ margin: '0 0 10px', fontSize: 14, fontWeight: 600 }}>آخر تحديثات</h3>
             <Timeline
-              items={[...workOrder.updates].reverse().map((update) => ({
-                id: `${update.at}-${update.actor}`,
+              items={[...workOrder.updates].reverse().map((update, idx) => ({
+                id: `update-${idx}`,
                 title: update.note,
                 who: `${update.at} · ${update.actor}`,
                 state: 'done',
@@ -263,7 +259,7 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
             variant="secondary"
             size="sm"
             className="block"
-            href={relatedRecordHref}
+            href={workOrder.incidentId ? `/incidents/${workOrder.incidentId}` : `/service-requests/${workOrder.serviceRequestId}`}
           >
             {workOrder.incidentId ? 'افتح البلاغ' : 'افتح الطلب'}
           </Button>

@@ -156,11 +156,6 @@ export function StatusChangeForm({
           rows={compact ? 2 : undefined}
           help={!compact ? 'بتظهر في تتبع البلاغ. اكتبها قصيرة وفيها اللي هيحصل بعد كده.' : undefined}
           disabled={!!disabledReason || busy}
-          onBlur={() => {
-            if (!note.trim()) {
-              setNoteError('اكتب رسالة للمواطنين');
-            }
-          }}
         />
         {!note && !compact && (
           <div className="chips" role="group" aria-label="رسايل جاهزة">

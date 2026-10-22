@@ -1,8 +1,8 @@
 """Timeline entry generation - ported from mobile app."""
 
 from datetime import datetime
-from app.helpers import iso_z
 
+from app.helpers import iso_z
 
 SEVERITY_LABEL_AR = {
     "low": "خطورة بسيطة",
@@ -12,21 +12,14 @@ SEVERITY_LABEL_AR = {
 }
 
 
-def incident_timeline_entry(
-    status: str, category_label: str, severity: str, department: str, at: datetime
-) -> dict:
+def incident_timeline_entry(status: str, category_label: str, severity: str, department: str, at: datetime) -> dict:
     """
     Generate a timeline entry for an incident status change.
     Returns a dict: {status, note, actor, at}
     """
     at_iso = iso_z(at) if isinstance(at, datetime) else at
     if status == "received":
-        return {
-            "status": status,
-            "at": at_iso,
-            "actor": "النظام",
-            "note": "وصلنا بلاغك",
-        }
+        return {"status": status, "at": at_iso, "actor": "النظام", "note": "وصلنا بلاغك"}
     elif status == "triaged":
         return {
             "status": status,
@@ -56,12 +49,7 @@ def incident_timeline_entry(
             "note": "اتصلّحت. شكرًا إنك بلّغت",
         }
     else:  # closed
-        return {
-            "status": status,
-            "at": at_iso,
-            "actor": "النظام",
-            "note": "اتقفل البلاغ",
-        }
+        return {"status": status, "at": at_iso, "actor": "النظام", "note": "اتقفل البلاغ"}
 
 
 def service_timeline_entry(status: str, at: datetime) -> dict:

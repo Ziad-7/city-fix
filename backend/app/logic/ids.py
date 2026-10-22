@@ -1,69 +1,33 @@
-"""Readable ID generation."""
+"""Readable ID generation (INC-501, FTC-1042, WO-318, SRV-2001, BP-1)."""
 
 from sqlalchemy.orm import Session
-from app.models import Incident, Report, WorkOrder, ServiceRequest, BudgetPlan
+
+from app.models import BudgetPlan, Incident, Report, ServiceRequest, WorkOrder
+
+# prefix -> (model, first sequence number when the table is empty)
+_SEQUENCES = {
+    "INC": (Incident, 501),
+    "FTC": (Report, 1043),
+    "WO": (WorkOrder, 334),
+    "SRV": (ServiceRequest, 2009),
+    "BP": (BudgetPlan, 1),
+}
 
 
-def _next_numeric_id(db: Session, model, prefix: str, width: int, start: int) -> str:
-    """Return the next ID after the greatest numeric suffix, independent of lexical order."""
-    values = db.query(model.id).filter(model.id.like(f"{prefix}-%")).all()
-    sequences = []
-    for (value,) in values:
-        suffix = value[len(prefix) + 1 :]
-        if suffix.isdigit():
-            sequences.append(int(suffix))
-    return f"{prefix}-{max(sequences, default=start - 1) + 1:0{width}d}"
-
-
-def format_incident_id(seq: int) -> str:
-    """Format incident ID: INC-501, INC-502, etc."""
-    return f"INC-{seq}"
-
-
-def format_report_id(seq: int) -> str:
-    """Format report ID: FTC-1042, etc."""
-    return f"FTC-{seq}"
-
-
-def format_work_order_id(seq: int) -> str:
-    """Format work order ID: WO-318, etc."""
-    return f"WO-{seq}"
-
-
-def format_service_request_id(seq: int) -> str:
-    """Format service request ID: SRV-2001, etc."""
-    return f"SRV-{seq}"
-
-
-def format_budget_plan_id(seq: int) -> str:
-    """Format budget plan ID: BP-1, BP-2, etc."""
-    return f"BP-{seq}"
+def format_id(prefix: str, seq: int) -> str:
+    return f"{prefix}-{seq}"
 
 
 def next_id(db: Session, entity_type: str) -> str:
-    """Generate next available ID for an entity type.
-
-    Args:
-        db: Database session
-        entity_type: 'INC', 'FTC', 'WO', 'SRV', or 'BP'
-
-    Returns:
-        Next available ID string
-    """
-    if entity_type == "INC":
-        return _next_numeric_id(db, Incident, "INC", 0, 501)
-
-    elif entity_type == "FTC":
-        return _next_numeric_id(db, Report, "FTC", 0, 1043)
-
-    elif entity_type == "WO":
-        return _next_numeric_id(db, WorkOrder, "WO", 0, 334)
-
-    elif entity_type == "SRV":
-        return _next_numeric_id(db, ServiceRequest, "SRV", 0, 2009)
-
-    elif entity_type == "BP":
-        return _next_numeric_id(db, BudgetPlan, "BP", 0, 1)
-
-    else:
+    """Next free id for 'INC', 'FTC', 'WO', 'SRV' or 'BP' (numeric max + 1, not string order)."""
+    if entity_type not in _SEQUENCES:
         raise ValueError(f"Unknown entity type: {entity_type}")
+    model, first = _SEQUENCES[entity_type]
+    prefix = entity_type + "-"
+    highest = 0
+    for (existing,) in db.query(model.id).filter(model.id.like(prefix + "%")).all():
+        try:
+            highest = max(highest, int(existing[len(prefix) :]))
+        except ValueError:
+            continue
+    return format_id(entity_type, max(first, highest + 1))

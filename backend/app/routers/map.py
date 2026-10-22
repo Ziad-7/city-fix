@@ -1,34 +1,49 @@
+"""GET /map/incidents."""
+
 import math
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
 
-from app.citizen import Bounds, Citizen, Repository
-from app.schemas.citizen import CategoryId, MapPin, Status
+from app.admin_auth import current_claims
+from app.db import get_db
+from app.logic.serialize import map_pin
+from app.models import Incident
+from app.schemas import CategoryId, IncidentStatus
 
-router = APIRouter(prefix="/map", tags=["map"])
+router = APIRouter(tags=["map"])
 
 
-def parse_bounds(raw: str | None) -> Bounds | None:
-    if raw is None:
-        return None
+def parse_bbox(bbox: str) -> tuple[float, float, float, float]:
+    """``minLng,minLat,maxLng,maxLat``; 400 when malformed."""
     try:
-        west, south, east, north = map(float, raw.split(","))
-        if not all(math.isfinite(n) for n in (west, south, east, north)):
-            raise ValueError
-        if not (-180 <= west <= east <= 180 and -90 <= south <= north <= 90):
-            raise ValueError
-        return west, south, east, north
+        min_lng, min_lat, max_lng, max_lat = (float(x) for x in bbox.split(","))
     except ValueError:
-        raise HTTPException(422, "حدود الخريطة مش صحيحة.") from None
+        raise HTTPException(status_code=400, detail="الإحداثيات مش صحيحة") from None
+    values = (min_lng, min_lat, max_lng, max_lat)
+    if not all(math.isfinite(v) for v in values):
+        raise HTTPException(status_code=400, detail="الإحداثيات مش صحيحة")
+    if not (-180 <= min_lng <= max_lng <= 180 and -90 <= min_lat <= max_lat <= 90):
+        raise HTTPException(status_code=400, detail="الإحداثيات مش صحيحة")
+    return min_lng, min_lat, max_lng, max_lat
 
 
-@router.get("/incidents", response_model=list[MapPin])
-def pins(
-    user: Citizen,
-    repo: Repository,
-    status: Status | None = None,
-    category_id: Annotated[CategoryId | None, Query(alias="categoryId")] = None,
+@router.get("/map/incidents")
+def map_incidents(
+    status: IncidentStatus | None = None,
+    categoryId: Annotated[CategoryId | None, Query()] = None,
     bbox: str | None = None,
-) -> list[MapPin]:
-    return repo.map_pins(status, category_id, parse_bounds(bbox))
+    payload: dict = Depends(current_claims),
+    db: Session = Depends(get_db),
+):
+    """MapPin[] (lightweight), optional filters status, categoryId, bbox."""
+    query = db.query(Incident)
+    if status:
+        query = query.filter(Incident.status == status)
+    if categoryId:
+        query = query.filter(Incident.category_id == categoryId)
+    if bbox:
+        min_lng, min_lat, max_lng, max_lat = parse_bbox(bbox)
+        query = query.filter(Incident.lng.between(min_lng, max_lng), Incident.lat.between(min_lat, max_lat))
+    return [map_pin(i) for i in query.order_by(Incident.created_at.desc(), Incident.id.desc()).all()]

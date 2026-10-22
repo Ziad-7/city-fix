@@ -9,17 +9,15 @@ export interface CardProps {
   as?: 'section' | 'aside' | 'div';
   labelledBy?: string;
   style?: React.CSSProperties;
-  action?: React.ReactNode;
 }
 
-export function Card({ children, className = '', padded = true, as = 'section', labelledBy, style, action }: CardProps) {
+export function Card({ children, className = '', padded = true, as = 'section', labelledBy, style }: CardProps) {
   const classes = ['ftc-card', !padded && 'is-unpadded', className].filter(Boolean).join(' ');
   const Comp = as as React.ElementType;
 
   return (
     <Comp className={classes} aria-labelledby={labelledBy} style={style}>
       {children}
-      {action}
     </Comp>
   );
 }

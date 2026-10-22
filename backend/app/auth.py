@@ -1,5 +1,13 @@
-"""Shared auth boundary. Persistence is supplied by the database owner."""
+"""Authentication: shared JWT boundary plus password and phone helpers.
 
+Tokens carry only the user id. ``current_user`` reloads the role and department scope from the
+user repository (the database) on every request, so deactivated or changed staff lose access at once.
+"""
+
+import hashlib
+import hmac
+import os
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -10,6 +18,39 @@ from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 Role = Literal["citizen", "staff", "admin"]
+
+
+def hash_password(password: str) -> str:
+    """Hash password with PBKDF2-SHA256 and random 16-byte salt."""
+    salt = os.urandom(16)
+    hashed = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 100000)
+    return f"{salt.hex()}${hashed.hex()}"
+
+
+def verify_password(password: str, hash_value: str) -> bool:
+    """Verify password against hash using constant-time comparison."""
+    try:
+        salt_hex, hash_hex = hash_value.split("$")
+        salt = bytes.fromhex(salt_hex)
+        hashed = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 100000)
+        return hmac.compare_digest(hashed.hex(), hash_hex)
+    except (ValueError, AttributeError):
+        return False
+
+
+PHONE_PATTERN = re.compile(r"01[0125][0-9]{8}")
+
+
+def is_valid_phone(phone: str) -> bool:
+    """Validate raw Egyptian phone number format: 01[0125]XXXXXXXX (no trailing newline)."""
+    return PHONE_PATTERN.fullmatch(phone) is not None
+
+
+def normalize_phone(phone: str) -> str:
+    """Normalize Egyptian phone number to +20 format."""
+    if not is_valid_phone(phone):
+        raise ValueError("Invalid phone format")
+    return "+20" + phone[1:]
 
 
 @dataclass(frozen=True)
@@ -59,7 +100,7 @@ def get_auth_context(request: Request) -> AuthContext:
 def unauthorized() -> HTTPException:
     return HTTPException(
         status_code=401,
-        detail="الجلسة مش صالحة، سجّل دخول تاني.",
+        detail="لازم تسجّل دخول",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
@@ -110,7 +151,7 @@ def current_user(
 def require_role(*roles: Role) -> Callable[..., User]:
     def dependency(user: Annotated[User, Depends(current_user)]) -> User:
         if user.role not in roles:
-            raise HTTPException(403, "مش مسموح لك بالعملية دي.")
+            raise HTTPException(403, "مش مسموح")
         return user
 
     return dependency
@@ -121,4 +162,4 @@ def require_department(user: User, department_id: str) -> None:
     if user.role == "admin":
         return
     if user.role != "staff" or user.department_id != department_id:
-        raise HTTPException(403, "مش مسموح لك بالعملية دي.")
+        raise HTTPException(403, "مش مسموح")

@@ -5,9 +5,9 @@ from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
 from app.auth import AuthContext, AuthSettings, User, require_role
-from app.auth_demo import MemoryUsers
 from app.routers.staff_auth import router
 from app.staff_auth import StaffAccount, StaffLoginContext, password_hash
+from tests.memory_users import MemoryUsers
 
 
 class Directory:
@@ -25,9 +25,7 @@ def staff_api():
     citizen = User("citizen-1", "+201112345678")
     users.users = {staff_user.id: staff_user, citizen.id: citizen}
     staff_password = password_hash.hash("correct horse battery")
-    directory = Directory(
-        {"admin@example.com": StaffAccount("staff-1", staff_password, "nasr-city")}
-    )
+    directory = Directory({"admin@example.com": StaffAccount("staff-1", staff_password, "nasr-city")})
     app = FastAPI()
     app.state.auth_context = AuthContext(AuthSettings("staff-test-secret-" * 3), users)
     app.state.staff_login_context = StaffLoginContext(directory)
@@ -50,17 +48,20 @@ def test_staff_login_issues_role_from_database(staff_api):
     )
     assert response.status_code == 200, response.text
     body = response.json()
+    # Contract StaffSession: { userId, name, title, role, department? (Arabic name), district, token }.
     assert body == {
         "userId": "staff-1",
         "name": "موظف",
+        "title": "موظف · roads",
         "role": "staff",
-        "departmentId": "roads",
+        "department": "roads",
         "district": "nasr-city",
         "token": body["token"],
     }
-    assert client.get(
-        "/staff-only", headers={"Authorization": "Bearer " + body["token"]}
-    ).json() == {"id": "staff-1", "departmentId": "roads"}
+    assert client.get("/staff-only", headers={"Authorization": "Bearer " + body["token"]}).json() == {
+        "id": "staff-1",
+        "departmentId": "roads",
+    }
 
 
 @pytest.mark.parametrize(
@@ -94,11 +95,7 @@ def test_staff_login_rate_limit(staff_api):
 
 def test_staff_endpoint_unavailable_until_directory_configured():
     app = FastAPI()
-    app.state.auth_context = AuthContext(
-        AuthSettings("another-test-secret-" * 2), MemoryUsers()
-    )
+    app.state.auth_context = AuthContext(AuthSettings("another-test-secret-" * 2), MemoryUsers())
     app.include_router(router)
-    response = TestClient(app).post(
-        "/auth/staff-login", json={"email": "admin@example.com", "password": "secret"}
-    )
+    response = TestClient(app).post("/auth/staff-login", json={"email": "admin@example.com", "password": "secret"})
     assert response.status_code == 503

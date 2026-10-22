@@ -21,9 +21,7 @@ def test_keyword_result_is_top_three_sorted_and_confidence_sum_is_bounded():
     result = classify_keywords("زبالة متراكمة وكلاب ضالة جنبها", CategoryId.garbage)
     assert len(result.options) == 3
     assert result.options[0].category_id == CategoryId.garbage
-    assert [o.confidence for o in result.options] == sorted(
-        (o.confidence for o in result.options), reverse=True
-    )
+    assert [o.confidence for o in result.options] == sorted((o.confidence for o in result.options), reverse=True)
     assert sum(o.confidence for o in result.options) <= 1
 
 
@@ -124,9 +122,7 @@ def test_invalid_model_output_uses_deterministic_fallback(bad_suggestion):
 
 
 def test_provider_failure_and_timeout_fall_back():
-    failed = asyncio.run(
-        analyze_report(FakeProvider(RuntimeError("429 quota")), "حفرة في الشارع")
-    )
+    failed = asyncio.run(analyze_report(FakeProvider(RuntimeError("429 quota")), "حفرة في الشارع"))
     assert failed.source == "fallback"
 
     class SlowProvider:
@@ -134,9 +130,7 @@ def test_provider_failure_and_timeout_fall_back():
             await asyncio.sleep(0.1)
             return model_suggestion()
 
-    timed_out = asyncio.run(
-        analyze_report(SlowProvider(), "حفرة في الشارع", timeout_seconds=0.01)
-    )
+    timed_out = asyncio.run(analyze_report(SlowProvider(), "حفرة في الشارع", timeout_seconds=0.01))
     assert timed_out.source == "fallback"
 
 

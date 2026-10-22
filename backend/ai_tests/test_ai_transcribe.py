@@ -1,16 +1,16 @@
 from dataclasses import dataclass
 from types import SimpleNamespace
 
-from fastapi import FastAPI, HTTPException
 import httpx
-from httpx import ASGITransport, AsyncClient
 import pytest
+from fastapi import FastAPI, HTTPException
+from httpx import ASGITransport, AsyncClient
 
 from app.ai.schemas import ProviderError
 from app.ai.transcribe import (
-    AudioAnalysis,
     MAX_TRANSCRIPTION_AUDIO_BYTES,
     MAX_TRANSCRIPTION_DURATION_SECONDS,
+    AudioAnalysis,
     GeminiAudioTranscriber,
     Transcription,
     create_transcription_router,
@@ -56,12 +56,8 @@ async def test_transcription_route_reads_only_the_callers_voice_note(monkeypatch
             provider=Provider(),
         )
     )
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
-        response = await client.post(
-            "/ai/transcribe", json={"path": "citizen-1/voice.m4a"}
-        )
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.post("/ai/transcribe", json={"path": "citizen-1/voice.m4a"})
 
     assert response.status_code == 200
     assert response.json() == {
@@ -92,12 +88,8 @@ async def test_transcription_route_does_not_call_provider_for_another_users_path
             provider=Provider(),
         )
     )
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
-        response = await client.post(
-            "/ai/transcribe", json={"path": "someone-else/voice.m4a"}
-        )
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.post("/ai/transcribe", json={"path": "someone-else/voice.m4a"})
 
     assert response.status_code == 403
 
@@ -122,12 +114,8 @@ async def test_transcription_route_rejects_oversized_audio_before_provider():
             provider=Provider(),
         )
     )
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
-        response = await client.post(
-            "/ai/transcribe", json={"path": "citizen-1/voice.m4a"}
-        )
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.post("/ai/transcribe", json={"path": "citizen-1/voice.m4a"})
 
     assert response.status_code == 413
 
@@ -161,12 +149,8 @@ async def test_transcription_route_rejects_long_audio_before_provider(monkeypatc
             provider=Provider(),
         )
     )
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
-        response = await client.post(
-            "/ai/transcribe", json={"path": "citizen-1/voice.m4a"}
-        )
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.post("/ai/transcribe", json={"path": "citizen-1/voice.m4a"})
 
     assert response.status_code == 413
 
@@ -187,9 +171,7 @@ def test_audio_analysis_uses_bounded_ffmpeg(monkeypatch):
             ),
         )
 
-    monkeypatch.setattr(
-        "app.ai.transcribe.shutil.which", lambda _name: "/usr/bin/ffmpeg"
-    )
+    monkeypatch.setattr("app.ai.transcribe.shutil.which", lambda _name: "/usr/bin/ffmpeg")
     monkeypatch.setattr("app.ai.transcribe.subprocess.run", run)
 
     analysis = inspect_audio(b"voice", "audio/mp4")
@@ -231,15 +213,9 @@ async def test_transcription_route_rejects_public_urls_and_missing_provider():
             provider=None,
         )
     )
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
-        invalid = await client.post(
-            "/ai/transcribe", json={"path": "https://example.com/voice.m4a"}
-        )
-        unavailable = await client.post(
-            "/ai/transcribe", json={"path": "citizen-1/voice.m4a"}
-        )
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        invalid = await client.post("/ai/transcribe", json={"path": "https://example.com/voice.m4a"})
+        unavailable = await client.post("/ai/transcribe", json={"path": "citizen-1/voice.m4a"})
 
     assert invalid.status_code == 422
     assert unavailable.status_code == 503

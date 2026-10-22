@@ -1,223 +1,82 @@
-# FixTheCity Backend
+# CityFix backend
 
-FastAPI backend for the citizen mobile app, citizen web, and admin Command Center. The assembled app currently supports local demo authentication, admin operations, and map pins. Citizen report/follow/booking persistence and production infrastructure remain unfinished; see [Remaining integration work](#remaining-integration-work).
+FastAPI + SQLAlchemy 2 (SQLite by default) serving the citizen mobile app, the citizen web and the admin Command Center. Shapes and endpoints: [`docs/api-contract.md`](../docs/api-contract.md).
 
-## Stack
-
-- **Python 3.12** with `uv`
-- **FastAPI** + **Uvicorn** for the API
-- **SQLAlchemy 2.0** with SQLite for the local demo; production PostgreSQL integration is pending
-- **Pydantic v2** for schemas with camelCase aliases
-- **PyJWT** for authentication
-- **pytest** for testing
-
-## Quick Start
-
-### 1. Setup
+## Run
 
 ```bash
-# Install Python 3.12 (or use pyenv/asdf)
-# Then:
-
-uv venv --python 3.12
-source .venv/bin/activate  # or .venv\Scripts\activate on Windows
-uv sync --extra dev
+cd backend
+uv sync                                              # Python >= 3.12
+uv run uvicorn app.main:app --reload --port 8000     # seeds demo data when the DB is empty
 ```
 
-### 2. Run
+Health check: `GET http://localhost:8000/health`. Interactive docs: `/docs`.
+
+Schema changes need no migration on SQLite: models + `create_all`. After changing `app/models.py` delete `fixthecity.db` (stop the server first) and it re-seeds on start, or run `uv run python scripts/reset_demo.py`. `POST /admin/demo/reset` (admin, needs `DEMO_RESET_ENABLED=true`) re-seeds a running server.
+
+## Test and lint
 
 ```bash
-# Create database and seed with demo data
-uv run python -c "from app.db import reset_db; reset_db()"
-
-# Start the server
-uv run uvicorn app.main:app --reload --port 8000
+uv run pytest -q          # fresh temp SQLite DB per session, never touches fixthecity.db
+uvx ruff check .          # CI also runs: ruff format --check .
 ```
 
-The server will be available at `http://localhost:8000`. The health check is at `/health`.
-
-### 3. Test
+CI (`.github/workflows/backend-ci.yml`) runs ruff check, ruff format --check, a scoped mypy over the auth boundary and `python -m pytest`:
 
 ```bash
-# Run all tests
-uv run pytest
-
-# Run with verbose output
-uv run pytest -v
-
-# Run a specific test file
-uv run pytest tests/test_priority.py
-
-# Run with coverage
-uv run pytest --cov=app tests/
+uv run --extra dev mypy app/auth.py app/auth_adapters.py app/admin_auth.py app/media.py   app/staff_auth.py app/routers/auth.py app/routers/staff_auth.py --ignore-missing-imports --follow-imports=skip
 ```
 
-## Database
+### pip instead of uv
 
-### Default (SQLite)
-
-Creates `./fixthecity.db`. Good for development.
+`requirements.txt` (runtime) and `requirements-dev.txt` (adds pytest, httpx, ruff, mypy) mirror `pyproject.toml`; keep the three in sync when adding a dependency.
 
 ```bash
-DATABASE_URL=sqlite:///./fixthecity.db
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
 ```
 
-### Planned PostgreSQL integration
+## Environment variables
 
-`DATABASE_URL` accepts a SQLAlchemy URL, but a production PostgreSQL setup still needs its driver, migrations, constraints and deployment validation. Changing this URL alone does not complete that integration:
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `DATABASE_URL` | `sqlite:///./fixthecity.db` | SQLAlchemy URL |
+| `JWT_SECRET` | dev value | HS256 secret (>= 32 bytes). **Required** when `OTP_MODE` is not `demo`: the app refuses to start with the built-in dev value |
+| `OTP_MODE` | `demo` | `demo`: no SMS, the code is always `123456`. Any other value has no OTP store yet, so `POST /auth/otp` and `/auth/verify` answer `503` (the demo code is never accepted outside demo mode) |
+| `TOKEN_MINUTES` | `10080` | Session token lifetime (7 days) |
+| `DEMO_RESET_ENABLED` | `false` | `POST /admin/demo/reset` deletes and re-seeds every record; it answers `404` unless this is `true`. Tests and the admin-web Playwright server set it. Enable only for a local demo |
+| `SEED_ON_START` | `true` | Seed demo data on startup when the DB has no incidents |
+| `CORS_ORIGINS` | `http://localhost:3000,http://localhost:3001` | Comma-separated allowed origins (Expo web `:8081` is always allowed) |
+| `CORS_ORIGIN_REGEX` | `^http://(localhost\|127\.0\.0\.1)(:\d+)?$` | Also allow any localhost port; set to your deployed origins (e.g. the Vercel domains) in production |
+| `VERSION` | `0.1.0` | Reported by `/health` |
 
-```bash
-DATABASE_URL=postgresql://user:password@localhost/fixthecity
-```
+## Demo accounts
 
-### Reset Database
+| Who | Login | Notes |
+| --- | --- | --- |
+| Admin | `admin@cityfix.demo` / `FixCity2026!` | `POST /auth/staff-login`; سارة محمود, sees everything, budget, demo reset |
+| Staff (roads) | `roads@cityfix.demo` / `FixCity2026!` | `م. هشام عادل`; only `صيانة الطرق` data. Also `sanitation@`, `lighting@`, `sewage@`, `water@`, `electricity@`, `parks@`, `utilities@`, `veterinary@cityfix.demo` (same password) |
+| Citizen | phone `01012345678`, OTP `123456` | `POST /auth/otp` (204) then `POST /auth/verify`; owns `FTC-1042` on `INC-501` and `SRV-2001` |
 
-```bash
-uv run python -c "from app.db import reset_db; reset_db()"
-```
+## Authentication boundary
 
-This drops all tables, recreates them, and re-seeds with demo data.
+One boundary (`app/auth.py`) serves every router. Tokens carry only the user id (`sub`, `iat`, `exp`, `iss`, `aud`); `current_user` reloads the **current role and department scope from the database on every request** through `app.state.auth_context` (`DatabaseUserRepository`), so a deactivated, demoted or re-assigned staff member loses (or changes) access immediately. Staff without a department scope are denied (`403`). `require_role` / `require_department` are available for new routes; the handlers use the dict claims from `app/admin_auth.py` (`require_staff`, `require_admin`, `current_claims`), also sourced from the database. Staff login (`app/staff_auth.py`, `routers/staff_auth.py`) verifies Argon2 or the seeded PBKDF2 hashes, always hashes (also for unknown e-mails) and limits attempts per e-mail (5 per minute, then `429`).
 
-## Demo Accounts
+Private media is optional: set `app.state.media_storage` to an object with `sign_upload`, `require_uploaded` and `sign_read` (see `app/media.py`). Then `POST /uploads/sign` returns its signed URL, report photo/voice paths must have been uploaded by the caller (`403` otherwise) and reads are signed. Without one, the local upload stub below is used.
 
-### Citizen (via OTP)
-- **Phone:** `01012345678`
-- **OTP Code:** `123456` (in demo mode)
+## Layout
 
-### Admin
-- **Email:** `admin@fixthecity.demo`
-- **Password:** `FixCity2026!`
-- **Role:** Admin (can see everything, manage budget)
+- `app/routers/` `auth` (citizen OTP), `staff_auth` (staff login, `/auth/me`), `reports`, `incidents`, `map`, `service_requests`, `uploads` (citizen) and `admin` (staff/admin; `PATCH /incidents/{id}` lives there too).
+- `app/ai/` CityBrain: `POST /triage` (Gemini with keyword fallback; duplicates / `alreadyReported` come from the database via `ai/integrations.py`) and `POST /ai/transcribe`; its tests live in `ai_tests/`.
+- `app/logic/` pure/domain code: `priority`, `duplicates` (haversine, 250 m), `triage` (keyword port of the mobile classifier), `status` (the one status-change function per entity, writes `activity_log`), `overdue`, `dashboard`, `budget` (knapsack, exact over 100 EGP units; costs rounded up), `insights`, `serialize` (DB to contract JSON, bulk-loaded), `domain` (report/work-order creation shared by routers).
+- `app/seed.py` demo data; `tests/` pytest suite.
 
-### Staff (Roads Department)
-- **Email:** `roads@fixthecity.demo`
-- **Password:** `FixCity2026!`
-- **Role:** Staff (can see only Roads department incidents)
+## Notes
 
-## API status
-
-### Smart-bin telemetry and Command Center
-
-- `POST /iot/bins/{binId}/readings` accepts up to 50 readings per request and authenticates the device with `X-Device-Key`. The simulator can retry safely: `(binId, seq)` is unique, identical repeats are acknowledged, and conflicting repeats return `409`. Optional `distanceCm`, `rssi`, `fw`, and nullable `at` follow the hardware simulator's wire shape.
-- `POST /admin/bins` is admin-only. It provisions a bin and returns a one-time `deviceKey`; only its SHA-256 hash is stored. Keep the returned key private and deliver it to the device out of band.
-- `GET /admin/bins` and `GET /admin/bins/{binId}/readings` require staff/admin auth. Department staff only see their department's bins plus unassigned bins. The authenticated Command Center shows status, current sensor values, alerts, and saved reading history at **الحاويات الذكية**.
-- `GET /admin/bins/{binId}/latest` returns the latest recorded reading. Bins with no recent sample (twice their configured interval, with a five-minute minimum) are shown as offline.
-
-The public Vercel demo at `/smart-bin-simulator.html` is a browser-only simulation: scenarios, sample fleet, charts, and injected faults are stored in that browser and do not reach this API. Use the local Python simulator in real mode to send data into an API deployment. `create_all()` creates these tables on a fresh database; an existing production database needs a reviewed migration before rollout. Production also needs a persistent PostgreSQL database, HTTPS, secret provisioning, and deployment validation. SQLite on an ephemeral serverless filesystem will lose data.
-
-### Health
-- `GET /health` → `{"status": "ok", "version": "0.1.0"}`
-
-### Authentication
-- `POST /auth/otp` and `POST /auth/verify` → Demo citizen login
-- `POST /auth/staff-login` and `GET /auth/me` → Staff/admin login backed by seeded accounts
-- `/admin/*` and `PATCH /incidents/{id}` → Demo admin operations, work orders, and budget APIs
-- `GET /map/incidents` → Authenticated map pins backed by the seeded database
-- Report, incident, map-filter, and service-request route modules are also available through the local citizen harness below.
-
-## Architecture
-
-### `app/`
-- **`main.py`** – FastAPI app, CORS, router registration
-- **`config.py`** – Environment settings
-- **`db.py`** – SQLAlchemy engine, session, init/reset
-- **`models.py`** – SQLAlchemy ORM models
-- **`admin_schemas.py`** – Admin Pydantic schemas (camelCase)
-- **`schemas/`** – Shared auth, citizen, and upload schemas
-- **`auth.py`** – Shared JWT validation and role dependencies
-- **`auth_adapters.py`** – SQLAlchemy user and staff-directory adapters
-- **`seed.py`** – Demo data seeding
-
-### `app/logic/`
-- **`priority.py`** – Deterministic priority formula (ported from mobile)
-- **`duplicates.py`** – Haversine distance for 250m check
-- **`ids.py`** – Readable ID formatting
-- **`timeline.py`** – Timeline entry generation
-- **`status.py`** – Status change functions with activity logging
-
-### `app/routers/`
-- **`auth.py`** – Citizen OTP login
-- **`staff_auth.py`** – Staff login and current session
-- **`admin.py`** – Command Center routes
-- **`bins.py`** – Device telemetry ingestion and authenticated smart-bin routes
-- **`reports.py`, `incidents.py`, `service_requests.py`, `map.py`** – Citizen route slice
-
-### `tests/`
-- **`conftest.py`** – Pytest fixtures (temp DB, client)
-- **`test_priority.py`** – Priority calculation (ported test cases)
-- **`test_duplicates.py`** – Haversine distance tests
-- **`test_auth.py`** – Auth endpoints
-- **`test_seed.py`** – Seed data invariants
-
-## Key Design Decisions
-
-1. **SQLite demo database**: Development-friendly, no extra setup. Production PostgreSQL setup and migrations are still pending.
-2. **Float lat/lng**: Simpler than PostGIS for now. Haversine in Python for duplicate detection.
-3. **Activity log for timeline**: Every status change writes a row; timelines built from logs on read.
-4. **Camel-case aliases**: Pydantic models have `alias_generator=to_camel`, responses use `by_alias=True`.
-5. **Role-based access**: `current_user`, `require_staff`, `require_admin` dependencies.
-6. **Seed on startup**: If DB is empty and `SEED_ON_START=true`, automatically runs seed.
-
-## Testing Notes
-
-- Tests use a fresh temporary SQLite database per test.
-- Auth tests verify OTP flow, staff login, token validation.
-- Priority tests port all cases from `apps/mobile/src/logic/__tests__/priority.test.ts`.
-- Seed tests verify 10 mobile incidents present, department integrity, priority factors structure.
-
-## Remaining integration work
-
-- Connect the citizen report, follow, and service-request routers to transactional database repositories in `app.main`.
-- Replace the local SQLite demo setup with agreed migrations and production PostgreSQL/PostGIS, provision private Supabase media storage, and connect a real OTP provider.
-- Replace demo readable-ID allocation with a transactional database sequence before concurrent or multi-worker deployment.
-- Add deployment configuration, production CORS/secrets, and connect the mobile, citizen web, and admin clients to a deployed API.
-- Validate the voice-transcription provider and photo face/plate blur on representative Egyptian recordings and images before enabling those AI paths in production.
-
-## Environment Variables
-
-Copy `.env.example` to `.env`:
-
-```bash
-cp .env.example .env
-```
-
-The example enables demo OTP and seed accounts and contains a placeholder signing key. These settings are for local development; production authentication, secrets and deployment still need integration.
-
-Edit as needed:
-
-- `DATABASE_URL` – Database connection string
-- `JWT_SECRET` – Change in production
-- `OTP_MODE` – `demo` enables the fixed local code; other values disable OTP because real delivery is not implemented
-- `SEED_ON_START` – `true` to auto-seed empty DB
-- `DEMO_RESET_ENABLED` – defaults to `false`; enable only for a local demo to allow the admin reset endpoint to delete and reseed all records
-
-## Troubleshooting
-
-### Import errors
-```bash
-# Make sure you're in the venv and dependencies are installed
-source .venv/bin/activate
-uv sync
-```
-
-### Database locked
-```bash
-# Remove the SQLite file and restart (it will be re-seeded)
-rm fixthecity.db
-```
-
-### Tests fail
-```bash
-# Clear pytest cache
-rm -rf .pytest_cache __pycache__
-uv run pytest
-```
-
-## Citizen route slice
-
-The citizen authentication and report/service route layer is implemented behind repository interfaces. Run the process-local harness with `OTP_MODE=demo python -m uvicorn app.citizen_demo:create_app --factory --host 127.0.0.1`; it is intended for route testing while persistent citizen repositories and storage are integrated into `app.main`.
-
-Install the combined development dependencies with `python -m pip install -r requirements-dev.txt`. The repository CI runs Ruff lint/format, mypy, and pytest from this directory.
+- Errors are `{ "detail": "<short Egyptian Arabic>" }`; invalid bodies are `422 {"detail": "البيانات مش مكتملة"}`.
+- Timestamps are stored naive UTC and sent as `...Z`.
+- No PostGIS locally: duplicates use haversine in Python.
+- `/uploads/sign` is a local stub: it returns a URL on this server that accepts a `PUT` and discards the body.
 
 ## CityBrain photo and Arabic text triage
 
@@ -230,3 +89,12 @@ The route uses the existing `/triage` response contract with an optional `photoC
 `POST /ai/transcribe` is mounted in the main app. It reads an uploaded voice note only from the authenticated caller's private storage path, then uses the configured Gemini model to return a short Egyptian Arabic transcription. The app discloses the provider and free-tier data-use policy before recording in API mode. If Gemini or storage is unavailable, the client leaves the description editable so the citizen can type it. Verify availability and transcription quality on representative Egyptian Arabic clips before production rollout.
 
 Voice notes are limited to 5 MB and 30 seconds by the clients and enforced again by the API before calling Gemini. The server uses a bounded FFmpeg pass to check file validity, duration, and peak level; clips at or below -75 dBFS are rejected as effectively silent, while quieter speech above that threshold is allowed. Temporary inspection files are removed immediately. Deploy with the included Dockerfile (the Python-only native build does not include FFmpeg). For a Render web service, set the root directory to `backend`, use Docker as the runtime, and keep the service on the free instance if available. The container uses Render's `PORT` and one Uvicorn worker.
+
+## Smart-bin telemetry and Command Center
+
+- `POST /iot/bins/{binId}/readings` accepts up to 50 readings per request and authenticates the device with `X-Device-Key`. The simulator can retry safely: `(binId, seq)` is unique, identical repeats are acknowledged, and conflicting repeats return `409`. Optional `distanceCm`, `rssi`, `fw`, and nullable `at` follow the hardware simulator's wire shape.
+- `POST /admin/bins` is admin-only. It provisions a bin and returns a one-time `deviceKey`; only its SHA-256 hash is stored. Keep the returned key private and deliver it to the device out of band.
+- `GET /admin/bins` and `GET /admin/bins/{binId}/readings` require staff/admin auth. Department staff only see their department's bins plus unassigned bins. The authenticated Command Center shows status, current sensor values, alerts, and saved reading history at **الحاويات الذكية**.
+- `GET /admin/bins/{binId}/latest` returns the latest recorded reading. Bins with no recent sample (twice their configured interval, with a five-minute minimum) are shown as offline.
+
+The public Vercel demo at `/smart-bin-simulator.html` is a browser-only simulation: scenarios, sample fleet, charts, and injected faults are stored in that browser and do not reach this API. Use the local Python simulator in real mode to send data into an API deployment. `create_all()` creates these tables on a fresh database; an existing production database needs a reviewed migration before rollout. Production also needs a persistent PostgreSQL database, HTTPS, secret provisioning, and deployment validation. SQLite on an ephemeral serverless filesystem will lose data.

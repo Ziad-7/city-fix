@@ -12,9 +12,9 @@ Built in 7 days by a team of 5, joined by a 6th member for hardware (CityCycle),
 | --- | --- | --- |
 | `apps/mobile/` | Citizen app — Expo (React Native) + TypeScript, Arabic-first RTL | In progress (Stage 1) |
 | `apps/web/` | Citizen website (client portal) — Next.js, same design as the app | Planned |
-| `apps/admin-web/` | City Command Center — Next.js web dashboard | Integrated with the local demo API; deployment pending |
-| `backend/` | FastAPI API with a SQLite demo database; planned production PostgreSQL/PostGIS | Shared auth, admin operations and map integrated; persistent citizen writes and deployment pending |
+| `apps/admin-web/` | City Command Center — Next.js web dashboard | Built and integrated with the local demo API (`feat/admin-dashboard`); deployment pending |
 | `hardware/` | CityCycle smart bin and hub scale: ESP32 firmware (PlatformIO), schematics, enclosure, BOM in EGP | Planned |
+| `backend/` | FastAPI API (SQLite for now, Supabase/PostGIS later), CityBrain AI, budget optimizer | Built (`feat/admin-dashboard`): shared database-backed auth, citizen, admin and map routes; production PostgreSQL, real OTP and deployment pending |
 | `docs/` | Decisions, design, specs, progress log | Living |
 
 ## Team
@@ -39,6 +39,17 @@ npx expo start
 ```
 
 Scan the QR code with **Expo Go** (Android/iOS). The app runs fully on **mock data** until the backend exists — see `apps/mobile/README.md`.
+
+## Run the backend and the Command Center
+
+The two commands below run side by side, so use two terminals (one per command).
+
+```bash
+cd backend && uv sync && uv run uvicorn app.main:app --reload --port 8000   # seeds demo data
+cd apps/admin-web && npm ci && npm run dev                                   # http://localhost:3001
+```
+
+Sign in with `admin@cityfix.demo` / `FixCity2026!`. Details: `backend/README.md`, `apps/admin-web/README.md`.
 
 ## Modules
 

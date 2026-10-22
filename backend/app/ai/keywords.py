@@ -268,39 +268,22 @@ def detect_emergency(description: str) -> bool:
     tokens = text.split()
     if any(token in EMERGENCY_WORDS_EN for token in tokens):
         return True
-    return any(
-        token == prefix + word
-        for token in tokens
-        for prefix in ARABIC_PREFIXES
-        for word in EMERGENCY_WORDS
-    )
+    return any(token == prefix + word for token in tokens for prefix in ARABIC_PREFIXES for word in EMERGENCY_WORDS)
 
 
 def _hits(description: str, category: CategoryId) -> int:
     arabic = normalize_ar(description)
     english = arabic
-    arabic_hits = len(
-        {
-            normalize_ar(word)
-            for word in ARABIC_KEYWORDS[category]
-            if normalize_ar(word) in arabic
-        }
-    )
-    english_hits = sum(
-        _whole_word_match(english, word) for word in ENGLISH_KEYWORDS[category]
-    )
+    arabic_hits = len({normalize_ar(word) for word in ARABIC_KEYWORDS[category] if normalize_ar(word) in arabic})
+    english_hits = sum(_whole_word_match(english, word) for word in ENGLISH_KEYWORDS[category])
     return arabic_hits + english_hits
 
 
 def _shift(severity: Severity, amount: int) -> Severity:
-    return SEVERITY_ORDER[
-        max(0, min(len(SEVERITY_ORDER) - 1, SEVERITY_ORDER.index(severity) + amount))
-    ]
+    return SEVERITY_ORDER[max(0, min(len(SEVERITY_ORDER) - 1, SEVERITY_ORDER.index(severity) + amount))]
 
 
-def classify_keywords(
-    description: str, category_hint: CategoryId | None = None
-) -> "TriageSuggestion":
+def classify_keywords(description: str, category_hint: CategoryId | None = None) -> "TriageSuggestion":
     from app.ai.schemas import TriageSuggestion
 
     scores = []
@@ -311,20 +294,15 @@ def classify_keywords(
     total = sum(score for _, score in scores)
     ranked = sorted(scores, key=lambda item: (-item[1], item[0].value))[:3]
     options = [
-        TriageOption(category_id=category, confidence=int(score / total * 100) / 100)
-        for category, score in ranked
+        TriageOption(category_id=category, confidence=int(score / total * 100) / 100) for category, score in ranked
     ]
 
     top = ranked[0][0]
     text = normalize_ar(description)
     severity = DEFAULT_SEVERITY[top]
-    if any(word in text for word in ESCALATE_AR) or any(
-        _whole_word_match(text, word) for word in ESCALATE_EN
-    ):
+    if any(word in text for word in ESCALATE_AR) or any(_whole_word_match(text, word) for word in ESCALATE_EN):
         severity = _shift(severity, 1)
-    elif any(word in text for word in DE_ESCALATE_AR) or any(
-        _whole_word_match(text, word) for word in DE_ESCALATE_EN
-    ):
+    elif any(word in text for word in DE_ESCALATE_AR) or any(_whole_word_match(text, word) for word in DE_ESCALATE_EN):
         severity = _shift(severity, -1)
     if top in {
         CategoryId.open_manhole,

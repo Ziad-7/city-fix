@@ -26,7 +26,7 @@ export function OverviewKpis({ dashboard, range, loading }: OverviewKpisProps) {
 
   if (loading || !dashboard) {
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
+      <div className="kpis">
         <KpiCard label="بلاغات مفتوحة" value="..." loading />
         <KpiCard label="متأخرة عن الميعاد" value="..." loading />
         <KpiCard label={resolvedLabel} value="..." loading />
@@ -58,7 +58,7 @@ export function OverviewKpis({ dashboard, range, loading }: OverviewKpisProps) {
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
+    <div className="kpis">
       <KpiCard
         label="بلاغات مفتوحة"
         value={formatNumber(dashboard.open)}

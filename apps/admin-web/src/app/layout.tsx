@@ -19,8 +19,9 @@ const plex = IBM_Plex_Sans_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: "FixTheCity — مركز القيادة",
-  description: "City Command Center for FixTheCity",
+  title: "CityFix — مركز القيادة",
+  description: "CityFix command center for city staff",
+  icons: { icon: "/brand/cityfix-mark.svg" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

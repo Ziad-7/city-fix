@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Modal, Button } from '@/components/ui';
 import { SelectField } from '@/components/ui/FormFields';
-import { Card, CardHead } from '@/components/ui/Card';
-import { Notice } from '@/components/ui/States';
+import { Card } from '@/components/ui/Card';
 import { Icon } from '@/components/Icon';
 import { useToast } from '@/components/ui/Toast';
 import { confirmTriage } from '@/services/incidents';
@@ -31,11 +30,8 @@ export default function AiSuggestionCard({
   incidentId,
   onTriageConfirmed,
 }: AiSuggestionCardProps) {
-  const options = triage.options ?? (triage.categoryId
-    ? [{ categoryId: triage.categoryId, confidence: triage.confidence ?? 0 }]
-    : []);
   const [changeModalOpen, setChangeModalOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>(options[0]?.categoryId || '');
+  const [selectedCategory, setSelectedCategory] = useState<string>(triage.options[0]?.categoryId || '');
   const [selectedSeverity, setSelectedSeverity] = useState<Severity>(triage.severity);
   const [busy, setBusy] = useState(false);
   const queryClient = useQueryClient();
@@ -45,7 +41,7 @@ export default function AiSuggestionCard({
     try {
       setBusy(true);
       await confirmTriage(incidentId, {
-        categoryId: options[0]?.categoryId,
+        categoryId: triage.options[0]?.categoryId,
         severity: triage.severity,
       });
       await queryClient.invalidateQueries({ queryKey: ['incident', incidentId] });
@@ -53,7 +49,7 @@ export default function AiSuggestionCard({
       toast.success('اتأكّد التصنيف.');
       onTriageConfirmed();
     } catch (err) {
-      const errorMsg = (err instanceof Error ? err.message : null) || 'حصلت مشكلة. جرّب تاني.';
+      const errorMsg = (err as Error).message || 'حصلت مشكلة. جرّب تاني.';
       toast.error(errorMsg);
     } finally {
       setBusy(false);
@@ -73,7 +69,7 @@ export default function AiSuggestionCard({
       toast.success('اتغيّر التصنيف واتأكّد.');
       onTriageConfirmed();
     } catch (err) {
-      const errorMsg = (err instanceof Error ? err.message : null) || 'حصلت مشكلة. جرّب تاني.';
+      const errorMsg = (err as Error).message || 'حصلت مشكلة. جرّب تاني.';
       toast.error(errorMsg);
     } finally {
       setBusy(false);
@@ -89,7 +85,7 @@ export default function AiSuggestionCard({
         </span>
 
         <div className="stack" style={{ gap: '12px', marginTop: '16px' }}>
-          {options.slice(0, 3).map((option, i) => {
+          {triage.options.slice(0, 3).map((option, i) => {
             const pct = Math.round(option.confidence * 100);
             const label = getCategory(option.categoryId).labelAr;
             return (

@@ -1,7 +1,7 @@
 import asyncio
+import unittest
 from dataclasses import dataclass
 from types import SimpleNamespace
-import unittest
 from unittest.mock import patch
 
 from fastapi import HTTPException
@@ -27,9 +27,7 @@ class AudioInspectionTests(unittest.TestCase):
             ),
         )
         with patch("app.ai.transcribe.shutil.which", return_value="/usr/bin/ffmpeg"):
-            with patch(
-                "app.ai.transcribe.subprocess.run", return_value=completed
-            ) as run:
+            with patch("app.ai.transcribe.subprocess.run", return_value=completed) as run:
                 analysis = inspect_audio(b"audio", "audio/mp4")
 
         self.assertAlmostEqual(analysis.duration_seconds, 12.5, places=3)
@@ -96,9 +94,7 @@ class TranscriptionAudioRouteTests(unittest.TestCase):
             load_authorized_voice=load_voice,
             provider=Provider(),
         )
-        endpoint = next(
-            route.endpoint for route in router.routes if route.path == "/ai/transcribe"
-        )
+        endpoint = next(route.endpoint for route in router.routes if route.path == "/ai/transcribe")
 
         async def call_endpoint():
             async def inspect_in_process(callback, *args):
@@ -109,9 +105,7 @@ class TranscriptionAudioRouteTests(unittest.TestCase):
                 return_value=analysis,
                 side_effect=inspection_error,
             ):
-                with patch(
-                    "app.ai.transcribe.asyncio.to_thread", new=inspect_in_process
-                ):
+                with patch("app.ai.transcribe.asyncio.to_thread", new=inspect_in_process):
                     result = await endpoint(
                         TranscriptionRequest(path="citizen-1/voice.m4a"),
                         current_user=User(),
@@ -122,16 +116,12 @@ class TranscriptionAudioRouteTests(unittest.TestCase):
 
     def test_silence_is_rejected_without_calling_provider(self):
         with self.assertRaises(HTTPException) as error:
-            self.request_with_audio_analysis(
-                AudioAnalysis(duration_seconds=2.0, peak_dbfs=-91.0)
-            )
+            self.request_with_audio_analysis(AudioAnalysis(duration_seconds=2.0, peak_dbfs=-91.0))
         self.assertEqual(error.exception.status_code, 422)
         self.assertIn("الصوت واطي", error.exception.detail)
 
     def test_quiet_speech_is_sent_to_provider(self):
-        result, calls = self.request_with_audio_analysis(
-            AudioAnalysis(duration_seconds=2.0, peak_dbfs=-60.0)
-        )
+        result, calls = self.request_with_audio_analysis(AudioAnalysis(duration_seconds=2.0, peak_dbfs=-60.0))
         self.assertEqual(result.text, "فيه حفرة")
         self.assertEqual(calls, ["provider"])
 

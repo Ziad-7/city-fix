@@ -1,80 +1,65 @@
-"""Proposed staff login; not registered by the default demo application."""
+"""Staff login and session: POST /auth/staff-login, GET /auth/me (contract ``StaffSession``)."""
 
-from typing import Annotated, Literal
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, HTTPException
-from pwdlib.exceptions import UnknownHashError
-from pydantic import Field
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 from app.auth import AuthContext, User, current_user, get_auth_context, issue_token
-from app.schemas.auth import ApiModel
-from app.schemas.citizen import InputModel
-from app.staff_auth import StaffLoginContext, get_staff_context, password_hash
+from app.auth_adapters import DEFAULT_DISTRICT, describe_staff
+from app.db import get_db
+from app.schemas import StaffLoginInput, StaffSession
+from app.staff_auth import StaffLoginContext, get_staff_context, verify_staff_password
 
-router = APIRouter(prefix="/auth", tags=["staff auth (proposed)"])
+router = APIRouter(prefix="/auth", tags=["auth"])
+
+BAD_CREDENTIALS = "البريد أو كلمة السر غلط"
 
 
-class StaffLogin(InputModel):
-    email: str = Field(
-        min_length=3, max_length=254, pattern=r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
+def _session(user: User, title: str | None, department: str | None, district: str, token: str | None) -> StaffSession:
+    """``department`` (Arabic name) is omitted for admins."""
+    department = None if user.role == "admin" else (department or user.department_id)
+    return StaffSession(
+        user_id=user.id,
+        name=user.name or "موظف",
+        title=title or (f"موظف · {department}" if department else "موظف"),
+        role=user.role,  # type: ignore[arg-type]
+        department=department,
+        district=district,
+        token=token,
     )
-    password: str = Field(min_length=1, max_length=1024, strict=True)
-
-
-class StaffSession(ApiModel):
-    user_id: str
-    name: str | None = None
-    role: Literal["staff", "admin"]
-    department_id: str | None = None
-    district: str
-    token: str
 
 
 @router.post(
-    "/staff-login", response_model=StaffSession, response_model_exclude_none=True
+    "/staff-login", response_model=StaffSession, response_model_exclude_none=True, response_model_by_alias=True
 )
-def login(
-    body: StaffLogin,
+def staff_login(
+    body: StaffLoginInput,
     auth: Annotated[AuthContext, Depends(get_auth_context)],
     staff: Annotated[StaffLoginContext, Depends(get_staff_context)],
 ) -> StaffSession:
-    email = body.email.lower()
+    """Email + password; role and department come from the database user, never from the request."""
+    email = body.email.strip().lower()
     staff.limiter.check(email)
     account = staff.directory.find_by_email(email)
-    try:
-        valid = password_hash.verify(
-            body.password, account.password_hash if account else staff.dummy_hash
-        )
-    except UnknownHashError:
-        valid = False
+    valid = verify_staff_password(body.password, account.password_hash if account else staff.dummy_hash)
     user = auth.users.get_by_id(account.user_id) if account else None
-    if not valid or user is None or user.role not in ("staff", "admin"):
-        raise HTTPException(401, "البريد أو كلمة السر مش صح.")
-    assert account is not None
+    if account is None or not valid or user is None or user.role not in ("staff", "admin"):
+        raise HTTPException(status_code=401, detail=BAD_CREDENTIALS)
     staff.limiter.clear(email)
-    return StaffSession(
-        user_id=user.id,
-        name=user.name,
-        role=user.role,
-        department_id=user.department_id,
-        district=user.district or account.district,
-        token=issue_token(user, auth.settings),
+    return _session(
+        user,
+        account.title,
+        account.department_name,
+        user.district or account.district,
+        issue_token(user, auth.settings),
     )
 
 
-@router.get("/me", response_model=StaffSession)
-def get_me(
-    user: Annotated[User, Depends(current_user)],
-    authorization: Annotated[str, Header()],
-) -> StaffSession:
+@router.get("/me", response_model=StaffSession, response_model_exclude_none=True, response_model_by_alias=True)
+def get_me(user: Annotated[User, Depends(current_user)], db: Annotated[Session, Depends(get_db)]) -> StaffSession:
+    """Current staff/admin session (without the token)."""
     if user.role not in ("staff", "admin"):
-        raise HTTPException(403, "مش مسموح")
-    token = authorization.removeprefix("Bearer ").strip()
-    return StaffSession(
-        user_id=user.id,
-        name=user.name,
-        role=user.role,
-        department_id=user.department_id,
-        district=user.district or "القاهرة · حي مدينة نصر أول",
-        token=token,
-    )
+        raise HTTPException(status_code=403, detail="مش مسموح")
+    title, department = describe_staff(db, user)
+    return _session(user, title, department, user.district or DEFAULT_DISTRICT, None)
