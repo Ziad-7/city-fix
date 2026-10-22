@@ -6,8 +6,10 @@ import { useRef, useState } from 'react';
 import { getCategory } from '@/domain/categories';
 import { SEVERITY_LABEL_AR, STATUS_LABEL_AR, type AlreadyReported, type CategoryId, type DuplicateMatch, type Place, type TriageSuggestion } from '@/domain/types';
 import { reportedByAr } from '@/components/report/text';
+import { API_MODE } from '@/services';
 import type { LocationState } from '@/lib/location';
 import { MAX_SECONDS, useVoiceNote } from '@/lib/voice';
+import { formatTimer } from '@/shared/components/report/voice';
 import { toArabicDigits } from '@/utils/digits';
 import { formatDistanceAr } from '@/utils/geo';
 import { radioKeys } from '@/ui/controls';
@@ -126,6 +128,9 @@ export function AiSuggestion({
         </span>
       </div>
       <p>{suggestion.summary}</p>
+      {suggestion.source === 'fallback' ? (
+        <p className="ftc-caption" data-testid="ai-fallback-label">اقتراح محلي من الكلمات، مش نتيجة نموذج ذكاء اصطناعي.</p>
+      ) : null}
       <span className="ftc-caption" style={{ color: 'var(--ftc-ink-muted)' }}>اختار التصنيف الصح</span>
       <div className="w-stack" style={{ gap: 8 }} role="radiogroup" aria-label="التصنيف">
         {suggestion.options.map((o, i) => {
@@ -174,7 +179,7 @@ export function VoiceRow({ highlight, onText, onVoiceNote }: { highlight?: boole
   const clock = `${toArabicDigits(Math.floor(seconds / 60))}:${toArabicDigits(String(seconds % 60).padStart(2, '0'))}`;
   const title = recording ? 'بنسمعك…' : state === 'working' ? 'بنكتب كلامك…' : 'سجّل بصوتك';
   const sub = recording
-    ? `دوس تاني لما تخلص · ${clock} من ${toArabicDigits(MAX_SECONDS / 60)}:٠٠`
+    ? `دوس تاني لما تخلص · ${clock} من ${formatTimer(MAX_SECONDS)}`
     : engine
       ? 'قول المشكلة بالعامية وإحنا نكتبها'
       : 'المتصفح ده مش بيدعم التسجيل. اكتب الوصف تحت.';
@@ -193,6 +198,7 @@ export function VoiceRow({ highlight, onText, onVoiceNote }: { highlight?: boole
         </button>
         <span className="tx"><span className="w-t" aria-live="polite">{title}</span><span className="w-m">{sub}</span></span>
       </div>
+      {API_MODE === 'api' ? <span className="ftc-help">التسجيل هيرتفع بشكل خاص ويتبعت لـ Gemini لتحويله لنص. النسخة المجانية ممكن تستخدم التسجيلات لتحسين منتجات Google؛ التسجيل اختياري وتقدر تكتب بدلًا منه.</span> : null}
       {interim ? <span className="ftc-help" aria-live="polite">«{interim}»</span> : null}
       {error ? <span className="a-err" role="alert" data-testid="voice-error">{error}</span> : null}
     </div>

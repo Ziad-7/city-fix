@@ -4,6 +4,9 @@
 
 int main() {
   using namespace citycycle;
+  assert(validDistanceCm(2) && validDistanceCm(200));
+  assert(!validDistanceCm(1.99f) && !validDistanceCm(200.01f));
+  assert(!validDistanceCm(NAN) && !validDistanceCm(INFINITY));
   assert(fillPercent(100) == 0); assert(fillPercent(5) == 100);
   assert(fillPercent(24) == 80); assert(fillPercent(-1) == -1);
   assert(fillPercent(NAN) == -1);

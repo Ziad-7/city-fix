@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -145,6 +146,12 @@ export default function ProfileScreen() {
       </Card>
 
       <StatsCard reports={stats.reports} fixed={stats.fixed} />
+
+      <Card rounded="lg" padding={16} style={styles.section}>
+        <AppText style={styles.heading} accessibilityRole="header">{tr('سيتي سايكل', 'CityCycle')}</AppText>
+        <Button label={tr('أثري في التدوير', 'My recycling impact')} variant="secondary" icon="leaf" onPress={() => router.push('/impact')} testID="open-impact" />
+        <Button label={tr('وضع الجامع', 'Collector mode')} variant="secondary" icon="truck" onPress={() => router.push('/collector')} testID="open-collector" />
+      </Card>
 
       <Card rounded="lg" padding={16} style={styles.section}>
         <View style={styles.langRow}>

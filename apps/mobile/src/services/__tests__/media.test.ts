@@ -1,6 +1,6 @@
 import type { NewReportInput } from '@/domain/types';
 import { ApiError } from '../api/http';
-import { classifyFailure, fitWithin, needsUpload, prepareReportInput, voiceContentType } from '../media';
+import { classifyFailure, fitWithin, needsUpload, prepareReportInput, prepareTriagePhoto, voiceContentType } from '../media';
 
 describe('fitWithin', () => {
   it('keeps small images as they are', () => {
@@ -85,5 +85,31 @@ describe('prepareReportInput', () => {
   it('propagates upload failures', async () => {
     const upload = jest.fn().mockRejectedValue(new ApiError(0, 'net'));
     await expect(prepareReportInput({ ...base, photoUris: ['file:///a.jpg'] }, upload)).rejects.toMatchObject({ status: 0 });
+  });
+});
+
+describe('prepareTriagePhoto', () => {
+  it('does not upload a photo without explicit consent', async () => {
+    const upload = jest.fn(async () => 'reports/photo.jpg');
+    await expect(prepareTriagePhoto('file:///cache/photo.jpg', false, upload)).resolves.toEqual({ photoConsent: false });
+    expect(upload).not.toHaveBeenCalled();
+  });
+
+  it('uploads a local photo before analysis when consent is given', async () => {
+    const upload = jest.fn(async () => 'reports/photo.jpg');
+    await expect(prepareTriagePhoto('file:///cache/photo.jpg', true, upload)).resolves.toEqual({
+      photoUri: 'reports/photo.jpg',
+      photoConsent: true,
+    });
+    expect(upload).toHaveBeenCalledWith(expect.any(String), 'report_photo', 'image/jpeg');
+  });
+
+  it('passes through an uploaded storage path only when consent is given', async () => {
+    const upload = jest.fn(async () => 'unused');
+    await expect(prepareTriagePhoto('reports/photo.jpg', true, upload)).resolves.toEqual({
+      photoUri: 'reports/photo.jpg',
+      photoConsent: true,
+    });
+    expect(upload).not.toHaveBeenCalled();
   });
 });

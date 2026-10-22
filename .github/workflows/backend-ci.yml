@@ -65,7 +65,14 @@ jobs:
         if: steps.guard.outputs.exists == 'true'
         working-directory: backend
         run: ruff format --check .
+      - name: Mypy
+        if: steps.guard.outputs.exists == 'true'
+        working-directory: backend
+        run: >-
+          mypy app/auth.py app/auth_adapters.py app/admin_auth.py app/media.py
+          app/staff_auth.py app/routers/auth.py app/routers/staff_auth.py
+          --ignore-missing-imports --follow-imports=skip
       - name: Pytest
         if: steps.guard.outputs.exists == 'true'
         working-directory: backend
-        run: pytest
+        run: python -m pytest

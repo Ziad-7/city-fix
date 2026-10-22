@@ -19,6 +19,10 @@ inline int fillPercent(float cm) {
   return static_cast<int>(std::lround((100.0f - cm) * 100.0f / 95.0f));
 }
 
+inline bool validDistanceCm(float cm) {
+  return std::isfinite(cm) && cm >= 2.0f && cm <= 200.0f;
+}
+
 struct ThresholdEdges {
   bool full = false;
   bool heat = false;

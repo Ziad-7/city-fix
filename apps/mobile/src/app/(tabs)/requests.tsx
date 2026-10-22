@@ -1,10 +1,12 @@
 import { router } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { PickupCard } from '@/components/citycycle';
+import { pickupInFilter } from '@/logic/citycycle';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { QueuedCard, REQUEST_FILTERS, RequestCard, StateMessage, filterRequests, type RequestFilter } from '@/components/requests';
 import { AppText, Chip, Screen, ScreenHeader } from '@/components/ui';
 import { useTr } from '@/i18n';
-import { flushOutbox, refreshAll, useReports, useRequestItems, useServiceRequests, useSession } from '@/store';
+import { flushOutbox, refreshAll, useRecycling, useReports, useRequestItems, useServiceRequests, useSession } from '@/store';
 import { useOutbox } from '@/store/useOutbox';
 import { colors } from '@/theme/tokens';
 
@@ -19,12 +21,30 @@ export default function RequestsScreen() {
   const userId = useSession((s) => s.userId);
   const outboxItems = useOutbox((s) => s.items);
   const queued = useMemo(() => outboxItems.filter((i) => i.userId === userId), [outboxItems, userId]);
-  const [filter, setFilter] = useState<RequestFilter>('all');
+  const pickups = useRecycling((s) => s.pickups);
+  const loadPrices = useRecycling((s) => s.loadPrices);
+  useEffect(() => {
+    void loadPrices(); // the pickup cards say "From" only when they know the price list
+  }, [loadPrices]);
+  const pickupsStatus = useRecycling((s) => s.status);
+  const [filter, setFilter] = useState<RequestFilter | 'recycling'>('all');
+  const filters = useMemo(() => [...REQUEST_FILTERS, { id: 'recycling' as const, labelAr: 'تدوير', labelEn: 'Recycling' }], []);
   const [refreshing, setRefreshing] = useState(false);
 
-  const visible = useMemo(() => filterRequests(items, filter), [items, filter]);
-  const loading = items.length === 0 && (reportsStatus === 'idle' || reportsStatus === 'loading' || servicesStatus === 'idle' || servicesStatus === 'loading');
-  const failed = reportsStatus === 'error' || servicesStatus === 'error';
+  const visible = useMemo(() => (filter === 'recycling' ? [] : filterRequests(items, filter)), [items, filter]);
+  const visiblePickups = useMemo(() => pickups.filter((p) => pickupInFilter(p.status, filter)), [pickups, filter]);
+  // Reports, services and pickups in one list, newest first.
+  const rows = useMemo(
+    () =>
+      [
+        ...visible.map((item) => ({ key: item.id, at: item.createdAt, node: <RequestCard key={item.id} item={item} /> })),
+        ...visiblePickups.map((p) => ({ key: p.id, at: p.createdAt, node: <PickupCard key={p.id} pickup={p} /> })),
+      ].sort((a, b) => b.at.localeCompare(a.at)),
+    [visible, visiblePickups],
+  );
+  const total = items.length + pickups.length;
+  const loading = total === 0 && (reportsStatus === 'idle' || reportsStatus === 'loading' || servicesStatus === 'idle' || servicesStatus === 'loading');
+  const failed = reportsStatus === 'error' || servicesStatus === 'error' || pickupsStatus === 'error';
   const errorText = reportsError ?? servicesError ?? undefined;
 
   const onRefresh = useCallback(async () => {
@@ -48,9 +68,9 @@ export default function RequestsScreen() {
   let body: React.ReactNode;
   if (loading && queued.length === 0) {
     body = <StateMessage loading title={tr('بنجيب طلباتك…', 'Loading your requests…')} />;
-  } else if (failed && items.length === 0 && queued.length === 0) {
+  } else if (failed && total === 0 && queued.length === 0) {
     body = <StateMessage tone="error" icon="wifi" title={tr('مقدرناش نحمّل طلباتك', "We couldn't load your requests")} body={errorText ?? tr('اتأكد من النت وجرّب تاني', 'Check your connection and try again')} actionLabel={tr('جرّب تاني', 'Try again')} onAction={onRefresh} />;
-  } else if (items.length === 0 && queued.length === 0) {
+  } else if (total === 0 && queued.length === 0) {
     body = (
       <StateMessage
         icon="clipboard"
@@ -60,7 +80,7 @@ export default function RequestsScreen() {
         onAction={() => router.push('/report/category')}
       />
     );
-  } else if (visible.length === 0 && !showQueued) {
+  } else if (rows.length === 0 && !showQueued) {
     body = <StateMessage icon="search" title={tr('مفيش طلبات في القسم ده', 'Nothing in this section')} body={tr('جرّب فلتر تاني من فوق.', 'Try another filter above.')} />;
   } else {
     body = (
@@ -69,7 +89,7 @@ export default function RequestsScreen() {
           <AppText variant="caption" color={colors.urgent}>{tr('معرفناش نحدّث الطلبات. اسحب لتحت وجرّب تاني.', "We couldn't refresh your requests. Pull down to try again.")}</AppText>
         ) : null}
         {showQueued ? queued.map((q) => <QueuedCard key={q.id} item={q} onSend={sendQueued} />) : null}
-        {visible.map((item) => <RequestCard key={item.id} item={item} />)}
+        {rows.map((r) => r.node)}
       </View>
     );
   }
@@ -81,7 +101,7 @@ export default function RequestsScreen() {
         <View>
           <ScreenHeader title={tr('طلباتي', 'My requests')} hideBack />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} accessibilityRole="tablist">
-            {REQUEST_FILTERS.map((f) => (
+            {filters.map((f) => (
               <Chip key={f.id} label={tr(f.labelAr, f.labelEn)} selected={filter === f.id} onPress={() => setFilter(f.id)} testID={`filter-${f.id}`} />
             ))}
           </ScrollView>

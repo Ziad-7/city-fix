@@ -26,6 +26,8 @@ type OutboxState = {
   remove: (id: string) => void;
   noteSent: () => void;
   noteDropped: (message: string) => void;
+  /** A toast for something other than a report (e.g. the collector's saved actions). */
+  notify: (ok: boolean, text: string) => void;
 };
 
 /**
@@ -66,6 +68,7 @@ export const useOutbox = create<OutboxState>()(
       remove: (id) => set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
       noteSent: () => set((s) => ({ notice: { n: (s.notice?.n ?? 0) + 1, ok: true, text: tr('بلاغك اتبعت', 'Your report was sent') } })),
       noteDropped: (text) => set((s) => ({ notice: { n: (s.notice?.n ?? 0) + 1, ok: false, text } })),
+      notify: (ok, text) => set((s) => ({ notice: { n: (s.notice?.n ?? 0) + 1, ok, text } })),
     }),
     {
       name: 'ftc.outbox.v1',

@@ -1,4 +1,4 @@
-import { normalizeAr, triageMock } from '../triage-mock';
+import { normalizeAr, triageMock, triageOfflineFallback } from '../triage-mock';
 
 describe('triageMock', () => {
   it('classifies a pothole description and boosts severity near a school', () => {
@@ -29,5 +29,24 @@ describe('triageMock', () => {
   });
   it('normalises Arabic spelling variants', () => {
     expect(normalizeAr('الأسفلت مكسورة ى')).toBe('الاسفلت مكسوره ي');
+  });
+});
+
+describe('triageOfflineFallback', () => {
+  it('returns a keyword suggestion when the description identifies a category', () => {
+    const result = triageOfflineFallback({ description: 'فيه حفرة في الاسفلت' });
+    expect(result?.options[0].categoryId).toBe('pothole');
+    expect(result?.source).toBe('fallback');
+    expect(result?.duplicates).toEqual([]);
+  });
+
+  it('does not guess a category from a photo-only or unrecognized report', () => {
+    expect(triageOfflineFallback({ description: '' })).toBeNull();
+    expect(triageOfflineFallback({ description: 'مشكلة في الشارع' })).toBeNull();
+  });
+
+  it('respects a category chosen by the citizen when text is unavailable', () => {
+    const result = triageOfflineFallback({ description: '', categoryId: 'pothole' });
+    expect(result?.options[0].categoryId).toBe('pothole');
   });
 });

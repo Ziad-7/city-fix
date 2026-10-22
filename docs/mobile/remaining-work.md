@@ -11,6 +11,12 @@ Date: 2026-10-22. Owner: Abood + Claude agents. New CityCycle work for the app i
 - [ ] Set `GOOGLE_MAPS_API_KEY` as an EAS environment variable (never commit it); without it a standalone build crashes on the map tab, report form and tree form.
 - [ ] iPhone build and test (no iOS build has been made).
 
+## 1b. CityCycle (added 2026-10-22)
+
+- [x] Pickup form, sorting guide, impact, bin map layer, collector mode (apply, jobs, weigh, finish, earnings), offline queue. See [`citycycle-backend-linking.md`](citycycle-backend-linking.md).
+- [ ] Test on a phone, then link to the backend with that checklist.
+- [ ] Bluetooth scale, sorting guide read aloud, CityCycle mockups in the design pack.
+
 ## 2. Needs the backend (API mode is untested)
 
 - [ ] Run the app with `EXPO_PUBLIC_API_MODE=api` against the real FastAPI backend and fix contract mismatches.

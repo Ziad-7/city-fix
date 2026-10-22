@@ -1,10 +1,13 @@
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { IncidentMap, NASR_CITY } from '@/components/map';
 import { PinSheet, TopBar, filterPins, incidentToPin, type MapStatusFilter } from '@/components/map-screen';
 import { StateMessage } from '@/components/requests';
-import { AppText, Screen } from '@/components/ui';
+import { BinSheet, binToMarker } from '@/components/citycycle';
+import { AppText, Chip, Screen } from '@/components/ui';
+import type { Bin } from '@/domain/citycycle';
+import { services } from '@/services';
 import { findDistrict } from '@/domain/locations';
 import { useTr } from '@/i18n';
 import type { CategoryId } from '@/domain/types';
@@ -15,6 +18,41 @@ import { haversineM } from '@/utils/geo';
 /** CityPulse: every open and recent incident as a status-coloured pin, with filters and a detail card. */
 export default function MapScreen() {
   const tr = useTr();
+  const [layer, setLayer] = useState<'incidents' | 'bins'>('incidents');
+  const [bins, setBins] = useState<Bin[]>([]);
+  const [binsState, setBinsState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [binId, setBinId] = useState<string | null>(null);
+  const [binBusy, setBinBusy] = useState(false);
+  const [binResult, setBinResult] = useState<'sent' | 'error' | null>(null);
+  const userId = useSession((s) => s.userId);
+  const loadBins = useCallback(async () => {
+    setBinsState('loading');
+    try {
+      setBins(await services.bins.list());
+      setBinsState('ready');
+    } catch {
+      setBinsState('error');
+    }
+  }, []);
+  const showBins = () => {
+    setLayer('bins');
+    if (binsState === 'idle') void loadBins();
+  };
+  const markers = useMemo(() => (layer === 'bins' ? bins.map(binToMarker) : undefined), [layer, bins]);
+  const selectedBin = bins.find((b) => b.id === binId) ?? null;
+  const reportFull = async () => {
+    if (!selectedBin || !userId) return;
+    setBinBusy(true);
+    try {
+      await services.bins.reportFull(userId, selectedBin.id, {});
+      setBinResult('sent');
+      void refreshAll();
+    } catch {
+      setBinResult('error');
+    } finally {
+      setBinBusy(false);
+    }
+  };
   const incidents = useReports((s) => s.incidents);
   const reports = useReports((s) => s.reports);
   const status = useReports((s) => s.status);
@@ -63,7 +101,7 @@ export default function MapScreen() {
     else setExpanded((e) => !e);
   };
 
-  const emptyFilter = status === 'ready' && visible.length === 0;
+  const emptyFilter = layer === 'incidents' && status === 'ready' && visible.length === 0;
   const emptyPill = (
     <View style={Platform.OS === 'web' ? styles.emptyInline : styles.empty} pointerEvents="none">
       <AppText variant="smallStrong" center>{tr('مفيش بلاغات بالفلتر ده', 'No reports match this filter')}</AppText>
@@ -72,9 +110,15 @@ export default function MapScreen() {
 
   const map = (
     <IncidentMap
-      pins={visible}
-      selectedId={sheetIncident?.id ?? null}
+      pins={layer === 'incidents' ? visible : []}
+      selectedId={layer === 'incidents' ? (sheetIncident?.id ?? null) : null}
       onSelectPin={select}
+      markers={markers}
+      selectedMarkerId={layer === 'bins' ? binId : null}
+      onSelectMarker={(id) => {
+        setBinId(id);
+        setBinResult(null);
+      }}
       center={center}
       style={Platform.OS === 'web' ? undefined : styles.map}
     />
@@ -85,7 +129,15 @@ export default function MapScreen() {
       edges={['top']}
       scroll={false}
       padded={false}
-      header={<TopBar status={statusFilter} onStatus={setStatusFilter} category={category} onCategory={setCategory} />}
+      header={
+        <View>
+          <View style={styles.layers} accessibilityRole="tablist">
+            <Chip label={tr('بلاغات', 'Reports')} selected={layer === 'incidents'} onPress={() => setLayer('incidents')} testID="layer-incidents" />
+            <Chip label={tr('صناديق ذكية', 'Smart bins')} icon="trash" selected={layer === 'bins'} onPress={showBins} testID="layer-bins" />
+          </View>
+          {layer === 'incidents' ? <TopBar status={statusFilter} onStatus={setStatusFilter} category={category} onCategory={setCategory} /> : null}
+        </View>
+      }
     >
       <View style={styles.body}>
         {Platform.OS === 'web' ? (
@@ -107,7 +159,18 @@ export default function MapScreen() {
         ) : null}
         {emptyFilter && Platform.OS !== 'web' ? emptyPill : null}
 
-        {sheetIncident ? (
+        {layer === 'bins' && binsState === 'error' ? (
+          <View style={styles.overlay}>
+            <StateMessage tone="error" icon="wifi" title={tr('مقدرناش نحمّل الصناديق', "We couldn't load the bins")} actionLabel={tr('جرّب تاني', 'Try again')} onAction={() => void loadBins()} />
+          </View>
+        ) : null}
+        {layer === 'bins' && selectedBin ? (
+          <View style={styles.sheetWrap} pointerEvents="box-none">
+            <BinSheet bin={selectedBin} busy={binBusy} result={binResult} onReportFull={reportFull} onOpenRequests={() => router.navigate('/requests')} onClose={() => setBinId(null)} />
+          </View>
+        ) : null}
+
+        {layer === 'incidents' && sheetIncident ? (
           <View style={styles.sheetWrap} pointerEvents="box-none">
             <PinSheet
               incident={sheetIncident}
@@ -129,6 +192,7 @@ export default function MapScreen() {
 
 const styles = StyleSheet.create({
   body: { flex: 1 },
+  layers: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 8 },
   map: { flex: 1, borderRadius: 0 },
   webList: { flex: 1 },
   webListContent: { padding: 16, paddingBottom: 220 },

@@ -138,3 +138,8 @@ For this managed environment, actual socket tests require `exec_command` with `s
 From repo root, launch with a fresh temporary data directory. Open the printed URL. Record fill 79/temp 59, send now, and verify acknowledged receiver data. Switch device network off, record 80/60 then 20/25, and verify pending readings and local/receiver distinction. Stop/restart the same directory, restore network, and verify all queued sequences drain without receiver duplicates. Change mock policy to interval 1/full 50/heat 45; send to obtain it, then record 55/46 and see immediate delivery/receiver alerts. Check browser console and narrow viewport. In real mode with placeholder local test endpoint, confirm no mock receiver is shown; an unconfigured real endpoint must fail before startup with an actionable message.
 
 The implementation and review are already authorized. This plan is the execution handoff, not an additional user approval request.
+
+
+## Follow-on integration delivered in PR #43
+
+After this local simulator plan was completed, the project added backend telemetry ingestion, staff-scoped Command Center views, and a separate static browser demo. The follow-on is recorded in the progress log and implemented in `backend/`, `apps/admin-web/`, and `apps/web/`; those changes do not alter this plan's original PC simulator checkpoints.

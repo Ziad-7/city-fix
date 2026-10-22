@@ -1,10 +1,29 @@
 import type { Metadata, Viewport } from 'next';
-import { Aref_Ruqaa, IBM_Plex_Sans_Arabic, Readex_Pro } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 
-const readex = Readex_Pro({ subsets: ['arabic', 'latin'], weight: ['500', '600', '700'], variable: '--font-readex', display: 'swap' });
-const plex = IBM_Plex_Sans_Arabic({ subsets: ['arabic', 'latin'], weight: ['400', '500', '600', '700'], variable: '--font-plex', display: 'swap' });
-const ruqaa = Aref_Ruqaa({ subsets: ['arabic', 'latin'], weight: ['700'], variable: '--font-ruqaa-face', display: 'swap' });
+const readex = localFont({
+  src: './fonts/ReadexPro.ttf',
+  weight: '500 700',
+  variable: '--font-readex',
+  display: 'swap',
+});
+const plex = localFont({
+  src: [
+    { path: './fonts/IBMPlexSansArabic-Regular.ttf', weight: '400' },
+    { path: './fonts/IBMPlexSansArabic-Medium.ttf', weight: '500' },
+    { path: './fonts/IBMPlexSansArabic-SemiBold.ttf', weight: '600' },
+    { path: './fonts/IBMPlexSansArabic-Bold.ttf', weight: '700' },
+  ],
+  variable: '--font-plex',
+  display: 'swap',
+});
+const ruqaa = localFont({
+  src: './fonts/ArefRuqaa-Bold.ttf',
+  weight: '700',
+  variable: '--font-ruqaa-face',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: { default: 'سيتي فيكس', template: '%s · سيتي فيكس' },

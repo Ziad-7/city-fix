@@ -1,0 +1,33 @@
+{"description":"فيه حفرة عميقة في نص الشارع والعربيات بتخبط فيها","categoryId":"pothole","severity":"medium"}
+{"description":"الأسفلت هابط قدام مدخل العمارة","categoryId":"pothole","severity":"medium"}
+{"description":"مطب كبير ومش باين بالليل","categoryId":"pothole","severity":"medium"}
+{"description":"بالوعة مفتوحة من غير غطا جنب مدخل العمارة","categoryId":"open_manhole","severity":"high"}
+{"description":"غطاء المنهول مكسور والفتحة مكشوفة","categoryId":"open_manhole","severity":"high"}
+{"description":"فيه مطبق مفتوح في الشارع","categoryId":"open_manhole","severity":"high"}
+{"description":"طفح مجاري في الشارع والريحة صعبة","categoryId":"sewage_overflow","severity":"high"}
+{"description":"مياه الصرف بتغرق الرصيف","categoryId":"sewage_overflow","severity":"high"}
+{"description":"فيه مياه سودة طالعة من البلاعة","categoryId":"sewage_overflow","severity":"high"}
+{"description":"ماسورة مياه مكسورة وبتغرق الشارع","categoryId":"water_pipe_burst","severity":"high"}
+{"description":"فيه تسريب من مواسير المياه عند البيت","categoryId":"water_pipe_burst","severity":"high"}
+{"description":"مياه بتطلع من ماسورة في الرصيف","categoryId":"water_pipe_burst","severity":"high"}
+{"description":"تلال قمامة متراكمة جنب السوق","categoryId":"garbage","severity":"medium"}
+{"description":"الزبالة متلمتش من الصندوق بقالها يومين","categoryId":"garbage","severity":"medium"}
+{"description":"مخلفات كتير مرمية عند مدخل الشارع","categoryId":"garbage","severity":"medium"}
+{"description":"عمود النور مطفي في الشارع","categoryId":"streetlight_out","severity":"low"}
+{"description":"الشارع ضلمة بعد المغرب","categoryId":"streetlight_out","severity":"low"}
+{"description":"لمبة الإنارة محروقة عند ناصية المدرسة","categoryId":"streetlight_out","severity":"low"}
+{"description":"سلك كهربا مكشوف جنب الرصيف","categoryId":"exposed_wire","severity":"high"}
+{"description":"أسلاك عريانة بتطلع شرر من العمود","categoryId":"exposed_wire","severity":"critical"}
+{"description":"كابل كهرباء مكشوف عند مدخل العمارة","categoryId":"exposed_wire","severity":"high"}
+{"description":"إشغالات قافلة نص الطريق","categoryId":"road_obstruction","severity":"low"}
+{"description":"عربية واقفة صف تاني ومقفلة الشارع","categoryId":"road_obstruction","severity":"low"}
+{"description":"بياعين واخدين الرصيف وسادين الطريق","categoryId":"road_obstruction","severity":"low"}
+{"description":"كلاب ضالة بتجري ورا الناس في الشارع","categoryId":"stray_dogs","severity":"medium"}
+{"description":"فيه كلب بينبح طول الليل عند العمارة","categoryId":"stray_dogs","severity":"medium"}
+{"description":"كلاب كتير بتعض المارة جنب الحديقة","categoryId":"stray_dogs","severity":"high"}
+{"description":"شجرة واقعة على الرصيف بعد الهوا","categoryId":"fallen_tree","severity":"medium"}
+{"description":"فرع شجر مايل على الطريق","categoryId":"fallen_tree","severity":"medium"}
+{"description":"شجره وقعت وسادة مدخل الشارع","categoryId":"fallen_tree","severity":"medium"}
+{"description":"الرصيف مكسور والناس بتتعثر فيه","categoryId":"broken_sidewalk","severity":"low"}
+{"description":"بلاط الرصيف متكسر قدام المحلات","categoryId":"broken_sidewalk","severity":"low"}
+{"description":"بلاطة مكسورة عاملة حفرة صغيرة في الرصيف","categoryId":"broken_sidewalk","severity":"low"}

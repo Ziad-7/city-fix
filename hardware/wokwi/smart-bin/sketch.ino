@@ -73,7 +73,7 @@ float readDistance() {
     if(us==0) return NAN; samples[i]=us*0.0343f/2.0f; delay(10);
   }
   for(int i=0;i<5;i++) for(int j=i+1;j<5;j++) if(samples[j]<samples[i]){float t=samples[i];samples[i]=samples[j];samples[j]=t;}
-  if(!std::isfinite(samples[2])||samples[2]<2||samples[2]>400) return NAN;
+  if(!validDistanceCm(samples[2])) return NAN;
   return samples[2];
 }
 bool readTemperature(float &temp) {

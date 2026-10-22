@@ -2,20 +2,23 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CATEGORIES, getCategory } from '@/domain/categories';
 import type { CategoryId, TriageSuggestion } from '@/domain/types';
 import { validateReportForm, type ReportFormErrors } from '@/components/report/validation';
 import { pickDuplicateView } from '@/logic/duplicates';
+import { detectEmergency, triageOfflineFallback } from '@/logic/triage-mock';
 import { useAreaCenter } from '@/lib/area';
 import { useReportLocation } from '@/lib/location';
 import { compressImage } from '@/lib/photo';
 import { API_MODE, services } from '@/services';
+import { prepareTriagePhoto } from '@/services/media';
 import { useReports, useSession } from '@/store';
 import { isQueuedOnDevice } from '@/store/outboxTabs';
 import { useOutbox } from '@/store/useOutbox';
 import { toArabicDigits } from '@/utils/digits';
 import { CategoryPicker } from '@/ui/CategoryGrid';
+import { EmergencyBox } from '@/ui/Hotlines';
 import { ToggleRow } from '@/ui/controls';
 import { QueuedNotice } from '@/ui/QueuedNotice';
 import { Icon } from '@/ui/Icon';
@@ -48,6 +51,8 @@ export function ReportForm() {
   }, []);
   const [blurFaces, setBlurFaces] = useState(true);
   const [anonymous, setAnonymous] = useState(false);
+  const [photoAnalysisConsent, setPhotoAnalysisConsent] = useState(false);
+  const triagePhotoCache = useRef(new Map<string, Promise<{ photoUri?: string; photoConsent: boolean }>>());
   const [manualCategory, setManualCategory] = useState<CategoryId | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -67,7 +72,7 @@ export function ReportForm() {
 
   // Mock AI: runs once there is a photo or a few words; debounced while typing; stale answers are dropped.
   // `done.key` says which inputs the latest answer belongs to, so "loading" is derived rather than stored.
-  const inputKey = [trimmed, mainPhoto ? mainPhoto.length : '', priorCategory ?? '', place.lat, place.lng, retryTick].join('|');
+  const inputKey = [trimmed, mainPhoto ? mainPhoto.length : '', photoAnalysisConsent, priorCategory ?? '', place.lat, place.lng, retryTick].join('|');
   const triage = hasInput ? (done?.suggestion ?? null) : null;
   const triageState: TriageState = !hasInput ? 'idle' : done?.key !== inputKey ? 'loading' : done.suggestion ? 'ready' : 'error';
   const categoryId: CategoryId | null = manualCategory ?? triage?.options[0]?.categoryId ?? paramCategory;
@@ -78,16 +83,36 @@ export function ReportForm() {
     const t = setTimeout(async () => {
       let suggestion: TriageSuggestion | null = null;
       try {
+        let triagePhoto: { photoUri?: string; photoConsent: boolean };
+        if (API_MODE === 'mock') {
+          triagePhoto = { photoUri: mainPhoto, photoConsent: false };
+        } else if (photoAnalysisConsent && mainPhoto) {
+          let prepared = triagePhotoCache.current.get(mainPhoto);
+          if (!prepared) {
+            prepared = prepareTriagePhoto(mainPhoto, true, services.uploads.upload);
+            triagePhotoCache.current.set(mainPhoto, prepared);
+            prepared.catch(() => triagePhotoCache.current.delete(mainPhoto));
+          }
+          try {
+            triagePhoto = await prepared;
+          } catch {
+            triagePhoto = { photoConsent: false };
+          }
+        } else {
+          triagePhoto = { photoConsent: false };
+        }
+        if (cancelled) return;
         suggestion = await services.triage.analyze({
           userId: userId ?? '',
           description: trimmed,
           categoryId: priorCategory ?? undefined,
-          // The backend can't open a browser data URL: the photo goes to /triage only once it's uploaded.
-          photoUri: API_MODE === 'mock' ? mainPhoto : undefined,
+          ...triagePhoto,
           location: { lat: place.lat, lng: place.lng },
         });
       } catch {
-        suggestion = null;
+        suggestion = API_MODE === 'api'
+          ? triageOfflineFallback({ description: trimmed, categoryId: priorCategory ?? undefined })
+          : null;
       }
       if (!cancelled) setDone({ key: inputKey, suggestion });
     }, 500);
@@ -95,7 +120,7 @@ export function ReportForm() {
       cancelled = true;
       clearTimeout(t);
     };
-  }, [hasInput, inputKey, userId, trimmed, mainPhoto, priorCategory, place.lat, place.lng]);
+  }, [hasInput, inputKey, userId, trimmed, mainPhoto, photoAnalysisConsent, priorCategory, place.lat, place.lng]);
 
   // Only matches of the category that will be submitted count (the AI top pick may differ from a manual pick).
   const dupView = pickDuplicateView(triage, categoryId);
@@ -114,6 +139,7 @@ export function ReportForm() {
     try {
       const encoded = await Promise.all(images.map((f) => compressImage(f, dataSaver)));
       setPhotos((p) => [...p, ...encoded].slice(0, 2));
+      setPhotoAnalysisConsent(false);
       setErrors((e) => ({ ...e, description: undefined }));
     } catch {
       setPhotoError('مقدرناش نفتح الصورة دي. جرّب صورة تانية، أو كمّل بوصف المشكلة.');
@@ -216,7 +242,7 @@ export function ReportForm() {
         >
           <section className="ftc-card r-sec" aria-labelledby="h-ph">
             <h2 className="w-h3" id="h-ph"><Icon name="camera" size={20} />الصور</h2>
-            <PhotoSlots photos={photos} busy={photoBusy} error={photoError} onAdd={(f) => void addPhotos(f)} onRemove={(i) => setPhotos((p) => p.filter((_, j) => j !== i))} />
+            <PhotoSlots photos={photos} busy={photoBusy} error={photoError} onAdd={(f) => void addPhotos(f)} onRemove={(i) => { setPhotos((p) => p.filter((_, j) => j !== i)); setPhotoAnalysisConsent(false); }} />
           </section>
 
           <section className="r-sec" aria-label="التصنيف">
@@ -225,6 +251,7 @@ export function ReportForm() {
             ) : (
               <AiSuggestion state={triageState} suggestion={triage} selected={categoryId} onSelect={pickCategory} onPickOther={() => setPickerOpen(true)} onRetry={() => setRetryTick((n) => n + 1)} />
             )}
+            {!triage?.emergency && detectEmergency(trimmed) ? <EmergencyBox /> : null}
             {errors.categoryId ? <span className="a-err" role="alert">{errors.categoryId}</span> : null}
           </section>
 
@@ -264,6 +291,7 @@ export function ReportForm() {
             <h2 className="w-h3" id="h-priv">خصوصيتك</h2>
             <ToggleRow icon="eye-off" title="اخفي الوشوش ونمر العربيات" subtitle="بنعمل blur تلقائي قبل ما الصورة تتنشر" on={blurFaces} onChange={setBlurFaces} testId="toggle-blur" />
             <ToggleRow icon="shield-check" title="بلّغ من غير اسم" subtitle="الحي مش هيشوف اسمك ولا رقمك" on={anonymous} onChange={setAnonymous} testId="toggle-anonymous" />
+            {API_MODE === 'api' && mainPhoto ? <ToggleRow icon="shield-check" title="أوافق على تحليل الصورة بالذكاء الاصطناعي" subtitle="هنرفع الصورة بشكل خاص ونبعتها لـ Gemini للتحليل. اختياري؛ تقدر تكمل بالوصف بس." on={photoAnalysisConsent} onChange={setPhotoAnalysisConsent} testId="toggle-ai-photo-consent" /> : null}
           </section>
           <button type="submit" hidden aria-hidden="true" tabIndex={-1} />
         </form>

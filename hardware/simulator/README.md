@@ -1,6 +1,6 @@
 # CityCycle smart-bin simulator
 
-This is a PC demonstration of one simulated smart bin. It runs a local browser panel, a separate mock HTTP receiver, and a durable SQLite outbox. It does not connect the Command Center, mobile apps, physical hardware, or a real CityCycle backend.
+This folder contains the PC simulator for smart-bin telemetry. Separate free-plan ESP32 firmware prototypes are documented in [hardware/wokwi](../wokwi/README.md); they do not change this PC simulator. It runs a local browser panel and durable SQLite outbox. By default it uses a local mock receiver; in `real` mode it sends device-authenticated readings to the CityFix API, where staff can inspect bins and history in the Command Center at **الحاويات الذكية**. The browser-only fleet demo is served publicly at `/smart-bin-simulator.html` when the `apps/web` site is deployed to Vercel. It uses sample data in that visitor's browser and never writes to the API.
 
 ## Start it
 
@@ -32,7 +32,13 @@ For a restart demonstration, turn the device network off, record a full/heat rea
 
 Mock mode is the default. It uses `BIN-SIM-001`, the demo thresholds (30 minutes, 80% full, 60 °C heat), and a fresh random device key each launch. The demo values are examples, not district settings.
 
-Real mode requires a provisioned endpoint and key. Use HTTPS except when the endpoint is a literal loopback address. Do not put credentials, query parameters, or fragments in the base URL. The base URL may include a path prefix; readings are posted under `/iot/bins/{binId}/readings`.
+Real mode requires the deployed API and a bin provisioned by an admin. In the Command Center API, `POST /admin/bins` creates a bin and returns a one-time `deviceKey`; save it securely because it is not shown again. The registration request uses camelCase fields, for example:
+
+```json
+{"id":"BIN-SIM-001","name":"Demo bin","district":"القاهرة","lat":30.0444,"lng":31.2357,"isSimulated":true}
+```
+
+Configure the simulator with that returned key and the deployed API base URL. Use HTTPS except when the endpoint is a literal loopback address. Do not put credentials, query parameters, or fragments in the base URL; readings are posted under `/iot/bins/{binId}/readings`.
 
 PowerShell:
 
@@ -54,13 +60,17 @@ export CITYFIX_DEVICE_KEY=replace-with-provisioned-key
 python hardware/simulator/run.py --no-browser
 ```
 
-Never paste a production key into a committed file or share it in a screenshot. The simulator does not store the device key in SQLite. Real endpoint mode does not start a mock receiver and shows receiver data as unavailable.
+Never paste a device key into a committed file or share it in a screenshot. The simulator does not store the device key in SQLite. Real endpoint mode does not start a mock receiver. Accepted readings and current status appear in the authenticated Command Center; the public browser demo remains isolated from production data.
 
 ## Data and limits
 
 The device outbox and mock receiver use separate SQLite files under the selected data directory. Select a new `--data-dir` for a clean demo. Existing data is tied to its bin, mode, and target URL; the simulator refuses to reuse it with a different identity. To reset a demo, stop it and choose a new directory. No queued reading is automatically evicted.
 
-The provisional HTTP shape and example fields are described in the [proposed API contract](../../docs/api-contract.md#citycycle--proposed) and the [Member 6 hardware brief](../../docs/team/hardware-iot.md). A real CityCycle endpoint, key provisioning, and contract approval still need coordination with backend owners. This simulator does not establish that contract, perform firmware or physical-bin validation, or integrate with the Command Center or mobile app.
+The implemented telemetry and staff API shape is documented in [API contract](../../docs/api-contract.md#smart-bin-telemetry-and-command-center) and [backend README](../../backend/README.md#smart-bin-telemetry-and-command-center). The simulator is not firmware and does not validate physical sensors. Mobile-device integration and physical-bin validation remain future work.
+
+## Online hosting and free-tier limits
+
+The public interactive simulator is a static HTML/CSS/JavaScript page with no paid model, server process, or database. It can be hosted with the existing `apps/web` Vercel deployment at `/smart-bin-simulator.html`; its editable demo state stays in the visitor's browser storage. The API ingestion path is separate: deploy the FastAPI backend and a persistent database, then configure the Command Center's `NEXT_PUBLIC_API_URL` and the simulator's real-mode variables. The backend's SQLite default is for development and is not suitable for an ephemeral serverless filesystem. A free host may sleep, impose quotas, or change its free tier; continuous live telemetry and durable hosted history cannot be promised as permanently free. The local demo and static online simulation remain free to run.
 
 ## Checks
 
