@@ -10,6 +10,7 @@ import type {
   Weighing,
 } from '@/domain/citycycle';
 import { tr } from '@/i18n';
+import { cleanTriageSummary } from '@/logic/triage-mock';
 import type { Incident, MapPin, Report, ServiceRequest, Session, TriageSuggestion } from '@/domain/types';
 import type { Services } from '../interfaces';
 import { ApiError, http, setApiToken } from './http';
@@ -86,7 +87,7 @@ export function createApiServices(): Services {
           body,
           { timeoutMs: 6000 },
         );
-        return { ...res, duplicates: res.duplicates ?? [], alreadyReported: res.alreadyReported ?? [] };
+        return { ...cleanTriageSummary(res), duplicates: res.duplicates ?? [], alreadyReported: res.alreadyReported ?? [] };
       },
     },
     uploads: createUploadService(),

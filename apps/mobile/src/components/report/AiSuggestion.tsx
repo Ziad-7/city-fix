@@ -4,6 +4,7 @@ import { Icon } from '@/components/Icon';
 import { AppText, ProgressBar } from '@/components/ui';
 import { CATEGORIES, getCategory } from '@/domain/categories';
 import { SEVERITY_LABEL_AR, type CategoryId, type TriageSuggestion } from '@/domain/types';
+import { cleanTriageSummary } from '@/logic/triage-mock';
 import { labelOfCategory, severityLabel, useIsRTL, useTr } from '@/i18n';
 import { colors, fonts, radius } from '@/theme/tokens';
 import { localDigits } from '@/utils/digits';
@@ -65,7 +66,7 @@ export function AiSuggestion({ state, suggestion, selected, onSelect, onPickOthe
         </View>
       </View>
 
-      <AppText variant="small">{suggestion.summary}</AppText>
+      <AppText variant="small">{cleanTriageSummary(suggestion).summary}</AppText>
       {suggestion.source === 'fallback' ? (
         <AppText testID="ai-fallback-label" variant="caption" color={colors.inkMuted}>
           {tr('اقتراح محلي من الكلمات، مش نتيجة نموذج ذكاء اصطناعي.', 'Local keyword fallback; no AI model was used.')}

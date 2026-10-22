@@ -143,3 +143,28 @@ export function triageOfflineFallback(input: TriageInput): TriageSuggestion | nu
   }
   return suggestion;
 }
+
+const RAW_SEVERITY = /\b(low|medium|high|critical)\b/i;
+
+/** Summary line in the current language, built from the top option and severity (never a raw enum value). */
+export function triageSummaryFor(s: Pick<TriageSuggestion, 'options' | 'severity'>): string {
+  const top = getCategory(s.options[0]?.categoryId ?? 'other');
+  return tr(
+    `الغالب إنها "${top.labelAr}" — ${SEVERITY_LABEL_AR[s.severity]}، وهتروح لـ${top.department}.`,
+    `Most likely “${categoryLabel(top.id, top.labelAr)}” — ${severityLabel(s.severity, SEVERITY_LABEL_AR[s.severity])}. It will go to ${departmentLabel(top.department)}.`,
+  );
+}
+
+/**
+ * Server summaries can carry the raw enum ("... — high، ..."), and English UI gets an Arabic line.
+ * Rebuild the line locally when it shows a raw severity word or the language does not match.
+ */
+export function cleanTriageSummary(s: TriageSuggestion): TriageSuggestion {
+  if (!s.options.length) return s;
+  const english = /[A-Za-z]{3}/.test(s.summary) && !/[؀-ۿ]/.test(s.summary);
+  const wantsEnglish = tr('ar', 'en') === 'en';
+  if (RAW_SEVERITY.test(s.summary) || (s.summary && english !== wantsEnglish && s.source !== 'model')) {
+    return { ...s, summary: triageSummaryFor(s) };
+  }
+  return s;
+}
