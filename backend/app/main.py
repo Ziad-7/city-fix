@@ -8,7 +8,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.config import settings
+from app.config import settings, validate_settings
 from app.db import SessionLocal, init_db
 from app.models import Incident
 from app.routers import admin, auth, incidents, map, reports, service_requests, triage, uploads
@@ -22,6 +22,7 @@ logger = logging.getLogger("fixthecity")
 async def lifespan(app: FastAPI):
     """Application lifespan: startup and shutdown."""
     # Startup
+    validate_settings()
     init_db()
 
     # Check if we should seed

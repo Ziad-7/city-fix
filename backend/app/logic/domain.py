@@ -39,8 +39,13 @@ TASKS_BY_CATEGORY = {
 
 
 def staff_department(payload: dict) -> str | None:
-    """Department id a staff token is restricted to; None for admins."""
-    return payload.get("department") if payload.get("role") == "staff" else None
+    """Department id a staff token is restricted to; None for admins. Staff without one fail closed (403)."""
+    if payload.get("role") != "staff":
+        return None
+    dept = payload.get("department")
+    if not dept:
+        raise HTTPException(status_code=403, detail="مش مسموح")
+    return dept
 
 
 def actor_name(db: Session, payload: dict) -> str:

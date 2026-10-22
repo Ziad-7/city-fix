@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import current_user, is_staff
 from app.db import get_db
-from app.logic.domain import ensure_follower
+from app.logic.domain import ensure_follower, staff_department
 from app.logic.serialize import incident_view, load_ctx
 from app.logic.status import change_incident_status
 from app.models import Incident
@@ -21,8 +21,16 @@ def _get_or_404(db: Session, incident_id: str) -> Incident:
     return inc
 
 
+def _staff_sees_admin_fields(inc: Incident, payload: dict) -> bool:
+    """Admins see admin fields everywhere; staff only for their own department (others get the public shape)."""
+    if not is_staff(payload):
+        return False
+    dept = staff_department(payload)
+    return dept is None or inc.department_id == dept
+
+
 def _view(db: Session, inc: Incident, payload: dict) -> dict:
-    return incident_view(load_ctx(db, [inc], payload["sub"]), inc, is_staff(payload))
+    return incident_view(load_ctx(db, [inc], payload["sub"]), inc, _staff_sees_admin_fields(inc, payload))
 
 
 @router.get("/incidents")
@@ -30,8 +38,7 @@ def list_incidents(payload: dict = Depends(current_user), db: Session = Depends(
     """All incidents, newest first. Public fields only; staff tokens also get the admin fields."""
     incidents = db.query(Incident).order_by(Incident.created_at.desc(), Incident.id.desc()).all()
     ctx = load_ctx(db, incidents, payload["sub"])
-    staff = is_staff(payload)
-    return [incident_view(ctx, i, staff) for i in incidents]
+    return [incident_view(ctx, i, _staff_sees_admin_fields(i, payload)) for i in incidents]
 
 
 @router.get("/incidents/{incident_id}")

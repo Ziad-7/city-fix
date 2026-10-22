@@ -256,7 +256,7 @@ Optional keys are omitted, never `null`. Dashboard semantics: `open` is always t
 | PATCH | `/admin/work-orders/{id}` | `{status?, team?, teamSize?, supervisor?, dueAt?, tasks?: WorkOrderTask[], note?}`; `in_progress`/`done` need a note (400) and move the linked incident/request to `in_progress`/`resolved` |
 | GET | `/admin/service-requests?status=&serviceType=&day=&payment=` | `AdminServiceRequest[]`, day asc then slot; `assignee` is admin-only (not in citizen `details`) |
 | PATCH | `/admin/service-requests/{id}` | `{status?, day?, slot?, assignee?, note?}`; note required on status change |
-| POST | `/admin/budget/optimize` | admin; `{budgetEgp > 0, incidentIds?}`; exact 0/1 knapsack, cost in units of 100 EGP (rounded up), ties by followers; empty `incidentIds` means all open; saved as the current plan |
+| POST | `/admin/budget/optimize` | admin; `{budgetEgp > 0, incidentIds?}`; 0/1 knapsack, exact over 100 EGP units (costs rounded up), ties by followers; empty `incidentIds` means all open; saved as the current plan |
 | POST | `/admin/budget/commit` | admin; `{incidentIds}` creates `WorkOrder[]` (same creation path as `POST /admin/work-orders`) |
 | GET | `/admin/insights` | `Insights` (deterministic, computed from data) |
 | POST | `/admin/demo/reset` | admin; re-seeds |

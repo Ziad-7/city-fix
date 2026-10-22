@@ -11,12 +11,15 @@ from app.logic.overdue import aware, is_open, is_overdue
 from app.models import Category, Department, Incident
 
 
-def generate_insights(db: Session) -> dict:
+def generate_insights(db: Session, department_id: str | None = None) -> dict:
     now = now_utc()
     week_ago, two_weeks_ago = now - timedelta(days=7), now - timedelta(days=14)
     cats = {c.id: c for c in db.query(Category).all()}
     depts = {d.id: d for d in db.query(Department).all()}
-    incidents = db.query(Incident).all()
+    query = db.query(Incident)
+    if department_id:
+        query = query.filter(Incident.department_id == department_id)
+    incidents = query.all()
     open_incs = [i for i in incidents if is_open(i)]
 
     hotspot_counts = Counter(i.address for i in open_incs if i.address)
@@ -38,7 +41,8 @@ def generate_insights(db: Session) -> dict:
     overdue_departments = [depts[d].name_ar if d in depts else d for d, _ in ranked[:3]]
 
     created = sum(this_week.values())
-    resolved = sum(1 for at in resolved_at_map(db).values() if at >= week_ago)
+    scoped_ids = {i.id for i in incidents}
+    resolved = sum(1 for iid, at in resolved_at_map(db).items() if at >= week_ago and iid in scoped_ids)
     sentences = [f"الأسبوع ده وصل {created} بلاغ جديد واتحل {resolved}"]
     if rising:
         top = rising[0]

@@ -1,5 +1,7 @@
 """Authentication endpoints."""
 
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
@@ -10,6 +12,7 @@ from app.auth import (
     normalize_phone,
     verify_password,
 )
+from app.config import settings
 from app.db import get_db
 from app.models import Department, Profile, StaffAccount
 from app.schemas import OTPRequestInput, OTPVerifyInput, StaffLoginInput, StaffSession
@@ -35,13 +38,15 @@ async def verify_otp(body: OTPVerifyInput, db: Session = Depends(get_db)) -> dic
         raise HTTPException(status_code=400, detail="رقم الموبايل مش صحيح")
     phone = normalize_phone(body.phone)
 
-    # Real SMS delivery is a stretch goal: both modes accept the demo code for now.
+    # Real SMS delivery is a stretch goal: only demo mode has an OTP "store" (the fixed code).
+    if settings.otp_mode != "demo":
+        raise HTTPException(status_code=400, detail="الكود غلط")
     if body.code != "123456":
         raise HTTPException(status_code=401, detail="الكود غلط")
 
     profile = db.query(Profile).filter_by(phone=phone).first()
     if not profile:
-        profile = Profile(id=f"citizen-{phone[-8:]}", phone=phone, role="citizen")
+        profile = Profile(id=f"citizen-{uuid.uuid4().hex[:12]}", phone=phone, role="citizen")
         db.add(profile)
         db.commit()
 

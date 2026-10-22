@@ -26,8 +26,8 @@ uvx ruff check .          # CI also runs: ruff format --check .
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `DATABASE_URL` | `sqlite:///./fixthecity.db` | SQLAlchemy URL |
-| `JWT_SECRET` | dev value | HS256 secret (>= 32 bytes); set it outside dev |
-| `OTP_MODE` | `demo` | `demo`: no SMS, the code is always `123456` |
+| `JWT_SECRET` | dev value | HS256 secret (>= 32 bytes). **Required** when `OTP_MODE` is not `demo`: the app refuses to start with the built-in dev value |
+| `OTP_MODE` | `demo` | `demo`: no SMS, the code is always `123456`. Any other value has no OTP store yet, so `POST /auth/verify` answers `400 الكود غلط` (the demo code is never accepted outside demo mode) |
 | `SEED_ON_START` | `true` | Seed demo data on startup when the DB has no incidents |
 | `CORS_ORIGINS` | `http://localhost:3000,http://localhost:3001` | Comma-separated allowed origins (Expo web `:8081` is always allowed) |
 | `CORS_ORIGIN_REGEX` | `^http://(localhost\|127\.0\.0\.1)(:\d+)?$` | Also allow any localhost port; set to your deployed origins (e.g. the Vercel domains) in production |
@@ -44,7 +44,7 @@ uvx ruff check .          # CI also runs: ruff format --check .
 ## Layout
 
 - `app/routers/` `auth`, `reports`, `incidents`, `map`, `service_requests`, `triage`, `uploads` (citizen) and `admin` (staff/admin; `PATCH /incidents/{id}` lives there too).
-- `app/logic/` pure/domain code: `priority`, `duplicates` (haversine, 250 m), `triage` (keyword port of the mobile classifier), `status` (the one status-change function per entity, writes `activity_log`), `overdue`, `dashboard`, `budget` (exact knapsack), `insights`, `serialize` (DB to contract JSON, bulk-loaded), `domain` (report/work-order creation shared by routers).
+- `app/logic/` pure/domain code: `priority`, `duplicates` (haversine, 250 m), `triage` (keyword port of the mobile classifier), `status` (the one status-change function per entity, writes `activity_log`), `overdue`, `dashboard`, `budget` (knapsack, exact over 100 EGP units; costs rounded up), `insights`, `serialize` (DB to contract JSON, bulk-loaded), `domain` (report/work-order creation shared by routers).
 - `app/seed.py` demo data; `tests/` pytest suite.
 
 ## Notes

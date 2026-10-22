@@ -31,6 +31,7 @@ from app.logic.serialize import (
     work_orders_view,
 )
 from app.logic.status import (
+    WORK_ORDER_STATUSES,
     add_incident_note,
     add_service_request_note,
     add_work_order_note,
@@ -249,6 +250,8 @@ def merge_incident(
     target = _incident_or_404(db, body.into_incident_id, payload)
     if source.id == target.id:
         raise HTTPException(status_code=400, detail=INVALID)
+    if getattr(target.status, "value", target.status) in ("resolved", "closed"):
+        raise HTTPException(status_code=400, detail="مينفعش تدمج في بلاغ اتحل أو اتقفل")
 
     def people(incident_id: str) -> set[str]:
         rows = db.query(IncidentFollower.user_id).filter(IncidentFollower.incident_id == incident_id).all()
@@ -270,7 +273,17 @@ def merge_incident(
     recompute_priority(db, target)
 
     actor = actor_name(db, payload)
-    change_incident_status(db, source, "closed", f"اتدمج البلاغ ده مع {target.id}", actor)
+    note = f"اتدمج البلاغ ده مع {target.id}"
+    wo = db.get(WorkOrder, source.work_order_id) if source.work_order_id else None
+    if wo is not None and getattr(wo.status, "value", wo.status) != "done":
+        if not target.work_order_id:
+            wo.incident_id = target.id
+            target.work_order_id = wo.id
+            source.work_order_id = None
+            note += f" واتنقل أمر الشغل {wo.id} للبلاغ {target.id}"
+        else:
+            note += f" وأمر الشغل {wo.id} فضل على البلاغ ده لأن {target.id} ليه أمر شغل"
+    change_incident_status(db, source, "closed", note, actor)
     db.commit()
     return _one(db, target)
 
@@ -415,6 +428,8 @@ def patch_work_order(
     current = getattr(wo.status, "value", wo.status)
     status_changed = body.status is not None and body.status != current
     moves_linked = body.status in ("in_progress", "done")
+    if status_changed and WORK_ORDER_STATUSES.index(body.status) < WORK_ORDER_STATUSES.index(current):
+        raise HTTPException(status_code=400, detail="مينفعش ترجّع الحالة لورا")
     if status_changed and moves_linked and not note:
         raise HTTPException(status_code=400, detail=NEEDS_NOTE)
     actor = actor_name(db, payload)
@@ -533,7 +548,7 @@ def budget_optimize(
     payload: dict = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    """Exact knapsack plan; saved so that ``inBudgetPlan`` reflects the last plan. Admin only."""
+    """Knapsack plan (exact over 100 EGP units, costs rounded up); saved so that ``inBudgetPlan`` reflects the last plan. Admin only."""
     plan = optimize_budget(db, body.budget_egp, body.incident_ids)
     db.add(
         BudgetPlan(
@@ -573,7 +588,7 @@ def budget_commit(
 # --------------------------------------------------------------------------- insights / demo
 @router.get("/insights")
 def get_insights(payload: dict = Depends(require_staff), db: Session = Depends(get_db)):
-    return generate_insights(db)
+    return generate_insights(db, staff_department(payload))
 
 
 @router.post("/demo/reset")

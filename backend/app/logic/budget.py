@@ -1,4 +1,4 @@
-"""Budget optimiser: exact 0/1 knapsack over cost in units of 100 EGP."""
+"""Budget optimiser: 0/1 knapsack, exact over cost in units of 100 EGP (costs rounded up)."""
 
 from dataclasses import dataclass
 from math import ceil
@@ -31,7 +31,7 @@ class Candidate:
 def knapsack(items: list[Candidate], budget_egp: int) -> list[int]:
     """Indices of the best subset: max sum of priority, ties broken by sum of followers.
 
-    Exact DP (value is the tuple (priority, followers), compared lexicographically).
+    DP, exact over 100 EGP units (costs rounded up; value is the tuple (priority, followers), compared lexicographically).
     Total cost in units never exceeds budget_egp // 100, so cost never exceeds the budget.
     """
     cap = min(budget_egp // UNIT_EGP, sum(i.units for i in items))

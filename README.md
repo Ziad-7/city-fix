@@ -40,6 +40,8 @@ Scan the QR code with **Expo Go** (Android/iOS). The app runs fully on **mock da
 
 ## Run the backend and the Command Center
 
+The two commands below run side by side, so use two terminals (one per command).
+
 ```bash
 cd backend && uv sync && uv run uvicorn app.main:app --reload --port 8000   # seeds demo data
 cd apps/admin-web && npm ci && npm run dev                                   # http://localhost:3001

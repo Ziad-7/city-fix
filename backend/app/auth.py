@@ -80,6 +80,8 @@ def require_staff(payload: dict = Depends(current_user)) -> dict:
     """Require staff or admin role."""
     if payload.get("role") not in ("staff", "admin"):
         raise HTTPException(status_code=403, detail="مش مسموح")
+    if payload.get("role") == "staff" and not payload.get("department"):
+        raise HTTPException(status_code=403, detail="مش مسموح")  # staff without a department fail closed
     return payload
 
 
