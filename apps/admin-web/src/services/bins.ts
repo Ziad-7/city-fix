@@ -5,7 +5,7 @@ export async function getSmartBins(): Promise<SmartBin[]> {
   return (await http<SmartBin[]>('GET', '/admin/bins')) ?? [];
 }
 
-export function getSmartBinReadings(
+export async function getSmartBinReadings(
   binId: string,
   limit = 100,
 ): Promise<SmartBinReading[]> {

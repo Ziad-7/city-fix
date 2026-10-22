@@ -40,9 +40,9 @@ class CreateBinInput(CamelCaseModel):
 
     id: Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9_-]{1,64}$")]
     name: Annotated[str, StringConstraints(min_length=1, max_length=255)]
-    district: Annotated[
-        str, StringConstraints(min_length=1, max_length=100)
-    ] = "القاهرة"
+    district: Annotated[str, StringConstraints(min_length=1, max_length=100)] = (
+        "القاهرة"
+    )
     department_id: str | None = None
     lat: float = Field(ge=-90, le=90, allow_inf_nan=False)
     lng: float = Field(ge=-180, le=180, allow_inf_nan=False)
@@ -88,4 +88,3 @@ class BinResponse(CamelCaseModel):
     is_hot: bool
     last_seen_at: datetime | None
     status: Literal["offline", "full", "heat", "low_battery", "normal"]
-

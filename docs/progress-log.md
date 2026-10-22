@@ -1,5 +1,11 @@
 # Progress log
 
+## 2026-10-22 — PR #43 CI fixes
+
+- Fixed the missing `async` on the admin smart-bin history service and applied Ruff's required schema formatting.
+- Replaced website Google Fonts build-time downloads with pinned local copies of the same Readex Pro, IBM Plex Sans Arabic, and Aref Ruqaa families. Font licenses and source hashes are included alongside the assets. This removes the Google URL parsing failure from the build path.
+- Verified admin typecheck and all 161 admin tests, backend Ruff formatting (86 files), and the website production build with network proxies set to an unreachable address. The original Google-font build also passed locally, so the reported CI response could not be reproduced; local fonts remove that external dependency.
+
 ## 2026-10-22 — Smart-bin backend and online demo (`feat/smart-bin-demo-enhancements`)
 
 **Done**
