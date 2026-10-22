@@ -2,6 +2,25 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-22 — CityCycle Wokwi ESP32 prototypes
+
+**Done** ([Wokwi handoff](../hardware/wokwi/README.md), [scenarios](../hardware/wokwi/SCENARIOS.md))
+- Added separate free-plan ESP32 Arduino projects for a smart bin and a collection-hub scale, with connected circuit diagrams, firmware, native helper tests, and pinned browser/local-build libraries.
+- The bin supports durable sample/outbox state, offline retry/ACK handling, configurable thresholds, sensor/power controls, a default local mock, and opt-in HTTP to the separate loopback-only receiver adapter. The scale supports tare, simulated known-weight calibration, explicit confirmation, offline queueing, and a local mock; scale HTTP is deferred until its response contract exists.
+- No existing PC simulator, backend, shared API contract, mobile code, or CI workflow was changed. The models make no physical accuracy, battery, or durability claims.
+- Review fixes add backoff-safe threshold delivery, atomic queue/edge persistence, fresh asynchronous temperature conversion, fail-closed checksummed NVS restore, exact MaterialId validation, capped/deadline-bound HTTP ACK parsing, and JSON responses for unsupported adapter methods.
+
+**How to test**
+- `g++ -std=c++17 -Wall -Wextra -Werror -Ihardware/wokwi/smart-bin hardware/wokwi/smart-bin/tests/native/core_test.cpp -o /tmp/smart-bin-core-test && /tmp/smart-bin-core-test` — passed.
+- `g++ -std=c++17 -Wall -Wextra -Werror -Ihardware/wokwi/hub-scale hardware/wokwi/hub-scale/tests/native/core_test.cpp -o /tmp/hub-scale-core-test && /tmp/hub-scale-core-test` — passed.
+- `python3 -m unittest discover -s hardware/wokwi/tests -v` — 5 adapter/socket tests passed with managed network permission.
+- Both sketches compiled for ESP32 Arduino 2.0.17 with PlatformIO 6.12.0 and the locally seeded, pinned libraries; exact commands and build details are in the accompanying review-workspace implementation report.
+- `python3 -m compileall -q hardware/wokwi`, diagram JSON parsing, and `git diff --check` passed.
+
+**Still open**
+- Wokwi interactive simulation and browser screenshots were unavailable in this workspace, so peripheral behavior and NVS persistence across browser restarts are unverified. The local ESP32 build and static wiring checks are not a substitute for that run. The external Wokwi gateway/tunnel path is also unverified.
+- Real hardware, physical sensor calibration, battery/solar design, deep-sleep behavior, and backend provisioning remain unvalidated or deferred; see the handoff for limits and safe wiring notes.
+
 ## 2026-10-22 — CityCycle PC smart-bin simulator
 
 **Done** ([simulator handoff](../hardware/simulator/README.md), [design](superpowers/specs/2026-10-22-smart-bin-simulator-design.md), [implementation plan](superpowers/plans/2026-10-22-smart-bin-simulator.md))

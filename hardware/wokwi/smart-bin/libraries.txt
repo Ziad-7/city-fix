@@ -1,0 +1,5 @@
+Adafruit GFX Library@1.11.11
+Adafruit SSD1306@2.5.13
+OneWire@2.3.8
+DallasTemperature@3.9.1
+ArduinoJson@7.4.2
