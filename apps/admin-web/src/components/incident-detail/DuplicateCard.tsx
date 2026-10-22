@@ -10,9 +10,9 @@ import type { DuplicateMatch } from '@/domain/types';
 
 interface DuplicateCardProps {
   current: AdminIncident;
-  matches: DuplicateMatch[];
+  matches: (DuplicateMatch & { createdAt?: string })[];
   canAct: boolean;
-  onMerge: (targetId: string) => Promise<void>;
+  onMerge: (sourceId: string, targetId: string) => Promise<void>;
 }
 
 export default function DuplicateCard({ current, matches, canAct, onMerge }: DuplicateCardProps) {
@@ -26,14 +26,15 @@ export default function DuplicateCard({ current, matches, canAct, onMerge }: Dup
   const otherCount = matches.length - 1;
 
   // Determine which is older and should be the merge target
-  const currentIsOlder = new Date(current.createdAt) < new Date();
+  const currentIsOlder =
+    !firstMatch.createdAt || new Date(current.createdAt) <= new Date(firstMatch.createdAt);
   const targetId = currentIsOlder ? current.id : firstMatch.incidentId;
   const sourceId = currentIsOlder ? firstMatch.incidentId : current.id;
 
   const handleMergeConfirm = async () => {
     try {
       setBusy(true);
-      await onMerge(targetId);
+      await onMerge(sourceId, targetId);
       setMergeModalOpen(false);
     } finally {
       setBusy(false);

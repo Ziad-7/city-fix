@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
@@ -12,13 +12,13 @@ import { PriorityBreakdown } from '@/components/ui/PriorityBreakdown';
 import { Timeline } from '@/components/ui/Timeline';
 import { StatusChangeForm } from '@/components/incidents/StatusChangeForm';
 import type { AdminIncident, WorkOrder, Department, Team, StaffSession } from '@/domain/admin-types';
-import { formatWhen, formatEgp, formatCitizens, formatWorkDays, formatDayDM, formatDueLabel, hoursLateOf } from '@/lib/format';
-import { STATUS_LABEL_AR } from '@/domain/types';
+import { formatWhen, formatEgp, formatCitizens, formatWorkDays, formatDueLabel, hoursLateOf } from '@/lib/format';
+import { STATUS_LABEL_AR, type IncidentStatus } from '@/domain/types';
 import { SEVERITY_AI_AR } from '@/lib/text';
 import { getCategory } from '@/domain/categories';
 import { isCriticalIncident, priorityReason } from '@/logic/priority';
-import { patchIncident, confirmTriage, mergeIncidents } from '@/services/incidents';
-import { createWorkOrder } from '@/services/workOrders';
+import { haversineM } from '@/utils/geo';
+import { patchIncident, mergeIncidents } from '@/services/incidents';
 import AiSuggestionCard from './AiSuggestionCard';
 import DuplicateCard from './DuplicateCard';
 import PhotosCard from './PhotosCard';
@@ -48,12 +48,11 @@ export default function IncidentDetailContent({
   const router = useRouter();
   const queryClient = useQueryClient();
   const toast = useToast();
-  const [statusFormBusy, setStatusFormBusy] = useState(false);
 
   // Document title
-  if (typeof window !== 'undefined') {
+  useEffect(() => {
     document.title = `FixTheCity — مركز القيادة: ${incident.id}`;
-  }
+  }, [incident.id]);
 
   const category = getCategory(incident.categoryId);
   const isCritical = isCriticalIncident(incident);
@@ -93,7 +92,8 @@ export default function IncidentDetailContent({
       incidentId: inc.id,
       title: inc.title,
       categoryId: inc.categoryId,
-      distanceM: 0, // Would be calculated from location data
+      distanceM: Math.round(haversineM(incident.location, inc.location)),
+      createdAt: inc.createdAt,
       followers: inc.linkedReports.length,
       status: inc.status,
     }))
@@ -137,32 +137,14 @@ export default function IncidentDetailContent({
     }
   };
 
+  // Errors propagate to StatusChangeForm, which shows the toast (success and failure).
   const handleStatusChange = async (data: { status: string; note: string }) => {
-    try {
-      setStatusFormBusy(true);
-      await patchIncident(incident.id, {
-        status: data.status,
-        note: data.note,
-      });
-
-      // Invalidate related queries
-      await queryClient.invalidateQueries({ queryKey: ['incident', incident.id] });
-      await queryClient.invalidateQueries({ queryKey: ['incidents'] });
-      await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-
-      toast.success('اتحدّثت الحالة. المواطنين هيشوفوا رسالتك في التتبع.');
-    } catch (err) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const errorMsg = ((err as any)?.response?.data?.detail as string) || 'حصلت مشكلة. جرّب تاني.';
-      toast.error(errorMsg);
-    } finally {
-      setStatusFormBusy(false);
-    }
+    await patchIncident(incident.id, { status: data.status, note: data.note });
   };
 
-  const handleMergeIncidents = async (targetId: string) => {
+  const handleMergeIncidents = async (sourceId: string, targetId: string) => {
     try {
-      await mergeIncidents(incident.id, targetId);
+      await mergeIncidents(sourceId, targetId);
 
       // Invalidate queries and redirect
       await queryClient.invalidateQueries({ queryKey: ['incident'] });
@@ -172,8 +154,7 @@ export default function IncidentDetailContent({
       toast.success(`اتدمجت البلاغات في ${targetId}.`);
       router.push(`/incidents/${targetId}`);
     } catch (err) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const errorMsg = ((err as any)?.response?.data?.detail as string) || 'حصلت مشكلة. جرّب تاني.';
+      const errorMsg = (err as Error).message || 'حصلت مشكلة. جرّب تاني.';
       toast.error(errorMsg);
     }
   };
@@ -190,13 +171,14 @@ export default function IncidentDetailContent({
       </nav>
 
       {/* Chips row */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
-        {isCritical && <StatusChip kind="critical" />}
-        <StatusChip kind="incident" status={incident.status} />
-        <StatusChip kind="priority" score={incident.priority.score} />
+      <div className="title-row">
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', flexBasis: '100%' }}>
+          {isCritical && <StatusChip kind="critical" />}
+          <StatusChip kind="incident" status={incident.status} />
+          <StatusChip kind="priority" score={incident.priority.score} />
+        </div>
+        <h1>{incident.title}</h1>
       </div>
-
-      <h1>{incident.title}</h1>
 
       {/* Metadata row */}
       <div className="meta">
@@ -219,14 +201,14 @@ export default function IncidentDetailContent({
       </div>
 
       {/* Main layout grid */}
-      <div className="layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 380px', gap: '24px', maxWidth: '100%' }}>
+      <div className="layout">
         {/* Left column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="col">
           {/* Photos card */}
           <PhotosCard incident={incident} />
 
           {/* Two-column section for AI and Details */}
-          <div className="two" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+          <div className="two" style={incident.triage ? undefined : { gridTemplateColumns: 'minmax(0, 1fr)' }}>
             {/* AI Suggestion Card */}
             {incident.triage && (
               <AiSuggestionCard
@@ -302,7 +284,7 @@ export default function IncidentDetailContent({
         </div>
 
         {/* Right column (aside) */}
-        <aside aria-label="إجراءات" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <aside aria-label="إجراءات" className="col">
           {/* Status form card */}
           <Card labelledBy="h-st-title">
             <CardHead id="h-st-title" title="غيّر الحالة" action={<StatusChip kind="incident" status={incident.status} />} />
@@ -312,11 +294,12 @@ export default function IncidentDetailContent({
               </Notice>
             ) : (
               <StatusChangeForm
+                key={`${incident.id}:${incident.status}`}
                 kind="incident"
                 currentStatus={incident.status}
                 options={getStatusOptions()}
                 defaultStatus={getNextStatus()}
-                previewStatusFor={(v) => v as any}
+                previewStatusFor={(v) => v as IncidentStatus}
                 citizensCount={incident.linkedReports.length}
                 disabledReason={!canAct ? 'ده بلاغ جهة تانية. تقدر تشوفه بس.' : undefined}
                 onSubmit={handleStatusChange}
@@ -343,7 +326,7 @@ export default function IncidentDetailContent({
               current={incident}
               matches={[matchedDuplicate]}
               canAct={canAct}
-              onMerge={(targetId) => handleMergeIncidents(targetId)}
+              onMerge={handleMergeIncidents}
             />
           )}
         </aside>
@@ -377,7 +360,7 @@ function TimelineContent({ incident, session }: { incident: AdminIncident; sessi
       timelineItems.push({
         id: 'pending-wo',
         title: 'في انتظار أمر شغل',
-        who: `${session?.name} · دلوقتي`,
+        who: `${session?.name ?? ''} · دلوقتي`,
         body: 'اختار الفريق وأنشئ أمر الشغل عشان المواطنين يشوفوا إن الشغل بدأ.',
         state: 'current' as TimelineItemState,
       });

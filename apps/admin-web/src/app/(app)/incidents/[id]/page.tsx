@@ -1,25 +1,18 @@
 'use client';
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { useParams } from 'next/navigation';
 import { useSession } from '@/lib/session';
 import { getIncident, getSimilarIncidents } from '@/services/incidents';
 import { getWorkOrder as getWorkOrderService } from '@/services/workOrders';
 import { getDepartments, getTeams } from '@/services/departments';
-import { getCategory } from '@/domain/categories';
-import { ErrorState, SkeletonTable, Skeleton } from '@/components/ui/States';
-import { Card, CardHead } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { ErrorState, Skeleton } from '@/components/ui/States';
+import { Card } from '@/components/ui/Card';
 import IncidentDetailContent from '@/components/incident-detail/IncidentDetailContent';
 
-export const generateStaticParams = async () => {
-  return [];
-};
-
-export default function IncidentDetailPage({ params }: { params: { id: string } }) {
-  const router = useRouter();
+export default function IncidentDetailPage() {
+  const params = useParams<{ id: string }>();
   const session = useSession();
-  const queryClient = useQueryClient();
 
   const { data: incident, isLoading, error, refetch } = useQuery({
     queryKey: ['incident', params.id],
@@ -56,8 +49,7 @@ export default function IncidentDetailPage({ params }: { params: { id: string } 
   });
 
   if (error) {
-    const errorObj = error as any;
-    const status = errorObj?.response?.status;
+    const status = (error as { status?: number }).status;
     if (status === 404) {
       return (
         <main className="ftc-admin-main">
@@ -95,7 +87,7 @@ export default function IncidentDetailPage({ params }: { params: { id: string } 
           <h1>
             <Skeleton variant="title" width="300px" />
           </h1>
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 380px', gap: '24px', maxWidth: '100%' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 380px', gap: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <Card>
                 <Skeleton variant="block" height={300} />
@@ -125,7 +117,7 @@ export default function IncidentDetailPage({ params }: { params: { id: string } 
     );
   }
 
-  const canAct = (session as any)?.role === 'admin' || incident.department === (session as any)?.department;
+  const canAct = session?.role === 'admin' || incident.department === session?.department;
 
   return (
     <main className="ftc-admin-main">
@@ -137,7 +129,7 @@ export default function IncidentDetailPage({ params }: { params: { id: string } 
           departments={departments}
           teams={teams}
           canAct={canAct}
-          session={session as any}
+          session={session ?? undefined}
         />
       </div>
     </main>

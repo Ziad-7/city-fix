@@ -16,7 +16,7 @@ import {
 import { useToast } from '@/components/ui/Toast';
 import { Icon } from '@/components/Icon';
 import { StatusChangeForm } from '@/components/incidents/StatusChangeForm';
-import type { WorkOrder, WorkOrderTask } from '@/domain/admin-types';
+import type { WorkOrder } from '@/domain/admin-types';
 import { patchWorkOrder } from '@/services/workOrders';
 import { getTeams } from '@/services/departments';
 import { formatDayWithTime, formatEgp } from '@/lib/format';

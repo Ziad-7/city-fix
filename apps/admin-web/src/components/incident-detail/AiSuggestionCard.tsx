@@ -49,8 +49,7 @@ export default function AiSuggestionCard({
       toast.success('اتأكّد التصنيف.');
       onTriageConfirmed();
     } catch (err) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const errorMsg = ((err as any)?.response?.data?.detail as string) || 'حصلت مشكلة. جرّب تاني.';
+      const errorMsg = (err as Error).message || 'حصلت مشكلة. جرّب تاني.';
       toast.error(errorMsg);
     } finally {
       setBusy(false);
@@ -70,8 +69,7 @@ export default function AiSuggestionCard({
       toast.success('اتغيّر التصنيف واتأكّد.');
       onTriageConfirmed();
     } catch (err) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const errorMsg = ((err as any)?.response?.data?.detail as string) || 'حصلت مشكلة. جرّب تاني.';
+      const errorMsg = (err as Error).message || 'حصلت مشكلة. جرّب تاني.';
       toast.error(errorMsg);
     } finally {
       setBusy(false);

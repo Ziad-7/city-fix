@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { Suspense, useEffect, useState, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import {
@@ -55,13 +56,28 @@ const INCIDENT_STATUS_OPTIONS: Record<string, string> = {
 };
 
 export default function IncidentsPage() {
+  return (
+    <Suspense fallback={null}>
+      <IncidentsPageInner />
+    </Suspense>
+  );
+}
+
+const VIEWS = ['all', 'high', 'critical', 'overdue', 'budget'] as const;
+type View = (typeof VIEWS)[number];
+
+function IncidentsPageInner() {
+  const searchParams = useSearchParams();
   const session = useSession();
-  const [view, setView] = useState<'all' | 'high' | 'critical' | 'overdue' | 'budget'>('all');
+  const [view, setView] = useState<View>(() => {
+    const v = searchParams?.get('view');
+    return (VIEWS as readonly string[]).includes(v ?? '') ? (v as View) : 'all';
+  });
   const [status, setStatus] = useState<'open' | 'all' | IncidentStatus>('open');
   const [categoryId, setCategoryId] = useState('');
   const [department, setDepartment] = useState('');
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [search, setSearch] = useState(() => searchParams?.get('q') ?? '');
+  const [debouncedSearch, setDebouncedSearch] = useState(() => searchParams?.get('q') ?? '');
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | undefined>();
 
   // Debounce search
@@ -328,6 +344,7 @@ export default function IncidentsPage() {
             id="department-select"
             label="الجهة"
             value={session?.department || ''}
+            onChange={() => {}}
             disabled
             options={[
               { value: session?.department || '', label: `الجهة: ${session?.department || '—'}` },
@@ -477,13 +494,14 @@ export default function IncidentsPage() {
               <div>
                 <span className="strong small">غيّر الحالة</span>
                 <StatusChangeForm
+                  key={`${selectedIncident.id}:${selectedIncident.status}`}
                   kind="incident"
                   currentStatus={selectedIncident.status}
                   options={statusOptions}
                   previewStatusFor={(value) => value as IncidentStatus}
                   citizensCount={selectedIncident.linkedReports.length}
                   compact
-                  disabledReason={session?.role === 'staff' && session?.department && session.department !== selectedIncident.department ? 'مش من صلاحياتك تغيّر حالة البلاغ ده' : undefined}
+                  disabledReason={session?.role === 'staff' && session?.department && session.department !== selectedIncident.department ? 'ده بلاغ جهة تانية. تقدر تشوفه بس.' : undefined}
                   onSubmit={async ({ status: newStatus, note }) => {
                     await patchIncident(selectedIncident.id, { status: newStatus, note });
                   }}

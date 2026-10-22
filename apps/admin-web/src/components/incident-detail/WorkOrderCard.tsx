@@ -53,74 +53,37 @@ export default function WorkOrderCard({
     return `${dept.nameAr} (الحي)`;
   };
 
+  const selectedDept = departments.find((d) => d.nameAr === selectedDepartment);
+
   const handleCreateWorkOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const selectedDept = departments.find((d) => d.id === selectedDepartment);
-    if (!selectedDept) return;
-
-    if (selectedDept.external) {
-      // External department - no form needed
-      try {
-        setFormBusy(true);
-        const result = await createWorkOrder({
-          incidentId: incident.id,
-          department: selectedDepartment,
-          dueAt: incident.dueAt,
-        });
-
+    if (formBusy) return;
+    const team = selectedDept?.external ? undefined : allTeams.find((t) => t.name === selectedTeam);
+    try {
+      setFormBusy(true);
+      const result = await createWorkOrder({
+        incidentId: incident.id,
+        department: selectedDepartment,
+        ...(team ? { team: team.name, teamSize: team.size } : {}),
+        dueAt: incident.dueAt,
+      });
+      await queryClient.invalidateQueries({ queryKey: ['incident', incident.id] });
+      await queryClient.invalidateQueries({ queryKey: ['work-order'] });
+      await queryClient.invalidateQueries({ queryKey: ['incidents'] });
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      toast.success(`اتعمل أمر الشغل ${result.id}.`);
+    } catch (err) {
+      const status = (err as { status?: number }).status;
+      if (status === 409) {
+        toast.error('البلاغ ده ليه أمر شغل بالفعل');
         await queryClient.invalidateQueries({ queryKey: ['incident', incident.id] });
-        await queryClient.invalidateQueries({ queryKey: ['incidents'] });
-        await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-
-        toast.success(`اتعمل أمر الشغل ${result.id}.`);
-      } catch (err) {
-        const errorMsg = (err as any)?.response?.data?.detail || 'حصلت مشكلة. جرّب تاني.';
-        if (errorMsg.includes('بالفعل')) {
-          toast.error(errorMsg);
-          await queryClient.invalidateQueries({ queryKey: ['incident', incident.id] });
-        } else {
-          toast.error(errorMsg);
-        }
-      } finally {
-        setFormBusy(false);
+      } else {
+        toast.error((err as Error).message || 'حصلت مشكلة. جرّب تاني.');
       }
-    } else {
-      // Internal department - requires team selection
-      if (!selectedTeam) {
-        toast.error('اختار فريق');
-        return;
-      }
-
-      try {
-        setFormBusy(true);
-        const result = await createWorkOrder({
-          incidentId: incident.id,
-          department: selectedDepartment,
-          team: selectedTeam,
-          dueAt: incident.dueAt,
-        });
-
-        await queryClient.invalidateQueries({ queryKey: ['incident', incident.id] });
-        await queryClient.invalidateQueries({ queryKey: ['incidents'] });
-        await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-
-        toast.success(`اتعمل أمر الشغل ${result.id}.`);
-      } catch (err) {
-        const errorMsg = (err as any)?.response?.data?.detail || 'حصلت مشكلة. جرّب تاني.';
-        if (errorMsg.includes('بالفعل')) {
-          toast.error(errorMsg);
-          await queryClient.invalidateQueries({ queryKey: ['incident', incident.id] });
-        } else {
-          toast.error(errorMsg);
-        }
-      } finally {
-        setFormBusy(false);
-      }
+    } finally {
+      setFormBusy(false);
     }
   };
-
-  const selectedDept = departments.find((d) => d.id === selectedDepartment);
 
   if (workOrder) {
     const woHours = hoursLateOf(workOrder.dueAt);
@@ -142,7 +105,7 @@ export default function WorkOrderCard({
             { label: 'المهام', value: `${workOrder.tasks.filter((t) => t.done).length} من ${workOrder.tasks.length}` },
           ]}
         />
-        <Button variant="secondary" block size="sm" href={`/work-orders?open=${workOrder.id}`} style={{ marginTop: '16px' }}>
+        <Button variant="secondary" block size="sm" href={`/work-orders?wo=${workOrder.id}`} style={{ marginTop: '16px' }}>
           افتح أمر الشغل
         </Button>
       </Card>
@@ -160,7 +123,7 @@ export default function WorkOrderCard({
           value={selectedDepartment}
           onChange={setSelectedDepartment}
           options={departments.map((d) => ({
-            value: d.id,
+            value: d.nameAr,
             label: getDepartmentLabel(d),
           }))}
           disabled={!canAct}

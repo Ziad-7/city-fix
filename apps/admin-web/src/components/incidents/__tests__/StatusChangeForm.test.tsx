@@ -8,7 +8,7 @@ import type { IncidentStatus } from '@/domain/types';
 const mockOnSubmit = vi.fn();
 const queryClient = new QueryClient();
 
-const renderComponent = (props: any = {}) => {
+const renderComponent = (props: Partial<React.ComponentProps<typeof StatusChangeForm>> = {}) => {
   return render(
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
