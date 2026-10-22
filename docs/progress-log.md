@@ -2,6 +2,18 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-22 — Mobile app: CityCycle features (branch `feat/mobile-citycycle`)
+
+**Done**
+- Citizen: recycling pickup form (materials, weights, photo with AI suggestion, free or paid with estimate, place, time, voice note), pickup tracking inside طلباتي (`RCY-` ids), cancel and confirm weighing, sorting guide, my impact, smart-bin layer on the map with "report full", entry points on home, services and profile.
+- Collector mode: apply, pending (demo verify in mock), jobs list and map, accept, manual weights, finish, earnings; offline-first queue with ordered flush and 4xx drop rules.
+- Mock services with a separate mock DB, real API services for every call, domain/logic/store tests.
+- Contract updated (`/collector/pickups`, new pickup fields, queue and privacy rules); linking checklist in [`mobile/citycycle-backend-linking.md`](mobile/citycycle-backend-linking.md).
+
+**How to test**: `cd apps/mobile && npm run typecheck && npm run lint && npm test`, then the manual list in the linking checklist.
+
+**Known issues**: Bluetooth scale and read-aloud guide not built; no design mockups for the new screens; CO₂ shown only if the backend sends it; web copy under `apps/web` not synced yet.
+
 ## 2026-10-22 — Mobile remaining-work checklist
 
 **Done**

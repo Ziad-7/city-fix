@@ -56,6 +56,8 @@ for f in services/interfaces.ts services/api/index.ts \
   services/media.ts services/sendReport.ts services/garbage-schedule.ts \
   services/__tests__/mock-incident-service.test.ts services/__tests__/mock-english.test.ts \
   services/__tests__/mock-transcription.test.ts services/__tests__/reopen.test.ts services/__tests__/garbage-schedule.test.ts \
+  services/mock/citycycle-db.ts services/mock/citycycle-services.ts services/__tests__/mock-citycycle.test.ts \
+  store/useRecycling.ts store/useCollector.ts store/collectorQueue.ts store/collectorSync.ts \
   store/actions.ts store/index.ts store/useReports.ts store/useRequests.ts store/useServiceRequests.ts \
   store/usePrefs.ts store/useNotifications.ts store/useOutbox.ts store/outboxFlush.ts \
   i18n/index.ts i18n/labels.ts i18n/__tests__/i18n.test.ts; do

@@ -3,6 +3,9 @@ import { services } from '@/services';
 import { setUnauthorizedHandler } from '@/services/api/http';
 import { voiceContentType } from '@/services/media';
 import { expectOwnChange, useNotifications } from './useNotifications';
+import { useCollector } from './useCollector';
+import { useCollectorQueue } from './collectorQueue';
+import { useRecycling } from './useRecycling';
 import { useReports } from './useReports';
 import { useServiceRequests } from './useServiceRequests';
 import { usePrefs } from './usePrefs';
@@ -12,13 +15,21 @@ export const SESSION_EXPIRED_MSG = 'الجلسة خلصت، سجّل دخول ت
 
 /** Loads reports, incidents and service requests (call once the user is signed in). */
 export async function refreshAll(): Promise<void> {
-  await Promise.all([useReports.getState().refresh(), useServiceRequests.getState().refresh()]);
+  await Promise.all([useReports.getState().refresh(), useServiceRequests.getState().refresh(), useRecycling.getState().refresh()]);
+  // Collector mode loads on demand: only keep it fresh once the person has opened it.
+  const collector = useCollector.getState();
+  if (collector.mineStatus !== 'idle') await collector.refreshMine();
 }
 
 export async function signOutAll(): Promise<void> {
+  const userId = useSession.getState().userId;
   try {
     await services.auth.signOut();
   } finally {
+    // Saved collector actions belong to the account that made them: they are not sent from another sign-in.
+    if (userId) useCollectorQueue.getState().clearUser(userId);
+    useRecycling.getState().reset();
+    useCollector.getState().reset();
     useReports.getState().reset();
     useNotifications.getState().reset();
     useServiceRequests.getState().reset();
