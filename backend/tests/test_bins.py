@@ -137,7 +137,7 @@ def test_optional_sensor_values_and_clock_unsynced_timestamp_round_trip(client, 
     assert response.json()["accepted"] == [1]
     assert send(client, registered, [payload]).status_code == 202
 
-    fleet = client.get("/admin/bins", headers=admin_h).json()
+    fleet = [b for b in client.get("/admin/bins", headers=admin_h).json() if b["id"] == "BIN-MERGE-001"]
     assert len(fleet) == 1
     assert fleet[0]["tempC"] is None and fleet[0]["batteryV"] is None
     assert not fleet[0]["isHot"]
