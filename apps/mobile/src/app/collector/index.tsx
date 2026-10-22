@@ -27,7 +27,7 @@ export default function CollectorHomeScreen() {
   else if (meStatus === 'error' && !collector) body = <StateMessage tone="error" icon="wifi" title={tr('مقدرناش نحمّل بياناتك', "We couldn't load your details")} actionLabel={tr('جرّب تاني', 'Try again')} onAction={() => void loadMe()} />;
   else if (!collector) body = <ApplyForm />;
   else if (collector.status === 'pending') body = <Pending />;
-  else if (collector.status === 'suspended') body = <StateMessage icon="alert-triangle" title={tr('حسابك موقوف', 'Your account is suspended')} body={tr('كلّم مكتب الحي لو محتاج توضيح.', 'Contact the district office if you need to know why.')} />;
+  else if (collector.status === 'suspended') body = <StateMessage icon="alert-triangle" title={tr('حسابك موقوف', 'Your account is suspended')} body={tr('للاستفسار كلّم مكتب الحي.', 'Contact the district office if you need to know why.')} />;
   else body = <Jobs />;
 
   return (

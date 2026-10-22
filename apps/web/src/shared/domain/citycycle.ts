@@ -338,7 +338,7 @@ export const awaitingConfirmation = (p: Pick<RecyclingPickup, 'status' | 'collec
 
 export const PICKUP_MODES: readonly { id: PickupMode; ar: string; en: string; subAr: string; subEn: string }[] = [
   { id: 'free', ar: 'أدّيها مجانًا', en: 'Give it away', subAr: 'من غير مقابل', subEn: 'No payment' },
-  { id: 'paid', ar: 'عايز أبيعها', en: 'Sell it', subAr: 'بسعر الحي × الوزن الفعلي', subEn: 'District price × actual weight' },
+  { id: 'paid', ar: 'بيع بالسعر', en: 'Sell it', subAr: 'بسعر الحي × الوزن الفعلي', subEn: 'District price × actual weight' },
 ];
 export const pickupModeLabel = (m: PickupMode): string => {
   const x = PICKUP_MODES.find((p) => p.id === m);

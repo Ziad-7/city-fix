@@ -175,7 +175,9 @@ function Summary({ pickup }: { pickup: RecyclingPickup }) {
 
 function Estimate({ pickup, prices }: { pickup: RecyclingPickup; prices: ReturnType<typeof useRecycling.getState>['prices'] }) {
   const tr = useTr();
-  const est = pickup.estimatedValueEgp ?? estimateValue(pickup.items, prices).valueEgp;
+  const calc = estimateValue(pickup.items, prices);
+  const est = pickup.estimatedValueEgp ?? calc.valueEgp;
+  const partial = prices.length > 0 && calc.unpriced.length > 0;
   return (
     <Card rounded="lg" padding={16} style={styles.section}>
       <AppText style={styles.heading} accessibilityRole="header">{tr('الخامات', 'Materials')}</AppText>
@@ -187,7 +189,7 @@ function Estimate({ pickup, prices }: { pickup: RecyclingPickup; prices: ReturnT
       {pickup.mode === 'paid' ? (
         <View style={styles.sumRow}>
           <AppText variant="small" color={colors.inkMuted}>{tr('القيمة التقريبية', 'Estimated value')}</AppText>
-          <AppText variant="smallStrong" testID="pickup-estimate">{est !== undefined ? formatEgp(est) : formatPrice(null)}</AppText>
+          <AppText variant="smallStrong" testID="pickup-estimate">{est !== undefined ? `${partial ? tr('من ', 'From ') : ''}${formatEgp(est)}` : formatPrice(null)}</AppText>
         </View>
       ) : null}
       <DemoPricesNote />
