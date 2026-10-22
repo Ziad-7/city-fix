@@ -6,9 +6,12 @@ paths sent with a report must have been uploaded by the caller, and reads are si
 No service-role keys or bucket URLs belong in route code.
 """
 
+import logging
 from typing import Protocol
 
 from fastapi import HTTPException, Request
+
+logger = logging.getLogger("fixthecity")
 
 
 class MediaStorage(Protocol):
@@ -57,9 +60,48 @@ def report_for_reader(view: dict, reader_id: str, storage: MediaStorage | None) 
     """
     out = dict(view)
     if storage is not None:
-        out["photoUris"] = [storage.sign_read(reader_id, path) for path in view.get("photoUris", [])]
+        # Paths are scoped to the report's author, so sign them against the author (the route has
+        # already authorized the reader); signing against an admin reader would always fail.
+        owner = view.get("reporterId") or reader_id
+        out["photoUris"] = signed_reads(storage, owner, view.get("photoUris", []))
         if view.get("voiceNoteUri"):
-            out["voiceNoteUri"] = storage.sign_read(reader_id, view["voiceNoteUri"])
+            voice = signed_reads(storage, owner, [view["voiceNoteUri"]])
+            if voice:
+                out["voiceNoteUri"] = voice[0]
+            else:
+                out.pop("voiceNoteUri")
     if view.get("anonymous") and view.get("reporterId") != reader_id:
         out["reporterId"] = ""
     return out
+
+
+def signed_reads(storage: MediaStorage, owner_id: str, paths: list[str]) -> list[str]:
+    """Short-lived read URLs for ``owner_id``'s paths; a path that cannot be signed is skipped.
+
+    Ownership is still enforced by the storage adapter (a path outside ``owner_id/`` is refused),
+    and legacy local-stub paths saved before storage was configured are dropped instead of failing
+    the whole response.
+    """
+    out: list[str] = []
+    for path in paths:
+        try:
+            out.append(storage.sign_read(owner_id, path))
+        except HTTPException as error:
+            logger.warning("skipped unsignable media path (status %s)", error.status_code)
+    return out
+
+
+def sign_linked_report_photos(incident: dict, reports: list, storage: MediaStorage | None) -> dict:
+    """Add ``photoUrls`` (short-lived signed reads) to each ``linkedReports`` entry of an AdminIncident.
+
+    Call only after the route authorized the staff member for this incident (department scope).
+    Without a configured storage (local demo) the stored paths are returned as-is.
+    """
+    by_id = {r.id: r for r in reports}
+    linked = []
+    for entry in incident.get("linkedReports", []):
+        report = by_id.get(entry["id"])
+        paths = list(report.photo_paths or []) if report is not None else []
+        urls = paths if storage is None else signed_reads(storage, report.reporter_id, paths) if report else []
+        linked.append({**entry, "photoUrls": urls})
+    return {**incident, "linkedReports": linked}
