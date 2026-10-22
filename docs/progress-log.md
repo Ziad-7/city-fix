@@ -1,5 +1,12 @@
 # Progress log
 
+## 2026-10-22 — Backend can run on Vercel with Supabase Postgres
+
+- Added the `psycopg` driver (also in `uv.lock`, which Vercel installs from), a `DATABASE_URL` normaliser that accepts Supabase's plain `postgresql://` string, connection-pool settings for non-SQLite databases, and `backend/vercel.json`.
+- New test `backend/tests/test_database_url.py`; full backend suite: **301 passed**. Ruff lint/format passed.
+- How to deploy: see "Deploy on Vercel" in [backend/README.md](../backend/README.md).
+- Known issues: no FFmpeg on Vercel (voice notes), photo upload is a stub without Supabase storage, readable IDs are not transactional (fine for solo testing). Bundle size is verified on the first build.
+
 ## 2026-10-22 — PR #43 aligned with the latest Command Center/backend merge
 
 - Merged `main` at `770efef` (PR #34) into the smart-bin feature branch. Preserved its database-backed citizen routes, auth, serialization, shared client types, and updated admin UI; mounted the device and staff bin routes alongside them.

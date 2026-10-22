@@ -6,12 +6,19 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.config import settings
 from app.models import Base
 
-# SQLAlchemy engine
-engine = create_engine(
-    settings.database_url,
-    connect_args={"check_same_thread": False} if "sqlite" in settings.database_url else {},
-    echo=False,
-)
+# SQLAlchemy engine. SQLite is the local default; PostgreSQL (Supabase session pooler on Vercel) gets a
+# small pool that survives idle connections being dropped between serverless invocations.
+if "sqlite" in settings.database_url:
+    engine = create_engine(settings.database_url, connect_args={"check_same_thread": False}, echo=False)
+else:
+    engine = create_engine(
+        settings.database_url,
+        pool_size=2,
+        max_overflow=3,
+        pool_pre_ping=True,
+        pool_recycle=300,
+        echo=False,
+    )
 
 # Session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
