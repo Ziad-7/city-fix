@@ -12,7 +12,7 @@ from app.auth import AuthContext, AuthSettings, current_user
 from app.auth_adapters import DatabaseStaffDirectory, DatabaseUserRepository
 from app.map_repository import DatabaseMapRepository
 from app.staff_auth import StaffLoginContext
-from app.routers import auth, admin, map as citizen_map, staff_auth
+from app.routers import auth, admin, bins, map as citizen_map, staff_auth
 from app.routers import uploads
 from app.seed import seed_db
 from app.ai.integrations import find_nearby_incidents
@@ -158,6 +158,8 @@ app.include_router(staff_auth.router)
 app.include_router(citizen_map.router)
 app.include_router(admin.router)
 app.include_router(admin.top_level_router)
+app.include_router(bins.iot_router)
+app.include_router(bins.admin_router)
 
 
 # ============================================================================

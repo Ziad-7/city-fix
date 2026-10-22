@@ -3,6 +3,7 @@
 from datetime import datetime, timezone
 from sqlalchemy import (
     Boolean,
+    BigInteger,
     Column,
     Float,
     ForeignKey,
@@ -13,6 +14,7 @@ from sqlalchemy import (
     Text,
     DateTime,
     Enum,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import declarative_base
 import enum
@@ -268,3 +270,55 @@ class BudgetPlan(Base):
     total_cost = Column(Integer, nullable=False)
     remaining = Column(Integer, nullable=False)
     created_at = Column(DateTime, default=utc_now)
+
+
+class SmartBin(Base):
+    """Registered bin device and its latest acknowledged telemetry."""
+
+    __tablename__ = "smart_bins"
+
+    id = Column(String(64), primary_key=True)
+    name = Column(String(255), nullable=False)
+    district = Column(String(100), nullable=False, default="القاهرة")
+    department_id = Column(String(100), ForeignKey("departments.id"), nullable=True)
+    lat = Column(Float, nullable=False)
+    lng = Column(Float, nullable=False)
+    device_key_hash = Column(String(64), nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)
+    is_simulated = Column(Boolean, nullable=False, default=False)
+    full_pct = Column(Float, nullable=False, default=80)
+    heat_c = Column(Float, nullable=False, default=60)
+    interval_min = Column(Integer, nullable=False, default=30)
+    last_seq = Column(BigInteger, nullable=False, default=0)
+    fill_pct = Column(Float, nullable=True)
+    temp_c = Column(Float, nullable=True)
+    battery_v = Column(Float, nullable=True)
+    is_full = Column(Boolean, nullable=False, default=False)
+    is_hot = Column(Boolean, nullable=False, default=False)
+    last_seen_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+
+
+class BinReading(Base):
+    """Immutable telemetry reading, unique per device sequence."""
+
+    __tablename__ = "bin_readings"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    bin_id = Column(String(64), ForeignKey("smart_bins.id"), nullable=False)
+    seq = Column(BigInteger, nullable=False)
+    recorded_at = Column(DateTime, nullable=False)
+    received_at = Column(DateTime, nullable=False, default=utc_now)
+    fill_pct = Column(Float, nullable=False)
+    distance_cm = Column(Float, nullable=True)
+    temp_c = Column(Float, nullable=False)
+    battery_v = Column(Float, nullable=False)
+    rssi = Column(Integer, nullable=True)
+    firmware = Column(String(40), nullable=True)
+    is_full = Column(Boolean, nullable=False, default=False)
+    is_hot = Column(Boolean, nullable=False, default=False)
+
+    __table_args__ = (
+        UniqueConstraint("bin_id", "seq", name="uq_bin_reading_sequence"),
+        Index("idx_bin_reading_received", "bin_id", "received_at"),
+    )

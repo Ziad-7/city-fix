@@ -172,3 +172,43 @@ export interface Team {
   department: string;
   size: number;
 }
+
+export type SmartBinStatus = 'offline' | 'full' | 'heat' | 'low_battery' | 'normal';
+
+export interface SmartBin {
+  id: string;
+  name: string;
+  district: string;
+  departmentId?: string;
+  lat: number;
+  lng: number;
+  isActive: boolean;
+  isSimulated: boolean;
+  fullPct: number;
+  heatC: number;
+  intervalMin: number;
+  lastSeq: number;
+  fillPct?: number;
+  tempC?: number;
+  batteryV?: number;
+  isFull: boolean;
+  isHot: boolean;
+  lastSeenAt?: string;
+  status: SmartBinStatus;
+}
+
+export interface SmartBinReading {
+  id: number;
+  binId: string;
+  seq: number;
+  recordedAt: string;
+  receivedAt: string;
+  fillPct: number;
+  distanceCm?: number;
+  tempC: number;
+  batteryV: number;
+  rssi?: number;
+  firmware?: string;
+  isFull: boolean;
+  isHot: boolean;
+}

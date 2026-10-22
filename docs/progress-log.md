@@ -1,5 +1,18 @@
 # Progress log
 
+## 2026-10-22 — Smart-bin backend and online demo (`feat/smart-bin-demo-enhancements`)
+
+**Done**
+- Added device-authenticated, idempotent telemetry ingestion and admin bin registration to the FastAPI backend. Stored bin readings include fill, temperature, battery, and optional distance/RSSI/firmware fields.
+- Added department-scoped Command Center APIs and an Arabic smart-bin page with fleet status, alert counts, charts, and reading history.
+- Added a public static Vercel simulator with four bins, named scenarios, history charts, and controllable offline/sensor/receiver faults. It stores its sample state in the visitor's browser and cannot change live backend data.
+- Linked the demo from the citizen website footer and documented simulator setup, API routes, free hosting limits, and production database migration needs.
+
+**Still open**
+- The static public demo can be served by the existing Vercel website deployment. To show real data, deploy the FastAPI backend and a persistent database, configure `NEXT_PUBLIC_API_URL`, provision a bin through `POST /admin/bins`, and run the Python simulator in `real` mode. A free backend tier can sleep or have changing quotas; no always-on promise is made.
+- Existing production DBs need a migration for `smart_bins` and `bin_readings`; mobile/physical hardware client integration is still future work.
+- User will verify the backend and web apps; tests/builds were deliberately not run in this implementation turn.
+
 ## 2026-10-22 — CityBrain status and remaining work
 
 - Added [`AI status and remaining work`](ai-status.md) as the current reference for delivered features, test evidence, privacy/quota gates, production integration, and the free-hosting limitations.

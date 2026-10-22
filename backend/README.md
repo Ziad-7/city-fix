@@ -96,6 +96,15 @@ This drops all tables, recreates them, and re-seeds with demo data.
 
 ## API status
 
+### Smart-bin telemetry and Command Center
+
+- `POST /iot/bins/{binId}/readings` accepts up to 50 readings per request and authenticates the device with `X-Device-Key`. The simulator can retry safely: `(binId, seq)` is unique, identical repeats are acknowledged, and conflicting repeats return `409`. Optional `distanceCm`, `rssi`, `fw`, and nullable `at` follow the hardware simulator's wire shape.
+- `POST /admin/bins` is admin-only. It provisions a bin and returns a one-time `deviceKey`; only its SHA-256 hash is stored. Keep the returned key private and deliver it to the device out of band.
+- `GET /admin/bins` and `GET /admin/bins/{binId}/readings` require staff/admin auth. Department staff only see their department's bins plus unassigned bins. The authenticated Command Center shows status, current sensor values, alerts, and saved reading history at **الحاويات الذكية**.
+- `GET /admin/bins/{binId}/latest` returns the latest recorded reading. Bins with no recent sample (twice their configured interval, with a five-minute minimum) are shown as offline.
+
+The public Vercel demo at `/smart-bin-simulator.html` is a browser-only simulation: scenarios, sample fleet, charts, and injected faults are stored in that browser and do not reach this API. Use the local Python simulator in real mode to send data into an API deployment. `create_all()` creates these tables on a fresh database; an existing production database needs a reviewed migration before rollout. Production also needs a persistent PostgreSQL database, HTTPS, secret provisioning, and deployment validation. SQLite on an ephemeral serverless filesystem will lose data.
+
 ### Health
 - `GET /health` → `{"status": "ok", "version": "0.1.0"}`
 
@@ -130,6 +139,7 @@ This drops all tables, recreates them, and re-seeds with demo data.
 - **`auth.py`** – Citizen OTP login
 - **`staff_auth.py`** – Staff login and current session
 - **`admin.py`** – Command Center routes
+- **`bins.py`** – Device telemetry ingestion and authenticated smart-bin routes
 - **`reports.py`, `incidents.py`, `service_requests.py`, `map.py`** – Citizen route slice
 
 ### `tests/`

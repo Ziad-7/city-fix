@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#c8102e">
+  <title>CityCycle · Smart-bin demo</title>
+  <link rel="stylesheet" href="/smart-bin-simulator.css">
+</head>
+<body>
+  <header class="bar">
+    <a class="brand" href="/"><span class="mark">C</span><span><b>CityCycle</b><small>SMART CITY OPERATIONS</small></span></a>
+    <span class="sim-tag"><i></i> PUBLIC SIMULATION · YOUR BROWSER</span>
+    <button id="reset" class="reset">Reset demo</button>
+  </header>
+  <main>
+    <section class="intro">
+      <div><span class="eyebrow">DEVICE LAB / FLEET DEMO</span><h1>Smart-bin <em>simulator</em></h1><p>Try repeatable scenarios across a small Cairo fleet. Data stays in this browser.</p></div>
+      <label class="scenario">Load a scenario
+        <select id="scenario">
+          <option value="">Choose a scenario…</option>
+          <option value="daily">Daily collection round</option>
+          <option value="full">Bin reaching capacity</option>
+          <option value="heat">High-temperature alert</option>
+          <option value="offline">Offline queue and recovery</option>
+        </select>
+      </label>
+    </section>
+    <div class="grid">
+      <section class="panel fleet">
+        <div class="head"><div><span class="eyebrow">CITYCYCLE FLEET</span><h2>Bins by area</h2></div><span id="fleetCount" class="count"></span></div>
+        <div id="bins" class="bin-list"></div>
+      </section>
+      <section class="panel controls">
+        <div class="head"><div><span class="eyebrow">SELECTED DEVICE</span><h2 id="selectedName">Bin condition</h2></div><span id="status" class="status"></span></div>
+        <div class="location" id="location"></div>
+        <div class="metrics"><div class="metric"><small>FILL LEVEL</small><b id="fillValue">—</b><div class="meter"><i id="fillMeter"></i></div></div><div class="metric"><small>TEMPERATURE</small><b id="tempValue">—</b></div><div class="metric"><small>BATTERY</small><b id="batteryValue">—</b></div></div>
+        <div class="inputs">
+          <label>Fill level <span><input id="fill" type="number" min="0" max="100" step="1"><b>%</b></span><input id="fillRange" type="range" min="0" max="100" step="1"></label>
+          <label>Temperature <span><input id="temp" type="number" min="-40" max="125" step="0.5"><b>°C</b></span><input id="tempRange" type="range" min="-40" max="125" step="0.5"></label>
+          <label>Battery <span><input id="battery" type="number" min="0" max="6" step="0.01"><b>V</b></span><input id="batteryRange" type="range" min="0" max="6" step="0.01"></label>
+        </div>
+        <div class="actions"><button id="record" class="primary">Record reading</button><button id="send" class="secondary">Send queue</button></div>
+        <div class="faults">
+          <b>Fault simulation</b>
+          <label><input id="offline" type="checkbox"> Device offline: keep readings queued</label>
+          <label><input id="sensorFault" type="checkbox"> Sensor fault: skip this device’s next reading</label>
+          <label><input id="receiverFault" type="checkbox"> Receiver fault: reject next delivery attempt</label>
+        </div>
+        <p id="notice" class="notice" role="status" aria-live="polite"></p>
+      </section>
+      <section class="panel history">
+        <div class="head"><div><span class="eyebrow">READING HISTORY</span><h2>Fill over time</h2></div><span id="readingCount" class="count"></span></div>
+        <svg id="chart" viewBox="0 0 720 220" role="img" aria-label="Fill percentage history chart"></svg>
+        <div class="legend"><span><i class="fill-dot"></i> Fill level</span><span><i class="threshold-dot"></i> Full alert at 80%</span></div>
+        <div id="readingRows" class="reading-rows"></div>
+      </section>
+      <section class="panel delivery">
+        <div class="head"><div><span class="eyebrow">MOCK RECEIVER</span><h2>Delivery activity</h2></div><span class="ready"><i></i> READY</span></div>
+        <p class="muted">The online demo uses a mock receiver. Use the local simulator’s real mode to send device-authenticated readings to the CityCycle API.</p>
+        <div id="deliveryRows" class="delivery-rows"></div>
+      </section>
+    </div>
+    <footer>Simulated data only · No physical device or live backend is changed by this public demo.</footer>
+  </main>
+  <script src="/smart-bin-simulator.js" defer></script>
+</body>
+</html>

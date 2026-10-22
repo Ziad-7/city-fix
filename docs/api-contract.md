@@ -181,6 +181,20 @@ The app calls `/ai/transcribe` after the citizen records a voice note and append
 
 `TriageSuggestion` includes `source: "model" | "fallback"` and `emergency: boolean`. When `emergency` is true, clients display emergency contact options before the AI suggestion; client-side keyword detection remains a safety fallback while triage is loading or unavailable.
 
+### Smart-bin telemetry and Command Center
+
+Implemented by `backend/app/routers/bins.py`. Device requests use a dedicated provisioned key, not a citizen/staff bearer token. Admin routes require the existing staff JWT and apply department filtering.
+
+| Method | Path | Body / response |
+| --- | --- | --- |
+| POST | `/iot/bins/{binId}/readings` | Header `X-Device-Key`; `{ readings: [{ seq, at, fillPct, distanceCm?, tempC, batteryV, rssi?, fw? }] }` → `202 { accepted: number[], intervalMin, fullPct, heatC }` |
+| POST | `/admin/bins` | Admin JWT; bin ID/name/location/threshold configuration → bin and one-time `deviceKey` |
+| GET | `/admin/bins` | Staff/admin JWT → authorized bin fleet and current status |
+| GET | `/admin/bins/{binId}/readings?limit=100&from=…&to=…` | Staff/admin JWT → newest-first telemetry history |
+| GET | `/admin/bins/{binId}/latest` | Staff/admin JWT → latest recorded reading |
+
+Sequence IDs are unique per bin. An identical retry is acknowledged; reused sequences with different reading values return `409`. `at` is nullable for clock-unsynced devices and falls back to server receive time. The public website simulator is intentionally browser-local and is not a device credential client; use `hardware/simulator` real mode to send authenticated telemetry. Deployment and migration requirements are in [`backend/README.md`](../backend/README.md#smart-bin-telemetry-and-command-center) and [`hardware/simulator/README.md`](../hardware/simulator/README.md#online-hosting-and-free-tier-limits).
+
 ## Business rules the backend owns
 
 - **Duplicates:** an open incident (`status` not `resolved`/`closed`) of the **same category** within **250 m** of the new location. Use PostGIS `ST_DWithin(location, point, 250)` on `geography`. Return nearest first with `distanceM`. Exclude incidents the caller already follows; incidents the caller reported go to `alreadyReported` (with their `reportId`) instead of `duplicates`.

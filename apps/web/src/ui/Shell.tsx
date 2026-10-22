@@ -74,6 +74,7 @@ export function Footer() {
     <footer className="w-foot">
       <span>CityFix · النسخة ١٫٠</span>
       <span>بلّغ.. وإحنا نتابع لحد ما تتصلّح</span>
+      <a href="/smart-bin-simulator.html">محاكاة الحاويات الذكية</a>
     </footer>
   );
 }
