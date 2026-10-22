@@ -68,7 +68,8 @@ def test_new_report_creates_incident_with_priority_and_received_entry(client, db
 
 def test_link_report_adds_follower_once_and_reprioritises(client, db, other_citizen_h):
     before = client.get("/incidents/INC-504", headers=other_citizen_h).json()
-    body = report_body(categoryId="garbage", linkToIncidentId="INC-504")
+    # Linking needs the same category within 250 m (the duplicate rule), so report from the incident's own spot.
+    body = report_body(categoryId=before["categoryId"], linkToIncidentId="INC-504", location=before["location"])
     r = client.post("/reports", json=body, headers=other_citizen_h).json()
     assert r["incident"]["id"] == "INC-504" and r["incident"]["followers"] == before["followers"] + 1
     assert len(r["incident"]["linkedReportIds"]) == len(before["linkedReportIds"]) + 1

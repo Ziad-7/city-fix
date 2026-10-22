@@ -1,15 +1,23 @@
-"""Authentication logic."""
+"""Authentication: shared JWT boundary plus password and phone helpers.
+
+Tokens carry only the user id. ``current_user`` reloads the role and department scope from the
+user repository (the database) on every request, so deactivated or changed staff lose access at once.
+"""
 
 import hashlib
 import hmac
 import os
 import re
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from typing import Annotated, Literal, Protocol
 
 import jwt
-from fastapi import Depends, Header, HTTPException
+from fastapi import Depends, HTTPException, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from app.config import settings
+Role = Literal["citizen", "staff", "admin"]
 
 
 def hash_password(password: str) -> str:
@@ -30,33 +38,12 @@ def verify_password(password: str, hash_value: str) -> bool:
         return False
 
 
-def create_jwt_token(sub: str, role: str, department: str | None = None, expires_delta: timedelta | None = None) -> str:
-    """Create JWT token."""
-    if expires_delta is None:
-        expires_delta = timedelta(days=7)
-
-    to_encode = {
-        "sub": sub,
-        "role": role,
-        "department": department,
-        "exp": datetime.now(UTC) + expires_delta,
-    }
-    encoded_jwt = jwt.encode(to_encode, settings.jwt_secret, algorithm="HS256")
-    return encoded_jwt
-
-
-def decode_jwt_token(token: str) -> dict:
-    """Decode and verify JWT token."""
-    try:
-        payload = jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])
-        return payload
-    except jwt.InvalidTokenError as e:
-        raise HTTPException(status_code=401, detail="لازم تسجّل دخول") from e
+PHONE_PATTERN = re.compile(r"01[0125][0-9]{8}")
 
 
 def is_valid_phone(phone: str) -> bool:
-    """Validate raw Egyptian phone number format: 01[0125]XXXXXXXX."""
-    return bool(re.match(r"^01[0125]\d{8}$", phone))
+    """Validate raw Egyptian phone number format: 01[0125]XXXXXXXX (no trailing newline)."""
+    return PHONE_PATTERN.fullmatch(phone) is not None
 
 
 def normalize_phone(phone: str) -> str:
@@ -66,31 +53,113 @@ def normalize_phone(phone: str) -> str:
     return "+20" + phone[1:]
 
 
-def current_user(authorization: str | None = Header(None)) -> dict:
-    """Extract current user from Authorization: Bearer <token> header."""
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="لازم تسجّل دخول")
-
-    token = authorization[7:]
-    payload = decode_jwt_token(token)
-    return payload
-
-
-def require_staff(payload: dict = Depends(current_user)) -> dict:
-    """Require staff or admin role."""
-    if payload.get("role") not in ("staff", "admin"):
-        raise HTTPException(status_code=403, detail="مش مسموح")
-    if payload.get("role") == "staff" and not payload.get("department"):
-        raise HTTPException(status_code=403, detail="مش مسموح")  # staff without a department fail closed
-    return payload
+@dataclass(frozen=True)
+class User:
+    id: str
+    phone: str
+    role: Role = "citizen"
+    name: str | None = None
+    department_id: str | None = None
+    district: str | None = None
 
 
-def require_admin(payload: dict = Depends(current_user)) -> dict:
-    """Require admin role."""
-    if payload.get("role") != "admin":
-        raise HTTPException(status_code=403, detail="مش مسموح")
-    return payload
+class UserRepository(Protocol):
+    def get_or_create_citizen(self, phone: str) -> User:
+        """Atomically find/create by normalized +20 phone; never grant staff roles."""
+        ...
+
+    def get_by_id(self, user_id: str) -> User | None: ...
 
 
-def is_staff(payload: dict) -> bool:
-    return payload.get("role") in ("staff", "admin")
+@dataclass(frozen=True)
+class AuthSettings:
+    jwt_secret: str
+    demo_otp: bool = False
+    token_minutes: int = 60
+    issuer: str = "fixthecity-api"
+    audience: str = "fixthecity-clients"
+
+    def __post_init__(self) -> None:
+        if len(self.jwt_secret.encode()) < 32:
+            raise ValueError("JWT secret must contain at least 32 bytes")
+        if self.token_minutes <= 0:
+            raise ValueError("Token lifetime must be positive")
+
+
+@dataclass(frozen=True)
+class AuthContext:
+    settings: AuthSettings
+    users: UserRepository
+
+
+def get_auth_context(request: Request) -> AuthContext:
+    context: AuthContext = request.app.state.auth_context
+    return context
+
+
+def unauthorized() -> HTTPException:
+    return HTTPException(
+        status_code=401,
+        detail="لازم تسجّل دخول",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+def issue_token(user: User, settings: AuthSettings) -> str:
+    now = datetime.now(UTC)
+    return jwt.encode(
+        {
+            "sub": user.id,
+            "iat": now,
+            "exp": now + timedelta(minutes=settings.token_minutes),
+            "iss": settings.issuer,
+            "aud": settings.audience,
+        },
+        settings.jwt_secret,
+        algorithm="HS256",
+    )
+
+
+bearer = HTTPBearer(auto_error=False)
+
+
+def current_user(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
+    context: Annotated[AuthContext, Depends(get_auth_context)],
+) -> User:
+    if credentials is None:
+        raise unauthorized()
+    settings = context.settings
+    try:
+        claims = jwt.decode(
+            credentials.credentials,
+            settings.jwt_secret,
+            algorithms=["HS256"],
+            issuer=settings.issuer,
+            audience=settings.audience,
+            options={"require": ["sub", "iat", "exp", "iss", "aud"]},
+        )
+    except jwt.InvalidTokenError:
+        raise unauthorized() from None
+    user = context.users.get_by_id(claims["sub"])
+    if user is None:
+        raise unauthorized()
+    # Read current permissions from persistence, not stale token claims.
+    return user
+
+
+def require_role(*roles: Role) -> Callable[..., User]:
+    def dependency(user: Annotated[User, Depends(current_user)]) -> User:
+        if user.role not in roles:
+            raise HTTPException(403, "مش مسموح")
+        return user
+
+    return dependency
+
+
+def require_department(user: User, department_id: str) -> None:
+    """Call with the resource's stored department, never a caller-supplied scope."""
+    if user.role == "admin":
+        return
+    if user.role != "staff" or user.department_id != department_id:
+        raise HTTPException(403, "مش مسموح")

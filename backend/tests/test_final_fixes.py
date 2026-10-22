@@ -4,10 +4,10 @@ import re
 
 import pytest
 
-from app.auth import create_jwt_token
+from app.auth import AuthContext, AuthSettings, User, issue_token
 from app.config import DEFAULT_JWT_SECRET, Settings, validate_settings
 from app.main import app
-from app.models import Incident, WorkOrder
+from app.models import Incident, Profile, WorkOrder
 from tests.conftest import _bearer, citizen_session
 
 
@@ -29,13 +29,17 @@ def test_citizen_ids_not_leaked_via_reports(client):
     assert re.fullmatch(r"citizen-[0-9a-f]{12}", s["userId"])
 
 
-def test_verify_real_mode_rejects_demo_code(client, monkeypatch):
-    from app.config import settings
-
-    monkeypatch.setattr(settings, "otp_mode", "real")
+def test_verify_real_mode_rejects_demo_code(client):
+    """Outside OTP_MODE=demo no code is accepted (real delivery is not implemented): 503, no session."""
+    context = client.app.state.auth_context
+    client.app.state.auth_context = AuthContext(
+        AuthSettings(context.settings.jwt_secret, demo_otp=False), context.users
+    )
     r = client.post("/auth/verify", json={"phone": "01012345678", "code": "123456"})
-    assert r.status_code == 400
-    assert r.json()["detail"] == "الكود غلط"
+    assert r.status_code == 503
+    assert "token" not in r.json()
+    r = client.post("/auth/otp", json={"phone": "01012345678", "channel": "sms"})
+    assert r.status_code == 503
 
 
 def test_startup_refuses_default_secret_outside_demo():
@@ -57,8 +61,11 @@ def test_work_order_status_cannot_move_backwards(client, admin_h):
     assert r.status_code == 200
 
 
-def test_staff_without_department_fails_closed(client):
-    h = _bearer(create_jwt_token(sub="staff-x", role="staff", department=None))
+def test_staff_without_department_fails_closed(client, db):
+    db.add(Profile(id="staff-x", phone=None, name="x", role="staff"))
+    db.commit()
+    token = issue_token(User("staff-x", "", role="staff"), client.app.state.auth_context.settings)
+    h = _bearer(token)
     for path in ("/admin/incidents", "/admin/insights", "/admin/dashboard", "/incidents"):
         assert client.get(path, headers=h).status_code == 403, path
 

@@ -4,9 +4,10 @@ Invalid enum values fail validation -> 422 ``{"detail": "البيانات مش �
 Responses are built as plain dicts by ``app.logic.serialize`` (None omitted).
 """
 
+from datetime import date
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 
 IncidentStatus = Literal["received", "triaged", "assigned", "in_progress", "resolved", "closed"]
@@ -77,8 +78,8 @@ class PlaceInput(CamelModel):
 
 class NewReportInput(CamelModel):
     category_id: CategoryId
-    description: str = ""
-    photo_uris: list[str] = []
+    description: str = Field(default="", max_length=10000)
+    photo_uris: list[str] = Field(default=[], max_length=10)
     location: PlaceInput
     anonymous: bool = False
     blur_faces: bool = False
@@ -91,13 +92,19 @@ class NewReportInput(CamelModel):
 
 
 class ServiceDetailsInput(CamelModel):
-    items: list[str] = []
+    items: list[str] = Field(default=[], max_length=30)
     day: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
     slot: SlotId
     payment: PaymentMethod | None = None  # optional: absent for free tree_maintenance
     note: str | None = None
     work_type: str | None = None
     photo_uris: list[str] | None = None
+
+    @field_validator("day")
+    @classmethod
+    def real_calendar_day(cls, value: str) -> str:
+        date.fromisoformat(value)  # "2026-02-31" -> ValueError -> 422
+        return value
 
 
 class NewServiceRequestInput(CamelModel):

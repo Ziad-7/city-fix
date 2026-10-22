@@ -6,7 +6,8 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.auth import require_admin, require_staff
+from app.admin_auth import require_admin, require_staff
+from app.config import settings
 from app.db import get_db, reset_session
 from app.helpers import now_utc
 from app.logic.budget import optimize_budget
@@ -249,7 +250,7 @@ def merge_incident(
     source = _incident_or_404(db, incident_id, payload)
     target = _incident_or_404(db, body.into_incident_id, payload)
     if source.id == target.id:
-        raise HTTPException(status_code=400, detail=INVALID)
+        raise HTTPException(status_code=422, detail=INVALID)  # an incident cannot be merged into itself
     if getattr(target.status, "value", target.status) in ("resolved", "closed"):
         raise HTTPException(status_code=400, detail="مينفعش تدمج في بلاغ اتحل أو اتقفل")
 
@@ -392,11 +393,18 @@ def post_work_order(
         sr = db.get(ServiceRequest, body.service_request_id)
         if not sr:
             raise _missing()
-        if scope and SERVICE_TYPE_DEPARTMENT.get(sr.service_type) != scope:
+        service_department = SERVICE_TYPE_DEPARTMENT.get(sr.service_type)
+        if scope and service_department != scope:
             raise _forbid()
+        if dept.id != service_department:
+            raise HTTPException(status_code=422, detail=INVALID)
         if db.query(WorkOrder).filter_by(service_request_id=sr.id).first():
             raise HTTPException(status_code=409, detail="الطلب ده ليه أمر شغل بالفعل")
 
+    if inc is not None and inc.department_id != dept.id:
+        # Admin reassignment: the incident follows its work order's department (staff are already
+        # limited to their own department above, so they can never move an incident out of scope).
+        inc.department_id = dept.id
     wo = create_work_order(
         db,
         inc,
@@ -593,6 +601,8 @@ def get_insights(payload: dict = Depends(require_staff), db: Session = Depends(g
 
 @router.post("/demo/reset")
 def demo_reset(payload: dict = Depends(require_admin), db: Session = Depends(get_db)):
-    """Re-seed the database. Admin only."""
+    """Re-seed the database. Admin only, and only when DEMO_RESET_ENABLED=true (404 otherwise)."""
+    if not settings.demo_reset_enabled:
+        raise _missing()
     reset_session(db)
     return {"status": "ok"}

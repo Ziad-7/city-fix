@@ -8,10 +8,14 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.auth import AuthContext, AuthSettings
+from app.auth_adapters import DatabaseStaffDirectory, DatabaseUserRepository
+from app.config import settings
 from app.db import get_db
 from app.main import app
 from app.models import Base
 from app.seed import seed_db
+from app.staff_auth import StaffLoginContext
 
 
 @pytest.fixture(scope="session")
@@ -51,18 +55,34 @@ def db(db_engine):
 
 
 @pytest.fixture
-def client(db: Session):
-    """Provide a FastAPI test client with test database."""
+def client(db: Session, monkeypatch):
+    """Provide a FastAPI test client with test database.
+
+    The shared auth boundary reloads role + department from the database on every request, so its
+    repositories are rebound to the test database too. The destructive demo reset is enabled here
+    (it is off by default); ``test_demo_reset_disabled_by_default`` turns it off again.
+    """
+    session_factory = sessionmaker(bind=db.get_bind())
 
     def override_get_db():
         yield db
 
+    monkeypatch.setattr(settings, "demo_reset_enabled", True)
+    previous = (app.state.auth_context, app.state.staff_login_context, app.state.media_storage)
+    app.state.auth_context = AuthContext(
+        AuthSettings(jwt_secret=settings.jwt_secret, demo_otp=True),
+        DatabaseUserRepository(session_factory),
+    )
+    app.state.staff_login_context = StaffLoginContext(DatabaseStaffDirectory(session_factory))
+    app.state.media_storage = None
     app.dependency_overrides[get_db] = override_get_db
 
-    with TestClient(app) as test_client:
-        yield test_client
-
-    app.dependency_overrides.clear()
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides.clear()
+        app.state.auth_context, app.state.staff_login_context, app.state.media_storage = previous
 
 
 PASSWORD = "FixCity2026!"

@@ -8,12 +8,15 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.auth import AuthContext, AuthSettings
+from app.auth_adapters import DatabaseStaffDirectory, DatabaseUserRepository
 from app.config import settings, validate_settings
 from app.db import SessionLocal, init_db
 from app.models import Incident
-from app.routers import admin, auth, incidents, map, reports, service_requests, triage, uploads
+from app.routers import admin, auth, incidents, map, reports, service_requests, staff_auth, triage, uploads
 from app.schemas import HealthResponse
 from app.seed import seed_db
+from app.staff_auth import StaffLoginContext
 
 logger = logging.getLogger("fixthecity")
 
@@ -47,6 +50,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# One auth boundary for every router: roles and department scope are reloaded from the database
+# on each authenticated request (tests swap these contexts for ones bound to their own engine).
+app.state.auth_context = AuthContext(
+    AuthSettings(
+        jwt_secret=settings.jwt_secret,
+        demo_otp=settings.otp_mode == "demo",
+        token_minutes=settings.token_minutes,
+    ),
+    DatabaseUserRepository(),
+)
+app.state.staff_login_context = StaffLoginContext(DatabaseStaffDirectory())
+# Optional signed-upload / private-media storage (see app.media); None = local upload stub.
+app.state.media_storage = None
+
 # CORS middleware for web clients
 cors_origins = [
     "http://localhost:8081",  # mobile (expo)
@@ -79,6 +96,7 @@ async def health_check() -> HealthResponse:
 # ============================================================================
 
 app.include_router(auth.router)
+app.include_router(staff_auth.router)
 app.include_router(admin.router)
 app.include_router(admin.top_level_router)
 app.include_router(reports.router)

@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.auth import current_user, is_staff
+from app.admin_auth import current_claims, is_staff
 from app.db import get_db
 from app.logic.domain import ensure_follower, staff_department
 from app.logic.serialize import incident_view, load_ctx
@@ -34,7 +34,7 @@ def _view(db: Session, inc: Incident, payload: dict) -> dict:
 
 
 @router.get("/incidents")
-def list_incidents(payload: dict = Depends(current_user), db: Session = Depends(get_db)):
+def list_incidents(payload: dict = Depends(current_claims), db: Session = Depends(get_db)):
     """All incidents, newest first. Public fields only; staff tokens also get the admin fields."""
     incidents = db.query(Incident).order_by(Incident.created_at.desc(), Incident.id.desc()).all()
     ctx = load_ctx(db, incidents, payload["sub"])
@@ -42,12 +42,12 @@ def list_incidents(payload: dict = Depends(current_user), db: Session = Depends(
 
 
 @router.get("/incidents/{incident_id}")
-def get_incident(incident_id: str, payload: dict = Depends(current_user), db: Session = Depends(get_db)):
+def get_incident(incident_id: str, payload: dict = Depends(current_claims), db: Session = Depends(get_db)):
     return _view(db, _get_or_404(db, incident_id), payload)
 
 
 @router.post("/incidents/{incident_id}/follow")
-def follow_incident(incident_id: str, payload: dict = Depends(current_user), db: Session = Depends(get_db)):
+def follow_incident(incident_id: str, payload: dict = Depends(current_claims), db: Session = Depends(get_db)):
     """Follow ("أنا كمان"): idempotent per user, increments ``followers`` once."""
     inc = _get_or_404(db, incident_id)
     if ensure_follower(db, inc.id, payload["sub"]):
@@ -60,7 +60,7 @@ def follow_incident(incident_id: str, payload: dict = Depends(current_user), db:
 def reopen_incident(
     incident_id: str,
     body: ReopenInput,
-    payload: dict = Depends(current_user),
+    payload: dict = Depends(current_claims),
     db: Session = Depends(get_db),
 ):
     """Reopen ("لسه المشكلة موجودة"): reporter/follower only, only from resolved, back to received."""

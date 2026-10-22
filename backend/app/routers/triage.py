@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.auth import current_user
+from app.admin_auth import current_claims
 from app.db import get_db
 from app.logic.duplicates import duplicate_match, find_nearby
 from app.logic.triage import triage_text
@@ -14,7 +14,7 @@ router = APIRouter(tags=["triage"])
 
 
 @router.post("/triage")
-def post_triage(body: TriageInput, payload: dict = Depends(current_user), db: Session = Depends(get_db)):
+def post_triage(body: TriageInput, payload: dict = Depends(current_claims), db: Session = Depends(get_db)):
     """TriageSuggestion. Duplicates: open, same category, within 250 m, excluding incidents the caller
     follows; incidents the caller reported themselves go to ``alreadyReported`` with their report id."""
     departments = {d.id: d.name_ar for d in db.query(Department).all()}

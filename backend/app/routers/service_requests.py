@@ -1,9 +1,12 @@
 """Citizen service requests (CityServe): POST/GET /service-requests, GET /service-requests/{id}."""
 
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.auth import current_user, is_staff
+from app.admin_auth import current_claims, is_staff
 from app.db import get_db
 from app.helpers import now_utc
 from app.logic.ids import next_id
@@ -14,16 +17,29 @@ from app.schemas import NewServiceRequestInput
 
 router = APIRouter(tags=["service-requests"])
 
+INVALID = "البيانات مش مكتملة"
+
+
+def check_bulky_waste_day(day: str) -> None:
+    """Bulky-waste pickups: a future day (Cairo time) on the Sunday-Thursday service calendar, else 422."""
+    requested = date.fromisoformat(day)
+    if requested <= datetime.now(ZoneInfo("Africa/Cairo")).date():
+        raise HTTPException(status_code=422, detail="اختار يوم جاي.")
+    if requested.weekday() in (4, 5):  # Friday, Saturday
+        raise HTTPException(status_code=422, detail="الخدمة متاحة من الأحد للخميس.")
+
 
 @router.post("/service-requests")
 def post_service_request(
     body: NewServiceRequestInput,
-    payload: dict = Depends(current_user),
+    payload: dict = Depends(current_claims),
     db: Session = Depends(get_db),
 ):
     """Book a service. ``details.payment`` is required for bulky_waste and optional (free) for tree_maintenance."""
     if body.service_type == "bulky_waste" and body.details.payment is None:
-        raise HTTPException(status_code=422, detail="البيانات مش مكتملة")
+        raise HTTPException(status_code=422, detail=INVALID)
+    if body.service_type == "bulky_waste":
+        check_bulky_waste_day(body.details.day)
     d = body.details
     details = {"items": d.items, "day": d.day, "slot": d.slot}
     for key, value in (
@@ -69,7 +85,7 @@ def post_service_request(
 
 
 @router.get("/service-requests")
-def list_my_service_requests(payload: dict = Depends(current_user), db: Session = Depends(get_db)):
+def list_my_service_requests(payload: dict = Depends(current_claims), db: Session = Depends(get_db)):
     """The caller's service requests, newest first."""
     rows = (
         db.query(ServiceRequest)
@@ -82,7 +98,7 @@ def list_my_service_requests(payload: dict = Depends(current_user), db: Session 
 
 
 @router.get("/service-requests/{sr_id}")
-def get_service_request(sr_id: str, payload: dict = Depends(current_user), db: Session = Depends(get_db)):
+def get_service_request(sr_id: str, payload: dict = Depends(current_claims), db: Session = Depends(get_db)):
     """404 if missing, 403 if it is not the caller's (staff and admins can read all)."""
     sr = db.get(ServiceRequest, sr_id)
     if not sr:

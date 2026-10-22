@@ -26,7 +26,7 @@ export default defineConfig({
       command: `node -e "require('fs').rmSync('_e2e.db',{force:true})" && cd ../../backend && node -e "require('fs').rmSync('_e2e.db',{force:true})" && uv run uvicorn app.main:app --port ${API_PORT}`,
       url: `${API_URL}/docs`,
       cwd: __dirname,
-      env: { DATABASE_URL: 'sqlite:///./_e2e.db', SEED_ON_START: 'true' },
+      env: { DATABASE_URL: 'sqlite:///./_e2e.db', SEED_ON_START: 'true', DEMO_RESET_ENABLED: 'true' },
       reuseExistingServer: !!process.env.CI,
       timeout: 120_000,
     },
