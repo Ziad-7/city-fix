@@ -8,7 +8,7 @@ This page describes what is actually in the repository today. The broader [free 
 
 - **Report triage:** authenticated `POST /triage` uses Gemini for structured suggestions when configured, with deterministic Arabic/English keyword fallback on provider failure or timeout. It adds emergency metadata and nearby duplicate/already-reported matches; it does not automatically change a report.
 - **Photo input safeguards:** consent and caller-owned private media are required; images are normalized, metadata is removed, size/dimensions are bounded, and face/plate regions are blurred before inference. Photo analysis is **disabled by default** until privacy validation passes. The bundled Russian-plate cascade is not validated for Egyptian plates.
-- **Voice transcription:** authenticated `POST /ai/transcribe` reads only caller-owned private media and uses Gemini audio transcription (not Groq/Whisper). Recordings are limited to 5 MB and 30 seconds; FFmpeg rejects invalid or near-silent audio before the provider call. The stored recording is not modified by validation.
+- **Voice transcription:** authenticated `POST /ai/transcribe` reads only caller-owned private media and uses Gemini audio transcription (not Groq/Whisper). Recordings are limited to 5 MB and 30 seconds; FFmpeg measures decoded frames in a bounded pass, supporting streamed WebM without duration metadata and ignoring forged container durations, and rejects invalid or near-silent audio before the provider call. The stored recording is not modified by validation.
 - **Client integration:** mobile and citizen web have API adapters, request timeouts, local keyword fallback on triage network/API failures, and editable voice transcription flows. Photo analysis requires explicit consent. Both clients continue to support mock mode.
 - **Admin helpers:** budget optimization uses deterministic 0/1 knapsack logic; weekly insights use database-derived deterministic summaries. These features do not depend on a generative model.
 - **Evaluation and tests:** a 33-example synthetic Arabic text triage smoke set and backend AI tests are present. The corpus is not a representative accuracy benchmark and contains no photos or real citizen data.
@@ -33,7 +33,7 @@ OCR is not implemented and is intentionally excluded: the user previously declin
 
 ## Verification recorded for this branch
 
-The latest AI validation run recorded **52 passed, 1 skipped** for `python -m pytest ai_tests -q`; Ruff, Python compile checks, and `git diff --check` also passed. The skipped test requires the bundled OpenCV integration dependency. These are backend AI checks, not proof of live provider quality, representative photo privacy, deployment, or full client-to-hosted-API behavior.
+The latest AI validation run recorded **53 passed, 1 skipped** for `python -m pytest ai_tests -q`; Ruff, Python compile checks, and `git diff --check` also passed. The skipped test requires the bundled OpenCV integration dependency. These are backend AI checks, not proof of live provider quality, representative photo privacy, deployment, or full client-to-hosted-API behavior.
 
 Run the AI suite from `backend/` with:
 

@@ -27,6 +27,7 @@ MAX_TRANSCRIPTION_AUDIO_BYTES = 5 * 1024 * 1024
 MAX_TRANSCRIPTION_DURATION_SECONDS = 30
 FFMPEG_TIMEOUT_SECONDS = 1.75
 SILENCE_PEAK_DBFS = -75.0
+AUDIO_DURATION_CHECK_SECONDS = MAX_TRANSCRIPTION_DURATION_SECONDS + 0.001
 AUDIO_SUFFIXES = {
     "audio/mp4": ".m4a",
     "audio/mpeg": ".mp3",
@@ -42,7 +43,11 @@ class AudioAnalysis:
 
 
 def inspect_audio(audio: bytes, mime_type: str) -> AudioAnalysis:
-    """Boundedly decode audio to validate duration and reject effectively silent clips."""
+    """Boundedly decode audio to validate duration and reject effectively silent clips.
+
+    Container duration metadata is optional for streamed WebM and can be forged, so
+    measure the decoded audio frames rather than trusting the container header.
+    """
     executable = shutil.which("ffmpeg")
     suffix = AUDIO_SUFFIXES.get(mime_type)
     if executable is None:
@@ -69,14 +74,14 @@ def inspect_audio(audio: bytes, mime_type: str) -> AudioAnalysis:
                     "1M",
                     "-threads",
                     "1",
-                    "-t",
-                    str(MAX_TRANSCRIPTION_DURATION_SECONDS),
                     "-i",
                     str(path),
                     "-map",
                     "0:a:0",
+                    "-t",
+                    str(AUDIO_DURATION_CHECK_SECONDS),
                     "-af",
-                    "volumedetect",
+                    f"atrim=duration={AUDIO_DURATION_CHECK_SECONDS},ashowinfo,volumedetect",
                     "-filter_threads",
                     "1",
                     "-f",
@@ -92,18 +97,26 @@ def inspect_audio(audio: bytes, mime_type: str) -> AudioAnalysis:
             )
             if result.returncode != 0:
                 raise ValueError("voice note is not valid audio")
-            duration_match = re.search(
-                r"Duration:\s*(\d+):(\d{2}):(\d{2}(?:\.\d+)?)", result.stderr
+            frame_matches = list(
+                re.finditer(
+                    r"pts_time:([-+]?\d+(?:\.\d+)?)"
+                    r"(?=[^\n]*\bnb_samples:(\d+))"
+                    r"(?=[^\n]*\brate:(\d+))",
+                    result.stderr,
+                )
             )
             peak_match = re.search(
                 r"max_volume:\s*(-?inf|[-+]?\d+(?:\.\d+)?)\s*dB",
                 result.stderr,
                 flags=re.IGNORECASE,
             )
-            if duration_match is None or peak_match is None:
+            if not frame_matches or peak_match is None:
                 raise ValueError("voice-note audio details could not be checked")
-            hours, minutes, seconds = duration_match.groups()
-            duration = int(hours) * 3600 + int(minutes) * 60 + float(seconds)
+            first_pts = float(frame_matches[0].group(1))
+            last_frame = frame_matches[-1]
+            last_pts = float(last_frame.group(1))
+            last_frame_duration = int(last_frame.group(2)) / int(last_frame.group(3))
+            duration = last_pts + last_frame_duration - first_pts
             peak_dbfs = float(peak_match.group(1))
     except subprocess.TimeoutExpired as error:
         raise ValueError("voice-note audio check timed out") from error

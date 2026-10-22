@@ -180,17 +180,26 @@ def test_audio_analysis_uses_bounded_ffmpeg(monkeypatch):
         calls.append((command, kwargs))
         return SimpleNamespace(
             returncode=0,
-            stderr="Duration: 00:00:12.50, start: 0.000000\nmax_volume: -55.0 dB",
+            stderr=(
+                "[Parsed_ashowinfo_0] n:0 pts:0 pts_time:0.0000 rate:48000 "
+                "nb_samples:1000\n"
+                "[Parsed_ashowinfo_0] n:599 pts:599000 pts_time:12.4792 "
+                "rate:48000 nb_samples:1000\n"
+                "max_volume: -55.0 dB"
+            ),
         )
 
     monkeypatch.setattr("app.ai.transcribe.shutil.which", lambda _name: "/usr/bin/ffmpeg")
     monkeypatch.setattr("app.ai.transcribe.subprocess.run", run)
 
     analysis = inspect_audio(b"voice", "audio/mp4")
-    assert analysis == AudioAnalysis(duration_seconds=12.5, peak_dbfs=-55.0)
+    assert analysis.duration_seconds == pytest.approx(12.5, abs=0.0001)
+    assert analysis.peak_dbfs == -55.0
     command, options = calls[0]
     assert command[0] == "/usr/bin/ffmpeg"
-    assert "volumedetect" in command
+    assert any("volumedetect" in arg for arg in command)
+    assert any("ashowinfo" in arg for arg in command)
+    assert "30.001" in command
     assert options["timeout"] <= 2
     assert options["shell"] is False
     assert command[command.index("-i") + 1].endswith(".m4a")

@@ -5,6 +5,11 @@
 - Added [`AI status and remaining work`](ai-status.md) as the current reference for delivered features, test evidence, privacy/quota gates, production integration, and the free-hosting limitations.
 - Marked the hosted implementation plan as a proposal whose provider/checklist details may be stale. The current transcription provider is Gemini; OCR remains out of scope at the user's request.
 
+## 2026-10-22 — Streamed WebM duration validation
+
+- Fixed audio validation to measure decoded FFmpeg frames in a bounded 30.001-second pass instead of relying on optional or editable container duration metadata. This accepts browser-style streamed WebM and rejects clips longer than the 30-second limit even when their headers claim a shorter duration.
+- Added regressions for missing and forged duration metadata. The AI suite passes 53 tests with one OpenCV-dependent skip; real FFmpeg-generated streamed WebM checks cover 1-second and 35-second clips.
+
 ## 2026-10-22 — AI transcription audio validation
 
 - Added one bounded FFmpeg pass that rejects malformed media, clips over 30 seconds, and near-silence (peak at or below -75 dBFS) before Gemini. Quiet speech above the threshold continues to transcription; stored recordings remain untouched.
