@@ -45,10 +45,10 @@ function messageFor(status: number, raw: string): string {
 
 /**
  * Minimal typed JSON fetch against NEXT_PUBLIC_API_URL.
- * GET/POST/PATCH with Bearer token, Accept-Language: ar, handle 204 as undefined.
+ * GET/POST/PATCH/PUT with Bearer token, Accept-Language: ar, handle 204 as undefined.
  */
 export async function http<T>(
-  method: 'GET' | 'POST' | 'PATCH',
+  method: 'GET' | 'POST' | 'PATCH' | 'PUT',
   path: string,
   body?: unknown,
 ): Promise<T | undefined> {
