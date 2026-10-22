@@ -88,7 +88,7 @@ Until they exist, use a fake `queries.py` with the seed data (10 incidents aroun
 
 ## Contract changes you need
 
-These are listed as **proposed** in [`api-contract.md`](../api-contract.md). Agree them with Member 4 and the client owners by PR before relying on them: `POST /ai/transcribe`, `GET /admin/insights`, `GET /admin/incidents/{id}/similar`, and the extra `source` / `emergency` fields on `TriageSuggestion`.
+These are listed as **proposed** in [`api-contract.md`](../api-contract.md). Agree them with Member 4 and the client owners by PR before relying on them: `GET /admin/insights` and `GET /admin/incidents/{id}/similar`.
 
 ## Hand-offs
 

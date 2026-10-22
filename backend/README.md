@@ -158,10 +158,10 @@ This drops all tables, recreates them, and re-seeds with demo data.
 ## Remaining integration work
 
 - Connect the citizen report, follow, and service-request routers to transactional database repositories in `app.main`.
-- Replace the local SQLite demo setup with agreed migrations and production PostgreSQL/PostGIS, plus real storage and OTP providers.
+- Replace the local SQLite demo setup with agreed migrations and production PostgreSQL/PostGIS, provision private Supabase media storage, and connect a real OTP provider.
 - Replace demo readable-ID allocation with a transactional database sequence before concurrent or multi-worker deployment.
 - Add deployment configuration, production CORS/secrets, and connect the mobile, citizen web, and admin clients to a deployed API.
-- Build and register the CityBrain triage, transcription, photo-blur, and budget-optimization services.
+- Validate the voice-transcription provider and photo face/plate blur on representative Egyptian recordings and images before enabling those AI paths in production.
 
 ## Environment Variables
 
@@ -208,3 +208,15 @@ uv run pytest
 The citizen authentication and report/service route layer is implemented behind repository interfaces. Run the process-local harness with `OTP_MODE=demo python -m uvicorn app.citizen_demo:create_app --factory --host 127.0.0.1`; it is intended for route testing while persistent citizen repositories and storage are integrated into `app.main`.
 
 Install the combined development dependencies with `python -m pip install -r requirements-dev.txt`. The repository CI runs Ruff lint/format, mypy, and pytest from this directory.
+
+## CityBrain photo and Arabic text triage
+
+`POST /triage` is mounted in the main FastAPI app and uses the existing bearer-token `current_user` dependency. Gemini structured suggestions use `GEMINI_API_KEY` and `GEMINI_MODEL`; absent credentials, timeouts, quota errors, and invalid responses fall back to the deterministic Arabic/English classifier. Nearby open incidents are queried from the existing SQLAlchemy models, with the caller's reports separated into `alreadyReported` and followed incidents excluded from duplicate suggestions.
+
+Photo inference is disabled unless `GEMINI_PHOTO_ANALYSIS_ENABLED=true`. Create a **private** Supabase Storage bucket, then configure `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_MEDIA_BUCKET` (default `report-media`) to enable `/uploads/sign`. The adapter refuses public buckets, scopes random object paths to the authenticated user, verifies uploaded MIME type and size, and issues 15-minute read URLs. The `/triage` request must include `photoConsent: true` to read a photo for AI analysis. Before a photo reaches Gemini, the backend strips metadata, caps dimensions, and blurs regions detected by OpenCV's bundled frontal-face and Russian-plate Haar cascades. The repository's tests do not validate detector recall on real Egyptian faces or plates; see [`ai_tests/PHOTO_PRIVACY_VALIDATION.md`](ai_tests/PHOTO_PRIVACY_VALIDATION.md) for the evidence gap and release gate. Keep photo inference disabled until that validation passes and the client shows informed consent. Gemini's free tier may use submitted content to improve Google products.
+
+The route uses the existing `/triage` response contract with an optional `photoConsent` request field. A device-local URI or browser data URL is not accepted by the API; clients must upload first and send the returned storage path.
+
+`POST /ai/transcribe` is mounted in the main app. It reads an uploaded voice note only from the authenticated caller's private storage path, then uses the configured Gemini model to return a short Egyptian Arabic transcription. The app discloses the provider and free-tier data-use policy before recording in API mode. If Gemini or storage is unavailable, the client leaves the description editable so the citizen can type it. Verify availability and transcription quality on representative Egyptian Arabic clips before production rollout.
+
+Voice notes are limited to 5 MB and 30 seconds by the clients and enforced again by the API before calling Gemini. The server uses a bounded FFmpeg pass to check file validity, duration, and peak level; clips at or below -75 dBFS are rejected as effectively silent, while quieter speech above that threshold is allowed. Temporary inspection files are removed immediately. Deploy with the included Dockerfile (the Python-only native build does not include FFmpeg). For a Render web service, set the root directory to `backend`, use Docker as the runtime, and keep the service on the free instance if available. The container uses Render's `PORT` and one Uvicorn worker.

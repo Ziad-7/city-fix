@@ -131,3 +131,15 @@ export function triageMock(input: TriageInput): TriageSuggestion {
   );
   return { options, severity, summary, duplicates: [], source: 'fallback', emergency };
 }
+
+/** Return a useful offline suggestion only when a keyword match or citizen category gives evidence. */
+export function triageOfflineFallback(input: TriageInput): TriageSuggestion | null {
+  const suggestion = triageMock(input);
+  if (
+    !input.categoryId &&
+    suggestion.options[0].confidence <= suggestion.options[1].confidence
+  ) {
+    return null;
+  }
+  return suggestion;
+}

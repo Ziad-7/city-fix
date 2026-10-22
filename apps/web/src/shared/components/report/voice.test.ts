@@ -6,7 +6,7 @@ describe('formatTimer', () => {
     expect(formatTimer(0)).toBe('٠٠:٠٠');
     expect(formatTimer(7)).toBe('٠٠:٠٧');
     expect(formatTimer(65.9)).toBe('٠١:٠٥');
-    expect(formatTimer(MAX_VOICE_SECONDS)).toBe('٠١:٠٠');
+    expect(formatTimer(MAX_VOICE_SECONDS)).toBe('٠٠:٣٠');
   });
   it('clamps bad input', () => {
     expect(formatTimer(-3)).toBe('٠٠:٠٠');

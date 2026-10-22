@@ -1,6 +1,42 @@
 # Progress log
 
+## 2026-10-22 — CityBrain status and remaining work
+
+- Added [`AI status and remaining work`](ai-status.md) as the current reference for delivered features, test evidence, privacy/quota gates, production integration, and the free-hosting limitations.
+- Marked the hosted implementation plan as a proposal whose provider/checklist details may be stale. The current transcription provider is Gemini; OCR remains out of scope at the user's request.
+
+## 2026-10-22 — Streamed WebM duration validation
+
+- Fixed audio validation to measure decoded FFmpeg frames in a bounded 30.001-second pass instead of relying on optional or editable container duration metadata. This accepts browser-style streamed WebM and rejects clips longer than the 30-second limit even when their headers claim a shorter duration.
+- Added regressions for missing and forged duration metadata. The AI suite passes 53 tests with one OpenCV-dependent skip; real FFmpeg-generated streamed WebM checks cover 1-second and 35-second clips.
+
+## 2026-10-22 — AI transcription audio validation
+
+- Added one bounded FFmpeg pass that rejects malformed media, clips over 30 seconds, and near-silence (peak at or below -75 dBFS) before Gemini. Quiet speech above the threshold continues to transcription; stored recordings remain untouched.
+- Added focused unit tests for parser behavior and route decisions. All 52 backend AI tests pass (one skipped); generated silent/quiet M4A and silent MP3, WebM, and OGG samples also passed the real FFmpeg check. Ruff and Python compilation pass.
+
+## 2026-10-22 — AI voice-note input limits
+
+- Aligned mobile and web recording controls and backend media checks to the plan's 5 MB / 30 second voice-note limit.
+- Added pre-transcription audio-container duration validation with a bounded `ffprobe` call and a backend Dockerfile that installs it.
+- Added tests for oversized and long recordings plus bounded FFmpeg inspection; a generated one-second M4A duration probe and compile checks passed.
+
 Newest first. Each entry: what was done, how to test it, known issues.
+
+## 2026-10-22 — CityBrain photo + Arabic text triage (`feat/ai-photo-triage-api`)
+
+**Done**
+- Integrated CityBrain into the existing FastAPI backend and its `current_user` bearer-auth dependency. `/triage` keeps the agreed response shape; the contract's proposed `source` and `emergency` fields stay internal.
+- Added Gemini structured suggestions with Arabic/English deterministic fallback, independent emergency rules, image bounds/metadata removal, a four-second model deadline, and nearby incident matches against the backend's SQLAlchemy models.
+- Added a private Supabase Storage adapter for signed uploads, user-scoped random paths, upload type/size verification, and short-lived signed reads. Before model calls, local OpenCV cascades detect candidate faces/plates and Pillow blurs the regions; failures stop image triage. The mobile and web consent UI is present; photo inference remains disabled by default pending local-image validation.
+- Mobile and web API-mode triage requests have 6-second deadlines; transcription requests have 25-second deadlines. On API failure, both report forms use the local keyword fallback when text or the citizen's category gives evidence, label it as a non-model result, and return no duplicate suggestions. Photo-only and unrecognized descriptions do not get a guessed category.
+- Added backend runtime dependencies, server-only Gemini env settings, integration notes, and AI/database route tests.
+- Checks: 46 focused storage, AI, route, and database tests pass; one bundled-OpenCV integration test is skipped because OpenCV could not be installed in this network-restricted workspace. Ruff and repository CI mypy pass. The full backend suite hangs at a synchronous TestClient test in this environment.
+
+**Still open**
+- Provision a private Supabase bucket and credentials, then validate detector recall with OpenCV installed on representative local photos (especially Egyptian plates) before enabling photo inference.
+- The consent-enabled mobile and web flows upload a photo privately before triage and send its storage path; production photo inference remains disabled until representative Egyptian privacy validation passes.
+- Confirm the model/free quota against a live, sanitized Google project request; no provider key was available for that check.
 
 ## 2026-10-22 — Backend and admin integration review
 

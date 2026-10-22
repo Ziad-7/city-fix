@@ -23,6 +23,12 @@ class MediaStorage(Protocol):
         """Return a short-lived HTTPS read URL after route-level authorization."""
         ...
 
+    async def read_approved(
+        self, user_id: str, path: str, kind: str, consent: bool
+    ) -> bytes:
+        """Verify ownership and consent; the caller must redact before any model call."""
+        ...
+
 
 def get_media(request: Request) -> MediaStorage | None:
     return getattr(request.app.state, "media_storage", None)
