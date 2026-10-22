@@ -2,6 +2,25 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-22 — CityCycle PC smart-bin simulator
+
+**Done** ([simulator handoff](../hardware/simulator/README.md), [design](superpowers/specs/2026-10-22-smart-bin-simulator-design.md), [implementation plan](superpowers/plans/2026-10-22-smart-bin-simulator.md))
+- Added a one-command Python 3.12+ local demo with a polished CityFix-styled browser panel, simulated fill/temperature/battery sensors, durable SQLite outbox, offline queueing, retries, and a separate authenticated mock HTTP receiver.
+- Device sequences, readings, network state, alert flags, and last received policy persist across restarts. The mock receiver idempotently stores acknowledged readings. The panel distinguishes queued readings from receiver-confirmed telemetry and marks both local and receiver-derived alerts.
+- Added same-origin/token-protected panel controls, loopback-only listeners, bounded HTTP payloads, real-mode HTTPS/credential validation, and Linux/Windows Python 3.12 simulator CI. No third-party Python dependencies are required.
+- This remains a local simulation. The proposed CityCycle backend contract needs owner approval and provisioning; physical hardware, Command Center, and mobile integration remain open.
+
+**How to test** (local Linux, Python 3.12)
+- `python -m unittest discover -s hardware/simulator/tests -v` — 66 tests passed, including periodic outbox delivery, retry backoff, network control ordering, worker recovery/shutdown, persistent HTTP poll teardown, actual socket delivery, and lost-response retry deduplication.
+- `python -m compileall -q hardware/simulator` — passed.
+- `node scripts/check-doc-links.mjs` — 658 relative links across 70 files resolved.
+- `git diff --check` — passed; `actionlint .github/workflows/hardware-ci.yml` — passed. Windows CI has not run in this workspace.
+- Launch with `python hardware/simulator/run.py --no-browser`; see the README for the port and data-directory options. Local HTTP smoke from a different working directory verified static/state routes, record/send, offline queue retention, network restoration, and receiver drain.
+
+**Still open**
+- Chromium smoke passed: initial delivery, offline queue retention for full/heat then normal samples, stale receiver state during outage, restoration/deduplication, receiver full/heat alerts, delayed policy application, auto-fill start/progress/pause, narrow viewport, keyboard sensor controls, and no JavaScript exceptions. A polling regression also passed: sensor and policy drafts remained intact while focus moved between fields for 1.5 seconds, then recorded/saved successfully.
+- No physical-bin test, real endpoint provisioning, agreed backend contract, Command Center connection, or mobile integration is included.
+
 ## 2026-10-22 — Mobile remaining-work checklist
 
 **Done**
