@@ -7,13 +7,14 @@ Newest first. Each entry: what was done, how to test it, known issues.
 **Done**
 - Integrated CityBrain into the existing FastAPI backend and its `current_user` bearer-auth dependency. `/triage` keeps the agreed response shape; the contract's proposed `source` and `emergency` fields stay internal.
 - Added Gemini structured suggestions with Arabic/English deterministic fallback, independent emergency rules, image bounds/metadata removal, a four-second model deadline, and nearby incident matches against the backend's SQLAlchemy models.
-- Added a private Supabase Storage adapter for signed uploads, user-scoped random paths, upload type/size verification, and short-lived signed reads. Before model calls, local OpenCV cascades detect candidate faces/plates and Pillow blurs the regions; failures stop image triage. Photo inference remains disabled by default pending local-image validation and the client consent UI.
+- Added a private Supabase Storage adapter for signed uploads, user-scoped random paths, upload type/size verification, and short-lived signed reads. Before model calls, local OpenCV cascades detect candidate faces/plates and Pillow blurs the regions; failures stop image triage. The mobile and web consent UI is present; photo inference remains disabled by default pending local-image validation.
+- Mobile and web API-mode triage requests have 6-second deadlines; transcription requests have 25-second deadlines. On API failure, both report forms use the local keyword fallback when text or the citizen's category gives evidence, label it as a non-model result, and return no duplicate suggestions. Photo-only and unrecognized descriptions do not get a guessed category.
 - Added backend runtime dependencies, server-only Gemini env settings, integration notes, and AI/database route tests.
 - Checks: 46 focused storage, AI, route, and database tests pass; one bundled-OpenCV integration test is skipped because OpenCV could not be installed in this network-restricted workspace. Ruff and repository CI mypy pass. The full backend suite hangs at a synchronous TestClient test in this environment.
 
 **Still open**
-- Provision a private Supabase bucket and credentials, validate detector recall with OpenCV installed on representative local photos (especially Egyptian plates), and add the client consent UI before enabling photo inference.
-- Mobile and web must upload before triage and pass the storage path; the current API-mode forms do not yet do this.
+- Provision a private Supabase bucket and credentials, then validate detector recall with OpenCV installed on representative local photos (especially Egyptian plates) before enabling photo inference.
+- The consent-enabled mobile and web flows upload a photo privately before triage and send its storage path; production photo inference remains disabled until representative Egyptian privacy validation passes.
 - Confirm the model/free quota against a live, sanitized Google project request; no provider key was available for that check.
 
 ## 2026-10-22 — Backend and admin integration review

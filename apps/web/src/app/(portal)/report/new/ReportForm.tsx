@@ -7,7 +7,7 @@ import { CATEGORIES, getCategory } from '@/domain/categories';
 import type { CategoryId, TriageSuggestion } from '@/domain/types';
 import { validateReportForm, type ReportFormErrors } from '@/components/report/validation';
 import { pickDuplicateView } from '@/logic/duplicates';
-import { detectEmergency } from '@/logic/triage-mock';
+import { detectEmergency, triageOfflineFallback } from '@/logic/triage-mock';
 import { useAreaCenter } from '@/lib/area';
 import { useReportLocation } from '@/lib/location';
 import { compressImage } from '@/lib/photo';
@@ -110,7 +110,9 @@ export function ReportForm() {
           location: { lat: place.lat, lng: place.lng },
         });
       } catch {
-        suggestion = null;
+        suggestion = API_MODE === 'api'
+          ? triageOfflineFallback({ description: trimmed, categoryId: priorCategory ?? undefined })
+          : null;
       }
       if (!cancelled) setDone({ key: inputKey, suggestion });
     }, 500);

@@ -127,6 +127,9 @@ export function AiSuggestion({
         </span>
       </div>
       <p>{suggestion.summary}</p>
+      {suggestion.source === 'fallback' ? (
+        <p className="ftc-caption" data-testid="ai-fallback-label">اقتراح محلي من الكلمات، مش نتيجة نموذج ذكاء اصطناعي.</p>
+      ) : null}
       <span className="ftc-caption" style={{ color: 'var(--ftc-ink-muted)' }}>اختار التصنيف الصح</span>
       <div className="w-stack" style={{ gap: 8 }} role="radiogroup" aria-label="التصنيف">
         {suggestion.options.map((o, i) => {

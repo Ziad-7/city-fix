@@ -16,7 +16,7 @@ import { DEFAULT_PLACE, findDistrict } from '@/domain/locations';
 import type { CategoryId, TriageSuggestion } from '@/domain/types';
 import { tr as trNow, useLang, useTr } from '@/i18n';
 import { pickDuplicateView } from '@/logic/duplicates';
-import { detectEmergency } from '@/logic/triage-mock';
+import { detectEmergency, triageOfflineFallback } from '@/logic/triage-mock';
 import { API_MODE, services } from '@/services';
 import { prepareTriagePhoto } from '@/services/media';
 import { uploadAndTranscribeVoiceNote, useReports, useSession } from '@/store';
@@ -115,7 +115,9 @@ export default function NewReportScreen() {
           location: { lat: place.lat, lng: place.lng },
         });
       } catch {
-        suggestion = null;
+        suggestion = API_MODE === 'api'
+          ? triageOfflineFallback({ description: trimmed, categoryId: priorCategory ?? undefined })
+          : null;
       }
       if (!cancelled) setDone({ key: inputKey, suggestion });
     }, 500);
