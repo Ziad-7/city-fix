@@ -208,7 +208,8 @@ Waste and recycling pillar ([vision](vision.md), [decision 0004](decisions/0004-
 ### New shapes
 
 ```ts
-MaterialPrice = { materialId, district: string, priceEgpPerKg: number | null /* null until set */, updatedAt }
+MaterialPrice = { materialId, district: string, priceEgpPerKg: number | null /* null until set */, updatedAt,
+  isDemo?: boolean /* proposed (mobile): true for seed/demo prices; apps then show "Demo prices" */ }
 
 RecyclingPickup = {
   id /* "RCY-3001" */, citizenId,
@@ -219,7 +220,9 @@ RecyclingPickup = {
   estimatedValueEgp?: number,      // from the district price list; absent if no price is set
   status: PickupStatus, collectorId?: string, collectorName?: string,
   weighings: Weighing[], totalKg?: number, totalValueEgp?: number,
-  timeline: TimelineEntry[], createdAt
+  timeline: TimelineEntry[], createdAt,
+  // proposed (mobile):
+  note?: string, paidToHouseholdEgp?: number, startedAt?: string, confirmedAt?: string
 }
 NewRecyclingPickupInput = { items, photoUris?, location, day, slot, mode, note? }
 
@@ -236,7 +239,8 @@ Collector = {
 
 CollectorJob = {   // a pickup as seen by a verified collector (no citizen phone or exact name)
   id, items, location: Place /* address and landmark; exact pin after accept */,
-  day, slot, mode, estimatedKg: number, estimatedValueEgp?: number, distanceM?: number
+  day, slot, mode, estimatedKg: number, estimatedValueEgp?: number, distanceM?: number,
+  approxPin?: boolean   // proposed (mobile): true while `location` is the approximate pin (rounded to about 100 m)
 }
 
 Earnings = {
@@ -274,7 +278,7 @@ WasteClassification = {
 | GET | `/recycling/pickups` | — | `RecyclingPickup[]` | The caller's own pickups. |
 | GET | `/recycling/pickups/{id}` | — | `RecyclingPickup` | 404 if missing, 403 if not the caller's. |
 | POST | `/recycling/pickups/{id}/cancel` | `{ note? }` | `RecyclingPickup` | Only while `requested`. |
-| POST | `/recycling/pickups/{id}/confirm` | — | `RecyclingPickup` | The household confirms the weighing in the app (the pickup then becomes `completed`). |
+| POST | `/recycling/pickups/{id}/confirm` | — | `RecyclingPickup` | The household confirms the weighing in the app. *Proposed change (mobile):* the pickup is already `completed` after the collector's `complete`, so the demo needs no second step; `confirm` only sets `confirmedAt`. |
 | GET | `/me/impact` | — | `Impact` | The caller's own impact (citizen or collector). |
 
 Photos and voice notes use the existing `/uploads/sign` flow (`kind: "report_photo"`).
@@ -285,17 +289,19 @@ Photos and voice notes use the existing `/uploads/sign` flow (`kind: "report_pho
 | --- | --- | --- | --- | --- |
 | POST | `/collectors/apply` | `{ name, district, materials, vehicle? }` | `Collector` (`pending`) | A signed-in user applies; staff verify in the Command Center. Role `collector` is granted on verification. |
 | GET | `/collectors/me` | — | `Collector` | |
+| GET | `/collector/pickups` | — | `RecyclingPickup[]` | *Proposed (mobile).* The caller's own accepted and finished pickups (active first), with the exact pin; needed to restore the current job after an app restart. |
 | GET | `/collector/jobs` | query `lat`, `lng`, `radiusM`, `materialId?` | `CollectorJob[]` | Verified collectors only; open (`requested`) pickups near the point, nearest first. |
 | POST | `/collector/jobs/{id}/accept` | — | `RecyclingPickup` | First accept wins; `409` if already taken. Reveals the exact pin to the collector. |
+| POST | `/collector/jobs/{id}/start` | — | `RecyclingPickup` | *Proposed (mobile).* "On my way": sets `startedAt` and adds a timeline entry; the status stays `accepted`. |
 | POST | `/collector/jobs/{id}/weighings` | `{ materialId, kg, source, scaleId?, clientId }` | `Weighing` | Idempotent on `clientId` (offline-first sync). Sets the pickup to `weighed`. |
-| POST | `/collector/jobs/{id}/complete` | `{ paidToHouseholdEgp?: number }` | `RecyclingPickup` | Records what was paid in cash (for `mode: "paid"`). The household then confirms. |
+| POST | `/collector/jobs/{id}/complete` | `{ paidToHouseholdEgp?: number }` | `RecyclingPickup` | Needs at least one weighing. Records what was paid in cash (for `mode: "paid"`; omit for a free pickup) as `paidToHouseholdEgp` and sets the pickup to `completed`. |
 | GET | `/collector/earnings` | query `from`, `to` | `Earnings` | |
 
 ### Smart bins and hubs
 
 | Method | Path | Body | Response | Notes |
 | --- | --- | --- | --- | --- |
-| GET | `/bins` | query `bbox` | `Bin[]` | Public fields for the map layer: location, state, fill level. |
+| GET | `/bins` | query `bbox` (optional) | `Bin[]` | Public fields for the map layer: location, state, fill level. |
 | POST | `/bins/{id}/report-full` | `{ note?, photoUri? }` | `204` | A citizen reports a full bin; creates a FixFirst `garbage` incident linked to the bin. |
 | POST | `/iot/bins/{id}/readings` | `{ readings: BinReading[] }` | `202 { accepted: number[], intervalMin, fullPct, heatC }` | **Device auth:** `X-Device-Key` header, no user token. Idempotent on `(binId, seq)`. Owner member 6 (payload) + member 4 (endpoint). |
 | POST | `/iot/hubs/{id}/weighings` | `{ seq, at, material, kg, pickupId? }` | `202` | Hub scale; same device auth and rules. |
@@ -332,6 +338,18 @@ Suggestion only: the citizen or collector confirms the materials and the size. O
 | Method | Path | Notes |
 | --- | --- | --- |
 | POST | `/gateway/sms` | Provider webhook: a short coded message (for example a district code + material + "pickup") creates a pickup for a feature phone. Provider and codes to decide; replies in Egyptian Arabic. |
+
+### Proposed additions from the mobile app
+
+Mobile (member 1) built its mock layer on the section above and needs these small additions; each is marked *proposed* where it appears. Member 4 to agree or counter-propose:
+
+- `MaterialPrice.isDemo`: seed prices are flagged so every screen can show a small "Demo prices" label (features plan: "seed prices marked as demo").
+- `RecyclingPickup`: `note`, `paidToHouseholdEgp`, `startedAt`, `confirmedAt`.
+- `CollectorJob.approxPin`: the exact pin comes with the accepted pickup.
+- `GET /collector/pickups` and `POST /collector/jobs/{id}/start` (see the collectors table).
+- `complete` sets `completed` (see above); `confirm` is an acknowledgement.
+- `POST /auth/verify` returns `roles` (`citizen`, and `collector` once verified) so the app can offer collector mode.
+- The bin state "filling" is client-side only (amber from `fillingPct`, see `apps/mobile/src/domain/bins.ts`); the contract's `BinState` is unchanged.
 
 ### Rules for CityCycle
 

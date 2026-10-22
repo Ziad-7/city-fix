@@ -116,13 +116,15 @@ src/
   components/   Icon, TabBar, Hotlines, ui/ (AppText, Button, Card, Chip, ChoiceChip, StatusChip, TextField,
                 SelectField, ToggleRow, ProgressBar, Screen, ScreenHeader, InlineNotice, confirm),
                 brand/ (LogoMark, LogoLockup, LogoPill, Skyline, Medal), map/ (IncidentMap .native/.web)
-  domain/       types, categories (12), hotlines, locations, services-catalog, zod schemas
+  domain/       types, categories (12), hotlines, locations, services-catalog, zod schemas,
+                CityCycle: citycycle (types), materials (catalogue, DEMO prices, value and impact maths), bins (states, thresholds)
   i18n/         tr / useTr / useLang / useIsRTL, labels.ts (English domain labels)
   logic/        priority (score + factors), duplicates (250 m), triage-mock (keyword classifier)
   notifications/ os.ts (expo-notifications: Android channel, local notifications, taps; no-op on web)
   services/     interfaces.ts, mock/ (seeded, AsyncStorage), api/ (fetch, uploads), media (resize + upload pipeline),
                 sendReport, network (NetInfo), garbage-schedule, index.ts (mode switch)
   store/        useSession (persisted, token in SecureStore), useReports, useServiceRequests, useRequests (merged list),
+                useCityCycle (prices, pickups, impact, bins), useCollector (jobs, weighings, earnings; session `mode`),
                 useOutbox + outboxFlush + useOutboxSync (offline queue), useNotifications (status diff), usePrefs, actions
   theme/        tokens.ts (light theme from docs/design/tokens.json)
   utils/        digits (Arabic-Indic / Western, phone), time (Arabic and English dates, relative time), geo (haversine, distance)
