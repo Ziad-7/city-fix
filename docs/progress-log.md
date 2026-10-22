@@ -22,7 +22,6 @@ Newest first. Each entry: what was done, how to test it, known issues.
 - SQLite plus haversine distance instead of Supabase/PostGIS; no migrations, delete the DB file after model changes.
 - Budget planner: the "بدون حد" preset is disabled.
 - The incident detail page has a location card without a map.
-- Free `tree_maintenance` bookings: the admin list shows them without a payment ("مجاني"), but the backend does not create them yet.
 - `NEXT_PUBLIC_API_URL` is inlined at build time. Port `3001` may be taken by another app on your machine; use `next dev -p 3002`.
 
 ## 2026-10-22 — Citizen website review fixes (branch `fix/citizen-web-review`)
