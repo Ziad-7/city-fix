@@ -1,28 +1,83 @@
 import { getLang } from '@/i18n';
 import { departmentLabel } from '@/i18n/labels';
+import { formatEgp, formatKg } from '@/utils/money';
+import type { PickupStatus } from './citycycle';
 import type { AppNotification, IncidentStatus } from './types';
+
+/**
+ * The finer stages a recycling pickup is tracked in. `accepted` and `on_the_way` are both the contract status
+ * `accepted` (the collector tapped "start" for the second), so the diff needs this to notify on both.
+ */
+export type PickupStage = PickupStatus | 'on_the_way';
+
+export const pickupStage = (p: { status: PickupStatus; startedAt?: string }): PickupStage => (p.status === 'accepted' && p.startedAt ? 'on_the_way' : p.status);
+
+/** What the pickup notifications say (first name of the collector only). */
+export type PickupFacts = { name?: string; totalKg?: number; paidEgp?: number };
 
 /** One report (via its incident) or service request, as the notification diff sees it. */
 export type TrackedItem = {
   entityType: AppNotification['entityType'];
-  /** FTC-… or SRV-… */
+  /** FTC-…, SRV-… or RCY-… */
   entityId: string;
+  /** For a pickup, the incident-status colour of its status (see `pickupChipStatus`). */
   status: IncidentStatus;
+  /** Pickups only: the stage the diff compares (it replaces `status` there, so "on the way" notifies too). */
+  stage?: PickupStage;
+  /** Pickups only: facts for the text. */
+  pickup?: PickupFacts;
   /** Responsible department (reports only). */
   department?: string;
   /** Latest timeline note, used as the body when present. */
   note?: string;
 };
 
-/** Last known status per entity id. */
-export type KnownStatuses = Record<string, IncidentStatus>;
+/** Last known status per entity id (a pickup's entry is its `PickupStage`). */
+export type KnownStatuses = Record<string, string>;
+
+/** The value the diff compares and stores for an item. */
+export const trackedKey = (item: Pick<TrackedItem, 'status' | 'stage'>): string => item.stage ?? item.status;
 
 /** "ل" + name, merging with "ال": الحدائق -> للحدائق, صيانة الطرق -> لصيانة الطرق. */
 const toDept = (name: string) => (name.startsWith('ال') ? `لل${name.slice(2)}` : `ل${name}`);
 
 /** Title and body for a status change, in the current language (the text is fixed when the notification is created). */
-export function describeChange(item: TrackedItem, previous: IncidentStatus): { title: string; body: string } {
-  return getLang() === 'en' ? describeChangeEn(item, previous) : describeChangeAr(item, previous);
+export function describeChange(item: TrackedItem, previous: string): { title: string; body: string } {
+  if (item.entityType === 'pickup') return describePickup(item);
+  const prev = previous as IncidentStatus;
+  return getLang() === 'en' ? describeChangeEn(item, prev) : describeChangeAr(item, prev);
+}
+
+/** Pickup notifications: accepted, on the way, weighed, completed (and cancelled by someone else), in both languages. */
+function describePickup(item: TrackedItem): { title: string; body: string } {
+  const en = getLang() === 'en';
+  const id = item.entityId;
+  const name = item.pickup?.name?.trim();
+  const stage = item.stage ?? 'requested';
+  switch (stage) {
+    case 'accepted':
+      return en
+        ? { title: `Your recycling request ${id} was accepted`, body: name ? `${name} will come on the day you chose` : 'A collector will come on the day you chose' }
+        : { title: `طلب التدوير ${id} اتقبل`, body: name ? `${name} هيعدّي عليك في الميعاد اللي اخترته` : 'جامع معتمد هيعدّي عليك في الميعاد اللي اخترته' };
+    case 'on_the_way':
+      return en
+        ? { title: `${name ?? 'The collector'} is on the way`, body: `For your recycling request ${id}. It helps if the materials are by the door` }
+        : { title: `${name ?? 'الجامع'} في الطريق ليك`, body: `لطلب التدوير ${id}. يا ريت الخامات تكون عند الباب` };
+    case 'weighed':
+      return en
+        ? { title: `Your materials were weighed`, body: item.pickup?.totalKg !== undefined ? `Weighed amount: ${formatKg(item.pickup.totalKg)}. Request ${id}` : `Request ${id}` }
+        : { title: 'اتوزنت الخامات', body: item.pickup?.totalKg !== undefined ? `الوزن الفعلي: ${formatKg(item.pickup.totalKg)}. الطلب ${id}` : `الطلب ${id}` };
+    case 'completed': {
+      const paid = item.pickup?.paidEgp ?? 0;
+      return en
+        ? { title: `Your recycling request ${id} is done`, body: paid > 0 ? `${formatEgp(paid)} paid to you. Thank you!` : 'Thank you for recycling!' }
+        : { title: `طلب التدوير ${id} خلص`, body: paid > 0 ? `اتدفعلك ${formatEgp(paid)}. تسلم إيدك!` : 'تسلم إيدك على التدوير!' };
+    }
+    case 'cancelled':
+      return en ? { title: `Your recycling request ${id} was cancelled`, body: 'You can ask for a new pickup any time' } : { title: `طلب التدوير ${id} اتلغى`, body: 'تقدر تطلب استلام جديد في أي وقت' };
+    default:
+      return en ? { title: `We got your recycling request ${id}`, body: 'We are waiting for a collector to accept it' } : { title: `وصلنا طلب التدوير ${id}`, body: 'مستنيين جامع يقبله' };
+  }
 }
 
 function describeChangeEn(item: TrackedItem, previous: IncidentStatus): { title: string; body: string } {
@@ -96,8 +151,9 @@ export function diffStatuses(
   const created: AppNotification[] = [];
   items.forEach((item, index) => {
     const before = known[item.entityId];
-    next[item.entityId] = item.status;
-    if (before === undefined || before === item.status) return;
+    const key = trackedKey(item);
+    next[item.entityId] = key;
+    if (before === undefined || before === key) return;
     const { title, body } = describeChange(item, before);
     created.push({
       id: makeId(item, index),

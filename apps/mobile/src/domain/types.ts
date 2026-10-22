@@ -156,11 +156,11 @@ export type Transcript = { text: string; confidence: number };
 
 export type UploadKind = 'report_photo' | 'voice_note';
 
-/** In-app notification (status changes on the citizen's reports and service requests). */
+/** In-app notification (status changes on the citizen's reports, service requests and recycling pickups). */
 export type AppNotification = {
   id: string;
-  entityType: 'report' | 'service_request';
-  /** Report id (FTC-…) or service request id (SRV-…): opens /requests/{entityId}. */
+  entityType: 'report' | 'service_request' | 'pickup';
+  /** Report id (FTC-…), service request id (SRV-…) or pickup id (RCY-…): opens /requests/{entityId}. */
   entityId: string;
   status: IncidentStatus;
   title: string;
