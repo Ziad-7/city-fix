@@ -19,6 +19,7 @@ class User:
     role: Role = "citizen"
     name: str | None = None
     department_id: str | None = None
+    district: str | None = None
 
 
 class UserRepository(Protocol):

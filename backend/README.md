@@ -1,51 +1,206 @@
-# Citizen backend slice
+# FixTheCity Backend
 
-Branch: `feat/api-auth`. Ownership: [two-person split](../docs/team/backend-split.md).
+FastAPI backend serving the citizen mobile app, citizen web, and admin Command Center.
 
-## Implemented
+## Stack
 
-- Citizen demo OTP endpoints and signed, expiring JWTs with current-user, role and department checks.
-- Citizen report create/list/detail; incident list/detail/follow; map pin filters; service request create/list/detail.
-- Contract-shaped Pydantic validation, private report/booking access, anonymous reporter masking for admins, and Sunday–Thursday future-day checks for bulky-waste bookings.
-- A storage interface and proposed signed-upload route. Routes verify ownership of uploaded objects and issue short-lived read links through the adapter.
-- Opt-in proposed staff login with Argon2 password verification, indistinguishable bad-credential errors, and a bounded per-process attempt limiter.
-- Local in-memory harness and repository used to try the full citizen HTTP flow without waiting on Supabase.
+- **Python 3.12** with `uv`
+- **FastAPI** + **Uvicorn** for the API
+- **SQLAlchemy 2.0** with SQLite (default) or PostgreSQL
+- **Pydantic v2** for schemas with camelCase aliases
+- **PyJWT** for authentication
+- **pytest** for testing
 
-## Run the local demo
+## Quick Start
 
-From Git Bash on Windows:
-
-```bash
-cd backend
-python -m venv .venv
-source .venv/Scripts/activate
-python -m pip install -r requirements-dev.txt
-OTP_MODE=demo python -m uvicorn app.citizen_demo:create_app --factory --host 127.0.0.1
-```
-
-Open http://127.0.0.1:8000/docs. Request a code for `01012345678` using `sms` or `whatsapp`, then verify with `123456`. No SMS or WhatsApp is sent. Create a report with a 10-character description or an uploaded image, then check `/incidents`, `/map/incidents`, and `/reports`. Book bulky waste for a future Sunday–Thursday date.
-
-The demo resets users, records, and its random signing key on restart. It has no real media provider, so photo uploads return 503. Do not deploy this demo.
-
-## Checks
-
-From `backend/` with the virtual environment active:
+### 1. Setup
 
 ```bash
-python -m pytest -q
-python -m ruff check app tests
-python -m ruff format --check app tests
-python -m mypy app --ignore-missing-imports
+# Install Python 3.12 (or use pyenv/asdf)
+# Then:
+
+uv venv --python 3.12
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+uv sync
 ```
 
-Python 3.12 is configured in CI. Local checks here ran on Python 3.14.
+### 2. Run
 
-## Production integration hand-off
+```bash
+# Create database and seed with demo data
+uv run python -c "from app.db import reset_db; reset_db()"
 
-The route layer depends on `AuthContext` and `CitizenRepository` in `app/citizen.py`. The teammate supplies `UserRepository` and `CitizenRepository` adapters. Citizen repository writes must be transactional and implement the documented constraints: priority formula, 250 m PostGIS duplicate check, report linking, idempotent followers, timeline writes, readable IDs, sorted lists, filtering, and ownership. The in-memory adapter intentionally does not implement the production score, departments, duplicate discovery, or durable IDs.
+# Start the server
+uv run uvicorn app.main:app --reload --port 8000
+```
 
-Assemble the routers from `reports`, `incidents`, `map`, and `service_requests` in the teammate's app. Register `uploads.router` only after mobile, web and backend owners agree the still-proposed contract in `docs/api-contract.md`, then provide a `MediaStorage` implementation that creates random per-user private object paths, checks full upload ownership/size/type, and returns short-lived HTTPS upload and read links. A user cannot use an arbitrary local URI as a report image.
+The server will be available at `http://localhost:8000`. The health check is at `/health`.
 
-Staff login in `routers/staff_auth.py` is also proposed and opt-in. Agree its shape with the admin client owner before registration. Supply `staff_login_context` with the directory adapter and ensure each staff account maps to a current `User` whose role and department are loaded from the database. Its memory limiter is only a local single-worker guard; deployment needs shared rate limiting. Never put the service role key in a client.
+### 3. Test
 
-The OTP harness only supports the shared demo code. Real authentication still needs expiring, single-use OTP storage, provider delivery and distributed rate limiting. Tokens expire after 60 minutes; refresh and revocation are not implemented.
+```bash
+# Run all tests
+uv run pytest
+
+# Run with verbose output
+uv run pytest -v
+
+# Run a specific test file
+uv run pytest tests/test_priority.py
+
+# Run with coverage
+uv run pytest --cov=app tests/
+```
+
+## Database
+
+### Default (SQLite)
+
+Creates `./fixthecity.db`. Good for development.
+
+```bash
+DATABASE_URL=sqlite:///./fixthecity.db
+```
+
+### PostgreSQL
+
+For production:
+
+```bash
+DATABASE_URL=postgresql://user:password@localhost/fixthecity
+```
+
+### Reset Database
+
+```bash
+uv run python -c "from app.db import reset_db; reset_db()"
+```
+
+This drops all tables, recreates them, and re-seeds with demo data.
+
+## Demo Accounts
+
+### Citizen (via OTP)
+- **Phone:** `01012345678`
+- **OTP Code:** `123456` (in demo mode)
+
+### Admin
+- **Email:** `admin@fixthecity.demo`
+- **Password:** `FixCity2026!`
+- **Role:** Admin (can see everything, manage budget)
+
+### Staff (Roads Department)
+- **Email:** `roads@fixthecity.demo`
+- **Password:** `FixCity2026!`
+- **Role:** Staff (can see only Roads department incidents)
+
+## API status
+
+### Health
+- `GET /health` → `{"status": "ok", "version": "0.1.0"}`
+
+### Authentication
+- `POST /auth/otp` and `POST /auth/verify` → Demo citizen login
+- `POST /auth/staff-login` and `GET /auth/me` → Staff/admin login backed by seeded accounts
+- `/admin/*` and `PATCH /incidents/{id}` → Demo admin operations, work orders, and budget APIs
+- `GET /map/incidents` → Authenticated map pins backed by the seeded database
+- Report, incident, map-filter, and service-request route modules are also available through the local citizen harness below.
+
+## Architecture
+
+### `app/`
+- **`main.py`** – FastAPI app, CORS, router registration
+- **`config.py`** – Environment settings
+- **`db.py`** – SQLAlchemy engine, session, init/reset
+- **`models.py`** – SQLAlchemy ORM models
+- **`admin_schemas.py`** – Admin Pydantic schemas (camelCase)
+- **`schemas/`** – Shared auth, citizen, and upload schemas
+- **`auth.py`** – Shared JWT validation and role dependencies
+- **`auth_adapters.py`** – SQLAlchemy user and staff-directory adapters
+- **`seed.py`** – Demo data seeding
+
+### `app/logic/`
+- **`priority.py`** – Deterministic priority formula (ported from mobile)
+- **`duplicates.py`** – Haversine distance for 250m check
+- **`ids.py`** – Readable ID formatting
+- **`timeline.py`** – Timeline entry generation
+- **`status.py`** – Status change functions with activity logging
+
+### `app/routers/`
+- **`auth.py`** – Citizen OTP login
+- **`staff_auth.py`** – Staff login and current session
+- **`admin.py`** – Command Center routes
+- **`reports.py`, `incidents.py`, `service_requests.py`, `map.py`** – Citizen route slice
+
+### `tests/`
+- **`conftest.py`** – Pytest fixtures (temp DB, client)
+- **`test_priority.py`** – Priority calculation (ported test cases)
+- **`test_duplicates.py`** – Haversine distance tests
+- **`test_auth.py`** – Auth endpoints
+- **`test_seed.py`** – Seed data invariants
+
+## Key Design Decisions
+
+1. **SQLite by default**: Development-friendly, no extra setup. Postgres supported via `DATABASE_URL`.
+2. **Float lat/lng**: Simpler than PostGIS for now. Haversine in Python for duplicate detection.
+3. **Activity log for timeline**: Every status change writes a row; timelines built from logs on read.
+4. **Camel-case aliases**: Pydantic models have `alias_generator=to_camel`, responses use `by_alias=True`.
+5. **Role-based access**: `current_user`, `require_staff`, `require_admin` dependencies.
+6. **Seed on startup**: If DB is empty and `SEED_ON_START=true`, automatically runs seed.
+
+## Testing Notes
+
+- Tests use a fresh temporary SQLite database per test.
+- Auth tests verify OTP flow, staff login, token validation.
+- Priority tests port all cases from `apps/mobile/src/logic/__tests__/priority.test.ts`.
+- Seed tests verify 10 mobile incidents present, department integrity, priority factors structure.
+
+## Remaining integration work
+
+- Connect the citizen report, follow, and service-request routers to transactional database repositories in `app.main`.
+- Replace the local SQLite demo setup with agreed migrations and production PostgreSQL/PostGIS, plus real storage and OTP providers.
+- Add deployment configuration, production CORS/secrets, and connect the mobile, citizen web, and admin clients to a deployed API.
+- Build and register the CityBrain triage, transcription, photo-blur, and budget-optimization services.
+
+## Environment Variables
+
+Copy `.env.example` to `.env`:
+
+```bash
+cp .env.example .env
+```
+
+Edit as needed:
+
+- `DATABASE_URL` – Database connection string
+- `JWT_SECRET` – Change in production
+- `OTP_MODE` – `demo` or `real`
+- `SEED_ON_START` – `true` to auto-seed empty DB
+
+## Troubleshooting
+
+### Import errors
+```bash
+# Make sure you're in the venv and dependencies are installed
+source .venv/bin/activate
+uv sync
+```
+
+### Database locked
+```bash
+# Remove the SQLite file and restart (it will be re-seeded)
+rm fixthecity.db
+```
+
+### Tests fail
+```bash
+# Clear pytest cache
+rm -rf .pytest_cache __pycache__
+uv run pytest
+```
+
+## Citizen route slice
+
+The citizen authentication and report/service route layer is implemented behind repository interfaces. Run the process-local harness with `OTP_MODE=demo python -m uvicorn app.citizen_demo:create_app --factory --host 127.0.0.1`; it is intended for route testing while persistent citizen repositories and storage are integrated into `app.main`.
+
+Install the combined development dependencies with `python -m pip install -r requirements-dev.txt`. The repository CI runs Ruff lint/format, mypy, and pytest from this directory.

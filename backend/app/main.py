@@ -1,0 +1,113 @@
+"""FastAPI application entry point."""
+
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from app.config import settings
+from app.db import init_db, SessionLocal
+from app.admin_schemas import HealthResponse
+from app.auth import AuthContext, AuthSettings
+from app.auth_adapters import DatabaseStaffDirectory, DatabaseUserRepository
+from app.map_repository import DatabaseMapRepository
+from app.staff_auth import StaffLoginContext
+from app.routers import auth, admin, map as citizen_map, staff_auth
+from app.seed import seed_db
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan: startup and shutdown."""
+    # Startup
+    init_db()
+
+    # Check if we should seed
+    if settings.seed_on_start:
+        db = SessionLocal()
+        try:
+            # Check if database is empty (no incidents)
+            from app.models import Incident
+
+            incident_count = db.query(Incident).count()
+            if incident_count == 0:
+                seed_db(db)
+        finally:
+            db.close()
+
+    yield
+    # Shutdown
+
+
+app = FastAPI(
+    title="FixTheCity Backend",
+    description="API for the FixTheCity citizen and admin apps",
+    version=settings.version,
+    lifespan=lifespan,
+)
+
+# All app routers use one auth boundary. User roles and department permissions
+# are reloaded from the database on each authenticated request.
+app.state.auth_context = AuthContext(
+    AuthSettings(
+        jwt_secret=settings.jwt_secret,
+        demo_otp=settings.otp_mode == "demo",
+    ),
+    DatabaseUserRepository(),
+)
+app.state.staff_login_context = StaffLoginContext(DatabaseStaffDirectory())
+app.state.citizen_repository = DatabaseMapRepository()
+
+# CORS middleware for web clients
+cors_origins = [
+    "http://localhost:8081",  # mobile (expo)
+    "http://127.0.0.1:8081",
+] + settings.cors_origins.split(",")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_origin_regex=settings.cors_origin_regex,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# ============================================================================
+# Health check
+# ============================================================================
+
+
+@app.get("/health", response_model=HealthResponse)
+async def health_check() -> HealthResponse:
+    """Health check endpoint."""
+    return HealthResponse(status="ok", version=settings.version)
+
+
+# ============================================================================
+# Router registration
+# ============================================================================
+
+app.include_router(auth.router)
+app.include_router(staff_auth.router)
+app.include_router(citizen_map.router)
+app.include_router(admin.router)
+app.include_router(admin.top_level_router)
+
+
+# ============================================================================
+# Error handlers
+# ============================================================================
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handle validation errors (422)."""
+    return JSONResponse(status_code=422, content={"detail": "البيانات مش مكتملة"})
+
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    """Handle general exceptions."""
+    return JSONResponse(status_code=500, content={"detail": "حدث خطأ في الخادم"})

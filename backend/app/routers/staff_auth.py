@@ -2,11 +2,11 @@
 
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pwdlib.exceptions import UnknownHashError
 from pydantic import Field
 
-from app.auth import AuthContext, get_auth_context, issue_token
+from app.auth import AuthContext, User, current_user, get_auth_context, issue_token
 from app.schemas.auth import ApiModel
 from app.schemas.citizen import InputModel
 from app.staff_auth import StaffLoginContext, get_staff_context, password_hash
@@ -57,6 +57,24 @@ def login(
         name=user.name,
         role=user.role,
         department_id=user.department_id,
-        district=account.district,
+        district=user.district or account.district,
         token=issue_token(user, auth.settings),
+    )
+
+
+@router.get("/me", response_model=StaffSession)
+def get_me(
+    user: Annotated[User, Depends(current_user)],
+    authorization: Annotated[str, Header()],
+) -> StaffSession:
+    if user.role not in ("staff", "admin"):
+        raise HTTPException(403, "مش مسموح")
+    token = authorization.removeprefix("Bearer ").strip()
+    return StaffSession(
+        user_id=user.id,
+        name=user.name,
+        role=user.role,
+        department_id=user.department_id,
+        district=user.district or "القاهرة · حي مدينة نصر أول",
+        token=token,
     )

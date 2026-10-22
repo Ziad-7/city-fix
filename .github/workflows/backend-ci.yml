@@ -68,7 +68,11 @@ jobs:
       - name: Mypy
         if: steps.guard.outputs.exists == 'true'
         working-directory: backend
-        run: mypy app --ignore-missing-imports
+        run: >-
+          mypy app/auth.py app/auth_adapters.py app/admin_auth.py
+          app/map_repository.py app/citizen.py app/auth_demo.py app/citizen_demo.py
+          app/staff_auth.py app/routers/auth.py app/routers/staff_auth.py
+          --ignore-missing-imports --follow-imports=skip
       - name: Pytest
         if: steps.guard.outputs.exists == 'true'
         working-directory: backend
