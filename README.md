@@ -12,8 +12,8 @@ Built in 7 days by a team of 5 for a hackathon.
 | --- | --- | --- |
 | `apps/mobile/` | Citizen app — Expo (React Native) + TypeScript, Arabic-first RTL | In progress (Stage 1) |
 | `apps/web/` | Citizen website (client portal) — Next.js, same design as the app | Planned |
-| `apps/admin-web/` | City Command Center — Next.js web dashboard | Planned |
-| `backend/` | FastAPI + Supabase (PostgreSQL/PostGIS, Storage) API, CityBrain AI, OR-Tools budget optimizer | Planned |
+| `apps/admin-web/` | City Command Center — Next.js web dashboard | Built (`feat/admin-dashboard`) |
+| `backend/` | FastAPI API (SQLite for now, Supabase/PostGIS later), CityBrain AI, budget optimizer | Built (`feat/admin-dashboard`) |
 | `docs/` | Decisions, design, specs, progress log | Living |
 
 ## Team
@@ -37,6 +37,15 @@ npx expo start
 ```
 
 Scan the QR code with **Expo Go** (Android/iOS). The app runs fully on **mock data** until the backend exists — see `apps/mobile/README.md`.
+
+## Run the backend and the Command Center
+
+```bash
+cd backend && uv sync && uv run uvicorn app.main:app --reload --port 8000   # seeds demo data
+cd apps/admin-web && npm ci && npm run dev                                   # http://localhost:3001
+```
+
+Sign in with `admin@cityfix.demo` / `FixCity2026!`. Details: `backend/README.md`, `apps/admin-web/README.md`.
 
 ## Modules
 

@@ -2,6 +2,29 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-22 — Command Center and backend (branch `feat/admin-dashboard`)
+
+**Done**
+- **Backend** (`backend/`, FastAPI + SQLAlchemy 2, SQLite): the citizen contract (auth with demo OTP, incidents, reports, service requests, uploads stub) plus the `/admin/*` routes: staff login, dashboard stats, work orders, service-request schedule, budget plan, demo reset. Priority score and duplicate detection are computed server side. Seed mirrors the mobile mock data. 132 pytest tests, ruff clean.
+- **Admin web** (`apps/admin-web`, Next.js 16): login, overview with KPIs, incident queue with filters and side panel, incident detail (status change with required note, work-order panel, timeline, priority factors), work-order kanban, service requests, city map, budget planner. Department staff see only their data. Arabic RTL, design tokens from `ftc.css`.
+- Shared mobile code is copied unchanged (`check:shared`); the admin web is renamed to CityFix / سيتي فيكس with the `cityfix-*.svg` assets; demo accounts are `@cityfix.demo`.
+- Merged `origin/main` (CityFix rename, optional payment for free services, reopen, uploads). CI: `admin-web-ci.yml` and `backend-ci.yml` run against the real folders.
+- Checks: backend 132 pytest, ruff check and format; admin web typecheck, lint, 189 Vitest tests, build, 13 Playwright tests; mobile typecheck and tests unchanged.
+
+**How to test**
+- `cd backend && uv run pytest -q && uvx ruff check . && uvx ruff format --check .`
+- `cd apps/admin-web && npm ci && npm run check:shared && npm run typecheck && npm run lint && npm test && npm run build && npx playwright test`
+- By hand: start the backend, `npm run dev` in `apps/admin-web`, sign in as `admin@cityfix.demo` / `FixCity2026!`, change a status with a note; the citizen sees it in the timeline.
+
+**Known issues**
+- Photos are placeholders (no real files are stored); `POST /uploads` is a stub.
+- `/ai/transcribe` and the garbage-schedule endpoints are not implemented in the backend.
+- SQLite plus haversine distance instead of Supabase/PostGIS; no migrations, delete the DB file after model changes.
+- Budget planner: the "بدون حد" preset is disabled.
+- The incident detail page has a location card without a map.
+- Free `tree_maintenance` bookings: the admin list shows them without a payment ("مجاني"), but the backend does not create them yet.
+- `NEXT_PUBLIC_API_URL` is inlined at build time. Port `3001` may be taken by another app on your machine; use `next dev -p 3002`.
+
 ## 2026-10-22 — Citizen website review fixes (branch `fix/citizen-web-review`)
 
 **Done** ([review](reviews/2026-10-21-citizen-web-review.md), every finding has a Resolution)
