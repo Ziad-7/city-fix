@@ -52,9 +52,17 @@ export async function confirmTriage(
   return result;
 }
 
+/**
+ * `GET /admin/incidents/{id}/similar` answers `DuplicateMatch[]` (the contract), but the detail page needs full
+ * incidents (location, linked reports), so each match is resolved with `GET /admin/incidents/{id}`. A match that
+ * cannot be read (merged away, out of the staff member's department) is dropped instead of failing the page.
+ */
 export async function getSimilarIncidents(id: string): Promise<AdminIncident[]> {
-  const result = await http<AdminIncident[]>('GET', `/admin/incidents/${id}/similar`);
-  return result || [];
+  const matches = await http<{ incidentId: string }[]>('GET', `/admin/incidents/${id}/similar`);
+  const found = await Promise.all(
+    (matches ?? []).map((m) => getIncident(m.incidentId).catch(() => null)),
+  );
+  return found.filter((inc): inc is AdminIncident => inc !== null);
 }
 
 export async function mergeIncidents(

@@ -17,6 +17,12 @@
 **Known issues**
 - Backend root cause (`backend/app/ai/keywords.py` uses `severity.value`) still to fix (W3).
 - Not tried on a device.
+## 2026-10-23 — End-to-end workflow check (branch `feat/e2e-workflow`, PR #54)
+
+- Ran the whole flow locally (SQLite backend, citizen web in api mode, admin web): citizen sign-in, photo upload, report, tracking; admin queue, detail, work order, status change with a note, resolve; citizen sees the update; reopen.
+- **Fixed:** the admin incident detail crashed ("reading 'lat'") when a nearby same-category incident existed, because the client read `/admin/incidents/{id}/similar` as full incidents while the backend returns `DuplicateMatch[]`. The service now resolves the matches; unit and page-level regression tests added.
+- **Open:** local upload stub discards files (backend W3 making it fail loudly); no recycling routes yet, so the CityCycle pickup path was not run; incident ids are not zero-padded. Details in [`e2e-bug-report.md`](e2e-bug-report.md).
+- **Not verified:** voice input, Gemini photo triage, the mobile app.
 
 ## 2026-10-23 — Command Center shows report photos (branch `fix/admin-report-photos`)
 
