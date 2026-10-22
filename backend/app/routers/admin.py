@@ -4,7 +4,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 from app.db import get_db
+from app.config import settings
 from app.admin_auth import require_staff, require_admin
 from app.models import (
     Incident,
@@ -46,6 +48,16 @@ from app.seed import TEAMS, seed_db
 router = APIRouter(prefix="/admin", tags=["admin"])
 # Separate router for non-prefixed routes (e.g., /incidents/{id})
 top_level_router = APIRouter(tags=["incidents"])
+
+
+def _database_utc_datetime(value: str | None) -> datetime | None:
+    """Normalize aware ISO datetimes to naive UTC for DateTime(timezone=False) columns."""
+    if value is None:
+        return None
+    parsed = datetime.fromisoformat(value)
+    if parsed.utcoffset() is not None:
+        return parsed.astimezone(timezone.utc).replace(tzinfo=None)
+    return parsed
 
 
 # ============================================================================
@@ -246,7 +258,10 @@ async def _patch_incident_impl(
         incident.category_id = update.category_id
         # Recompute priority
         category = db.query(Category).filter_by(id=incident.category_id).first()
-        days_open = max(0, int((now_utc() - incident.created_at).days))
+        created_at = incident.created_at
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+        days_open = max(0, int((now_utc() - created_at).days))
         priority = compute_priority(
             {
                 "severity": incident.severity,
@@ -340,6 +355,8 @@ async def merge_incidents(
         raise HTTPException(status_code=404, detail="مش موجود")
 
     target_id = data.into_incident_id
+    if target_id == source.id:
+        raise HTTPException(status_code=422, detail="البيانات مش مكتملة")
     target = db.query(Incident).filter_by(id=target_id).first()
     if not target:
         raise HTTPException(status_code=404, detail="مش موجود")
@@ -392,6 +409,11 @@ async def confirm_triage(
     if not incident:
         raise HTTPException(status_code=404, detail="مش موجود")
 
+    if payload.get("role") == "staff" and incident.department_id != payload.get(
+        "department"
+    ):
+        raise HTTPException(status_code=403, detail="مش مسموح")
+
     # Validate enum fields
     if (
         data.category_id
@@ -410,7 +432,10 @@ async def confirm_triage(
 
     # I2: Recompute priority after category/severity update
     category = db.query(Category).filter_by(id=incident.category_id).first()
-    days_open = max(0, int((now_utc() - incident.created_at).days))
+    created_at = incident.created_at
+    if created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=timezone.utc)
+    days_open = max(0, int((now_utc() - created_at).days))
     priority = compute_priority(
         {
             "severity": incident.severity,
@@ -437,6 +462,7 @@ async def confirm_triage(
         )
         if ai_sug and ai_sug.payload:
             ai_sug.payload["confirmed"] = True
+            flag_modified(ai_sug, "payload")
 
     # I2: Record reviewer name + time
     actor = payload.get("sub", "staff")
@@ -523,6 +549,9 @@ async def create_work_order(
     incident_id = data.incident_id
     sr_id = data.service_request_id
 
+    if bool(incident_id) == bool(sr_id):
+        raise HTTPException(status_code=422, detail="البيانات مش مكتملة")
+
     # Validate required field
     if not data.department:
         raise HTTPException(status_code=422, detail="البيانات مش مكتملة")
@@ -541,12 +570,36 @@ async def create_work_order(
             staff_dept = payload.get("department")
             if incident.department_id != staff_dept:
                 raise HTTPException(status_code=403, detail="مش مسموح")
+            if data.department != staff_dept:
+                raise HTTPException(status_code=403, detail="مش مسموح")
+
+    if sr_id:
+        service_request = db.query(ServiceRequest).filter_by(id=sr_id).first()
+        if not service_request:
+            raise HTTPException(status_code=404, detail="مش موجود")
+        service_department = {
+            "bulky_waste": "sanitation",
+            "tree_maintenance": "parks",
+        }.get(service_request.service_type)
+        if payload.get("role") == "staff" and service_department != payload.get(
+            "department"
+        ):
+            raise HTTPException(status_code=403, detail="مش مسموح")
+        if data.department != service_department:
+            raise HTTPException(status_code=422, detail="البيانات مش مكتملة")
+
+    if not db.query(Department).filter_by(id=data.department).first():
+        raise HTTPException(status_code=422, detail="البيانات مش مكتملة")
+
+    try:
+        parsed_due_at = _database_utc_datetime(data.due_at)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="البيانات مش مكتملة") from None
 
     dept_id = data.department
     team = data.team
     team_size = data.team_size
     supervisor = data.supervisor
-    due_at = data.due_at
     tasks = data.tasks or []
 
     # Create work order
@@ -562,7 +615,7 @@ async def create_work_order(
         team_size=team_size,
         supervisor=supervisor,
         status=wo_status,
-        due_at=datetime.fromisoformat(due_at) if due_at else None,
+        due_at=parsed_due_at,
         estimated_cost_egp=data.estimated_cost_egp,
         tasks=[{"label": t, "done": False} for t in tasks] if tasks else [],
     )
@@ -572,6 +625,7 @@ async def create_work_order(
     # I5: Link to incident
     if incident_id:
         incident.work_order_id = wo_id
+        incident.department_id = dept_id
 
         # I5: Only move incident to assigned if status is received/triaged
         actor = payload.get("sub", "staff")
@@ -634,6 +688,11 @@ async def patch_work_order(
         if not data.note:
             raise HTTPException(status_code=400, detail="اكتب رسالة")
 
+    try:
+        parsed_due_at = _database_utc_datetime(data.due_at)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="البيانات مش مكتملة") from None
+
     # Apply updates
     if data.status:
         new_status = data.status
@@ -660,7 +719,7 @@ async def patch_work_order(
         wo.supervisor = data.supervisor
 
     if data.due_at is not None:
-        wo.due_at = datetime.fromisoformat(data.due_at) if data.due_at else None
+        wo.due_at = parsed_due_at
 
     if data.tasks is not None:
         wo.tasks = data.tasks
@@ -742,9 +801,10 @@ async def patch_service_request(
 
     # Validate enum fields
     if data.status and data.status not in (
-        "pending",
-        "scheduled",
-        "completed",
+        "received",
+        "triaged",
+        "assigned",
+        "in_progress",
         "resolved",
         "closed",
     ):
@@ -770,6 +830,9 @@ async def patch_service_request(
 
     if data.assignee is not None:
         sr.details["assignee"] = data.assignee
+
+    if data.day is not None or data.slot is not None or data.assignee is not None:
+        flag_modified(sr, "details")
 
     # A3: note-only PATCH
     if data.note and not data.status:
@@ -886,7 +949,9 @@ async def get_insights(
     payload: dict = Depends(require_staff), db: Session = Depends(get_db)
 ):
     """Get deterministic insights."""
-    return generate_insights(db)
+    return generate_insights(
+        db, department_id=payload["department"] if payload["role"] == "staff" else None
+    )
 
 
 # ============================================================================
@@ -899,6 +964,9 @@ async def reset_demo(
     payload: dict = Depends(require_admin), db: Session = Depends(get_db)
 ):
     """Re-seed the database. Admin only."""
+    if not settings.demo_reset_enabled:
+        raise HTTPException(status_code=404, detail="مش موجود")
+
     # Clear all data
     from sqlalchemy import text
     from app.models import Base

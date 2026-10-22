@@ -1,4 +1,4 @@
-import type { Incident, TriageSuggestion, IncidentStatus, CategoryId, ServiceRequest } from './types';
+import type { Incident, TriageSuggestion, IncidentStatus, CategoryId, ServiceRequest, TriageOption, Severity } from './types';
 
 export type WorkOrderStatus = 'open' | 'assigned' | 'in_progress' | 'done';
 
@@ -30,7 +30,17 @@ export interface LinkedReport {
 
 export interface AdminIncident extends Incident {
   linkedReports: LinkedReport[];
-  triage?: TriageSuggestion & { source: 'model' | 'fallback'; confirmed: boolean };
+  triage?: Omit<TriageSuggestion, 'summary' | 'duplicates'> & {
+    options: TriageOption[];
+    summary?: string;
+    duplicates?: TriageSuggestion['duplicates'];
+    categoryId?: CategoryId;
+    confidence?: number;
+    confidences?: Partial<Record<CategoryId, number>>;
+    severity: Severity;
+    source: 'model' | 'fallback';
+    confirmed: boolean;
+  };
   dueAt: string;
   overdue: boolean;
   external: boolean;
@@ -38,6 +48,15 @@ export interface AdminIncident extends Incident {
   inBudgetPlan: boolean;
   lastReviewedBy?: string;
   lastReviewedAt?: string;
+}
+
+export interface SimilarIncidentMatch {
+  incidentId: string;
+  title: string;
+  address: string;
+  distance: number;
+  priorityScore: number;
+  followersCount: number;
 }
 
 export interface WorkOrderTask {

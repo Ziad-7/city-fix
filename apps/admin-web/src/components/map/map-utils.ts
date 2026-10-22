@@ -1,6 +1,5 @@
-import type L from 'leaflet';
 import type { AdminIncident } from '@/domain/admin-types';
-import type { IncidentStatus } from '@/domain/types';
+
 
 export type PinKind = 'received' | 'assigned' | 'progress' | 'resolved' | 'critical';
 
@@ -26,20 +25,6 @@ const PIN_STYLE: Record<PinKind, { body: string; glyph: string; svg: string }> =
 export function pinSvg(kind: PinKind): string {
   const s = PIN_STYLE[kind];
   return `<svg viewBox="4 2 52 60" aria-hidden="true"><path d="${PIN_PATH}" fill="${s.body}" stroke="#fff" stroke-width="3"/><circle cx="32" cy="26.5" r="12.5" fill="#fff"/><g transform="translate(23.6 18.1) scale(.7)" fill="none" stroke="${s.glyph}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${s.svg}</g></svg>`;
-}
-
-export function pinIcon(kind: PinKind, selected = false, near = false): L.DivIcon {
-  const lg = kind === 'critical' || selected;
-  const [w, h] = lg ? [41, 48] : [30, 35];
-  const classes = ['ftc-pin', lg && 'ftc-pin--lg', kind === 'critical' && 'ftc-pin--critical', selected && 'is-selected', near && 'ftc-pin--near'].filter(Boolean).join(' ');
-  const tag = kind === 'critical' ? '<span class="ftc-pin__tag">خطر</span>' : '';
-  return L.divIcon({ className: 'ftc-divicon', html: `<div class="${classes}">${tag}${pinSvg(kind)}</div>`, iconSize: [w, h], iconAnchor: [w / 2, h] });
-}
-
-export function clusterIcon(cluster: L.MarkerCluster): L.DivIcon {
-  const n = cluster.getChildCount();
-  const d = n < 10 ? 40 : n < 50 ? 44 : 48;
-  return L.divIcon({ className: 'ftc-divicon', html: `<div class="ftc-cluster">${n}</div>`, iconSize: [d, d] });
 }
 
 /** Determine the pin kind based on incident status and critical flag */
@@ -104,9 +89,11 @@ export function clusterPins(pins: MapPinModel[], zoomLevel: number): MapPinModel
 export function filterPins(
   pins: MapPinModel[],
   statuses: PinKind[],
-  categoryId?: string,
-  department?: string,
+  _categoryId?: string,
+  _department?: string,
 ): MapPinModel[] {
+  void _categoryId;
+  void _department;
   return pins.filter(pin => {
     if (!statuses.includes(pin.kind)) return false;
     // Note: categoryId and department filtering happens at the API level

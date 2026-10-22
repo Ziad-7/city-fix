@@ -23,20 +23,12 @@ export default function OverviewPage() {
   const searchParams = useSearchParams();
   const session = useSession();
 
-  const [range, setRange] = useState<'today' | '7d' | '30d'>('7d');
+  const requestedRange = searchParams.get('range');
+  const range: 'today' | '7d' | '30d' = requestedRange === 'today' || requestedRange === '30d' ? requestedRange : '7d';
   const [search, setSearch] = useState('');
-
-  // Sync range from URL
-  useEffect(() => {
-    const urlRange = searchParams.get('range') as 'today' | '7d' | '30d' | null;
-    if (urlRange && ['today', '7d', '30d'].includes(urlRange)) {
-      setRange(urlRange);
-    }
-  }, [searchParams]);
 
   // Update URL when range changes
   const handleRangeChange = (newRange: 'today' | '7d' | '30d') => {
-    setRange(newRange);
     router.push(`/?range=${newRange}`);
   };
 

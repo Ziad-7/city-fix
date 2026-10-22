@@ -16,7 +16,8 @@ import {
 import { useToast } from '@/components/ui/Toast';
 import { Icon } from '@/components/Icon';
 import { StatusChangeForm } from '@/components/incidents/StatusChangeForm';
-import type { WorkOrder, Team } from '@/domain/admin-types';
+import type { WorkOrder } from '@/domain/admin-types';
+import type { IncidentStatus } from '@/domain/types';
 import { patchWorkOrder } from '@/services/workOrders';
 import { getTeams } from '@/services/departments';
 import { formatDayWithTime, formatEgp } from '@/lib/format';
@@ -29,7 +30,7 @@ const WORK_ORDER_STATUSES: Record<string, string> = {
   done: 'اتحلّت',
 };
 
-function previewStatusFor(status: string) {
+function previewStatusFor(status: string): IncidentStatus {
   // Map work order status to incident status for preview
   const map: Record<string, string> = {
     open: 'received',
@@ -37,7 +38,7 @@ function previewStatusFor(status: string) {
     in_progress: 'in_progress',
     done: 'resolved',
   };
-  return map[status] as any;
+  return (map[status] ?? 'received') as IncidentStatus;
 }
 
 export interface WorkOrderDrawerProps {
@@ -58,16 +59,13 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
   });
 
   const patchMutation = useMutation({
-    mutationFn: (data: any) => patchWorkOrder(workOrder!.id, data),
+    mutationFn: (data: Parameters<typeof patchWorkOrder>[1]) => patchWorkOrder(workOrder!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['work-order', workOrder!.id] });
       queryClient.invalidateQueries({ queryKey: ['work-orders'] });
       queryClient.invalidateQueries({ queryKey: ['incidents'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       toast.success(`اتحدّث أمر الشغل ${workOrder!.id}.`);
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'حصلت مشكلة. جرّب تاني.');
     },
   });
 
@@ -80,14 +78,14 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
       await patchWorkOrder(workOrder.id, { tasks: newTasks });
       queryClient.invalidateQueries({ queryKey: ['work-order', workOrder.id] });
       queryClient.invalidateQueries({ queryKey: ['work-orders'] });
-    } catch (error) {
+    } catch {
       toast.error('مقدرناش نحفظ المهمة. جرّب تاني.');
     }
   };
 
   const handleStatusChange = async ({ status, note }: { status: string; note: string }) => {
     if (!workOrder) return;
-    const updateData: any = { status, note };
+    const updateData: Parameters<typeof patchWorkOrder>[1] = { status, note };
     if (selectedTeam && status === 'assigned') {
       const team = teams.find((t) => t.name === selectedTeam);
       if (team) {
@@ -95,7 +93,7 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
         updateData.teamSize = team.size;
       }
     }
-    patchMutation.mutate(updateData);
+    await patchMutation.mutateAsync(updateData);
   };
 
   if (!workOrder) return null;
@@ -103,13 +101,16 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
   const departmentTeams = teams.filter((t) => t.department === workOrder.department);
   const isOpenStatus = workOrder.status === 'open';
   const isDone = workOrder.status === 'done';
+  const relatedRecordHref = workOrder.incidentId
+    ? `/incidents/${workOrder.incidentId}`
+    : `/service-requests?open=${encodeURIComponent(workOrder.serviceRequestId ?? '')}`;
 
   const kvItems = [
     {
       label: workOrder.incidentId ? 'البلاغ' : 'الطلب',
       value: (
         <div>
-          <Link href={workOrder.incidentId ? `/incidents/${workOrder.incidentId}` : `/service-requests/${workOrder.serviceRequestId}`}>
+          <Link href={relatedRecordHref}>
             {workOrder.incidentId ?? workOrder.serviceRequestId}
           </Link>
           {workOrder.followers && <span> · {workOrder.followers} مواطنين</span>}
@@ -247,6 +248,7 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
             <h3 style={{ margin: '0 0 10px', fontSize: 14, fontWeight: 600 }}>آخر تحديثات</h3>
             <Timeline
               items={[...workOrder.updates].reverse().map((update) => ({
+                id: `${update.at}-${update.actor}`,
                 title: update.note,
                 who: `${update.at} · ${update.actor}`,
                 state: 'done',
@@ -261,7 +263,7 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
             variant="secondary"
             size="sm"
             className="block"
-            href={workOrder.incidentId ? `/incidents/${workOrder.incidentId}` : `/service-requests/${workOrder.serviceRequestId}`}
+            href={relatedRecordHref}
           >
             {workOrder.incidentId ? 'افتح البلاغ' : 'افتح الطلب'}
           </Button>

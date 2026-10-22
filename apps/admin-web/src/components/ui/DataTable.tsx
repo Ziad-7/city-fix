@@ -43,6 +43,7 @@ export function DataTable<T>({
   minWidth,
   tableClassName,
 }: DataTableProps<T>) {
+  const selectRow = onSelect;
   // Internal sort state for uncontrolled mode
   const [internalSort, setInternalSort] = useState<{ id: string; dir: 'asc' | 'desc' } | undefined>();
   const isControlled = onSortChange !== undefined || sort !== undefined;
@@ -83,7 +84,7 @@ export function DataTable<T>({
       return rows;
     }
 
-    const sorted = [...rows].sort((a, b) => {
+    return [...rows].sort((a, b) => {
       const aVal = col.sortValue!(a);
       const bVal = col.sortValue!(b);
 
@@ -92,7 +93,6 @@ export function DataTable<T>({
       return 0;
     });
 
-    return sorted;
   }, [rows, activeSort, columns, loading]);
 
   const displayRows = loading ? Array(skeletonRows).fill(null) : sortedRows;
@@ -110,7 +110,7 @@ export function DataTable<T>({
     <div className="tablewrap" aria-busy={loading} role={loading ? 'status' : undefined}>
       {loading && <span className="sr-only">جاري التحميل…</span>}
       <table
-        className={['ftc-table', onSelect && 'is-clickable', tableClassName].filter(Boolean).join(' ')}
+        className={['ftc-table', selectRow && 'is-clickable', tableClassName].filter(Boolean).join(' ')}
         style={{ minWidth }}
         aria-label={ariaLabel}
       >
@@ -159,20 +159,20 @@ export function DataTable<T>({
               <td colSpan={columns.length}>{empty}</td>
             </tr>
           ) : (
-            rows.map((r) => {
+            sortedRows.map((r) => {
               const id = getRowId(r);
               const selected = selectedId === id;
               return (
                 <tr
                   key={id}
-                  tabIndex={onSelect ? 0 : undefined}
-                  aria-selected={onSelect ? selected : undefined}
+                  tabIndex={selectRow ? 0 : undefined}
+                  aria-selected={selectRow ? selected : undefined}
                   className={[selected && 'is-selected', rowClassName?.(r)].filter(Boolean).join(' ')}
-                  onClick={() => onSelect?.(r)}
+                  onClick={() => selectRow?.(r)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      onSelect?.(r);
+                      selectRow?.(r);
                     }
                     if (e.key === 'ArrowDown') focusSibling(e, 1);
                     if (e.key === 'ArrowUp') focusSibling(e, -1);

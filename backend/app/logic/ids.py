@@ -4,6 +4,17 @@ from sqlalchemy.orm import Session
 from app.models import Incident, Report, WorkOrder, ServiceRequest, BudgetPlan
 
 
+def _next_numeric_id(db: Session, model, prefix: str, width: int, start: int) -> str:
+    """Return the next ID after the greatest numeric suffix, independent of lexical order."""
+    values = db.query(model.id).filter(model.id.like(f"{prefix}-%")).all()
+    sequences = []
+    for (value,) in values:
+        suffix = value[len(prefix) + 1 :]
+        if suffix.isdigit():
+            sequences.append(int(suffix))
+    return f"{prefix}-{max(sequences, default=start - 1) + 1:0{width}d}"
+
+
 def format_incident_id(seq: int) -> str:
     """Format incident ID: INC-501, INC-502, etc."""
     return f"INC-{seq}"
@@ -40,59 +51,19 @@ def next_id(db: Session, entity_type: str) -> str:
         Next available ID string
     """
     if entity_type == "INC":
-        last = db.query(Incident).order_by(Incident.id.desc()).first()
-        if last and last.id.startswith("INC-"):
-            try:
-                seq = int(last.id[4:]) + 1
-            except (ValueError, IndexError):
-                seq = 501
-        else:
-            seq = 501
-        return format_incident_id(seq)
+        return _next_numeric_id(db, Incident, "INC", 0, 501)
 
     elif entity_type == "FTC":
-        last = db.query(Report).order_by(Report.id.desc()).first()
-        if last and last.id.startswith("FTC-"):
-            try:
-                seq = int(last.id[4:]) + 1
-            except (ValueError, IndexError):
-                seq = 1043
-        else:
-            seq = 1043
-        return format_report_id(seq)
+        return _next_numeric_id(db, Report, "FTC", 0, 1043)
 
     elif entity_type == "WO":
-        last = db.query(WorkOrder).order_by(WorkOrder.id.desc()).first()
-        if last and last.id.startswith("WO-"):
-            try:
-                seq = int(last.id[3:]) + 1
-            except (ValueError, IndexError):
-                seq = 334
-        else:
-            seq = 334
-        return format_work_order_id(seq)
+        return _next_numeric_id(db, WorkOrder, "WO", 0, 334)
 
     elif entity_type == "SRV":
-        last = db.query(ServiceRequest).order_by(ServiceRequest.id.desc()).first()
-        if last and last.id.startswith("SRV-"):
-            try:
-                seq = int(last.id[4:]) + 1
-            except (ValueError, IndexError):
-                seq = 2009
-        else:
-            seq = 2009
-        return format_service_request_id(seq)
+        return _next_numeric_id(db, ServiceRequest, "SRV", 0, 2009)
 
     elif entity_type == "BP":
-        last = db.query(BudgetPlan).order_by(BudgetPlan.id.desc()).first()
-        if last and last.id.startswith("BP-"):
-            try:
-                seq = int(last.id[3:]) + 1
-            except (ValueError, IndexError):
-                seq = 1
-        else:
-            seq = 1
-        return format_budget_plan_id(seq)
+        return _next_numeric_id(db, BudgetPlan, "BP", 0, 1)
 
     else:
         raise ValueError(f"Unknown entity type: {entity_type}")

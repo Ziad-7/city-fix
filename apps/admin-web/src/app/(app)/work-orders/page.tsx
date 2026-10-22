@@ -21,27 +21,20 @@ const STATUS_LABELS: Record<WorkOrderStatus, string> = {
   in_progress: 'شغالين عليه',
   done: 'اتحلّت',
 };
+const INITIAL_NOW = Date.now();
 
 export default function WorkOrdersPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const session = useSession();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
-  const [now, setNow] = useState(Date.now());
   const openParam = searchParams?.get('open');
-
+  const selectedId = openParam;
+  const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
+  const [now, setNow] = useState(INITIAL_NOW);
   useEffect(() => {
-    setNow(Date.now());
     const interval = setInterval(() => setNow(Date.now()), 30000);
     return () => clearInterval(interval);
   }, []);
-
-  useEffect(() => {
-    if (openParam) {
-      setSelectedId(openParam);
-    }
-  }, [openParam]);
 
   const { data: workOrders = [], isLoading, error, refetch } = useQuery({
     queryKey: ['work-orders', selectedDepartment],
@@ -66,14 +59,14 @@ export default function WorkOrdersPage() {
 
   // Filter orders - done ones only from last 7 days
   const filteredOrders = useMemo(() => {
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
     return workOrders.filter((wo) => {
       if (wo.status === 'done') {
         return wo.resolvedAt && new Date(wo.resolvedAt).getTime() > sevenDaysAgo;
       }
       return true;
     });
-  }, [workOrders]);
+  }, [workOrders, now]);
 
   // Group by status and sort
   const grouped = useMemo(() => {
@@ -108,12 +101,10 @@ export default function WorkOrdersPage() {
   const deptList = session?.role === 'admin' ? [null, ...departments.map((d) => d.id)] : [null];
 
   const handleOpenWorkOrder = (id: string) => {
-    setSelectedId(id);
     router.push(`?open=${id}`);
   };
 
   const handleCloseDrawer = () => {
-    setSelectedId(null);
     router.push('');
   };
 
@@ -200,7 +191,7 @@ export default function WorkOrdersPage() {
         {/* Drawer */}
         <WorkOrderDrawer
           open={!!selectedId && !!selectedWorkOrder}
-          workOrder={selectedWorkOrder}
+          workOrder={selectedWorkOrder ?? undefined}
           onClose={handleCloseDrawer}
         />
       </div>

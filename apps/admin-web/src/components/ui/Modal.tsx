@@ -10,7 +10,7 @@ export interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-  actions: React.ReactNode;
+  actions?: React.ReactNode;
   dismissible?: boolean;
   busy?: boolean;
 }
@@ -56,7 +56,7 @@ export function Modal({ open, onClose, title, children, actions, dismissible = t
         >
           <h2 id={titleId}>{title}</h2>
           {children}
-          <div className="actions">{actions}</div>
+          {actions && <div className="actions">{actions}</div>}
         </div>
       </div>
     </>,

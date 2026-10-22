@@ -6,7 +6,7 @@ from app.models import Incident, ActivityLog, Category
 from app.helpers import now_utc
 
 
-def generate_insights(db: Session) -> dict:
+def generate_insights(db: Session, department_id: str | None = None) -> dict:
     """Generate deterministic insights from data.
 
     Returns:
@@ -17,7 +17,11 @@ def generate_insights(db: Session) -> dict:
     two_weeks_ago = now - timedelta(days=14)
 
     # Get all incidents
-    all_incidents = db.query(Incident).all()
+    incident_query = db.query(Incident)
+    if department_id is not None:
+        incident_query = incident_query.filter(Incident.department_id == department_id)
+    all_incidents = incident_query.all()
+    incident_ids = {incident.id for incident in all_incidents}
     open_statuses = {"received", "triaged", "assigned", "in_progress"}
     open_incidents = [i for i in all_incidents if i.status in open_statuses]
 
@@ -46,6 +50,8 @@ def generate_insights(db: Session) -> dict:
         )
         .all()
     ):
+        if department_id is not None and activity.entity_id not in incident_ids:
+            continue
         at = activity.at
         if at.tzinfo is None:
             from datetime import timezone
@@ -128,6 +134,8 @@ def generate_insights(db: Session) -> dict:
         )
         .all()
     ):
+        if department_id is not None and activity.entity_id not in incident_ids:
+            continue
         created_this_week += 1
 
     for activity in (
@@ -138,6 +146,8 @@ def generate_insights(db: Session) -> dict:
         )
         .all()
     ):
+        if department_id is not None and activity.entity_id not in incident_ids:
+            continue
         if activity.status in ("resolved", "closed"):
             resolved_this_week += 1
 

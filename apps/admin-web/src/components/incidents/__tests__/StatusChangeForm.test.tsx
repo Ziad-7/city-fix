@@ -2,13 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '@/components/ui/Toast';
-import { StatusChangeForm } from '../StatusChangeForm';
+import { StatusChangeForm, type StatusChangeFormProps } from '../StatusChangeForm';
 import type { IncidentStatus } from '@/domain/types';
 
 const mockOnSubmit = vi.fn();
 const queryClient = new QueryClient();
 
-const renderComponent = (props: any = {}) => {
+const renderComponent = (props: Partial<StatusChangeFormProps> = {}) => {
   return render(
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
@@ -89,6 +89,20 @@ describe('StatusChangeForm', () => {
     await waitFor(() => {
       expect(mockOnSubmit).toHaveBeenCalled();
     });
+  });
+
+  it('preserves the note and reports failure when status submission rejects', async () => {
+    mockOnSubmit.mockRejectedValue(new Error('PATCH failed'));
+    renderComponent();
+
+    fireEvent.change(screen.getAllByRole('combobox')[0], { target: { value: 'triaged' } });
+    const textarea = screen.getByRole('textbox', { name: /رسالة للمواطنين/ });
+    fireEvent.change(textarea, { target: { value: 'Please keep this note' } });
+    fireEvent.click(screen.getByRole('button', { name: /حدّث الحالة وابلّغ المواطنين/i }));
+
+    await waitFor(() => expect(screen.getByText('PATCH failed')).toBeInTheDocument());
+    expect(textarea).toHaveValue('Please keep this note');
+    expect(screen.queryByText(/اتحدّثت الحالة/)).not.toBeInTheDocument();
   });
 
 

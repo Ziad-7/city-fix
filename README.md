@@ -12,8 +12,8 @@ Built in 7 days by a team of 5 for a hackathon.
 | --- | --- | --- |
 | `apps/mobile/` | Citizen app — Expo (React Native) + TypeScript, Arabic-first RTL | In progress (Stage 1) |
 | `apps/web/` | Citizen website (client portal) — Next.js, same design as the app | Planned |
-| `apps/admin-web/` | City Command Center — Next.js web dashboard | Planned |
-| `backend/` | FastAPI + Supabase API; planned CityBrain AI and OR-Tools optimizer | Auth slice started; database and remaining API planned |
+| `apps/admin-web/` | City Command Center — Next.js web dashboard | Integrated with the local demo API; deployment pending |
+| `backend/` | FastAPI API with a SQLite demo database; planned production PostgreSQL/PostGIS | Shared auth, admin operations and map integrated; persistent citizen writes and deployment pending |
 | `docs/` | Decisions, design, specs, progress log | Living |
 
 ## Team

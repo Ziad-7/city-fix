@@ -10,11 +10,13 @@ const WORK_ORDER_LABEL_AR: Record<WorkOrderStatus, string> = {
   done: 'اتحلّت',
 };
 
-export type StatusChipProps =
-  | { kind: 'incident'; status: IncidentStatus }
-  | { kind: 'workorder'; status: WorkOrderStatus }
-  | { kind: 'critical' }
-  | { kind: 'priority'; score: number; levelOnly?: boolean };
+export type StatusChipProps = {
+  kind?: 'incident' | 'workorder' | 'critical' | 'priority';
+  workorder?: boolean;
+  status?: IncidentStatus | WorkOrderStatus;
+  score?: number;
+  levelOnly?: boolean;
+};
 
 /**
  * Map status/priority to tone (CSS class suffix).
@@ -42,22 +44,25 @@ export function StatusChip(props: StatusChipProps) {
     tone = 'critical';
     label = 'خطر';
   } else if (props.kind === 'incident') {
+    if (!props.status) return null;
     const key = `incident-${props.status}`;
     const mapping = STATUS_CHIP[key];
     tone = mapping.tone;
     label = mapping.label;
-  } else if (props.kind === 'workorder') {
+  } else if (props.kind === 'workorder' || props.workorder) {
+    if (!props.status) return null;
     const key = `workorder-${props.status}`;
     const mapping = STATUS_CHIP[key];
     tone = mapping.tone;
     label = mapping.label;
   } else {
     // priority
-    const level = priorityLevel(props.score);
+    const score = props.score ?? 0;
+    const level = priorityLevel(score);
     if (props.levelOnly) {
       label = PRIORITY_LABEL_AR[level];
     } else {
-      const scoreStr = props.score.toString();
+      const scoreStr = score.toString();
       label = `${PRIORITY_LABEL_AR[level]} · ${scoreStr}`;
     }
 

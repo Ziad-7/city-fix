@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'next/navigation';
 import { getServiceRequests, patchServiceRequest } from '@/services/serviceRequests';
 import {
   PageHead,
@@ -21,15 +22,16 @@ import {
 } from '@/components/ui';
 import { Icon } from '@/components/Icon';
 import { useToast } from '@/components/ui/Toast';
-import { formatDayDM, formatSlot, formatLongDate } from '@/lib/format';
+import { formatDayDM, formatSlot, formatLongDate, formatRelative } from '@/lib/format';
 import type { AdminServiceRequest } from '@/domain/admin-types';
+import type { AdminIconName } from '@/components/admin-icon-shapes';
 
 const SERVICE_TYPE_LABELS: Record<string, string> = {
   bulky_waste: 'رفع مخلفات كبيرة',
   tree_maintenance: 'صيانة أشجار',
 };
 
-const SERVICE_TYPE_ICONS: Record<string, string> = {
+const SERVICE_TYPE_ICONS: Record<string, AdminIconName> = {
   bulky_waste: 'trash',
   tree_maintenance: 'tree',
 };
@@ -59,21 +61,20 @@ interface FilterState {
 }
 
 export default function ServiceRequestsPage() {
+  const searchParams = useSearchParams();
   const toast = useToast();
   const queryClient = useQueryClient();
 
   const [filters, setFilters] = useState<FilterState>({});
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(searchParams.get('open'));
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [scheduleDay, setScheduleDay] = useState('');
   const [scheduleSlot, setScheduleSlot] = useState('');
   const [scheduleNote, setScheduleNote] = useState('');
 
-  const now = useMemo(() => new Date(), []);
-
   const { data: requests = [], isLoading, error, refetch } = useQuery({
     queryKey: ['service-requests'],
-    queryFn: getServiceRequests,
+    queryFn: () => getServiceRequests(),
   });
 
   const patchMutation = useMutation({
@@ -96,7 +97,7 @@ export default function ServiceRequestsPage() {
     },
   });
 
-  const now = new Date();
+  const now = useMemo(() => new Date(), []);
 
   // Calculate KPIs
   const kpis = useMemo(() => {
@@ -174,7 +175,7 @@ export default function ServiceRequestsPage() {
       <div className="page">
         <PageHead
           title="طلبات الخدمات"
-          subtitle={`CityServe · رفع مخلفات كبيرة وصيانة أشجار بميعاد · ${formatLongDate(now)}`}
+          subtitle={`CityServe · رفع مخلفات كبيرة وصيانة أشجار بميعاد · ${formatLongDate(now.getTime())}`}
         />
 
         <div className="mini-kpis">
@@ -261,14 +262,15 @@ export default function ServiceRequestsPage() {
               />
             ) : (
               <DataTable
-                aria-label="طلبات الخدمات"
+                ariaLabel="طلبات الخدمات"
                 columns={[
                   {
+                    id: 'request',
                     header: 'الطلب',
-                    render: (row: AdminServiceRequest) => (
+                    cell: (row: AdminServiceRequest) => (
                       <div className="type">
                         <span className="ftc-icon-well">
-                          <Icon shape={SERVICE_TYPE_ICONS[row.serviceType]} size={18} />
+                        <Icon name={SERVICE_TYPE_ICONS[row.serviceType]} size={18} />
                         </span>
                         <div>
                           <span className="strong num">{row.id}</span>
@@ -280,8 +282,9 @@ export default function ServiceRequestsPage() {
                     ),
                   },
                   {
+                    id: 'location',
                     header: 'العنوان والجهة',
-                    render: (row: AdminServiceRequest) => (
+                    cell: (row: AdminServiceRequest) => (
                       <div>
                         {row.location.address}
                         <span className="mini" style={{ display: 'block' }}>
@@ -291,8 +294,9 @@ export default function ServiceRequestsPage() {
                     ),
                   },
                   {
+                    id: 'schedule',
                     header: 'اليوم والفترة',
-                    render: (row: AdminServiceRequest) => (
+                    cell: (row: AdminServiceRequest) => (
                       <div>
                         {formatDayDM(row.details.day, now.getTime())}
                         <span className="mini num" style={{ display: 'block' }}>
@@ -302,8 +306,9 @@ export default function ServiceRequestsPage() {
                     ),
                   },
                   {
+                    id: 'payment',
                     header: 'الدفع',
-                    render: (row: AdminServiceRequest) => (
+                    cell: (row: AdminServiceRequest) => (
                       <div>
                         {PAYMENT_LABELS[row.details.payment]}
                         {row.paid && row.details.payment !== 'cash' && ' · مدفوع'}
@@ -312,13 +317,15 @@ export default function ServiceRequestsPage() {
                     ),
                   },
                   {
+                    id: 'status',
                     header: 'الحالة',
-                    render: (row: AdminServiceRequest) => <StatusChip status={row.status} kind="incident" />,
+                    cell: (row: AdminServiceRequest) => <StatusChip status={row.status} kind="incident" />,
                   },
                 ]}
-                data={filteredRequests}
-                onRowClick={(row) => setSelectedId(row.id)}
-                selectedRowId={selectedId}
+                rows={filteredRequests}
+                getRowId={(row) => row.id}
+                onSelect={(row) => setSelectedId(row.id)}
+                selectedId={selectedId}
               />
             )}
           </Card>
@@ -342,7 +349,7 @@ export default function ServiceRequestsPage() {
                 <ul className="items">
                   {selected.details.items.map((item, idx) => (
                     <li key={idx}>
-                      <Icon shape="check" size={16} />
+                      <Icon name="check" size={16} />
                       {item}
                     </li>
                   ))}

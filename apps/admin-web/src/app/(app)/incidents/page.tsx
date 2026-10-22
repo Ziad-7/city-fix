@@ -415,7 +415,7 @@ export default function IncidentsPage() {
               </div>
 
               {/* Triage box */}
-              {selectedIncident.triage && selectedIncident.triage.options.length > 0 && (
+              {selectedIncident.triage?.options?.[0] && (
                 <div className="aibox">
                   <div className="lab">
                     <Icon name="sparkles" size={16} />

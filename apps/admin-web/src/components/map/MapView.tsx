@@ -4,7 +4,8 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvent, Circle } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { pinIcon, type MapPinModel } from './map-utils';
+import { pinIcon } from './map-icons';
+import type { MapPinModel } from './map-utils';
 
 export interface MapViewProps {
   pins: MapPinModel[];

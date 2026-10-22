@@ -46,7 +46,8 @@ interface FilterState {
 
 export default function MapPage() {
   const searchParams = useSearchParams();
-  const { district } = useSession();
+  const session = useSession();
+  const district = session?.district ?? 'القاهرة';
   const [mapRef, setMapRef] = useState<L.Map | null>(null);
   const [filters, setFilters] = useState<FilterState>({
     statuses: new Set(['received', 'assigned', 'progress', 'resolved', 'critical']),
@@ -248,7 +249,7 @@ export default function MapPage() {
               <section className="ftc-card sel" aria-labelledby="h-sel" style={{ border: '2px solid var(--ftc-gold)' }}>
                 <div className="head">
                   <span className="ftc-icon-well ftc-icon-well--danger">
-                    <Icon shape="alert-triangle" />
+                    <Icon name="alert-triangle" />
                   </span>
                   <div>
                     <h2 id="h-sel">{selected.title}</h2>

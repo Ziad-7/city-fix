@@ -222,10 +222,10 @@ describe('IncidentsPage', () => {
   });
 
   it('shows only open incidents with default status filter', async () => {
-    const mockOpenIncident = { ...mockIncidents[0], status: 'received' };
-    const mockResolvedIncident = { ...mockIncidents[0], id: 'inc-resolved', status: 'resolved' };
+    const mockOpenIncident = { ...mockIncidents[0], status: 'received' as const };
+    const mockResolvedIncident = { ...mockIncidents[0], id: 'inc-resolved', status: 'resolved' as const };
     const { getIncidents } = await import('@/services/incidents');
-    (getIncidents as any).mockResolvedValue([mockOpenIncident, mockResolvedIncident]);
+    vi.mocked(getIncidents).mockResolvedValue([mockOpenIncident, mockResolvedIncident]);
 
     const { default: IncidentsPage } = await import('../page');
     render(<IncidentsPage />, { wrapper: createWrapper() });
@@ -240,10 +240,10 @@ describe('IncidentsPage', () => {
   });
 
   it('shows all incidents when كل الحالات filter is selected', async () => {
-    const mockOpenIncident = { ...mockIncidents[0], status: 'received' };
-    const mockResolvedIncident = { ...mockIncidents[0], id: 'inc-resolved', status: 'resolved', title: 'بلاغ اتحلّ' };
+    const mockOpenIncident = { ...mockIncidents[0], status: 'received' as const };
+    const mockResolvedIncident = { ...mockIncidents[0], id: 'inc-resolved', status: 'resolved' as const, title: 'بلاغ اتحلّ' };
     const { getIncidents } = await import('@/services/incidents');
-    (getIncidents as any).mockResolvedValue([mockOpenIncident, mockResolvedIncident]);
+    vi.mocked(getIncidents).mockResolvedValue([mockOpenIncident, mockResolvedIncident]);
 
     const { default: IncidentsPage } = await import('../page');
     const user = userEvent.setup();

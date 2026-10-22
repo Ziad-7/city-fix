@@ -1,12 +1,12 @@
 # FixTheCity Backend
 
-FastAPI backend serving the citizen mobile app, citizen web, and admin Command Center.
+FastAPI backend for the citizen mobile app, citizen web, and admin Command Center. The assembled app currently supports local demo authentication, admin operations, and map pins. Citizen report/follow/booking persistence and production infrastructure remain unfinished; see [Remaining integration work](#remaining-integration-work).
 
 ## Stack
 
 - **Python 3.12** with `uv`
 - **FastAPI** + **Uvicorn** for the API
-- **SQLAlchemy 2.0** with SQLite (default) or PostgreSQL
+- **SQLAlchemy 2.0** with SQLite for the local demo; production PostgreSQL integration is pending
 - **Pydantic v2** for schemas with camelCase aliases
 - **PyJWT** for authentication
 - **pytest** for testing
@@ -21,7 +21,7 @@ FastAPI backend serving the citizen mobile app, citizen web, and admin Command C
 
 uv venv --python 3.12
 source .venv/bin/activate  # or .venv\Scripts\activate on Windows
-uv sync
+uv sync --extra dev
 ```
 
 ### 2. Run
@@ -62,9 +62,9 @@ Creates `./fixthecity.db`. Good for development.
 DATABASE_URL=sqlite:///./fixthecity.db
 ```
 
-### PostgreSQL
+### Planned PostgreSQL integration
 
-For production:
+`DATABASE_URL` accepts a SQLAlchemy URL, but a production PostgreSQL setup still needs its driver, migrations, constraints and deployment validation. Changing this URL alone does not complete that integration:
 
 ```bash
 DATABASE_URL=postgresql://user:password@localhost/fixthecity
@@ -141,7 +141,7 @@ This drops all tables, recreates them, and re-seeds with demo data.
 
 ## Key Design Decisions
 
-1. **SQLite by default**: Development-friendly, no extra setup. Postgres supported via `DATABASE_URL`.
+1. **SQLite demo database**: Development-friendly, no extra setup. Production PostgreSQL setup and migrations are still pending.
 2. **Float lat/lng**: Simpler than PostGIS for now. Haversine in Python for duplicate detection.
 3. **Activity log for timeline**: Every status change writes a row; timelines built from logs on read.
 4. **Camel-case aliases**: Pydantic models have `alias_generator=to_camel`, responses use `by_alias=True`.
@@ -159,6 +159,7 @@ This drops all tables, recreates them, and re-seeds with demo data.
 
 - Connect the citizen report, follow, and service-request routers to transactional database repositories in `app.main`.
 - Replace the local SQLite demo setup with agreed migrations and production PostgreSQL/PostGIS, plus real storage and OTP providers.
+- Replace demo readable-ID allocation with a transactional database sequence before concurrent or multi-worker deployment.
 - Add deployment configuration, production CORS/secrets, and connect the mobile, citizen web, and admin clients to a deployed API.
 - Build and register the CityBrain triage, transcription, photo-blur, and budget-optimization services.
 
@@ -170,12 +171,15 @@ Copy `.env.example` to `.env`:
 cp .env.example .env
 ```
 
+The example enables demo OTP and seed accounts and contains a placeholder signing key. These settings are for local development; production authentication, secrets and deployment still need integration.
+
 Edit as needed:
 
 - `DATABASE_URL` – Database connection string
 - `JWT_SECRET` – Change in production
-- `OTP_MODE` – `demo` or `real`
+- `OTP_MODE` – `demo` enables the fixed local code; other values disable OTP because real delivery is not implemented
 - `SEED_ON_START` – `true` to auto-seed empty DB
+- `DEMO_RESET_ENABLED` – defaults to `false`; enable only for a local demo to allow the admin reset endpoint to delete and reseed all records
 
 ## Troubleshooting
 

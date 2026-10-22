@@ -4,6 +4,7 @@ export interface PageHeadProps {
   title: string;
   subtitle?: React.ReactNode;
   actions?: React.ReactNode;
+  action?: React.ReactNode;
   search?: {
     value: string;
     onChange: (v: string) => void;
@@ -13,14 +14,14 @@ export interface PageHeadProps {
   };
 }
 
-export function PageHead({ title, subtitle, actions, search }: PageHeadProps) {
+export function PageHead({ title, subtitle, actions, action, search }: PageHeadProps) {
   return (
     <header className="page-head">
       <div className="grow">
         <h1>{title}</h1>
         {subtitle && <p>{subtitle}</p>}
       </div>
-      {actions}
+      {actions ?? action}
       {search && (
         <label className="search">
           <Icon name="search" size={18} />

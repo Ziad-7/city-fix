@@ -12,14 +12,14 @@ import { useToast } from '@/components/ui/Toast';
 import { createWorkOrder } from '@/services/workOrders';
 import { formatDayDM, formatDueLabel, hoursLateOf } from '@/lib/format';
 import { WORK_ORDER_LABEL_AR } from '@/lib/text';
-import type { AdminIncident, Department, WorkOrder } from '@/domain/admin-types';
+import type { AdminIncident, Department, Team, WorkOrder } from '@/domain/admin-types';
 import { getCategory } from '@/domain/categories';
 
 interface WorkOrderCardProps {
   incident: AdminIncident;
   workOrder?: WorkOrder;
   departments: Department[];
-  teams: any[];
+  teams: Team[];
   canAct: boolean;
   disabledReason?: string;
 }
@@ -40,11 +40,12 @@ export default function WorkOrderCard({
   const [selectedTeam, setSelectedTeam] = useState('');
 
   const category = getCategory(incident.categoryId);
-  const dueDate = new Date(incident.dueAt).toISOString().split('T')[0];
 
   // Get teams for selected department
+  const selectedDept = departments.find((d) => d.id === selectedDepartment || d.nameAr === selectedDepartment);
+  const selectedDepartmentId = selectedDept?.id ?? selectedDepartment;
   const departmentTeams = allTeams
-    .filter((t) => t.department === selectedDepartment)
+    .filter((t) => t.department === selectedDepartmentId || t.department === selectedDept?.nameAr)
     .map((t) => ({
       name: t.name,
       size: t.size,
@@ -60,7 +61,7 @@ export default function WorkOrderCard({
   const handleCreateWorkOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const selectedDept = departments.find((d) => d.id === selectedDepartment);
+    const selectedDept = departments.find((d) => d.id === selectedDepartmentId || d.nameAr === selectedDepartment);
     if (!selectedDept) return;
 
     if (selectedDept.external) {
@@ -69,7 +70,7 @@ export default function WorkOrderCard({
         setFormBusy(true);
         const result = await createWorkOrder({
           incidentId: incident.id,
-          department: selectedDepartment,
+          department: selectedDepartmentId,
           dueAt: incident.dueAt,
         });
 
@@ -79,7 +80,7 @@ export default function WorkOrderCard({
 
         toast.success(`اتعمل أمر الشغل ${result.id}.`);
       } catch (err) {
-        const errorMsg = (err as any)?.response?.data?.detail || 'حصلت مشكلة. جرّب تاني.';
+        const errorMsg = (err instanceof Error ? err.message : null) || 'حصلت مشكلة. جرّب تاني.';
         if (errorMsg.includes('بالفعل')) {
           toast.error(errorMsg);
           await queryClient.invalidateQueries({ queryKey: ['incident', incident.id] });
@@ -100,7 +101,7 @@ export default function WorkOrderCard({
         setFormBusy(true);
         const result = await createWorkOrder({
           incidentId: incident.id,
-          department: selectedDepartment,
+          department: selectedDepartmentId,
           team: selectedTeam,
           dueAt: incident.dueAt,
         });
@@ -111,7 +112,7 @@ export default function WorkOrderCard({
 
         toast.success(`اتعمل أمر الشغل ${result.id}.`);
       } catch (err) {
-        const errorMsg = (err as any)?.response?.data?.detail || 'حصلت مشكلة. جرّب تاني.';
+        const errorMsg = (err instanceof Error ? err.message : null) || 'حصلت مشكلة. جرّب تاني.';
         if (errorMsg.includes('بالفعل')) {
           toast.error(errorMsg);
           await queryClient.invalidateQueries({ queryKey: ['incident', incident.id] });
@@ -123,8 +124,6 @@ export default function WorkOrderCard({
       }
     }
   };
-
-  const selectedDept = departments.find((d) => d.id === selectedDepartment);
 
   if (workOrder) {
     const woHours = hoursLateOf(workOrder.dueAt);
@@ -161,7 +160,7 @@ export default function WorkOrderCard({
         <SelectField
           id="dep"
           label="الجهة"
-          value={selectedDepartment}
+          value={selectedDepartmentId}
           onChange={setSelectedDepartment}
           options={departments.map((d) => ({
             value: d.id,

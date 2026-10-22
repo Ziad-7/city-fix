@@ -1,25 +1,19 @@
 'use client';
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { useParams } from 'next/navigation';
 import { useSession } from '@/lib/session';
-import { getIncident, getSimilarIncidents, getWorkOrder } from '@/services/incidents';
+import { getIncident, getSimilarIncidents } from '@/services/incidents';
 import { getWorkOrder as getWorkOrderService } from '@/services/workOrders';
 import { getDepartments, getTeams } from '@/services/departments';
-import { getCategory } from '@/domain/categories';
-import { ErrorState, SkeletonTable, Skeleton } from '@/components/ui/States';
-import { Card, CardHead } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { ErrorState, Skeleton } from '@/components/ui/States';
+import { Card } from '@/components/ui/Card';
 import IncidentDetailContent from '@/components/incident-detail/IncidentDetailContent';
+import { ApiError } from '@/lib/http';
 
-export const generateStaticParams = async () => {
-  return [];
-};
-
-export default function IncidentDetailPage({ params }: { params: { id: string } }) {
-  const router = useRouter();
+export default function IncidentDetailPage() {
+  const params = useParams<{ id: string }>();
   const session = useSession();
-  const queryClient = useQueryClient();
 
   const { data: incident, isLoading, error, refetch } = useQuery({
     queryKey: ['incident', params.id],
@@ -56,8 +50,9 @@ export default function IncidentDetailPage({ params }: { params: { id: string } 
   });
 
   if (error) {
-    const errorObj = error as any;
-    const status = errorObj?.response?.status;
+    const status = error instanceof ApiError
+      ? error.status
+      : (error as Error & { response?: { status?: number } })?.response?.status;
     if (status === 404) {
       return (
         <main className="ftc-admin-main">
@@ -125,7 +120,9 @@ export default function IncidentDetailPage({ params }: { params: { id: string } 
     );
   }
 
-  const canAct = session?.role === 'admin' || incident.department === session?.department;
+  const canAct = session?.role === 'admin' || departments.some(
+    (department) => department.id === session?.department && department.nameAr === incident.department,
+  );
 
   return (
     <main className="ftc-admin-main">
@@ -133,11 +130,11 @@ export default function IncidentDetailPage({ params }: { params: { id: string } 
         <IncidentDetailContent
           incident={incident}
           similarIncidents={similarIncidents}
-          workOrder={workOrder}
+          workOrder={workOrder ?? undefined}
           departments={departments}
           teams={teams}
           canAct={canAct}
-          session={session}
+          session={session ?? undefined}
         />
       </div>
     </main>

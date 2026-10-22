@@ -33,28 +33,10 @@ export default function BudgetPage() {
     return () => clearTimeout(timer);
   }, [budgetValue]);
 
-  if (!session || session.role !== 'admin') {
-    return (
-      <main className="ftc-admin-main">
-        <div className="page">
-          <PageHead title="الميزانية" />
-          <ErrorState
-            variant="forbidden"
-            message="ميزانية الإصلاحات متاحة للمشرفين بس."
-            action={
-              <Button variant="secondary" size="sm" href="/incidents">
-                ارجع للبلاغات
-              </Button>
-            }
-          />
-        </div>
-      </main>
-    );
-  }
-
   const { data: budgetPlan, isLoading, error, refetch } = useQuery({
     queryKey: ['budget', debouncedBudget],
     queryFn: () => optimizeBudget(debouncedBudget),
+    enabled: session?.role === 'admin',
   });
 
   const commitMutation = useMutation({
@@ -65,10 +47,23 @@ export default function BudgetPage() {
       toast.success(`اتعمل ${count} أمر شغل من الخطة.`);
       router.push('/work-orders');
     },
-    onError: (error: any) => {
-      toast.error(error.message || 'حصلت مشكلة. جرّب تاني.');
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'حصلت مشكلة. جرّب تاني.');
     },
   });
+
+  if (!session || session.role !== 'admin') {
+    return (
+      <main className="ftc-admin-main">
+        <div className="page">
+          <PageHead title="الميزانية" />
+          <ErrorState variant="forbidden" message="ميزانية الإصلاحات متاحة للمشرفين بس." action={
+            <Button variant="secondary" size="sm" href="/incidents">ارجع للبلاغات</Button>
+          } />
+        </div>
+      </main>
+    );
+  }
 
   const selectedCount = budgetPlan?.selected.length ?? 0;
   const isLoaded = !isLoading && budgetPlan;

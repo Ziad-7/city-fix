@@ -23,6 +23,8 @@ def require_staff(
 ) -> dict[str, str]:
     if claims["role"] not in ("staff", "admin"):
         raise HTTPException(403, "مش مسموح")
+    if claims["role"] == "staff" and not claims["department"]:
+        raise HTTPException(403, "مش مسموح")
     return claims
 
 

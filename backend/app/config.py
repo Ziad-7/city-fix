@@ -14,11 +14,14 @@ class Settings(BaseSettings):
     # JWT (must be >= 32 bytes for HS256)
     jwt_secret: str = "dev-secret-change-in-production-now!!"
 
-    # OTP mode: "demo" uses fixed code "123456", "real" sends via SMS/WhatsApp
+    # OTP_MODE=demo uses fixed code "123456". Real SMS/WhatsApp delivery is not implemented.
     otp_mode: str = "demo"
 
     # Seed the database on startup if it's empty
     seed_on_start: bool = True
+
+    # Destructive demo reset endpoint is disabled unless explicitly enabled.
+    demo_reset_enabled: bool = False
 
     # CORS origins (comma-separated)
     cors_origins: str = "http://localhost:3000,http://localhost:3001"

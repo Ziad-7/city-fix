@@ -2,6 +2,35 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-22 — Backend and admin integration review
+
+**Branch:** `feat/api-auth`, incorporating `feat/admin-dashboard`. This combines the two owners' existing work and repairs the integration after an independent code review.
+
+**Scope**
+- Retain the shared JWT boundary with persisted user roles and departments; connect staff login, admin operations and database-backed map pins.
+- Repair SQLite timestamp handling, service-request status validation, persisted scheduling and AI-confirmation edits, and readable-ID digit boundaries.
+- Enforce department access on triage and work-order creation; deny unscoped staff access and scope insights to the staff department.
+- Require explicit local configuration before the destructive demo-reset endpoint is available.
+- Repair admin response-shape assumptions, department identity handling, duplicate merge direction, table sorting, and asynchronous status errors.
+- Reconcile admin component callers with their typed interfaces and run the admin build, typecheck, lint and regression tests.
+
+**How to test**
+- `backend/`: install `requirements-dev.txt`; run `python -m pytest -q`, `python -m ruff check .`, `python -m ruff format --check .` and the scoped mypy command in `backend-ci.yml`.
+- `apps/admin-web/`: run `npm ci`, `npm run typecheck`, `npm run lint`, `npm test`, and `npm run build`.
+- Repository root: run `node scripts/check-doc-links.mjs` and `git diff --check`.
+- Against the local demo API, sign in as admin, open an incident with AI/duplicate suggestions, confirm triage, create a work order, and change its status with a note. Schedule a service request and reload to verify persistence. Roads staff should be denied changes to other departments.
+
+**Validation**
+- Backend: 132 tests pass on Python 3.14; Ruff lint/format and the configured auth-boundary mypy check pass. Six dependency/deprecation warnings remain.
+- Admin: 161 tests pass; typecheck and lint pass (25 unused-variable warnings remain). The default production build is unresolved and tracked in [issue 33](https://github.com/Ziad-7/fix-city/issues/33); no alternate-bundler or font workaround is retained. A diagnostic build is not a passing check for the final PR tree.
+- Documentation links and Git whitespace checks pass. Independent agent review verified the confirmed fixes. Remote CI results must be checked on the pushed commit.
+
+**Known limitations**
+- `app.main` is a local SQLite demo assembly. Persistent citizen report/follow/booking repositories, private media storage, real OTP, production migrations/PostGIS and deployment are still pending.
+- Readable IDs still need transactional sequences before concurrent deployment. Demo credentials, fixed OTP and example secrets must not be used as production authentication.
+- Whole-backend ORM typing is incomplete; the passing mypy check covers the configured authentication/integration boundary.
+- Independent agent review supplements the team's review; teammate acceptance and remote CI remain separate checks.
+
 ## 2026-10-22 — Citizen API route slice
 
 **Branch:** `feat/api-auth` (extends the documented backend split/auth work).

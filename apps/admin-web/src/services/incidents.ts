@@ -1,5 +1,40 @@
 import { http } from '@/lib/http';
-import type { AdminIncident } from '@/domain/admin-types';
+import type { AdminIncident, SimilarIncidentMatch } from '@/domain/admin-types';
+import type { CategoryId, Severity, TriageOption } from '@/domain/types';
+
+interface AdminIncidentResponse extends Omit<AdminIncident, 'triage'> {
+  triage?: {
+    categoryId?: CategoryId;
+    severity: Severity;
+    confidence?: number;
+    confidences?: Partial<Record<CategoryId, number>>;
+    options?: TriageOption[];
+    source?: 'model' | 'fallback';
+    confirmed?: boolean;
+  };
+}
+
+export function normalizeAdminIncident(incident: AdminIncidentResponse): AdminIncident {
+  const triage = incident.triage;
+  if (!triage) return { ...incident, triage: undefined };
+
+  const options = triage.options ?? Object.entries(triage.confidences ?? {})
+    .map(([categoryId, confidence]) => ({ categoryId: categoryId as CategoryId, confidence: confidence ?? 0 }))
+    .sort((a, b) => b.confidence - a.confidence)
+    .slice(0, 3);
+  if (triage.categoryId && !options.some((option) => option.categoryId === triage.categoryId)) {
+    options.unshift({ categoryId: triage.categoryId, confidence: triage.confidence ?? 0 });
+  }
+  return {
+    ...incident,
+    triage: {
+      ...triage,
+      options,
+      source: triage.source ?? 'model',
+      confirmed: triage.confirmed ?? false,
+    },
+  };
+}
 
 export async function getIncidents(params?: {
   status?: string;
@@ -18,14 +53,14 @@ export async function getIncidents(params?: {
   if (params?.q) searchParams.append('q', params.q);
 
   const qs = searchParams.toString();
-  const result = await http<AdminIncident[]>('GET', `/admin/incidents${qs ? '?' + qs : ''}`);
-  return result || [];
+  const result = await http<AdminIncidentResponse[]>('GET', `/admin/incidents${qs ? '?' + qs : ''}`);
+  return (result ?? []).map(normalizeAdminIncident);
 }
 
 export async function getIncident(id: string): Promise<AdminIncident> {
-  const result = await http<AdminIncident>('GET', `/admin/incidents/${id}`);
+  const result = await http<AdminIncidentResponse>('GET', `/admin/incidents/${id}`);
   if (!result) throw new Error('No incident returned');
-  return result;
+  return normalizeAdminIncident(result);
 }
 
 export async function patchIncident(
@@ -38,22 +73,22 @@ export async function patchIncident(
     note?: string;
   },
 ): Promise<AdminIncident> {
-  const result = await http<AdminIncident>('PATCH', `/admin/incidents/${id}`, data);
+  const result = await http<AdminIncidentResponse>('PATCH', `/admin/incidents/${id}`, data);
   if (!result) throw new Error('No incident returned');
-  return result;
+  return normalizeAdminIncident(result);
 }
 
 export async function confirmTriage(
   id: string,
   data: { categoryId?: string; severity?: string },
 ): Promise<AdminIncident> {
-  const result = await http<AdminIncident>('POST', `/admin/incidents/${id}/triage/confirm`, data);
+  const result = await http<AdminIncidentResponse>('POST', `/admin/incidents/${id}/triage/confirm`, data);
   if (!result) throw new Error('No incident returned');
-  return result;
+  return normalizeAdminIncident(result);
 }
 
-export async function getSimilarIncidents(id: string): Promise<AdminIncident[]> {
-  const result = await http<AdminIncident[]>('GET', `/admin/incidents/${id}/similar`);
+export async function getSimilarIncidents(id: string): Promise<SimilarIncidentMatch[]> {
+  const result = await http<SimilarIncidentMatch[]>('GET', `/admin/incidents/${id}/similar`);
   return result || [];
 }
 
@@ -61,7 +96,7 @@ export async function mergeIncidents(
   sourceId: string,
   intoIncidentId: string,
 ): Promise<AdminIncident> {
-  const result = await http<AdminIncident>('POST', `/admin/incidents/${sourceId}/merge`, { intoIncidentId });
+  const result = await http<AdminIncidentResponse>('POST', `/admin/incidents/${sourceId}/merge`, { intoIncidentId });
   if (!result) throw new Error('No incident returned');
-  return result;
+  return normalizeAdminIncident(result);
 }

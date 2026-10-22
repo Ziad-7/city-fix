@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
@@ -11,8 +11,7 @@ import { Notice, EmptyState, Skeleton } from '@/components/ui/States';
 import { PriorityBreakdown } from '@/components/ui/PriorityBreakdown';
 import { Timeline } from '@/components/ui/Timeline';
 import { StatusChangeForm } from '@/components/incidents/StatusChangeForm';
-import type { AdminIncident, WorkOrder, Department, Team, StaffSession } from '@/domain/admin-types';
-import type { DuplicateMatch } from '@/domain/types';
+import type { AdminIncident, WorkOrder, Department, Team, StaffSession, SimilarIncidentMatch } from '@/domain/admin-types';
 import { formatDateTime, formatWhen, formatEgp, formatNumber, formatCitizens, formatWorkDays, formatDayDM, formatDueLabel, hoursLateOf, shortAddress } from '@/lib/format';
 import { STATUS_LABEL_AR } from '@/domain/types';
 import { SEVERITY_AI_AR } from '@/lib/text';
@@ -29,7 +28,7 @@ import LocationCard from './LocationCard';
 
 interface IncidentDetailContentProps {
   incident: AdminIncident;
-  similarIncidents: AdminIncident[];
+  similarIncidents: SimilarIncidentMatch[];
   workOrder?: WorkOrder;
   departments: Department[];
   teams: Team[];
@@ -51,10 +50,9 @@ export default function IncidentDetailContent({
   const toast = useToast();
   const [statusFormBusy, setStatusFormBusy] = useState(false);
 
-  // Document title
-  if (typeof window !== 'undefined') {
+  useEffect(() => {
     document.title = `FixTheCity — مركز القيادة: ${incident.id}`;
-  }
+  }, [incident.id]);
 
   const category = getCategory(incident.categoryId);
   const isCritical = isCriticalIncident(incident);
@@ -89,16 +87,7 @@ export default function IncidentDetailContent({
   };
 
   const dismissed = getDismissedDuplicates();
-  const matchedDuplicate = similarIncidents
-    .map((inc) => ({
-      incidentId: inc.id,
-      title: inc.title,
-      categoryId: inc.categoryId,
-      distanceM: 0, // Would be calculated from location data
-      followers: inc.linkedReports.length,
-      status: inc.status,
-    }))
-    .find((m) => !dismissed.has(m.incidentId));
+  const matchedDuplicate = similarIncidents.find((match) => !dismissed.has(match.incidentId));
 
   // Status change options based on current status
   const getStatusOptions = () => {
@@ -151,30 +140,21 @@ export default function IncidentDetailContent({
       await queryClient.invalidateQueries({ queryKey: ['incidents'] });
       await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
 
-      toast.success('اتحدّثت الحالة. المواطنين هيشوفوا رسالتك في التتبع.');
-    } catch (err) {
-      const errorMsg = (err as any)?.response?.data?.detail || 'حصلت مشكلة. جرّب تاني.';
-      toast.error(errorMsg);
     } finally {
       setStatusFormBusy(false);
     }
   };
 
   const handleMergeIncidents = async (targetId: string) => {
-    try {
-      await mergeIncidents(incident.id, targetId);
+    await mergeIncidents(incident.id, targetId);
 
-      // Invalidate queries and redirect
-      await queryClient.invalidateQueries({ queryKey: ['incident'] });
-      await queryClient.invalidateQueries({ queryKey: ['incidents'] });
-      await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    // Invalidate queries and redirect
+    await queryClient.invalidateQueries({ queryKey: ['incident'] });
+    await queryClient.invalidateQueries({ queryKey: ['incidents'] });
+    await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
 
-      toast.success(`اتدمجت البلاغات في ${targetId}.`);
-      router.push(`/incidents/${targetId}`);
-    } catch (err) {
-      const errorMsg = (err as any)?.response?.data?.detail || 'حصلت مشكلة. جرّب تاني.';
-      toast.error(errorMsg);
-    }
+    toast.success(`اتدمجت البلاغات في ${targetId}.`);
+    router.push(`/incidents/${targetId}`);
   };
 
   const isClosed = incident.status === 'closed';
@@ -315,7 +295,7 @@ export default function IncidentDetailContent({
                 currentStatus={incident.status}
                 options={getStatusOptions()}
                 defaultStatus={getNextStatus()}
-                previewStatusFor={(v) => v as any}
+                previewStatusFor={(v) => v as import('@/domain/types').IncidentStatus}
                 citizensCount={incident.linkedReports.length}
                 disabledReason={!canAct ? 'ده بلاغ جهة تانية. تقدر تشوفه بس.' : undefined}
                 onSubmit={handleStatusChange}
