@@ -25,6 +25,8 @@ export interface LinkedReport {
   description: string;
   source: 'app' | 'web';
   photoCount: number;
+  /** Short-lived signed read URLs (detail endpoint only; ~15 min). Stub paths in the local demo. */
+  photoUrls?: string[];
   createdAt: string;
 }
 

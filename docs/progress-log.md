@@ -1,5 +1,12 @@
 # Progress log
 
+## 2026-10-23 — Command Center shows report photos (branch `fix/admin-report-photos`)
+
+- **Root cause (two bugs):** (1) the admin incident API only sent `photoCount` for linked reports and `PhotosCard` drew a grey placeholder icon, so no admin screen ever had an image URL; (2) `report_for_reader` signed media against the *reader's* id, and the private-storage adapter only signs `<owner_id>/...` paths, so an admin calling `GET /reports/{id}` on a report with photos got a 503.
+- **Fix:** `GET /admin/incidents/{id}` adds `photoUrls` (15-minute signed reads) to each linked report, after the existing department-scope check. Signing uses the report author's id, so the storage ownership check and the private bucket stay as they were. Paths that cannot be signed (old `photos/...` stub paths saved before storage was configured) are skipped and logged instead of failing the response. `PhotosCard` renders the images (all photos, up to 6), opens the full image in a new tab and falls back to the placeholder when a URL has expired.
+- Tests: `backend/tests/test_admin_photos.py` (real `SupabaseMediaStorage` against an `httpx.MockTransport` fake of Supabase Storage: admin detail, admin report read, legacy paths, other-department staff 403, local demo) and `PhotosCard.test.tsx`.
+- Note: 1 of the 5 production reports with photos has a legacy `photos/...` path (uploaded through the stub before the storage keys were set); that file was never stored, so it stays a placeholder.
+
 ## 2026-10-23 — Citizen website: features restored, voice back on the browser engine (branch `feat/web-restore-browser-voice`)
 
 - Restored the CityCycle screens and English for the website (PR #46) after the temporary revert in #47. The tree is identical to the PR #46 merge.

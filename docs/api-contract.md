@@ -214,7 +214,10 @@ Status of the staff/admin API used by `apps/admin-web`. Everything below is **im
 StaffSession = { userId, name, title, role: 'staff'|'admin', department?: string /* Arabic name, absent for admin */, district, token }
 // GET /auth/me returns the same without `token`.
 Department = { id, nameAr, external: boolean, externalHotline?: string }
-LinkedReport = { id, reporter: 'مواطن'|'بلاغ بدون اسم', description, source: 'app'|'web', photoCount, createdAt }
+LinkedReport = { id, reporter: 'مواطن'|'بلاغ بدون اسم', description, source: 'app'|'web', photoCount, photoUrls?: string[], createdAt }
+// photoUrls: only on GET /admin/incidents/{id} (not the list). Short-lived (15 min) signed read URLs of the
+// linked report's photos when private storage is configured, the stored paths in the local demo. Signed only
+// after the staff member passed the department-scope check; a path that cannot be signed is left out.
 
 AdminIncident = Incident & {
   linkedReports: LinkedReport[],
