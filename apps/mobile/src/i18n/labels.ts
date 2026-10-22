@@ -125,6 +125,8 @@ export const SERVICE_EN: Record<string, { title: string; subtitle: string }> = {
   bulky: { title: 'Bulky waste pickup', subtitle: 'Old furniture, appliances, building waste · within 48 hours' },
   tree: { title: 'Tree trimming or removal', subtitle: 'Parks Department · within 5 days' },
   'garbage-schedule': { title: 'Garbage collection times', subtitle: 'See when the truck comes to your street' },
+  'recycle-pickup': { title: 'Recycling pickup', subtitle: 'Plastic, paper, metal · free or paid' },
+  'recycle-guide': { title: 'Sorting guide', subtitle: 'How to sort each material, with pictures' },
 };
 
 export const SERVICE_TYPE_EN: Record<ServiceType, string> = {
@@ -132,7 +134,7 @@ export const SERVICE_TYPE_EN: Record<ServiceType, string> = {
   tree_maintenance: 'Tree trimming or removal',
 };
 
-export const SERVICE_GROUP_EN: Record<string, string> = { all: 'All', cleaning: 'Cleaning', gardens: 'Parks', lighting: 'Lighting' };
+export const SERVICE_GROUP_EN: Record<string, string> = { all: 'All', cleaning: 'Cleaning', gardens: 'Parks', lighting: 'Lighting', recycling: 'Recycling' };
 
 /** Bulky items and tree work types by their Arabic label. */
 export const ITEM_EN: Record<string, string> = {

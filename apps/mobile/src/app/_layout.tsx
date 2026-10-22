@@ -83,6 +83,7 @@ export default function RootLayout() {
           <Stack.Screen name="services/bulky-waste" />
           <Stack.Screen name="services/tree" />
           <Stack.Screen name="services/garbage-schedule" />
+          <Stack.Screen name="bins/[id]" />
           <Stack.Screen name="notifications" />
         </Stack.Protected>
       </Stack>
