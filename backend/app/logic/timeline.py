@@ -1,7 +1,8 @@
 """Timeline entry generation - ported from mobile app."""
-from datetime import datetime
-from app.helpers import iso_z
 
+from datetime import datetime
+
+from app.helpers import iso_z
 
 SEVERITY_LABEL_AR = {
     "low": "خطورة بسيطة",
@@ -11,9 +12,7 @@ SEVERITY_LABEL_AR = {
 }
 
 
-def incident_timeline_entry(
-    status: str, category_label: str, severity: str, department: str, at: datetime
-) -> dict:
+def incident_timeline_entry(status: str, category_label: str, severity: str, department: str, at: datetime) -> dict:
     """
     Generate a timeline entry for an incident status change.
     Returns a dict: {status, note, actor, at}

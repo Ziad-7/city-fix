@@ -1,154 +1,101 @@
 """Authentication endpoints."""
-from fastapi import APIRouter, HTTPException, Depends, Header
+
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
-from app.db import get_db
-from app.models import Profile, StaffAccount
-from app.schemas import OTPRequestInput, OTPVerifyInput, StaffLoginInput, StaffSession
-from app.config import settings
+
 from app.auth import (
     create_jwt_token,
-    decode_jwt_token,
-    verify_password,
-    normalize_phone,
-    is_valid_phone,
     current_user,
+    is_valid_phone,
+    normalize_phone,
+    verify_password,
 )
+from app.db import get_db
+from app.models import Department, Profile, StaffAccount
+from app.schemas import OTPRequestInput, OTPVerifyInput, StaffLoginInput, StaffSession
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+ADMIN_TITLE = "مشرفة فرز · حي مدينة نصر"
+DEFAULT_DISTRICT = "القاهرة · حي مدينة نصر أول"
 
-@router.post("/otp")
-async def request_otp(body: OTPRequestInput) -> dict:
-    """
-    Request an OTP code.
-    In demo mode, always succeeds and the code is '123456'.
-    In real mode, sends via SMS or WhatsApp.
-    """
+
+@router.post("/otp", status_code=204)
+async def request_otp(body: OTPRequestInput) -> Response:
+    """Request an OTP code. Demo mode (OTP_MODE=demo): nothing is sent, the code is always 123456."""
     if not is_valid_phone(body.phone):
         raise HTTPException(status_code=400, detail="رقم الموبايل مش صحيح")
-
-    # In demo mode, we just return 204
-    # In real mode, we would generate and send an OTP
-    return {}
+    return Response(status_code=204)
 
 
 @router.post("/verify")
 async def verify_otp(body: OTPVerifyInput, db: Session = Depends(get_db)) -> dict:
-    """
-    Verify OTP code and return session with JWT token.
-    Creates the citizen profile if it doesn't exist.
-    """
+    """Verify the OTP and return a citizen session; the first verify creates the profile."""
     if not is_valid_phone(body.phone):
         raise HTTPException(status_code=400, detail="رقم الموبايل مش صحيح")
+    phone = normalize_phone(body.phone)
 
-    normalized_phone = normalize_phone(body.phone)
+    # Real SMS delivery is a stretch goal: both modes accept the demo code for now.
+    if body.code != "123456":
+        raise HTTPException(status_code=401, detail="الكود غلط")
 
-    # In demo mode, accept code '123456'
-    if settings.otp_mode == "demo":
-        if body.code != "123456":
-            raise HTTPException(status_code=401, detail="الكود غلط")
-    else:
-        # In real mode, would verify against stored OTP
-        # For now, also accept '123456'
-        if body.code != "123456":
-            raise HTTPException(status_code=401, detail="الكود غلط")
-
-    # Get or create citizen profile
-    profile = db.query(Profile).filter_by(phone=normalized_phone).first()
+    profile = db.query(Profile).filter_by(phone=phone).first()
     if not profile:
-        profile = Profile(id=f"citizen-{normalized_phone[-8:]}", phone=normalized_phone, role="citizen")
+        profile = Profile(id=f"citizen-{phone[-8:]}", phone=phone, role="citizen")
         db.add(profile)
-        db.flush()
+        db.commit()
 
-    # Create token
     token = create_jwt_token(sub=profile.id, role="citizen")
-
-    db.commit()
-
-    return {
-        "userId": profile.id,
-        "phone": profile.phone,
-        "name": profile.name,
-        "token": token,
-    }
+    out = {"userId": profile.id, "phone": profile.phone, "token": token}
+    if profile.name:
+        out["name"] = profile.name
+    return out
 
 
-@router.post("/staff-login")
-async def staff_login(body: StaffLoginInput, db: Session = Depends(get_db)) -> StaffSession:
-    """Staff login with email and password."""
-    account = db.query(StaffAccount).filter_by(email=body.email).first()
-    if not account:
-        raise HTTPException(status_code=401, detail="البريد أو كلمة السر غلط")
-
-    if not verify_password(body.password, account.password_hash):
-        raise HTTPException(status_code=401, detail="البريد أو كلمة السر غلط")
-
-    profile = db.query(Profile).filter_by(id=account.profile_id).first()
-    if not profile:
-        raise HTTPException(status_code=401, detail="البريد أو كلمة السر غلط")
-
-    # Create token
-    token = create_jwt_token(
-        sub=profile.id,
-        role=profile.role,
-        department=account.department_id,
-    )
-
-    # Extract title from profile (e.g., "مشرفة فرز · حي مدينة نصر")
-    title = ""
+def staff_session(db: Session, profile: Profile, account: StaffAccount | None, token: str | None) -> StaffSession:
+    """StaffSession; ``department`` (Arabic name) is omitted for admins."""
+    dept_name = None
+    if profile.role == "staff" and account and account.department_id:
+        dept = db.get(Department, account.department_id)
+        dept_name = dept.name_ar if dept else account.department_id
     if profile.role == "admin":
-        title = "مشرفة فرز · حي مدينة نصر"
-    elif profile.role == "staff":
-        # Get department name
-        dept = db.query(Profile).filter_by(id=account.profile_id).first()
-        title = f"موظف · {account.department_id}" if account.department_id else "موظف"
-
-    # I7: For admin, omit department key (set to None which will be excluded)
-    dept_id = None if profile.role == "admin" else account.department_id
-
+        title = (profile.prefs or {}).get("title") or ADMIN_TITLE
+    else:
+        title = f"موظف · {dept_name}" if dept_name else "موظف"
     return StaffSession(
-        userId=profile.id,
+        user_id=profile.id,
         name=profile.name or "موظف",
         title=title,
         role=profile.role,
-        department=dept_id,
-        district=profile.district or "القاهرة · حي مدينة نصر أول",
+        department=dept_name,
+        district=profile.district or DEFAULT_DISTRICT,
         token=token,
     )
 
 
-@router.get("/me")
-async def get_me(
-    db: Session = Depends(get_db),
-    authorization: str = Header(None),
-) -> StaffSession:
-    """Get current user info without returning token."""
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="مش مسموح")
-
-    token = authorization[7:]
-    payload = decode_jwt_token(token)
-
-    profile = db.query(Profile).filter_by(id=payload["sub"]).first()
+@router.post(
+    "/staff-login", response_model=StaffSession, response_model_exclude_none=True, response_model_by_alias=True
+)
+async def staff_login(body: StaffLoginInput, db: Session = Depends(get_db)):
+    """Staff login with email and password."""
+    bad = HTTPException(status_code=401, detail="البريد أو كلمة السر غلط")
+    account = db.query(StaffAccount).filter_by(email=body.email).first()
+    if not account or not verify_password(body.password, account.password_hash):
+        raise bad
+    profile = db.get(Profile, account.profile_id)
     if not profile:
-        raise HTTPException(status_code=401, detail="مش مسموح")
+        raise bad
+    token = create_jwt_token(sub=profile.id, role=profile.role, department=account.department_id)
+    return staff_session(db, profile, account, token)
 
-    account = None
-    if profile.role in ("staff", "admin"):
-        account = db.query(StaffAccount).filter_by(profile_id=profile.id).first()
 
-    title = ""
-    if profile.role == "admin":
-        title = "مشرفة فرز · حي مدينة نصر"
-    elif profile.role == "staff" and account:
-        title = f"موظف · {account.department_id}" if account.department_id else "موظف"
-
-    return StaffSession(
-        userId=profile.id,
-        name=profile.name or "موظف",
-        title=title,
-        role=profile.role,
-        department=account.department_id if account else None,
-        district=profile.district or "القاهرة · حي مدينة نصر أول",
-        token=token,  # Include token for consistency
-    )
+@router.get("/me", response_model=StaffSession, response_model_exclude_none=True, response_model_by_alias=True)
+async def get_me(payload: dict = Depends(current_user), db: Session = Depends(get_db)):
+    """Current staff/admin session (without the token)."""
+    if payload.get("role") not in ("staff", "admin"):
+        raise HTTPException(status_code=403, detail="مش مسموح")
+    profile = db.get(Profile, payload["sub"])
+    if not profile:
+        raise HTTPException(status_code=401, detail="لازم تسجّل دخول")
+    account = db.query(StaffAccount).filter_by(profile_id=profile.id).first()
+    return staff_session(db, profile, account, None)

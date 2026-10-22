@@ -1,5 +1,5 @@
 """Tests for duplicate detection using haversine distance."""
-import pytest
+
 from app.logic.duplicates import haversine_m, is_within_radius
 
 

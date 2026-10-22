@@ -1,4 +1,5 @@
 """Priority calculation logic - ported from mobile app."""
+
 from typing import TypedDict
 
 

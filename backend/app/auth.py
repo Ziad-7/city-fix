@@ -1,17 +1,15 @@
 """Authentication logic."""
+
 import hashlib
 import hmac
-import jwt
 import os
 import re
-from datetime import datetime, timedelta, timezone
-from typing import Optional
-from fastapi import Depends, HTTPException, status, Header
-from sqlalchemy.orm import Session
+from datetime import UTC, datetime, timedelta
+
+import jwt
+from fastapi import Depends, Header, HTTPException
+
 from app.config import settings
-from app.db import get_db
-from app.models import Profile, StaffAccount
-from app.schemas import StaffSession
 
 
 def hash_password(password: str) -> str:
@@ -32,9 +30,7 @@ def verify_password(password: str, hash_value: str) -> bool:
         return False
 
 
-def create_jwt_token(
-    sub: str, role: str, department: Optional[str] = None, expires_delta: Optional[timedelta] = None
-) -> str:
+def create_jwt_token(sub: str, role: str, department: str | None = None, expires_delta: timedelta | None = None) -> str:
     """Create JWT token."""
     if expires_delta is None:
         expires_delta = timedelta(days=7)
@@ -43,7 +39,7 @@ def create_jwt_token(
         "sub": sub,
         "role": role,
         "department": department,
-        "exp": datetime.now(timezone.utc) + expires_delta,
+        "exp": datetime.now(UTC) + expires_delta,
     }
     encoded_jwt = jwt.encode(to_encode, settings.jwt_secret, algorithm="HS256")
     return encoded_jwt
@@ -70,10 +66,7 @@ def normalize_phone(phone: str) -> str:
     return "+20" + phone[1:]
 
 
-def current_user(
-    db: Session = Depends(get_db),
-    authorization: Optional[str] = Header(None),
-) -> dict:
+def current_user(authorization: str | None = Header(None)) -> dict:
     """Extract current user from Authorization: Bearer <token> header."""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="لازم تسجّل دخول")
@@ -95,3 +88,7 @@ def require_admin(payload: dict = Depends(current_user)) -> dict:
     if payload.get("role") != "admin":
         raise HTTPException(status_code=403, detail="مش مسموح")
     return payload
+
+
+def is_staff(payload: dict) -> bool:
+    return payload.get("role") in ("staff", "admin")

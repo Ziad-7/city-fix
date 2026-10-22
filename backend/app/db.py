@@ -1,6 +1,8 @@
 """Database connection and session management."""
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session, sessionmaker
+
 from app.config import settings
 from app.models import Base
 
@@ -29,14 +31,22 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
 
+def reset_session(db: Session) -> None:
+    """Delete every row on this session's database and re-seed it (demo reset)."""
+    from app.seed import seed_db
+
+    for table in reversed(Base.metadata.sorted_tables):
+        db.execute(table.delete())
+    db.commit()
+    seed_db(db)
+
+
 def reset_db():
-    """Drop and recreate all tables, then seed."""
+    """Drop and recreate all tables, then seed (CLI / scripts)."""
     Base.metadata.drop_all(bind=engine)
     init_db()
-    # Seed after reset
-    from app.seed import seed_db
     db = SessionLocal()
     try:
-        seed_db(db)
+        reset_session(db)
     finally:
         db.close()

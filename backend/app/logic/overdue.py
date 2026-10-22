@@ -1,26 +1,47 @@
-"""I8: Helpers for overdue calculations."""
-from datetime import timedelta, timezone
-from app.models import Incident, Category
+"""Due-date and overdue helpers (one place for the rule)."""
+
+from datetime import UTC, datetime, timedelta
+
 from app.helpers import now_utc
+from app.logic.status import OPEN_STATUSES
+from app.models import Category, Incident
+
+DUE_SOON_HOURS = 12
+DEFAULT_TARGET_DAYS = 5
 
 
-def due_at(incident: Incident, category: Category) -> 'datetime':
-    """I8: Calculate due date for an incident based on category target_days."""
-    created_at = incident.created_at
-    if created_at.tzinfo is None:
-        created_at = created_at.replace(tzinfo=timezone.utc)
-    target_days = category.target_days if category else 5
-    return created_at + timedelta(days=target_days)
+def aware(dt: datetime) -> datetime:
+    """Treat naive datetimes (SQLite) as UTC."""
+    return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
 
 
-def is_overdue(incident: Incident, category: Category, now: 'datetime' = None) -> bool:
-    """I8: Check if incident is overdue (past deadline or due within 12h). Open statuses only."""
-    if incident.status not in ("received", "triaged", "assigned", "in_progress"):
+def _status(incident: Incident) -> str:
+    return getattr(incident.status, "value", incident.status)
+
+
+def due_at(incident: Incident, category: Category | None) -> datetime:
+    """createdAt + category target days (calendar days)."""
+    days = category.target_days if category else DEFAULT_TARGET_DAYS
+    return aware(incident.created_at) + timedelta(days=days)
+
+
+def is_open(incident: Incident) -> bool:
+    return _status(incident) in OPEN_STATUSES
+
+
+def is_overdue(incident: Incident, category: Category | None, now: datetime | None = None) -> bool:
+    """Open and past its due date."""
+    return is_open(incident) and (now or now_utc()) > due_at(incident, category)
+
+
+def is_due_soon(incident: Incident, category: Category | None, now: datetime | None = None) -> bool:
+    """Open and overdue, or due within the next 12 hours."""
+    if not is_open(incident):
         return False
+    remaining = due_at(incident, category) - (now or now_utc())
+    return remaining <= timedelta(hours=DUE_SOON_HOURS)
 
-    if now is None:
-        now = now_utc()
 
-    due = due_at(incident, category)
-    hours_until_due = (due - now).total_seconds() / 3600
-    return hours_until_due <= 12
+def hours_late(incident: Incident, category: Category | None, now: datetime | None = None) -> int:
+    """round((now - dueAt) hours); negative means hours remaining."""
+    return round((((now or now_utc()) - due_at(incident, category)).total_seconds()) / 3600)

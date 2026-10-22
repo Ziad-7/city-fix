@@ -1,26 +1,28 @@
 """Database models using SQLAlchemy 2.0."""
-from datetime import datetime, timezone
+
+import enum
+from datetime import UTC, datetime
+
 from sqlalchemy import (
+    JSON,
     Boolean,
     Column,
+    DateTime,
+    Enum,
     Float,
     ForeignKey,
     Index,
     Integer,
-    JSON,
     String,
     Text,
-    DateTime,
-    Enum,
-    UniqueConstraint,
 )
-from sqlalchemy.orm import declarative_base, relationship
-import enum
+from sqlalchemy.orm import declarative_base
 
 
 def utc_now():
     """Get current time as timezone-aware UTC."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
+
 
 Base = declarative_base()
 

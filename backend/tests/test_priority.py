@@ -1,12 +1,10 @@
 """Tests for priority calculation logic."""
-import pytest
+
 from app.logic.priority import (
+    MAX,
     compute_priority,
     priority_level,
-    SEVERITY_POINTS,
-    MAX,
 )
-
 
 base = {
     "severity": "medium",
@@ -41,62 +39,61 @@ class TestComputePriority:
         """Score should increase for higher severity, sensitive place, more reporters, older age, underserved."""
         s0 = compute_priority(base)["score"]
         assert compute_priority({**base, "severity": "critical"})["score"] > s0
-        assert (
-            compute_priority({**base, "near_sensitive_place": True})["score"]
-            == s0 + MAX["sensitive"]
-        )
-        assert (
-            compute_priority({**base, "reporters": 7})["score"]
-            == s0 + (7 - 1) * 3
-        )
-        assert (
-            compute_priority({**base, "days_open": 5})["score"] == s0 + 10
-        )
-        assert (
-            compute_priority({**base, "area_underserved": True})["score"]
-            == s0 + MAX["equity"]
-        )
+        assert compute_priority({**base, "near_sensitive_place": True})["score"] == s0 + MAX["sensitive"]
+        assert compute_priority({**base, "reporters": 7})["score"] == s0 + (7 - 1) * 3
+        assert compute_priority({**base, "days_open": 5})["score"] == s0 + 10
+        assert compute_priority({**base, "area_underserved": True})["score"] == s0 + MAX["equity"]
 
     def test_caps_factors_and_total(self):
         """Each factor and total should be capped."""
-        maxed = compute_priority({
-            "severity": "critical",
-            "near_sensitive_place": True,
-            "reporters": 99,
-            "days_open": 99,
-            "target_days": 1,
-            "area_underserved": True,
-        })
+        maxed = compute_priority(
+            {
+                "severity": "critical",
+                "near_sensitive_place": True,
+                "reporters": 99,
+                "days_open": 99,
+                "target_days": 1,
+                "area_underserved": True,
+            }
+        )
         assert maxed["score"] <= 100
         assert all(f["points"] <= f["max"] for f in maxed["factors"])
 
     def test_age_points_specific_values(self):
         """Age factor should return specific points for given daysOpen/targetDays."""
         # daysOpen 1, targetDays 4 → age points 3
-        result1 = compute_priority({
-            "severity": "medium",
-            "near_sensitive_place": False,
-            "reporters": 1,
-            "days_open": 1,
-            "target_days": 4,
-            "area_underserved": False,
-        })
+        result1 = compute_priority(
+            {
+                "severity": "medium",
+                "near_sensitive_place": False,
+                "reporters": 1,
+                "days_open": 1,
+                "target_days": 4,
+                "area_underserved": False,
+            }
+        )
         age_factor1 = next((f for f in result1["factors"] if f["key"] == "age"), None)
         assert age_factor1 is not None, "Age factor not found"
-        assert age_factor1["points"] == 3, f"Expected 3 age points for days_open=1, target_days=4, got {age_factor1['points']}"
+        assert age_factor1["points"] == 3, (
+            f"Expected 3 age points for days_open=1, target_days=4, got {age_factor1['points']}"
+        )
 
         # daysOpen 9, targetDays 20 → age points 5
-        result2 = compute_priority({
-            "severity": "medium",
-            "near_sensitive_place": False,
-            "reporters": 1,
-            "days_open": 9,
-            "target_days": 20,
-            "area_underserved": False,
-        })
+        result2 = compute_priority(
+            {
+                "severity": "medium",
+                "near_sensitive_place": False,
+                "reporters": 1,
+                "days_open": 9,
+                "target_days": 20,
+                "area_underserved": False,
+            }
+        )
         age_factor2 = next((f for f in result2["factors"] if f["key"] == "age"), None)
         assert age_factor2 is not None, "Age factor not found"
-        assert age_factor2["points"] == 5, f"Expected 5 age points for days_open=9, target_days=20, got {age_factor2['points']}"
+        assert age_factor2["points"] == 5, (
+            f"Expected 5 age points for days_open=9, target_days=20, got {age_factor2['points']}"
+        )
 
     def test_priority_level_mapping(self):
         """Score should map correctly to priority level."""

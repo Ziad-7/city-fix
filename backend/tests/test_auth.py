@@ -1,21 +1,22 @@
 """Tests for authentication endpoints."""
-import pytest
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from app.models import Profile, StaffAccount
-from app.auth import hash_password
+
+from app.models import Profile
 
 
 class TestOTP:
     """Tests for OTP endpoints."""
 
     def test_otp_request_valid_phone(self, client: TestClient):
-        """Valid phone should return 200."""
+        """Valid phone should return 204 (contract)."""
         response = client.post(
             "/auth/otp",
             json={"phone": "01012345678", "channel": "sms"},
         )
-        assert response.status_code == 200
+        assert response.status_code == 204
+        assert response.content == b""
 
     def test_otp_request_invalid_phone(self, client: TestClient):
         """Invalid phone should return 400."""
@@ -68,14 +69,12 @@ class TestOTP:
             "/auth/verify",
             json={"phone": phone, "code": "123456"},
         )
-        token1 = response1.json()["token"]
 
         # Second verify
         response2 = client.post(
             "/auth/verify",
             json={"phone": phone, "code": "123456"},
         )
-        token2 = response2.json()["token"]
 
         # Both should return same user ID but different tokens
         assert response1.json()["userId"] == response2.json()["userId"]
@@ -155,6 +154,7 @@ class TestStaffLogin:
 
         # Use token in a request
         from app.auth import decode_jwt_token
+
         payload = decode_jwt_token(token)
         assert payload["role"] == "admin"
 
@@ -199,8 +199,9 @@ class TestGetMe:
 
     def test_citizen_token_denied_on_staff_dependency(self, client: TestClient):
         """Citizen token should fail require_staff dependency (test via direct dependency call)."""
-        from app.auth import require_staff, decode_jwt_token
         from fastapi import HTTPException
+
+        from app.auth import decode_jwt_token, require_staff
 
         # Get a citizen token via OTP
         response = client.post(

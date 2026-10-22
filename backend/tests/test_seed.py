@@ -1,12 +1,22 @@
 """Tests for seed data integrity and completeness."""
-import pytest
-from datetime import datetime, timezone, timedelta
+
+from datetime import UTC, timedelta
+
 from sqlalchemy.orm import Session
-from app.models import (
-    Incident, Report, ServiceRequest, Department, Profile, StaffAccount,
-    WorkOrder, Category, AISuggestion, ActivityLog
-)
+
 from app.helpers import now_utc
+from app.models import (
+    ActivityLog,
+    AISuggestion,
+    Category,
+    Department,
+    Incident,
+    Profile,
+    Report,
+    ServiceRequest,
+    StaffAccount,
+    WorkOrder,
+)
 
 
 class TestSeedIncidents:
@@ -67,13 +77,15 @@ class TestSeedIncidents:
                 created_at = incident.created_at
                 # Ensure timezone awareness for comparison
                 if created_at.tzinfo is None:
-                    created_at = created_at.replace(tzinfo=timezone.utc)
+                    created_at = created_at.replace(tzinfo=UTC)
 
                 deadline = created_at + timedelta(days=category.target_days)
                 if now > deadline:
                     overdue_incidents.append(incident)
 
-        assert len(overdue_incidents) >= 3, f"Expected >=3 overdue incidents, got {len(overdue_incidents)}: {[i.id for i in overdue_incidents]}"
+        assert len(overdue_incidents) >= 3, (
+            f"Expected >=3 overdue incidents, got {len(overdue_incidents)}: {[i.id for i in overdue_incidents]}"
+        )
 
     def test_critical_severity_incidents(self, db: Session):
         """At least 2 incidents should have critical severity."""
@@ -86,20 +98,26 @@ class TestSeedIncidents:
         seven_days_ago = now - timedelta(days=7)
 
         resolved_within_7d = []
-        for activity in db.query(ActivityLog).filter(
-            ActivityLog.entity_type == "incident",
-            ActivityLog.status == "resolved",
-        ).all():
+        for activity in (
+            db.query(ActivityLog)
+            .filter(
+                ActivityLog.entity_type == "incident",
+                ActivityLog.status == "resolved",
+            )
+            .all()
+        ):
             # Ensure timezone awareness
             at = activity.at
             if at.tzinfo is None:
-                at = at.replace(tzinfo=timezone.utc)
+                at = at.replace(tzinfo=UTC)
 
             if seven_days_ago <= at <= now:
                 resolved_within_7d.append(activity.entity_id)
 
         unique_resolved = set(resolved_within_7d)
-        assert len(unique_resolved) >= 4, f"Expected >=4 incidents resolved within 7 days, got {len(unique_resolved)}: {unique_resolved}"
+        assert len(unique_resolved) >= 4, (
+            f"Expected >=4 incidents resolved within 7 days, got {len(unique_resolved)}: {unique_resolved}"
+        )
 
     def test_resolved_7_to_14_days_ago(self, db: Session):
         """At least 2 incidents should be resolved 7-14 days ago (from activity_log timestamp)."""
@@ -108,20 +126,26 @@ class TestSeedIncidents:
         seven_days_ago = now - timedelta(days=7)
 
         resolved_7_to_14d_ago = []
-        for activity in db.query(ActivityLog).filter(
-            ActivityLog.entity_type == "incident",
-            ActivityLog.status == "resolved",
-        ).all():
+        for activity in (
+            db.query(ActivityLog)
+            .filter(
+                ActivityLog.entity_type == "incident",
+                ActivityLog.status == "resolved",
+            )
+            .all()
+        ):
             # Ensure timezone awareness
             at = activity.at
             if at.tzinfo is None:
-                at = at.replace(tzinfo=timezone.utc)
+                at = at.replace(tzinfo=UTC)
 
             if fourteen_days_ago <= at < seven_days_ago:
                 resolved_7_to_14d_ago.append(activity.entity_id)
 
         unique_resolved = set(resolved_7_to_14d_ago)
-        assert len(unique_resolved) >= 2, f"Expected >=2 incidents resolved 7-14 days ago, got {len(unique_resolved)}: {unique_resolved}"
+        assert len(unique_resolved) >= 2, (
+            f"Expected >=2 incidents resolved 7-14 days ago, got {len(unique_resolved)}: {unique_resolved}"
+        )
 
     def test_incidents_with_priority_scores(self, db: Session):
         """All incidents should have priority scores calculated."""
@@ -182,7 +206,17 @@ class TestSeedDepartments:
 
     def test_departments_seeded(self, db: Session):
         """All main departments should be seeded."""
-        expected_ids = ["roads", "sanitation", "lighting", "sewage", "water", "electricity", "parks", "utilities", "veterinary"]
+        expected_ids = [
+            "roads",
+            "sanitation",
+            "lighting",
+            "sewage",
+            "water",
+            "electricity",
+            "parks",
+            "utilities",
+            "veterinary",
+        ]
         for dept_id in expected_ids:
             dept = db.query(Department).filter_by(id=dept_id).first()
             assert dept is not None, f"Department {dept_id} not found"
@@ -229,20 +263,14 @@ class TestSeedStaffAccounts:
     def test_staff_login_works(self, db: Session, client):
         """Staff login should work for both demo accounts."""
         # Admin login
-        response = client.post("/auth/staff-login", json={
-            "email": "admin@fixthecity.demo",
-            "password": "FixCity2026!"
-        })
+        response = client.post("/auth/staff-login", json={"email": "admin@fixthecity.demo", "password": "FixCity2026!"})
         assert response.status_code == 200
         data = response.json()
         assert data["role"] == "admin"
         assert "token" in data
 
         # Roads staff login
-        response = client.post("/auth/staff-login", json={
-            "email": "roads@fixthecity.demo",
-            "password": "FixCity2026!"
-        })
+        response = client.post("/auth/staff-login", json={"email": "roads@fixthecity.demo", "password": "FixCity2026!"})
         assert response.status_code == 200
         data = response.json()
         assert data["role"] == "staff"
@@ -278,12 +306,14 @@ class TestSeedWorkOrders:
             # Ensure timezone awareness for comparison
             due_at = wo.due_at
             if due_at.tzinfo is None:
-                due_at = due_at.replace(tzinfo=timezone.utc)
+                due_at = due_at.replace(tzinfo=UTC)
 
             if due_at < now:
                 overdue_wos.append(wo)
 
-        assert len(overdue_wos) >= 2, f"Expected >=2 overdue work orders, got {len(overdue_wos)}: {[wo.id for wo in overdue_wos]}"
+        assert len(overdue_wos) >= 2, (
+            f"Expected >=2 overdue work orders, got {len(overdue_wos)}: {[wo.id for wo in overdue_wos]}"
+        )
 
 
 class TestSeedAISuggestions:
@@ -301,10 +331,7 @@ class TestSeedAISuggestions:
 
             has_triage = False
             for report in reports:
-                suggestions = db.query(AISuggestion).filter_by(
-                    report_id=report.id,
-                    kind="triage"
-                ).all()
+                suggestions = db.query(AISuggestion).filter_by(report_id=report.id, kind="triage").all()
 
                 if suggestions:
                     has_triage = True
@@ -313,7 +340,9 @@ class TestSeedAISuggestions:
                         assert payload.get("confirmed") is False, f"Suggestion for {incident.id} has confirmed != False"
                         confidences = payload.get("confidences", {})
                         total_confidence = sum(confidences.values()) if isinstance(confidences, dict) else 0
-                        assert total_confidence <= 1.0, f"Suggestion for {incident.id} has sum(confidences)={total_confidence} > 1"
+                        assert total_confidence <= 1.0, (
+                            f"Suggestion for {incident.id} has sum(confidences)={total_confidence} > 1"
+                        )
 
             assert has_triage, f"Incident {incident.id} (with {len(reports)} reports) has no triage suggestion"
 
@@ -325,16 +354,136 @@ class TestMobileIncidentsSync:
         """INC-501..510 should match mobile ROWS data (title, address, lat, lng, status, severity, followers, reporters, sensitivePlace, workOrder)."""
         # Hard-coded ROWS from apps/mobile/src/services/mock/seed.ts
         expected_rows = [
-            {"n": 501, "title": "حفرة في شارع عباس العقاد", "address": "شارع عباس العقاد، مدينة نصر", "lat": 30.0562, "lng": 31.3305, "status": "in_progress", "severity": "high", "followers": 7, "reporters": 7, "sensitivePlace": "مدرسة النصر الإعدادية", "workOrder": "WO-318"},
-            {"n": 502, "title": "بالوعة مفتوحة في شارع حسن المأمون", "address": "شارع حسن المأمون، مدينة نصر", "lat": 30.0575, "lng": 31.329, "status": "assigned", "severity": "critical", "followers": 12, "reporters": 12, "sensitivePlace": None, "workOrder": "WO-321"},
-            {"n": 503, "title": "عمود نور مطفي في شارع مكرم عبيد", "address": "شارع مكرم عبيد، مدينة نصر", "lat": 30.054, "lng": 31.3335, "status": "resolved", "severity": "low", "followers": 2, "reporters": 2, "sensitivePlace": None, "workOrder": None},
-            {"n": 504, "title": "زبالة متراكمة في شارع الطيران", "address": "شارع الطيران، مدينة نصر", "lat": 30.059, "lng": 31.335, "status": "received", "severity": "medium", "followers": 3, "reporters": 3, "sensitivePlace": None, "workOrder": None},
-            {"n": 505, "title": "طفح مجاري قدام عمارة ١٢", "address": "شارع الحجاز، مدينة نصر", "lat": 30.052, "lng": 31.327, "status": "assigned", "severity": "high", "followers": 5, "reporters": 4, "sensitivePlace": None, "workOrder": "WO-324"},
-            {"n": 506, "title": "كسر ماسورة مياه في شارع الثورة", "address": "شارع الثورة، مدينة نصر", "lat": 30.061, "lng": 31.331, "status": "in_progress", "severity": "high", "followers": 9, "reporters": 6, "sensitivePlace": None, "workOrder": "WO-326"},
-            {"n": 507, "title": "سلك كهربا مكشوف جنب الحديقة", "address": "شارع يوسف عباس، مدينة نصر", "lat": 30.055, "lng": 31.338, "status": "received", "severity": "critical", "followers": 1, "reporters": 1, "sensitivePlace": "حديقة الأطفال", "workOrder": None},
-            {"n": 508, "title": "شجرة مايلة على الرصيف", "address": "شارع مصطفى النحاس، مدينة نصر", "lat": 30.05, "lng": 31.333, "status": "resolved", "severity": "medium", "followers": 4, "reporters": 3, "sensitivePlace": None, "workOrder": None},
-            {"n": 509, "title": "رصيف مكسور قدام المستشفى", "address": "شارع أحمد فخري، مدينة نصر", "lat": 30.058, "lng": 31.326, "status": "assigned", "severity": "medium", "followers": 6, "reporters": 5, "sensitivePlace": "مستشفى المبرة", "workOrder": None},
-            {"n": 510, "title": "كلاب ضالة جنب المدرسة", "address": "شارع عمر بن الخطاب، مدينة نصر", "lat": 30.053, "lng": 31.33, "status": "triaged", "severity": "medium", "followers": 3, "reporters": 2, "sensitivePlace": "مدرسة الشهيد محمود", "workOrder": None},
+            {
+                "n": 501,
+                "title": "حفرة في شارع عباس العقاد",
+                "address": "شارع عباس العقاد، مدينة نصر",
+                "lat": 30.0562,
+                "lng": 31.3305,
+                "status": "in_progress",
+                "severity": "high",
+                "followers": 7,
+                "reporters": 7,
+                "sensitivePlace": "مدرسة النصر الإعدادية",
+                "workOrder": "WO-318",
+            },
+            {
+                "n": 502,
+                "title": "بالوعة مفتوحة في شارع حسن المأمون",
+                "address": "شارع حسن المأمون، مدينة نصر",
+                "lat": 30.0575,
+                "lng": 31.329,
+                "status": "assigned",
+                "severity": "critical",
+                "followers": 12,
+                "reporters": 12,
+                "sensitivePlace": None,
+                "workOrder": "WO-321",
+            },
+            {
+                "n": 503,
+                "title": "عمود نور مطفي في شارع مكرم عبيد",
+                "address": "شارع مكرم عبيد، مدينة نصر",
+                "lat": 30.054,
+                "lng": 31.3335,
+                "status": "resolved",
+                "severity": "low",
+                "followers": 2,
+                "reporters": 2,
+                "sensitivePlace": None,
+                "workOrder": None,
+            },
+            {
+                "n": 504,
+                "title": "زبالة متراكمة في شارع الطيران",
+                "address": "شارع الطيران، مدينة نصر",
+                "lat": 30.059,
+                "lng": 31.335,
+                "status": "received",
+                "severity": "medium",
+                "followers": 3,
+                "reporters": 3,
+                "sensitivePlace": None,
+                "workOrder": None,
+            },
+            {
+                "n": 505,
+                "title": "طفح مجاري قدام عمارة ١٢",
+                "address": "شارع الحجاز، مدينة نصر",
+                "lat": 30.052,
+                "lng": 31.327,
+                "status": "assigned",
+                "severity": "high",
+                "followers": 5,
+                "reporters": 4,
+                "sensitivePlace": None,
+                "workOrder": "WO-324",
+            },
+            {
+                "n": 506,
+                "title": "كسر ماسورة مياه في شارع الثورة",
+                "address": "شارع الثورة، مدينة نصر",
+                "lat": 30.061,
+                "lng": 31.331,
+                "status": "in_progress",
+                "severity": "high",
+                "followers": 9,
+                "reporters": 6,
+                "sensitivePlace": None,
+                "workOrder": "WO-326",
+            },
+            {
+                "n": 507,
+                "title": "سلك كهربا مكشوف جنب الحديقة",
+                "address": "شارع يوسف عباس، مدينة نصر",
+                "lat": 30.055,
+                "lng": 31.338,
+                "status": "received",
+                "severity": "critical",
+                "followers": 1,
+                "reporters": 1,
+                "sensitivePlace": "حديقة الأطفال",
+                "workOrder": None,
+            },
+            {
+                "n": 508,
+                "title": "شجرة مايلة على الرصيف",
+                "address": "شارع مصطفى النحاس، مدينة نصر",
+                "lat": 30.05,
+                "lng": 31.333,
+                "status": "resolved",
+                "severity": "medium",
+                "followers": 4,
+                "reporters": 3,
+                "sensitivePlace": None,
+                "workOrder": None,
+            },
+            {
+                "n": 509,
+                "title": "رصيف مكسور قدام المستشفى",
+                "address": "شارع أحمد فخري، مدينة نصر",
+                "lat": 30.058,
+                "lng": 31.326,
+                "status": "assigned",
+                "severity": "medium",
+                "followers": 6,
+                "reporters": 5,
+                "sensitivePlace": "مستشفى المبرة",
+                "workOrder": None,
+            },
+            {
+                "n": 510,
+                "title": "كلاب ضالة جنب المدرسة",
+                "address": "شارع عمر بن الخطاب، مدينة نصر",
+                "lat": 30.053,
+                "lng": 31.33,
+                "status": "triaged",
+                "severity": "medium",
+                "followers": 3,
+                "reporters": 2,
+                "sensitivePlace": "مدرسة الشهيد محمود",
+                "workOrder": None,
+            },
         ]
 
         for expected in expected_rows:
@@ -355,7 +504,9 @@ class TestMobileIncidentsSync:
             assert reporters_count == expected["reporters"], f"INC-{expected['n']} reporters count mismatch"
 
             # Check sensitive place
-            assert incident.sensitive_place == expected["sensitivePlace"], f"INC-{expected['n']} sensitivePlace mismatch"
+            assert incident.sensitive_place == expected["sensitivePlace"], (
+                f"INC-{expected['n']} sensitivePlace mismatch"
+            )
 
             # Check work order
             assert incident.work_order_id == expected["workOrder"], f"INC-{expected['n']} workOrder mismatch"
@@ -374,7 +525,7 @@ class TestSeedInvariants:
 
     def test_work_order_incident_links(self, db: Session):
         """Work orders with incident_id should have valid incidents."""
-        orders = db.query(WorkOrder).filter(WorkOrder.incident_id != None).all()
+        orders = db.query(WorkOrder).filter(WorkOrder.incident_id.isnot(None)).all()
         for wo in orders:
             incident = db.query(Incident).filter_by(id=wo.incident_id).first()
             assert incident is not None, f"Work order {wo.id} links to non-existent incident {wo.incident_id}"
