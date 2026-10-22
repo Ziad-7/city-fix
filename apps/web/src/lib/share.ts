@@ -1,5 +1,6 @@
 'use client';
 
+import { tr } from '@/i18n';
 import { useToast } from '@/ui/toast';
 
 /** Web Share when the browser has it (phones), else copy to the clipboard and say so. */
@@ -16,9 +17,9 @@ export async function shareText(text: string, url?: string): Promise<void> {
   }
   try {
     await navigator.clipboard.writeText(full);
-    useToast.getState().show('اتنسخ، ابعته لجروب العمارة.');
+    useToast.getState().show(tr('اتنسخ، ابعته لجروب العمارة.', 'Copied. Send it to your building’s group.'));
   } catch {
-    useToast.getState().show('مقدرناش ننسخ الرابط، انسخه من شريط العنوان.');
+    useToast.getState().show(tr('مقدرناش ننسخ الرابط، انسخه من شريط العنوان.', 'We couldn’t copy the link. Copy it from the address bar.'));
   }
 }
 
@@ -30,8 +31,8 @@ export const absoluteUrl = (path: string) => (typeof window === 'undefined' ? pa
 export async function copyLink(url: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(url);
-    useToast.getState().show('اتنسخ الرابط.');
+    useToast.getState().show(tr('اتنسخ الرابط.', 'Link copied.'));
   } catch {
-    useToast.getState().show('مقدرناش ننسخ الرابط، انسخه من شريط العنوان.');
+    useToast.getState().show(tr('مقدرناش ننسخ الرابط، انسخه من شريط العنوان.', 'We couldn’t copy the link. Copy it from the address bar.'));
   }
 }
