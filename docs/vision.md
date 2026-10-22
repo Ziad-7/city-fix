@@ -21,12 +21,12 @@ CityFix already knows where garbage piles up (FixFirst) and already books bulky-
 
 | Pillar | What it is | Status |
 | --- | --- | --- |
-| **FixFirst** | Report a problem, explainable priority score, budget planning. | Built |
-| **CityServe** | Municipal service requests: bulky-waste pickup, tree maintenance, garbage schedule. | Built |
-| **CityCycle** (سيتي سايكل — إعادة التدوير) | **New.** Recyclables pickup, collector mode for informal collectors, smart bins, collection hubs with scales, material prices, impact. | Planned |
-| **CityOps** | Work orders, department assignment, status updates. | Planned |
-| **CityPulse** | The live map: incidents, and (new) smart bins and dumping hotspots. | Built (incidents) |
-| **CityBrain** | AI triage, now also waste photo check, fill forecasting, route optimisation, hotspot detection. | Planned |
+| **FixFirst** | Report a problem, explainable priority score, budget planning. | Existing |
+| **CityServe** | Municipal service requests: bulky-waste pickup, tree maintenance, garbage schedule. | Existing |
+| **CityCycle** (سيتي سايكل — إعادة التدوير) | **New.** Recyclables pickup, collector mode for informal collectors, smart bins, collection hubs with scales, material prices, impact. | New |
+| **CityOps** | Work orders, department assignment, status updates. | Existing |
+| **CityPulse** | The live map: incidents, and (new) smart bins and dumping hotspots. | Existing (incidents); bins and hotspots new |
+| **CityBrain** | AI triage, now also waste photo check, fill forecasting, route optimisation, hotspot detection. | Existing; waste features new |
 
 ## How they connect
 

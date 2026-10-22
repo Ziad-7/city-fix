@@ -70,7 +70,7 @@ Body:
       "rssi": -85, "fw": "0.1.0" }
   ]
 }
-Response 202: { "accepted": [1042], "intervalMin": 30, "fullPct": 80, "heatC": 60 }
+Response 202: { "accepted": [1042], "intervalMin": 30, "fullPct": 80, "heatC": 60 }   // example values only; real ones are set by the district (to verify)
 ```
 
 - **`seq`** is a counter stored in flash; the server de-duplicates on `(binId, seq)`, so retrying is safe.
