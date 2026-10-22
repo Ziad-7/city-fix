@@ -77,7 +77,7 @@ export function ActivityFeed({ activity, loading }: ActivityFeedProps) {
           return (
             <li key={idx}>
               <span className={`ic ${modifier}`}>
-                <Icon name={icon as any} size={16} />
+                <Icon name={icon} size={16} />
               </span>
               <span>
                 {item.actor === 'الذكاء الاصطناعي' ? (

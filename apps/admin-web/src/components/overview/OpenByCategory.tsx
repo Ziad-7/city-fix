@@ -40,7 +40,7 @@ export function OpenByCategory({ data, open, loading }: OpenByCategoryProps) {
   }
 
   // Show top 10 rows, combine rest into "باقي الأنواع"
-  let rows: HBarRow[] = data.slice(0, 10).map((item) => {
+  const rows: HBarRow[] = data.slice(0, 10).map((item) => {
     const category = getCategory(item.categoryId);
     return {
       key: item.categoryId,

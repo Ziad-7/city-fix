@@ -6,11 +6,11 @@ import type { AdminIncident } from '@/domain/admin-types';
 
 interface MapPreviewProps {
   open: number;
-  incidents: AdminIncident[];
+  incidents?: AdminIncident[];
   loading: boolean;
 }
 
-export function MapPreview({ open, incidents, loading }: MapPreviewProps) {
+export function MapPreview({ open, loading }: MapPreviewProps) {
   if (loading) {
     return (
       <Card>
