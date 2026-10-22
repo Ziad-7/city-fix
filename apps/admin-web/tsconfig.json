@@ -19,6 +19,7 @@
       }
     ],
     "paths": {
+      "@react-native-async-storage/async-storage": ["./src/platform/async-storage.ts"],
       "@/*": ["./src/*"]
     }
   },

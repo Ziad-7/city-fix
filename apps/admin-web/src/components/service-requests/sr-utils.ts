@@ -26,10 +26,12 @@ export function isDone(r: Pick<AdminServiceRequest, 'status'>): boolean {
 }
 
 export function paymentLabel(r: AdminServiceRequest): string {
-  const base = PAYMENT_LABEL_AR[r.details.payment] ?? r.details.payment;
-  if (r.details.payment === 'cash') return base;
+  const method = r.details.payment;
+  if (!method) return 'مجاني'; // free district services (tree_maintenance) carry no payment
+  const base = PAYMENT_LABEL_AR[method] ?? method;
+  if (method === 'cash') return base;
   if (r.paid) return `${base} · مدفوع`;
-  return r.details.payment === 'wallet' ? base : `${base} · مستنية الدفع`;
+  return method === 'wallet' ? base : `${base} · مستنية الدفع`;
 }
 
 /** Chip counts are over the unfiltered list. */

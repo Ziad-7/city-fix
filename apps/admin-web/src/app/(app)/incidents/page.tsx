@@ -20,6 +20,7 @@ import {
   PriorityBreakdown,
   EmptyState,
   ErrorState,
+  Skeleton,
   SkeletonTable,
 } from '@/components/ui';
 import { Icon } from '@/components/Icon';
@@ -475,7 +476,11 @@ function IncidentsPageInner() {
                   <div className="wo-sum" aria-busy="true">
                     <span className="strong small">أمر الشغل</span>
                     <p className="sr-only">جاري التحميل…</p>
-                    <SkeletonTable rows={3} cols={2} />
+                    <div style={{ display: 'grid', gap: 8 }}>
+                      <Skeleton variant="line" width="60%" />
+                      <Skeleton variant="line" />
+                      <Skeleton variant="line" width="80%" />
+                    </div>
                   </div>
                 )
               ) : (

@@ -31,10 +31,13 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
-      command: `node e2e/start-web.mjs`,
+      // Dev server locally; on CI a production build (NEXT_PUBLIC_API_URL is inlined at build time).
+      command: process.env.CI
+        ? `npx next build && npx next start -p ${WEB_PORT}`
+        : `npx next dev -p ${WEB_PORT}`,
       url: `${WEB_URL}/login`,
       cwd: __dirname,
-      env: { NEXT_PUBLIC_API_URL: API_URL, E2E_WEB_PORT: String(WEB_PORT) },
+      env: { NEXT_PUBLIC_API_URL: API_URL },
       reuseExistingServer: !!process.env.CI,
       timeout: 180_000,
     },
