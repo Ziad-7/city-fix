@@ -103,12 +103,15 @@ async def staff_login(body: StaffLoginInput, db: Session = Depends(get_db)) -> S
         dept = db.query(Profile).filter_by(id=account.profile_id).first()
         title = f"موظف · {account.department_id}" if account.department_id else "موظف"
 
+    # I7: For admin, omit department key (set to None which will be excluded)
+    dept_id = None if profile.role == "admin" else account.department_id
+
     return StaffSession(
         userId=profile.id,
         name=profile.name or "موظف",
         title=title,
         role=profile.role,
-        department=account.department_id,
+        department=dept_id,
         district=profile.district or "القاهرة · حي مدينة نصر أول",
         token=token,
     )

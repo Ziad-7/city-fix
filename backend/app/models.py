@@ -118,6 +118,8 @@ class Incident(Base):
     area_underserved = Column(Boolean, default=False)
     work_order_id = Column(String(50), nullable=True)
     eta = Column(String(255), nullable=True)
+    last_reviewed_by = Column(String(255), nullable=True)  # I1: staff who confirmed triage
+    last_reviewed_at = Column(DateTime, nullable=True)  # I1: when triage was confirmed
     created_at = Column(DateTime, default=utc_now)
     updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
 
@@ -148,6 +150,7 @@ class Report(Base):
     anonymous = Column(Boolean, default=False)
     blur_faces = Column(Boolean, default=False)
     severity_suggested = Column(String(20), nullable=True)
+    source = Column(String(20), default="app")  # I1: "app" or "web"
     created_at = Column(DateTime, default=utc_now)
 
 

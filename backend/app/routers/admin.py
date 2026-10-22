@@ -276,10 +276,16 @@ async def get_similar_incidents(
     payload: dict = Depends(require_staff),
     db: Session = Depends(get_db)
 ):
-    """Get duplicate/similar incidents within 250m, same category, open only."""
+    """I4: Get duplicate/similar incidents within 250m, same category, open only. Staff scoped."""
     incident = db.query(Incident).filter_by(id=incident_id).first()
     if not incident:
         raise HTTPException(status_code=404, detail="مش موجود")
+
+    # I4: Check department access (staff only)
+    if payload.get("role") == "staff":
+        staff_dept = payload.get("department")
+        if incident.department_id != staff_dept:
+            raise HTTPException(status_code=403, detail="مش مسموح")
 
     duplicates = find_duplicates(db, incident)
     return duplicates
@@ -292,7 +298,7 @@ async def merge_incidents(
     payload: dict = Depends(require_staff),
     db: Session = Depends(get_db)
 ):
-    """Merge reports and followers from source into target incident."""
+    """I4: Merge reports and followers from source into target incident. Staff scoped."""
     source = db.query(Incident).filter_by(id=incident_id).first()
     if not source:
         raise HTTPException(status_code=404, detail="مش موجود")
@@ -301,6 +307,12 @@ async def merge_incidents(
     target = db.query(Incident).filter_by(id=target_id).first()
     if not target:
         raise HTTPException(status_code=404, detail="مش موجود")
+
+    # I4: Check department access (staff only)
+    if payload.get("role") == "staff":
+        staff_dept = payload.get("department")
+        if source.department_id != staff_dept or target.department_id != staff_dept:
+            raise HTTPException(status_code=403, detail="مش مسموح")
 
     # Move reports from source to target
     reports = db.query(Report).filter_by(incident_id=source.id).all()
@@ -336,7 +348,7 @@ async def confirm_triage(
     payload: dict = Depends(require_staff),
     db: Session = Depends(get_db)
 ):
-    """Confirm AI triage suggestion and move incident from received to triaged."""
+    """I2: Confirm AI triage suggestion. Only moves received→triaged, not other statuses."""
     incident = db.query(Incident).filter_by(id=incident_id).first()
     if not incident:
         raise HTTPException(status_code=404, detail="مش موجود")
@@ -354,6 +366,20 @@ async def confirm_triage(
     if data.severity:
         incident.severity = data.severity
 
+    # I2: Recompute priority after category/severity update
+    category = db.query(Category).filter_by(id=incident.category_id).first()
+    days_open = max(0, int((now_utc() - incident.created_at).days))
+    priority = compute_priority({
+        "severity": incident.severity,
+        "near_sensitive_place": bool(incident.sensitive_place),
+        "reporters": db.query(Report).filter_by(incident_id=incident.id).count(),
+        "days_open": days_open,
+        "target_days": category.target_days if category else 5,
+        "area_underserved": incident.area_underserved,
+    })
+    incident.priority_score = priority["score"]
+    incident.priority_factors = priority["factors"]
+
     # Mark triage as confirmed in AI suggestions
     first_report = db.query(Report).filter_by(incident_id=incident_id).first()
     if first_report:
@@ -364,9 +390,19 @@ async def confirm_triage(
         if ai_sug and ai_sug.payload:
             ai_sug.payload["confirmed"] = True
 
-    # Move from received to triaged
+    # I2: Record reviewer name + time
     actor = payload.get("sub", "staff")
-    change_incident_status(db, incident, "triaged", "تم تصنيف البلاغ", actor)
+    incident.last_reviewed_by = actor
+    incident.last_reviewed_at = now_utc()
+
+    # I2: Only move from received to triaged (other statuses unchanged)
+    if incident.status == "received":
+        # I2: Write timeline note with category label
+        category_label = category.label_ar if category else data.category_id or "تصنيف"
+        change_incident_status(db, incident, "triaged", f"اتأكّد التصنيف: {category_label}", actor)
+    else:
+        # Don't change status if not received, just record the update
+        pass
 
     db.commit()
     return admin_incident(db, incident)
@@ -484,19 +520,20 @@ async def create_work_order(
     db.add(wo)
     db.flush()
 
-    # Link to incident
+    # I5: Link to incident
     if incident_id:
         incident.work_order_id = wo_id
 
-        # Move incident to assigned
+        # I5: Only move incident to assigned if status is received/triaged
         actor = payload.get("sub", "staff")
-        dept = db.query(Department).filter_by(id=dept_id).first()
-        dept_name = dept.name_ar if dept else dept_id
-        change_incident_status(
-            db, incident, "assigned",
-            f"اتحوّل لـ{dept_name}",
-            actor
-        )
+        if incident.status in ("received", "triaged"):
+            dept = db.query(Department).filter_by(id=dept_id).first()
+            dept_name = dept.name_ar if dept else dept_id
+            change_incident_status(
+                db, incident, "assigned",
+                f"اتحوّل لـ{dept_name} ضمن خطة الميزانية",
+                actor
+            )
 
     # Record work order creation
     actor = payload.get("sub", "staff")
@@ -592,8 +629,19 @@ async def list_service_requests(
     payload: dict = Depends(require_staff),
     db: Session = Depends(get_db)
 ):
-    """List service requests, sorted by day ascending."""
+    """I4: List service requests, sorted by day ascending. Staff scoped by department."""
     srs = db.query(ServiceRequest).all()
+
+    # I4: Filter by staff department - map service type to department
+    if payload.get("role") == "staff":
+        staff_dept = payload.get("department")
+        if staff_dept:
+            service_type_to_dept = {
+                "bulky_waste": "sanitation",
+                "tree_maintenance": "parks",
+            }
+            allowed_types = [st for st, dept in service_type_to_dept.items() if dept == staff_dept]
+            srs = [s for s in srs if s.service_type in allowed_types]
 
     if status:
         srs = [s for s in srs if s.status == status]
@@ -620,14 +668,21 @@ async def patch_service_request(
     payload: dict = Depends(require_staff),
     db: Session = Depends(get_db)
 ):
-    """
-    Update service request.
-    Note is required when status changes (400).
-    A3: note-only PATCH appends timeline entry.
-    """
+    """I4: Update service request. Staff scoped by department."""
     sr = db.query(ServiceRequest).filter_by(id=sr_id).first()
     if not sr:
         raise HTTPException(status_code=404, detail="مش موجود")
+
+    # I4: Check department access (staff only)
+    if payload.get("role") == "staff":
+        staff_dept = payload.get("department")
+        service_type_to_dept = {
+            "bulky_waste": "sanitation",
+            "tree_maintenance": "parks",
+        }
+        sr_dept = service_type_to_dept.get(sr.service_type)
+        if sr_dept != staff_dept:
+            raise HTTPException(status_code=403, detail="مش مسموح")
 
     # Validate enum fields
     if data.status and data.status not in ("pending", "scheduled", "completed", "resolved", "closed"):

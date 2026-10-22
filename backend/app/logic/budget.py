@@ -1,4 +1,5 @@
 """Budget optimization using 0/1 knapsack DP."""
+from math import ceil
 from sqlalchemy.orm import Session
 from app.models import Incident, Category, WorkOrder
 from app.helpers import iso_z, now_utc
@@ -42,12 +43,12 @@ def optimize_budget(db: Session, budget_egp: int, incident_ids: list[str] = None
                 candidates.append(incident)
 
     # Prepare items: (cost_units, priority, followers, incident)
-    # cost_units = cost / 100 EGP
+    # I6: cost_units = ceil(cost / 100 EGP)
     items = []
     for incident in candidates:
         category = db.query(Category).filter_by(id=incident.category_id).first()
         cost = category.estimated_cost_egp if category else 1000
-        cost_units = max(1, cost // 100)  # Round up to nearest unit
+        cost_units = ceil(cost / 100)  # I6: Use ceil instead of floor
         items.append((cost_units, incident.priority_score, incident.followers_count, incident))
 
     # DP knapsack: dp[w] = max (priority_score, total_followers, items_indices)

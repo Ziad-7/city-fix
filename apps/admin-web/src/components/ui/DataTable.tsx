@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react';
 import { Icon } from '../Icon';
 
 export interface Column<T> {
@@ -42,17 +43,59 @@ export function DataTable<T>({
   minWidth,
   tableClassName,
 }: DataTableProps<T>) {
-  const displayRows = loading ? Array(skeletonRows).fill(null) : rows;
+  // Internal sort state for uncontrolled mode
+  const [internalSort, setInternalSort] = useState<{ id: string; dir: 'asc' | 'desc' } | undefined>();
+  const isControlled = onSortChange !== undefined || sort !== undefined;
+  const activeSort = isControlled ? sort : internalSort;
 
   const handleSort = (colId: string) => {
-    if (!sort || sort.id !== colId) {
-      onSortChange?.({ id: colId, dir: 'asc' });
-    } else if (sort.dir === 'asc') {
-      onSortChange?.({ id: colId, dir: 'desc' });
+    if (!activeSort || activeSort.id !== colId) {
+      const newSort = { id: colId, dir: 'asc' as const };
+      if (isControlled) {
+        onSortChange?.(newSort);
+      } else {
+        setInternalSort(newSort);
+      }
+    } else if (activeSort.dir === 'asc') {
+      const newSort = { id: colId, dir: 'desc' as const };
+      if (isControlled) {
+        onSortChange?.(newSort);
+      } else {
+        setInternalSort(newSort);
+      }
     } else {
-      onSortChange?.(undefined);
+      if (isControlled) {
+        onSortChange?.(undefined);
+      } else {
+        setInternalSort(undefined);
+      }
     }
   };
+
+  // Sort rows based on active sort
+  const sortedRows = useMemo(() => {
+    if (loading || !activeSort) {
+      return rows;
+    }
+
+    const col = columns.find((c) => c.id === activeSort.id);
+    if (!col || !col.sortValue) {
+      return rows;
+    }
+
+    const sorted = [...rows].sort((a, b) => {
+      const aVal = col.sortValue!(a);
+      const bVal = col.sortValue!(b);
+
+      if (aVal < bVal) return activeSort.dir === 'asc' ? -1 : 1;
+      if (aVal > bVal) return activeSort.dir === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  }, [rows, activeSort, columns, loading]);
+
+  const displayRows = loading ? Array(skeletonRows).fill(null) : sortedRows;
 
   const focusSibling = (e: React.KeyboardEvent<HTMLTableRowElement>, offset: number) => {
     const rows = Array.from((e.currentTarget.parentNode as HTMLTableSectionElement).querySelectorAll('tr'));
@@ -79,7 +122,7 @@ export function DataTable<T>({
                 scope="col"
                 {...(c.sortValue
                   ? {
-                      'aria-sort': sort && sort.id === c.id ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none',
+                      'aria-sort': activeSort && activeSort.id === c.id ? (activeSort.dir === 'asc' ? 'ascending' : 'descending') : 'none',
                     }
                   : {})}
               >

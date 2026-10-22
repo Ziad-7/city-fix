@@ -110,7 +110,7 @@ def admin_incident(db: Session, incident: Incident) -> dict:
     # Get timeline
     timeline = incident_timeline(db, incident.id, oldest_first=True)
 
-    # Get linked reports (never show citizen names/phones)
+    # I1: Get linked reports with source from report data
     linked_reports = []
     for report in db.query(Report).filter_by(incident_id=incident.id).all():
         reporter = db.query(Report).filter_by(id=report.id).first()
@@ -123,7 +123,7 @@ def admin_incident(db: Session, incident: Incident) -> dict:
             "id": report.id,
             "reporter": reporter_name,
             "description": report.description,
-            "source": "app",  # Simplified - assume app for now
+            "source": report.source if report.source else "app",  # I1: use report.source
             "photoCount": len(report.photo_paths) if report.photo_paths else 0,
             "createdAt": iso_z(report.created_at),
         })
@@ -156,10 +156,9 @@ def admin_incident(db: Session, incident: Incident) -> dict:
     if last_plan and incident.id in last_plan.selected:
         in_budget_plan = True
 
-    # Get last reviewed by/at (from activity log if staff confirmed triage)
-    last_reviewed_by = None
-    last_reviewed_at = None
-    # For now, we'll leave this as None - it would be set when triage is confirmed
+    # I1: Get last reviewed by/at set by triage confirm
+    last_reviewed_by = incident.last_reviewed_by
+    last_reviewed_at = iso_z(incident.last_reviewed_at) if incident.last_reviewed_at else None
 
     # Get triage suggestion if any
     triage = None
@@ -284,7 +283,28 @@ def work_order(db: Session, wo: WorkOrder) -> dict:
 
 
 def admin_service_request(db: Session, sr: ServiceRequest) -> dict:
-    """Serialize service request for admin view."""
+    """Serialize service request for admin view (I3)."""
+    # I3: Get department from service type mapping
+    service_type_to_dept = {
+        "bulky_waste": "sanitation",
+        "tree_maintenance": "parks",
+    }
+    dept_id = service_type_to_dept.get(sr.service_type)
+    dept = None
+    if dept_id:
+        dept = db.query(Department).filter_by(id=dept_id).first()
+
+    dept_name = dept.name_ar if dept else None
+
+    # I3: Get assignee and workOrderId from details
+    assignee = sr.details.get("assignee") if sr.details else None
+
+    # Find work order linked to this service request
+    work_order_id = None
+    wo = db.query(WorkOrder).filter_by(service_request_id=sr.id).first()
+    if wo:
+        work_order_id = wo.id
+
     result = {
         "id": sr.id,
         "citizenId": sr.citizen_id,
@@ -296,9 +316,9 @@ def admin_service_request(db: Session, sr: ServiceRequest) -> dict:
         "landmark": sr.landmark,
         "status": sr.status,
         "paid": sr.paid,
-        "department": None,  # Could be derived from service type
-        "assignee": None,
-        "workOrderId": None,
+        "department": dept_name,
+        "assignee": assignee,
+        "workOrderId": work_order_id,
         "createdAt": iso_z(sr.created_at),
     }
     # Remove None values

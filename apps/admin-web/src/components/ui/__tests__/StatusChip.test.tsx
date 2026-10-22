@@ -6,29 +6,47 @@ import { describe, it, expect } from 'vitest';
 
 describe('StatusChip', () => {
   it('renders incident statuses with correct label and class', () => {
+    const expectedLabels: Record<IncidentStatus, string> = {
+      received: 'وصل',
+      triaged: 'اتصنّف',
+      assigned: 'اتحوّل',
+      in_progress: 'جاري التنفيذ',
+      resolved: 'اتصلّح',
+      closed: 'اتقفل',
+    };
+
     const statuses: IncidentStatus[] = ['received', 'triaged', 'assigned', 'in_progress', 'resolved', 'closed'];
 
     statuses.forEach((status) => {
       const { unmount, container } = render(<StatusChip kind="incident" status={status} />);
       const mapping = STATUS_CHIP[`incident-${status}`];
+      const expectedLabel = expectedLabels[status];
 
       const chip = container.querySelector(`.ftc-chip--${mapping.tone}`);
       expect(chip).toBeTruthy();
-      expect(chip?.textContent).toBe(mapping.label);
+      expect(chip?.textContent).toBe(expectedLabel);
       unmount();
     });
   });
 
   it('renders workorder statuses with correct label and class', () => {
+    const expectedLabels: Record<WorkOrderStatus, string> = {
+      open: 'اتسلّم',
+      assigned: 'اتوزّع',
+      in_progress: 'شغالين عليه',
+      done: 'اتحلّت',
+    };
+
     const statuses: WorkOrderStatus[] = ['open', 'assigned', 'in_progress', 'done'];
 
     statuses.forEach((status) => {
       const { unmount, container } = render(<StatusChip kind="workorder" status={status} />);
       const mapping = STATUS_CHIP[`workorder-${status}`];
+      const expectedLabel = expectedLabels[status];
 
       const chip = container.querySelector(`.ftc-chip--${mapping.tone}`);
       expect(chip).toBeTruthy();
-      expect(chip?.textContent).toBe(mapping.label);
+      expect(chip?.textContent).toBe(expectedLabel);
       unmount();
     });
   });

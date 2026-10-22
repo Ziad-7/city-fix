@@ -12,6 +12,7 @@ class CamelCaseModel(BaseModel):
         alias_generator=to_camel,
         populate_by_name=True,
         from_attributes=True,
+        exclude_none=True,  # I7: Omit None values in responses
     )
 
 

@@ -63,7 +63,7 @@ def generate_insights(db: Session) -> dict:
 
     rising.sort(key=lambda x: x["delta"], reverse=True)
 
-    # Overdue departments: departments with most overdue incidents
+    # I9: Overdue departments: departments with most overdue incidents
     from app.models import Department
     overdue_by_dept = {}
 
@@ -84,22 +84,61 @@ def generate_insights(db: Session) -> dict:
                 overdue_by_dept[dept_id] = 0
             overdue_by_dept[dept_id] += 1
 
-    overdue_departments = [
+    # I9: Return Arabic department names, not IDs
+    overdue_department_ids = [
         dept_id
         for dept_id, count in sorted(overdue_by_dept.items(), key=lambda x: x[1], reverse=True)
         if count > 0
     ][:3]
 
-    # Generate summary text
-    summary = "النظام في وضع جيد"  # Default
-    if len(open_incidents) > 50:
-        summary = "عدد البلاغات المفتوحة مرتفع جداً"
-    elif len(open_incidents) > 30:
-        summary = "عدد البلاغات المفتوحة مرتفع"
-    elif len(open_incidents) < 5:
-        summary = "أداء ممتاز - معظم البلاغات تم حلها"
-    elif len(hotspots) > 0 and hotspots[0]["count"] > 5:
-        summary = f"تركز المشاكل في {hotspots[0]['address']}"
+    overdue_departments = []
+    for dept_id in overdue_department_ids:
+        dept = db.query(Department).filter_by(id=dept_id).first()
+        if dept:
+            overdue_departments.append(dept.name_ar)
+        else:
+            overdue_departments.append(dept_id)
+
+    # I9: Generate Arabic summary with real numbers
+    # Count created and resolved in window
+    created_this_week = 0
+    resolved_this_week = 0
+    for activity in db.query(ActivityLog).filter(
+        ActivityLog.entity_type == "incident",
+        ActivityLog.status == "received",
+        ActivityLog.at >= week_ago,
+    ).all():
+        created_this_week += 1
+
+    for activity in db.query(ActivityLog).filter(
+        ActivityLog.entity_type == "incident",
+        ActivityLog.at >= week_ago,
+    ).all():
+        if activity.status in ("resolved", "closed"):
+            resolved_this_week += 1
+
+    # Build summary with real numbers
+    summary_parts = []
+    if created_this_week > 0 or resolved_this_week > 0:
+        summary_parts.append(f"الأسبوع ده وصل {created_this_week} بلاغ جديد واتحل {resolved_this_week}")
+
+    # Most rising category
+    if rising:
+        cat = db.query(Category).filter_by(id=rising[0]["categoryId"]).first()
+        cat_label = cat.label_ar if cat else rising[0]["categoryId"]
+        summary_parts.append(f"أكتر نوع زايد: {cat_label} (+{rising[0]['delta']})")
+
+    # Overdue by department
+    for dept_name in overdue_departments[:1]:  # Only mention the worst
+        # Count how many overdue
+        overdue_count = sum(
+            1 for inc in open_incidents
+            if inc.department_id in [d.id for d in db.query(Department).all() if d.name_ar == dept_name]
+        )
+        if overdue_count > 0:
+            summary_parts.append(f"{dept_name} عندها {overdue_count} متأخرين")
+
+    summary = ". ".join(summary_parts) if summary_parts else "النظام في وضع جيد"
 
     return {
         "summary": summary,
