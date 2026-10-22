@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "FixTheCity",
+    "name": "CityFix",
     "slug": "fixthecity",
     "scheme": "fixthecity",
     "version": "1.0.0",
@@ -41,7 +41,13 @@
       ],
       [
         "expo-localization",
-        { "forcesRTL": true, "supportedLocales": ["ar", "en"] }
+        {
+          "supportsRTL": true,
+          "supportedLocales": [
+            "ar",
+            "en"
+          ]
+        }
       ],
       [
         "expo-image-picker",
@@ -55,6 +61,28 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "التطبيق محتاج موقعك عشان نحدد مكان المشكلة على الخريطة."
+        }
+      ],
+      "expo-status-bar",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "extraProguardRules": "# WorkManager (pulled in by react-native-maps) starts at launch and Room creates its database\n# by reflection. Without these rules R8 strips WorkDatabase_Impl and the app crashes on open.\n-keep class * extends androidx.room.RoomDatabase { <init>(); }\n-keep class androidx.work.impl.WorkDatabase_Impl { *; }\n-keep class androidx.work.** { *; }\n-dontwarn androidx.work.**"
+          }
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "التطبيق محتاج الميكروفون عشان تسجّل وصف المشكلة بصوتك."
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "color": "#C8102E"
         }
       ]
     ]

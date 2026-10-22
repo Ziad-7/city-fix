@@ -1,6 +1,6 @@
 # Team: who does what
 
-FixTheCity is built by **5 members in parallel**. Everyone works in their own folder, on their own branches, and meets the others in two shared places:
+CityFix is built by **5 members in parallel**. Everyone works in their own folder, on their own branches, and meets the others in two shared places:
 
 1. **The API contract** ([`docs/api-contract.md`](../api-contract.md)): one backend, the same endpoints and shapes for every app.
 2. **The design** ([`docs/design/index.html`](../design/index.html)): one identity ([`identity.html`](../design/identity.html)) and an HTML design for every screen.

@@ -1,3 +1,4 @@
+import { setLang } from '@/i18n';
 import { SERVICES } from '@/domain/services-catalog';
 import { filterServices, normalizeArabic } from './filter';
 
@@ -19,5 +20,14 @@ describe('filterServices', () => {
   });
   it('normalizes alef variants', () => {
     expect(normalizeArabic('أشجار')).toBe(normalizeArabic('اشجار'));
+  });
+});
+
+describe('filterServices in English', () => {
+  afterEach(() => setLang('ar'));
+  it('finds services by their English names and still by Arabic', () => {
+    setLang('en');
+    expect(filterServices(SERVICES, 'bulky', 'all').map((s) => s.id)).toEqual(['bulky']);
+    expect(filterServices(SERVICES, 'شجرة', 'all').map((s) => s.id)).toContain('tree');
   });
 });

@@ -1,8 +1,8 @@
-# FixTheCity
+# CityFix — سيتي فيكس
 
 بلّغ.. وإحنا نتابع لحد ما تتصلّح — Report it, and we follow it until it's fixed.
 
-FixTheCity is a civic platform for Egyptian cities: citizens report problems and request services, and the city's command center triages, prioritises, fixes and budgets them. The identity takes Balady's structure — Arabic-first, right-to-left, big service tiles, a calm government-grade feel — and dresses it in the colours of the Egyptian flag: red, white and black, with the gold of the eagle as the accent.
+CityFix is a civic platform for Egyptian cities: citizens report problems and request services, and the city's command center triages, prioritises, fixes and budgets them. The identity takes Balady's structure — Arabic-first, right-to-left, big service tiles, a calm government-grade feel — and dresses it in the colours of the Egyptian flag: red, white and black, with the gold of the eagle as the accent.
 
 ## Brand idea
 
@@ -19,9 +19,9 @@ The flag is used as a **palette**, not as a picture: never draw the eagle or the
 
 ## Logo
 
-- **Mark** (`fixthecity-mark.svg`): red pin, white disc, red check, gold dot. App icon, favicon, "your report" map marker.
-- **English lockup** (`fixthecity-lockup-en.svg`): "Fix" in `red`, "TheCity" in `ink`.
-- **Arabic lockup** (`fixthecity-lockup-ar.svg`): فيكس ذا سيتي — the default on Arabic screens; the mark sits on the right (RTL start).
+- **Mark** (`cityfix-mark.svg`): red pin, white disc, red check, gold dot. App icon, favicon, "your report" map marker.
+- **English lockup** (`cityfix-lockup-en.svg`): "City" in `ink`, "Fix" in `red`.
+- **Arabic lockup** (`cityfix-lockup-ar.svg`): سيتي فيكس ("سيتي" in `ink`, "فيكس" in `red`) — the default on Arabic screens; the mark sits on the right (RTL start).
 - Clear space around the mark: at least the gold dot's diameter. Minimum mark size 24px.
 - On `red` backgrounds put the mark on a white plate (a white circle or pill). Never recolour the gold dot.
 
@@ -66,7 +66,7 @@ The flag is used as a **palette**, not as a picture: never draw the eagle or the
 
 ## Made for Egypt
 
-These rules apply to every citizen screen; they are what make FixTheCity Egyptian beyond the colours.
+These rules apply to every citizen screen; they are what make CityFix Egyptian beyond the colours.
 
 - **Sign-up by phone, not email.** Egyptian mobile number with a fixed `+20` prefix (works on Vodafone, Orange, Etisalat and WE). The one-time code goes by SMS or WhatsApp, the citizen's choice. No national ID at sign-up.
 - **Egypt's address structure.** Location is محافظة → حي (e.g. القاهرة · حي مدينة نصر أول), plus a free-text **landmark** field ("قدام مدرسة النصر الإعدادية"), because many streets are known by landmarks, not numbers.

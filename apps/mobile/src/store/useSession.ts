@@ -1,10 +1,10 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { DEFAULT_DISTRICT, DEFAULT_GOVERNORATE } from '@/domain/locations';
 import type { OtpChannel, Session } from '@/domain/types';
 import { setApiToken } from '@/services/api/http';
+import { createSessionStorage } from './secureSessionStorage';
 
 export type Prefs = {
   /** Status updates by WhatsApp (SMS fallback). */
@@ -17,7 +17,7 @@ type SessionState = {
   userId: string | null;
   phone: string | null;
   name: string | null;
-  /** Bearer token (API mode). Persisted with the session; plain AsyncStorage for now (see README). */
+  /** Bearer token (API mode). Persisted with the session, but in expo-secure-store on native (see secureSessionStorage). */
   token: string | null;
   /** One-off notice for the sign-in screen (e.g. the session expired). Never persisted. */
   notice: string | null;
@@ -70,7 +70,7 @@ export const useSession = create<SessionState>()(
     }),
     {
       name: 'ftc.session.v1',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => createSessionStorage()),
       partialize: (s) => ({
         userId: s.userId,
         phone: s.phone,

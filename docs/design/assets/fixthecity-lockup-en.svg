@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 64" width="300" height="64">
-  <title>FixTheCity</title>
-  <path d="M32 4C19.3 4 9 14.1 9 26.8 9 42.6 32 60 32 60s23-17.4 23-33.2C55 14.1 44.7 4 32 4z" fill="#C8102E"/>
-  <circle cx="32" cy="26.5" r="12.5" fill="#FFFFFF"/>
-  <path d="M26 26.8l4.4 4.4 8-8.6" fill="none" stroke="#C8102E" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="50" cy="10" r="6.5" fill="#D4A20B"/>
-  <text x="68" y="43" font-family="'Readex Pro','IBM Plex Sans Arabic',Arial,sans-serif" font-size="32" font-weight="700" letter-spacing="-0.5"><tspan fill="#C8102E">Fix</tspan><tspan fill="#161616">TheCity</tspan></text>
-</svg>

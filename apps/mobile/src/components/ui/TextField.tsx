@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { StyleSheet, TextInput, View, type KeyboardTypeOptions, type StyleProp, type ViewStyle } from 'react-native';
+import { useIsRTL } from '@/i18n';
 import { colors, fonts, radius } from '@/theme/tokens';
 import { AppText } from './AppText';
 import { useScrollIntoView } from './Screen';
@@ -32,6 +33,7 @@ export function TextField({
   prefix, ltr, large, autoFocus, onSubmitEditing, style, testID,
 }: TextFieldProps) {
   const [focused, setFocused] = useState(false);
+  const rtl = useIsRTL();
   const wrapRef = useRef<View>(null);
   const scrollIntoView = useScrollIntoView();
   const borderColor = error ? colors.urgent : focused ? colors.red : colors.line;
@@ -69,7 +71,7 @@ export function TextField({
           style={[
             styles.input,
             { fontSize: large ? 17 : 15, letterSpacing: large ? 0.5 : 0 },
-            ltr ? { textAlign: 'left', writingDirection: 'ltr' } : { textAlign: 'right', writingDirection: 'rtl' },
+            ltr ? { textAlign: 'left', writingDirection: 'ltr' } : rtl ? { textAlign: 'right', writingDirection: 'rtl' } : { textAlign: 'left', writingDirection: 'ltr' },
             multiline ? { paddingTop: 8 } : null,
           ]}
         />

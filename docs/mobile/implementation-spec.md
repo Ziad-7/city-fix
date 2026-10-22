@@ -1,4 +1,4 @@
-# FixTheCity citizen mobile app — implementation spec
+# CityFix citizen mobile app — implementation spec
 
 This is the brief the implementers work from. The design is final; implement it faithfully.
 
@@ -35,14 +35,14 @@ Screen file → app route:
 
 ## Stack and versions (already installed in `apps/mobile`)
 
-- Expo SDK **58**, React Native 0.88, React 19.3, TypeScript 6, Expo Router 58.
+- Expo SDK **57** (pinned to match Expo Go 57 on the team's phones; see [the Expo Go handoff](2026-10-21-expo-go-and-apk-handoff.md)), React Native 0.86.3, React 19.2.3, TypeScript 6, Expo Router 57. Install with `npm ci`; add packages only with `npx expo install`.
 - `react-native-svg`, `react-native-maps`, `expo-image-picker`, `expo-location`, `expo-localization`, `expo-font`, `expo-splash-screen`, `@react-native-async-storage/async-storage`, `zustand` 5, `zod` 4.
 - Fonts: `@expo-google-fonts/readex-pro`, `@expo-google-fonts/ibm-plex-sans-arabic`, `@expo-google-fonts/aref-ruqaa` — load at runtime with `useFonts` in the root layout and hold the splash screen until loaded. Export names: `ReadexPro_500Medium/600SemiBold/700Bold`, `IBMPlexSansArabic_400Regular/500Medium/600SemiBold/700Bold`, `ArefRuqaa_700Bold`.
 
 ## Environment gotchas (verified — read before doing anything)
 
 1. **Expo's version API is blocked** from this sandbox. Always run installs as `EXPO_OFFLINE=1 npx expo install <pkg>` (it uses the SDK's bundled version map). Plain `npm install` works for anything else.
-2. **Tabs import:** `import { Tabs } from 'expo-router/js-tabs'` (importing `Tabs` from `'expo-router'` is deprecated in SDK 58). `Stack`, `Link`, `router`, `useLocalSearchParams`, `Redirect` come from `'expo-router'`.
+2. **Tabs import:** `import { Tabs } from 'expo-router/js-tabs'` (importing `Tabs` from `'expo-router'` is deprecated). The custom tab bar receives `navigation` (SDK 57 API: `navigation.emit` + `navigation.navigate`). `Stack`, `Link`, `router`, `useLocalSearchParams`, `Redirect` come from `'expo-router'`.
 3. **No icon font is installed** (`@expo/vector-icons` is not a dependency). Build a small `Icon` component on `react-native-svg` with Lucide-style 24×24 stroke paths (stroke 1.75, round caps/joins). The SVG paths used in the mockups can be copied straight from `docs/design/screens/mobile/*.html`. Directional icons (arrows/chevrons) must mirror in RTL; objects never mirror.
 4. **RTL:** the app is Arabic-only for now. Configure the `expo-localization` plugin in `app.json` with `"forcesRTL": true` and `"supportedLocales": ["ar", "en"]`. Do **not** rely on `I18nManager.forceRTL` at runtime (doesn't work in Expo Go). Write layouts with `flexDirection: 'row'` and let the platform mirror them; use `start`/`end` (not `left`/`right`) for margins/padding/positioning. On **web** only, set `document.documentElement.dir = 'rtl'` and `lang = 'ar'` in the root layout effect so the web preview mirrors too.
 5. **Maps:** `react-native-maps` works in Expo Go with no API key; it does not support web. Use platform files: `src/components/map/IncidentMap.native.tsx` (MapView + Markers) and `src/components/map/IncidentMap.web.tsx` (a styled list/placeholder so the web export builds).

@@ -73,7 +73,7 @@ Readable IDs: use a Postgres sequence per table and format in the API (`FTC-` + 
 
 **Row-level security** (if the app ever talks to Supabase directly): citizens read/write only their own `reports` and `service_requests`; everyone authenticated reads `incidents` (public columns); only `staff`/`admin` update incidents and work orders. The API itself connects with the service role and enforces the same rules in code.
 
-**Seed data** (`0003_seed.sql`): departments, the 12 categories, 10 incidents around Nasr City (lat ≈ 30.056, lng ≈ 31.330) with varied statuses and timelines, one demo citizen (`01012345678`) with report `FTC-1042` (pothole near a school, in progress, 7 reporters) and service request `SRV-2001` (bulky waste, assigned), one admin account (`admin@fixthecity.demo` / password in `.env.example`) and one staff account per department. Mirror `apps/mobile/src/services/mock/seed.ts` so the demo looks the same in mock and real mode.
+**Seed data** (`0003_seed.sql`): departments, the 12 categories, 10 incidents around Nasr City (lat ≈ 30.056, lng ≈ 31.330) with varied statuses and timelines, one demo citizen (`01012345678`) with report `FTC-1042` (pothole near a school, in progress, 7 reporters) and service request `SRV-2001` (bulky waste, assigned), one admin account (`admin@cityfix.demo` / password in `.env.example`) and one staff account per department. Mirror `apps/mobile/src/services/mock/seed.ts` so the demo looks the same in mock and real mode.
 
 ## Work plan
 

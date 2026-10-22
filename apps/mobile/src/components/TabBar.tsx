@@ -2,22 +2,24 @@ import { router } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { IconName } from '@/domain/types';
+import { useTr } from '@/i18n';
 import { colors, fonts, layout, shadows } from '@/theme/tokens';
 import { AppText } from './ui/AppText';
 import { Icon } from './Icon';
 
-const TABS: Record<string, { label: string; icon: IconName }> = {
-  index: { label: 'الرئيسية', icon: 'home' },
-  map: { label: 'الخريطة', icon: 'map' },
-  requests: { label: 'طلباتي', icon: 'clipboard' },
-  profile: { label: 'حسابي', icon: 'user' },
+export const TABS: Record<string, { ar: string; en: string; icon: IconName }> = {
+  index: { ar: 'الرئيسية', en: 'Home', icon: 'home' },
+  map: { ar: 'الخريطة', en: 'Map', icon: 'map' },
+  requests: { ar: 'طلباتي', en: 'My requests', icon: 'clipboard' },
+  profile: { ar: 'حسابي', en: 'Account', icon: 'user' },
 };
 
 /**
  * Bottom nav from Main.html: الرئيسية · الخريطة · [gold Report FAB] · طلباتي · حسابي.
- * Rows mirror automatically in RTL, so slots are listed in reading order.
+ * Rows mirror automatically in RTL, so slots are listed in reading order. English: Home · Map · Report · My requests · Account.
  */
-export function TabBar({ state, emitter, navigateToTab, insets }: BottomTabBarProps) {
+export function TabBar({ state, navigation, insets }: BottomTabBarProps) {
+  const tr = useTr();
   const focused = state.routes[state.index]?.name;
 
   const renderTab = (name: string) => {
@@ -25,21 +27,22 @@ export function TabBar({ state, emitter, navigateToTab, insets }: BottomTabBarPr
     const meta = TABS[name];
     if (!route || !meta) return null;
     const active = focused === name;
+    const label = tr(meta.ar, meta.en);
     const color = active ? colors.red : colors.inkMuted;
     return (
       <Pressable
         key={name}
         accessibilityRole="tab"
-        accessibilityLabel={meta.label}
+        accessibilityLabel={label}
         accessibilityState={{ selected: active }}
         onPress={() => {
-          const e = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-          if (!active && !e.defaultPrevented) navigateToTab(route.key);
+          const e = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+          if (!active && !e.defaultPrevented) navigation.navigate(route.name, route.params);
         }}
         style={styles.slot}
       >
         <Icon name={meta.icon} size={22} color={color} />
-        <AppText color={color} style={{ fontFamily: active ? fonts.sans600 : fonts.sans500, fontSize: 11, lineHeight: 16 }}>{meta.label}</AppText>
+        <AppText fixedSize numberOfLines={1} maxFontSizeMultiplier={1.2} color={color} style={{ fontFamily: active ? fonts.sans600 : fonts.sans500, fontSize: 11, lineHeight: 16 }}>{label}</AppText>
       </Pressable>
     );
   };
@@ -51,7 +54,7 @@ export function TabBar({ state, emitter, navigateToTab, insets }: BottomTabBarPr
       <View style={styles.slot}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="بلّغ عن مشكلة"
+          accessibilityLabel={tr('بلّغ عن مشكلة', 'Report a problem')}
           testID="report-fab"
           onPress={() => router.push('/report/category')}
           style={({ pressed }) => [styles.fab, pressed ? { opacity: 0.85 } : null]}

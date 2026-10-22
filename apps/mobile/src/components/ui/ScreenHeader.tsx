@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useTr } from '@/i18n';
 import { colors, fonts } from '@/theme/tokens';
 import { AppText } from './AppText';
 import { Icon } from '../Icon';
 
 export type ScreenHeaderProps = {
   title: string;
-  /** e.g. "خطوة ١ من ٣" */
+  /** e.g. "خطوة ١ من ٣" / "Step 1 of 3" */
   step?: string;
   /** Slot at the end (share button, etc.). */
   action?: React.ReactNode;
@@ -22,10 +23,11 @@ export function goBack() {
 
 /** Back button (mirrors in RTL) + 20 px Readex title + optional step label. */
 export function ScreenHeader({ title, step, action, onBack, hideBack }: ScreenHeaderProps) {
+  const tr = useTr();
   return (
     <View style={styles.header}>
       {hideBack ? null : (
-        <Pressable accessibilityRole="button" accessibilityLabel="رجوع" onPress={onBack ?? goBack} style={styles.back} hitSlop={6}>
+        <Pressable accessibilityRole="button" accessibilityLabel={tr('رجوع', 'Back')} onPress={onBack ?? goBack} style={styles.back} hitSlop={6}>
           <Icon name="arrow-back" size={22} />
         </Pressable>
       )}

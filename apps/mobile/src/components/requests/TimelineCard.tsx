@@ -2,7 +2,8 @@ import { StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { AppText, Card } from '@/components/ui';
 import { colors, fonts } from '@/theme/tokens';
-import { formatDateTimeAr } from '@/utils/time';
+import { useTr } from '@/i18n';
+import { formatDateTime } from '@/utils/time';
 import type { StepState, TimelineStep } from './timeline';
 
 const DOT = 24;
@@ -19,8 +20,9 @@ function Dot({ state }: { state: StepState }) {
   return <View style={[styles.dot, { backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.line }]} />;
 }
 
-/** "مراحل البلاغ": vertical RTL timeline. Done = red check, current = gold dot with soft ring, future = hollow. */
+/** "مراحل البلاغ": vertical timeline that starts at the reading start (right in Arabic, left in English). Done = red check, current = gold dot with soft ring, future = hollow. */
 export function TimelineCard({ title, steps }: { title: string; steps: TimelineStep[] }) {
+  const tr = useTr();
   return (
     <Card rounded="lg" padding={16} accessibilityLabel={title}>
       <AppText style={styles.heading} accessibilityRole="header">{title}</AppText>
@@ -31,7 +33,7 @@ export function TimelineCard({ title, steps }: { title: string; steps: TimelineS
           // The rail below a dot is red while the next stage is reached, gold into the current one, grey toward the future.
           const rail = next?.state === 'future' ? colors.line : next?.state === 'current' ? colors.gold : colors.red;
           return (
-            <View key={s.key} style={styles.item} accessible accessibilityLabel={`${s.title}${s.at ? `، ${formatDateTimeAr(s.at)}` : ''}`}>
+            <View key={s.key} style={styles.item} accessible accessibilityLabel={`${s.title}${s.at ? `${tr('، ', ', ')}${formatDateTime(s.at)}` : ''}`}>
               <View style={styles.rail}>
                 <Dot state={s.state} />
                 {last ? null : <View style={[styles.line, { backgroundColor: rail }]} />}
@@ -41,7 +43,7 @@ export function TimelineCard({ title, steps }: { title: string; steps: TimelineS
                   {s.title}
                 </AppText>
                 {s.detail ? <AppText variant="small" color={colors.inkMuted} style={styles.detail}>{s.detail}</AppText> : null}
-                {s.at ? <AppText variant="caption" color={colors.inkMuted}>{formatDateTimeAr(s.at)}</AppText> : null}
+                {s.at ? <AppText variant="caption" color={colors.inkMuted}>{formatDateTime(s.at)}</AppText> : null}
               </View>
             </View>
           );

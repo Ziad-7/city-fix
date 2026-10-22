@@ -1,8 +1,8 @@
-# FixTheCity design pack
+# CityFix design pack
 
-The visual identity and screen designs for FixTheCity: the citizen mobile app, the citizen website and the Command Center (admin web). Arabic-first, right-to-left, in the colours of the Egyptian flag.
+The visual identity and screen designs for CityFix: the citizen mobile app, the citizen website and the Command Center (admin web). Arabic-first, right-to-left, in the colours of the Egyptian flag.
 
-**The rule:** everyone follows [`identity.html`](identity.html) and [`css/fixthecity.css`](css/fixthecity.css). [`tokens.json`](tokens.json) is the source of truth for every value; if a value changes, change it there first, then update the CSS, the Tailwind theme and `apps/mobile/src/theme/tokens.ts`.
+**The rule:** everyone follows [`identity.html`](identity.html) and [`css/cityfix.css`](css/cityfix.css). [`tokens.json`](tokens.json) is the source of truth for every value; if a value changes, change it there first, then update the CSS, the Tailwind theme and `apps/mobile/src/theme/tokens.ts`.
 
 ## Folder map
 
@@ -12,7 +12,7 @@ docs/design/
 ├── identity.html         the visual identity guide (colour, type, logo, components, rules)
 ├── brand-book.md         brand idea, voice, "Made for Egypt" rules
 ├── tokens.json           design tokens (source of truth)
-├── css/fixthecity.css    shared stylesheet: --ftc-* variables and .ftc-* classes
+├── css/cityfix.css    shared stylesheet: --ftc-* variables and .ftc-* classes
 ├── assets/               logo mark, Arabic/English lockups, Cairo skyline (SVG)
 └── screens/
     ├── mobile/           10 phone screens (390px)
@@ -29,7 +29,7 @@ docs/design/
 
 - [Design hub](index.html) · [preview](https://raw.githack.com/Ziad-7/fix-city/main/docs/design/index.html)
 - [Identity guide](identity.html) · [preview](https://raw.githack.com/Ziad-7/fix-city/main/docs/design/identity.html)
-- [Brand book](brand-book.md) · [tokens.json](tokens.json) · [fixthecity.css](css/fixthecity.css)
+- [Brand book](brand-book.md) · [tokens.json](tokens.json) · [cityfix.css](css/cityfix.css)
 
 ## Screens
 
