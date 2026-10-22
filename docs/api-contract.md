@@ -187,13 +187,13 @@ Implemented by `backend/app/routers/bins.py`. Device requests use a dedicated pr
 
 | Method | Path | Body / response |
 | --- | --- | --- |
-| POST | `/iot/bins/{binId}/readings` | Header `X-Device-Key`; `{ readings: [{ seq, at, fillPct, distanceCm?, tempC, batteryV, rssi?, fw? }] }` → `202 { accepted: number[], intervalMin, fullPct, heatC }` |
+| POST | `/iot/bins/{binId}/readings` | Header `X-Device-Key`; `{ readings: [{ seq, at, fillPct, distanceCm?, tempC?, batteryV?, rssi?, fw? }] }` → `202 { accepted: number[], intervalMin, fullPct, heatC }` |
 | POST | `/admin/bins` | Admin JWT; bin ID/name/location/threshold configuration → bin and one-time `deviceKey` |
 | GET | `/admin/bins` | Staff/admin JWT → authorized bin fleet and current status |
 | GET | `/admin/bins/{binId}/readings?limit=100&from=…&to=…` | Staff/admin JWT → newest-first telemetry history |
 | GET | `/admin/bins/{binId}/latest` | Staff/admin JWT → latest recorded reading |
 
-Sequence IDs are unique per bin. An identical retry is acknowledged; reused sequences with different reading values return `409`. `at` is nullable for clock-unsynced devices and falls back to server receive time. The public website simulator is intentionally browser-local and is not a device credential client; use `hardware/simulator` real mode to send authenticated telemetry. Deployment and migration requirements are in [`backend/README.md`](../backend/README.md#smart-bin-telemetry-and-command-center) and [`hardware/simulator/README.md`](../hardware/simulator/README.md#online-hosting-and-free-tier-limits).
+Sequence IDs are strict integers and unique per bin. `fillPct` is required; temperature, battery, distance, RSSI and firmware are optional measurements. Missing temperature is unavailable, not zero, and cannot trigger a heat alert. Boolean values are rejected for numeric fields. An identical retry is acknowledged; reuse of a sequence with any changed sensor value or device timestamp (including `at: null` versus a timestamp) returns `409`. A null `at` means the device clock was unsynchronized: the backend preserves that original null and separately exposes `recordedAt` (the effective display time), `receivedAt`, `deviceAt`, and `clockUnsynced` (`true`/`false`, or `null` for migrated legacy rows whose original timestamp cannot be recovered). The public website simulator is intentionally browser-local and is not a device credential client; use `hardware/simulator` real mode to send authenticated telemetry. Deployment and migration requirements are in [`backend/README.md`](../backend/README.md#smart-bin-telemetry-and-command-center) and [`hardware/simulator/README.md`](../hardware/simulator/README.md#online-hosting-and-free-tier-limits).
 
 ## Business rules the backend owns
 

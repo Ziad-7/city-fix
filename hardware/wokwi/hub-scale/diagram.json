@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "author": "CityCycle / CityFix",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-esp32-devkit-v1", "id": "esp", "top": 35, "left": 190, "attrs": {} },
+    { "type": "wokwi-hx711", "id": "hx", "top": 50, "left": 455, "attrs": {} },
+    { "type": "wokwi-text", "id": "hx-label", "top": 15, "left": 440, "attrs": { "text": "HX711 / 50kg simulation" } },
+    { "type": "board-ssd1306", "id": "oled", "top": 355, "left": 205, "attrs": { "i2cAddress": "0x3c" } },
+    { "type": "wokwi-pushbutton", "id": "tare", "top": 125, "left": 25, "attrs": { "color": "yellow" } },
+    { "type": "wokwi-text", "id": "tare-label", "top": 100, "left": 20, "attrs": { "text": "TARE (platform unloaded)" } },
+    { "type": "wokwi-pushbutton", "id": "confirm", "top": 230, "left": 25, "attrs": { "color": "green" } },
+    { "type": "wokwi-text", "id": "confirm-label", "top": 205, "left": 20, "attrs": { "text": "CONFIRM WEIGHING" } },
+    { "type": "wokwi-slide-switch", "id": "network", "top": 15, "left": 25, "attrs": { "value": "1" } },
+    { "type": "wokwi-text", "id": "network-label", "top": -10, "left": 20, "attrs": { "text": "NETWORK (ON = connected)" } },
+    { "type": "wokwi-led", "id": "status", "top": 200, "left": 580, "attrs": { "color": "blue" } },
+    { "type": "wokwi-text", "id": "status-label", "top": 175, "left": 550, "attrs": { "text": "NETWORK / LOCAL MOCK" } },
+    { "type": "wokwi-resistor", "id": "rled", "top": 225, "left": 540, "rotate": 90, "attrs": { "value": "220" } }
+  ],
+  "connections": [
+    [ "hx:VCC", "esp:3V3", "red", [] ], [ "hx:GND", "esp:GND.1", "black", [] ], [ "hx:DT", "esp:D32", "green", [] ], [ "hx:SCK", "esp:D33", "blue", [] ],
+    [ "oled:VCC", "esp:3V3", "red", [] ], [ "oled:GND", "esp:GND.1", "black", [] ], [ "oled:SDA", "esp:D21", "green", [] ], [ "oled:SCL", "esp:D22", "blue", [] ],
+    [ "tare:1.l", "esp:GND.1", "black", [] ], [ "tare:2.l", "esp:D25", "yellow", [] ],
+    [ "confirm:1.l", "esp:GND.1", "black", [] ], [ "confirm:2.l", "esp:D26", "green", [] ],
+    [ "network:1", "esp:GND.1", "black", [] ], [ "network:2", "esp:D27", "green", [] ], [ "network:3", "esp:3V3", "red", [] ],
+    [ "esp:D19", "rled:1", "blue", [] ], [ "rled:2", "status:A", "blue", [] ], [ "status:C", "esp:GND.1", "black", [] ]
+  ],
+  "dependencies": {}
+}

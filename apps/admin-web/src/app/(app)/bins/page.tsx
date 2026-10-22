@@ -135,9 +135,9 @@ export default function SmartBinsPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
                   <thead><tr><th>التسلسل</th><th>الامتلاء</th><th>المسافة</th><th>الحرارة</th><th>البطارية</th><th>الإشارة</th><th>التنبيهات</th><th>وقت القراءة</th></tr></thead>
                   <tbody>{(readings.data ?? []).map((reading) => <tr key={reading.id}>
-                    <td dir="ltr">#{reading.seq}</td><td>{reading.fillPct}%</td><td>{reading.distanceCm == null ? '—' : `${reading.distanceCm} سم`}</td><td>{reading.tempC} °م</td><td>{reading.batteryV} V</td><td>{reading.rssi == null ? '—' : `${reading.rssi} dBm`}</td>
+                    <td dir="ltr">#{reading.seq}</td><td>{reading.fillPct}%</td><td>{reading.distanceCm == null ? '—' : `${reading.distanceCm} سم`}</td><td>{reading.tempC == null ? '—' : `${reading.tempC} °م`}</td><td>{reading.batteryV == null ? '—' : `${reading.batteryV} V`}</td><td>{reading.rssi == null ? '—' : `${reading.rssi} dBm`}</td>
                     <td>{reading.isFull ? 'ممتلئة ' : ''}{reading.isHot ? 'حرارة مرتفعة' : !reading.isFull ? '—' : ''}</td>
-                    <td>{timeLabel(reading.recordedAt)}</td>
+                    <td>{reading.clockUnsynced === true ? <>وقت الجهاز غير متاح · وقت الاستلام {timeLabel(reading.receivedAt)}</> : reading.clockUnsynced === null ? <>مصدر الوقت غير محفوظ · {timeLabel(reading.recordedAt)}</> : timeLabel(reading.recordedAt)}</td>
                   </tr>)}</tbody>
                 </table>
               </div>

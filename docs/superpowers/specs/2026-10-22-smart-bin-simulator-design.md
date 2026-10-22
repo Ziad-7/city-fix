@@ -8,7 +8,7 @@ Build one simulated smart bin that can be controlled in a local browser. Demonst
 
 The user accepted this direction and authorized routine implementation choices. This artifact records those choices for the requested GPT-6 Luna implementation and GPT-6.1 Sol review. It does not ask for another approval stage.
 
-The initial simulator-only delivery was later extended by `feat/smart-bin-demo-enhancements`. That follow-on adds device telemetry ingestion, staff-only bin/history APIs, the Command Center fleet view, and the public static demo. See the final status in [`docs/progress-log.md`](../../progress-log.md). Physical firmware/mobile hardware integration and production hosting are still separate work. No scale, OTA, hardware claims, or invented cost/accuracy/battery-life figures are made.
+The initial local simulator delivery owned `hardware/simulator/`, its workflow and implementation records. A later follow-on in PR #43 added backend telemetry ingestion, staff-scoped Command Center views, and a separate static browser demo; see the progress log and API contract for the current live integration. The simulator itself remains a PC demonstration, and Wokwi prototypes are documented separately in `hardware/wokwi/`. No physical sensor, OTA, accuracy, battery-life, or durability claims are made.
 
 ## Approach and tradeoffs
 
@@ -83,3 +83,8 @@ Document PowerShell environment assignments and shell equivalents using placehol
 5. Mock auth/validation/conflict failures mutate neither receiver nor outbox. Snapshot/log checks find no key; cross-origin/foreign Host/static traversal attempts fail. Real mode rejects insecure external HTTP and missing credentials.
 6. A real Chromium smoke checks controls, offline queue then delivery, full/heat receiver alerts, mock policy response application, responsive keyboard-accessible layout, no browser console errors, and the permanent simulation label. This is local simulator end to end, not Command Center/mobile end to end.
 7. Standard-library tests pass through hardware CI on Linux and Windows with Python 3.12; preserve the existing conditional PlatformIO job for future firmware. Documentation links remain valid; progress log states scope, tests, and real-backend/physical work still open.
+
+
+## Follow-on integration
+
+PR #43 extended the original PC simulator delivery with authenticated backend telemetry, staff-only bin/history views, and a browser-only static simulator. These are separate paths: local mock mode remains isolated, real mode targets the provisioned API, and public sample data stays in the visitor's browser. See the current implementation notes in [`docs/progress-log.md`](../../progress-log.md).

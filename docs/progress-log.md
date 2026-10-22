@@ -32,6 +32,57 @@
 - How to deploy: see "Deploy on Vercel" in [backend/README.md](../backend/README.md).
 - Known issues: no FFmpeg on Vercel (voice notes), photo upload is a stub without Supabase storage, readable IDs are not transactional (fine for solo testing). Bundle size is verified on the first build.
 
+## 2026-10-22 — PR #39 / #43 smart-bin integration fixes
+
+- Aligned backend telemetry ingestion with the existing device contract: temperature and battery are optional, unavailable temperature never raises a heat alert, numeric booleans/strings are rejected, and the Command Center shows unavailable readings and distinguishes unsynced device time from effective/receive time.
+- Persisted the original nullable device timestamp and a tri-state clock-provenance flag. Timestamp changes in either direction now conflict for newly ingested rows. Fleet latest-state updates use a conditional database update, and SQLite/PostgreSQL unique-key inserts make concurrent identical retries idempotent.
+- Added migration guidance for existing databases; no external database was changed. The Wokwi smart-bin prototype now rejects distance readings above the shared 200 cm API limit as sensor faults instead of queuing payloads the receiver cannot accept.
+- Verification: backend **300 tests passed**, scoped Ruff check/format passed, admin-web typecheck plus **196 full-suite tests passed**, including the unavailable-sensor UI regression. Both the smart-bin native harness and ESP32 Arduino 2.0.17 PlatformIO build passed.
+
+## 2026-10-22 — CityCycle Wokwi ESP32 prototypes
+
+**Done** ([Wokwi handoff](../hardware/wokwi/README.md), [scenarios](../hardware/wokwi/SCENARIOS.md))
+- Added separate free-plan ESP32 Arduino projects for a smart bin and a collection-hub scale, with connected circuit diagrams, firmware, native helper tests, and pinned browser/local-build libraries.
+- The bin supports durable sample/outbox state, offline retry/ACK handling, configurable thresholds, sensor/power controls, a default local mock, and opt-in HTTP to the separate loopback-only receiver adapter. The scale supports tare, simulated known-weight calibration, explicit confirmation, offline queueing, and a local mock; scale HTTP is deferred until its response contract exists.
+- No existing PC simulator, backend, shared API contract, mobile code, or CI workflow was changed. The models make no physical accuracy, battery, or durability claims.
+- Review fixes add backoff-safe threshold delivery, atomic queue/edge persistence, fresh asynchronous temperature conversion, fail-closed checksummed NVS restore, exact MaterialId validation, capped/deadline-bound HTTP ACK parsing, and JSON responses for unsupported adapter methods.
+
+**How to test**
+- `g++ -std=c++17 -Wall -Wextra -Werror -Ihardware/wokwi/smart-bin hardware/wokwi/smart-bin/tests/native/core_test.cpp -o /tmp/smart-bin-core-test && /tmp/smart-bin-core-test` — passed.
+- `g++ -std=c++17 -Wall -Wextra -Werror -Ihardware/wokwi/hub-scale hardware/wokwi/hub-scale/tests/native/core_test.cpp -o /tmp/hub-scale-core-test && /tmp/hub-scale-core-test` — passed.
+- `python3 -m unittest discover -s hardware/wokwi/tests -v` — 5 adapter/socket tests passed with managed network permission.
+- Both sketches compiled for ESP32 Arduino 2.0.17 with PlatformIO 6.12.0 and the locally seeded, pinned libraries; exact commands and build details are in the accompanying review-workspace implementation report.
+- `python3 -m compileall -q hardware/wokwi`, diagram JSON parsing, and `git diff --check` passed.
+
+**Still open**
+- Wokwi interactive simulation and browser screenshots were unavailable in this workspace, so peripheral behavior and NVS persistence across browser restarts are unverified. The local ESP32 build and static wiring checks are not a substitute for that run. The external Wokwi gateway/tunnel path is also unverified.
+- Real hardware, physical sensor calibration, battery/solar design, deep-sleep behavior, and backend provisioning remain unvalidated or deferred; see the handoff for limits and safe wiring notes.
+
+
+
+## 2026-10-22 — CityCycle PC smart-bin simulator
+
+**Done** ([simulator handoff](../hardware/simulator/README.md), [design](superpowers/specs/2026-10-22-smart-bin-simulator-design.md), [implementation plan](superpowers/plans/2026-10-22-smart-bin-simulator.md))
+- Added a one-command Python 3.12+ local demo with a polished CityFix-styled browser panel, simulated fill/temperature/battery sensors, durable SQLite outbox, offline queueing, retries, and a separate authenticated mock HTTP receiver.
+- Device sequences, readings, network state, alert flags, and last received policy persist across restarts. The mock receiver idempotently stores acknowledged readings. The panel distinguishes queued readings from receiver-confirmed telemetry and marks both local and receiver-derived alerts.
+- Added same-origin/token-protected panel controls, loopback-only listeners, bounded HTTP payloads, real-mode HTTPS/credential validation, and Linux/Windows Python 3.12 simulator CI. No third-party Python dependencies are required.
+- This remains a local simulation. The proposed CityCycle backend contract needs owner approval and provisioning; physical hardware, Command Center, and mobile integration remain open.
+
+**How to test** (local Linux, Python 3.12)
+- `python -m unittest discover -s hardware/simulator/tests -v` — 66 tests passed, including periodic outbox delivery, retry backoff, network control ordering, worker recovery/shutdown, persistent HTTP poll teardown, actual socket delivery, and lost-response retry deduplication.
+- `python -m compileall -q hardware/simulator` — passed.
+- `node scripts/check-doc-links.mjs` — 658 relative links across 70 files resolved.
+- `git diff --check` — passed; `actionlint .github/workflows/hardware-ci.yml` — passed. Windows CI has not run in this workspace.
+- Launch with `python hardware/simulator/run.py --no-browser`; see the README for the port and data-directory options. Local HTTP smoke from a different working directory verified static/state routes, record/send, offline queue retention, network restoration, and receiver drain.
+
+**Still open**
+- Chromium smoke passed: initial delivery, offline queue retention for full/heat then normal samples, stale receiver state during outage, restoration/deduplication, receiver full/heat alerts, delayed policy application, auto-fill start/progress/pause, narrow viewport, keyboard sensor controls, and no JavaScript exceptions. A polling regression also passed: sensor and policy drafts remained intact while focus moved between fields for 1.5 seconds, then recorded/saved successfully.
+- No physical-bin test, real endpoint provisioning, agreed backend contract, Command Center connection, or mobile integration is included.
+
+## 2026-10-22 — Mobile remaining-work checklist
+
+**Done**
+- [`mobile/remaining-work.md`](mobile/remaining-work.md): what is left on the citizen app (real-device checks, backend-dependent items, known gaps, shared-code duty), collected from the README stubs, reviews and this log.
 ## 2026-10-22 — PR #43 aligned with the latest Command Center/backend merge
 
 - Merged `main` at `770efef` (PR #34) into the smart-bin feature branch. Preserved its database-backed citizen routes, auth, serialization, shared client types, and updated admin UI; mounted the device and staff bin routes alongside them.

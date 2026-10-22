@@ -170,8 +170,8 @@ export interface SmartBin {
   intervalMin: number;
   lastSeq: number;
   fillPct?: number;
-  tempC?: number;
-  batteryV?: number;
+  tempC?: number | null;
+  batteryV?: number | null;
   isFull: boolean;
   isHot: boolean;
   lastSeenAt?: string;
@@ -186,10 +186,12 @@ export interface SmartBinReading {
   receivedAt: string;
   fillPct: number;
   distanceCm?: number;
-  tempC: number;
-  batteryV: number;
+  tempC: number | null;
+  batteryV: number | null;
   rssi?: number;
   firmware?: string;
+  deviceAt: string | null;
+  clockUnsynced: boolean | null;
   isFull: boolean;
   isHot: boolean;
 }

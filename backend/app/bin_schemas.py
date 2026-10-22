@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import ConfigDict, Field, StringConstraints
+from pydantic import ConfigDict, Field, StrictFloat, StrictInt, StringConstraints
 from typing_extensions import Annotated
 
 from app.schemas import CamelModel
@@ -18,13 +18,13 @@ class BinReadingInput(CamelModel):
         extra="forbid",
     )
 
-    seq: int = Field(ge=1, le=9_007_199_254_740_991)
+    seq: StrictInt = Field(ge=1, le=9_007_199_254_740_991)
     at: datetime | None
-    fill_pct: float = Field(ge=0, le=100, allow_inf_nan=False)
-    distance_cm: float | None = Field(default=None, ge=0, le=200, allow_inf_nan=False)
-    temp_c: float = Field(ge=-40, le=125, allow_inf_nan=False)
-    battery_v: float = Field(ge=0, le=6, allow_inf_nan=False)
-    rssi: int | None = Field(default=None, ge=-127, le=0)
+    fill_pct: StrictFloat = Field(ge=0, le=100, allow_inf_nan=False)
+    distance_cm: StrictFloat | None = Field(default=None, ge=0, le=200, allow_inf_nan=False)
+    temp_c: StrictFloat | None = Field(default=None, ge=-40, le=125, allow_inf_nan=False)
+    battery_v: StrictFloat | None = Field(default=None, ge=0, le=6, allow_inf_nan=False)
+    rssi: StrictInt | None = Field(default=None, ge=-127, le=0)
     fw: Annotated[str, StringConstraints(min_length=1, max_length=40)] | None = None
 
 
@@ -57,10 +57,12 @@ class BinReadingResponse(CamelModel):
     received_at: datetime
     fill_pct: float
     distance_cm: float | None
-    temp_c: float
-    battery_v: float
+    temp_c: float | None
+    battery_v: float | None
     rssi: int | None
     firmware: str | None
+    device_at: datetime | None
+    clock_unsynced: bool | None
     is_full: bool
     is_hot: bool
 
