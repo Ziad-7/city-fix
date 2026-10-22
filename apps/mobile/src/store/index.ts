@@ -7,3 +7,6 @@ export { flushOutbox } from './outboxFlush';
 export { useOutboxSync } from './useOutboxSync';
 export { startNotificationSync, useNotifications, useUnreadCount } from './useNotifications';
 export { LARGE_TEXT_SCALE, scaleTextStyle, textScaleFor, usePrefs } from './usePrefs';
+export { useRecycling } from './useRecycling';
+export { useCollector, type ActionResult } from './useCollector';
+export { useCollectorQueue, queuedFor, type QueuedCollectorAction } from './collectorQueue';

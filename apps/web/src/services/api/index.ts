@@ -1,3 +1,14 @@
+import type {
+  Bin,
+  Collector,
+  CollectorJob,
+  Earnings,
+  Impact,
+  MaterialPrice,
+  RecyclingPickup,
+  WasteClassification,
+  Weighing,
+} from '@/domain/citycycle';
 import type { Incident, MapPin, Report, ServiceRequest, Session, TriageSuggestion } from '@/domain/types';
 import type { Services } from '../interfaces';
 import { ApiError, http, setApiToken } from './http';
@@ -36,6 +47,15 @@ export function createApiServices(): Services {
     reopenIncident: (_userId, id, note) => http<Incident>('POST', `/incidents/${encodeURIComponent(id)}/reopen`, { note }),
   };
 
+  const enc = encodeURIComponent;
+  const query = (params: Record<string, string | number | undefined>): string => {
+    const q = Object.entries(params)
+      .filter(([, v]) => v !== undefined)
+      .map(([k, v]) => `${k}=${enc(String(v))}`)
+      .join('&');
+    return q ? `?${q}` : '';
+  };
+
   return {
     auth: {
       async requestCode(phone, channel) {
@@ -72,6 +92,43 @@ export function createApiServices(): Services {
     // POST /ai/transcribe (proposed, member 5) with the uploaded voice-note path.
     transcription: {
       transcribe: (path) => http('POST', '/ai/transcribe', { path }, { timeoutMs: 25000 }),
+    },
+    // CityCycle (contract: "CityCycle — proposed"). The caller is known from the token, so `userId` is not sent.
+    recycling: {
+      materials: (district) => http<MaterialPrice[]>('GET', `/recycling/materials${query({ district })}`),
+      create: (_userId, input) => http<RecyclingPickup>('POST', '/recycling/pickups', input),
+      listMine: () => http<RecyclingPickup[]>('GET', '/recycling/pickups'),
+      get: (id) => orNull(http<RecyclingPickup | null>('GET', `/recycling/pickups/${enc(id)}`)),
+      cancel: (_userId, id, note) => http<RecyclingPickup>('POST', `/recycling/pickups/${enc(id)}/cancel`, { note }),
+      confirm: (_userId, id) => http<RecyclingPickup>('POST', `/recycling/pickups/${enc(id)}/confirm`),
+      impact: () => http<Impact>('GET', '/me/impact'),
+    },
+    collector: {
+      apply: (_userId, input) => http<Collector>('POST', '/collectors/apply', input),
+      me: () => orNull(http<Collector | null>('GET', '/collectors/me')),
+      jobs: (_userId, q) => http<CollectorJob[]>('GET', `/collector/jobs${query({ lat: q.lat, lng: q.lng, radiusM: q.radiusM, materialId: q.materialId })}`),
+      myPickups: () => http<RecyclingPickup[]>('GET', '/collector/pickups'),
+      accept: (_userId, id) => http<RecyclingPickup>('POST', `/collector/jobs/${enc(id)}/accept`),
+      addWeighing: (_userId, id, input) => http<Weighing>('POST', `/collector/jobs/${enc(id)}/weighings`, input),
+      complete: (_userId, id, paidToHouseholdEgp) => http<RecyclingPickup>('POST', `/collector/jobs/${enc(id)}/complete`, { paidToHouseholdEgp }),
+      earnings: (_userId, range) => http<Earnings>('GET', `/collector/earnings${query({ from: range.from, to: range.to })}`),
+      simulateVerify: () => Promise.reject(new Error('simulateVerify متاح في وضع mock بس')),
+    },
+    bins: {
+      list: () => http<Bin[]>('GET', '/bins'),
+      async reportFull(_userId, binId, input) {
+        await http<unknown>('POST', `/bins/${enc(binId)}/report-full`, input);
+      },
+    },
+    waste: {
+      // A suggestion only: on any failure the app carries on without one (the contract also returns `source: "fallback"`).
+      async classify(path) {
+        try {
+          return await http<WasteClassification>('POST', '/ai/waste-classify', { path });
+        } catch {
+          return { materials: [], size: 'medium', source: 'fallback' };
+        }
+      },
     },
   };
 }

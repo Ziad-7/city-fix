@@ -15,6 +15,7 @@ import {
   followersLine,
   type InfoTile,
 } from '@/components/requests';
+import { PickupDetail } from '@/components/citycycle';
 import { AppText, Button, Card, Screen, ScreenHeader, StatusChips, ToggleRow } from '@/components/ui';
 import { getCategory } from '@/domain/categories';
 import { SERVICES } from '@/domain/services-catalog';
@@ -28,9 +29,8 @@ import { isolateLtr, maskPhone } from '@/utils/digits';
 import { formatDate, formatDateTime } from '@/utils/time';
 
 /** متابعة البلاغ / الطلب: summary, timeline, updates preferences, share. */
-export default function RequestDetailScreen() {
+function ReportOrServiceDetail({ id }: { id: string }) {
   const tr = useTr();
-  const { id } = useLocalSearchParams<{ id: string }>();
   const item = useRequestItem(id);
   const reportsStatus = useReports((s) => s.status);
   const servicesStatus = useServiceRequests((s) => s.status);
@@ -253,3 +253,10 @@ const styles = StyleSheet.create({
   updates: { gap: 12, paddingVertical: 14 },
   followers: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 4 },
 });
+
+/** CityCycle pickups (RCY-…) have their own detail; everything else is a report or a city service. */
+export default function RequestDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  if (typeof id === 'string' && id.startsWith('RCY-')) return <PickupDetail id={id} />;
+  return <ReportOrServiceDetail id={id} />;
+}
