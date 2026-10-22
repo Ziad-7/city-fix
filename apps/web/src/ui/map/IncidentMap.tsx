@@ -4,7 +4,6 @@ import type L from 'leaflet';
 import { useMemo } from 'react';
 import { Marker } from 'react-leaflet';
 import type { LatLng, MapPin } from '@/domain/types';
-import { useTr } from '@/i18n';
 import { pinSvg } from '../brand';
 import { BaseMap, meIcon, pinIcon } from './LeafletBase';
 import { pinColor, pinGlyph, pinLabel } from './pinColor';
@@ -13,11 +12,10 @@ import { pinColor, pinGlyph, pinLabel } from './pinColor';
 export default function IncidentMap({
   pins, selectedId, onSelect, center, onReady,
 }: { pins: MapPin[]; selectedId: string | null; onSelect: (id: string) => void; center: LatLng; onReady?: (m: L.Map) => void }) {
-  const tr = useTr();
   const icons = useMemo(() => new Map(pins.map((p) => [p.id, { off: pinIcon(pinSvg(pinColor(p), pinGlyph(p))), on: pinIcon(pinSvg(pinColor(p), pinGlyph(p)), true) }])), [pins]);
   const me = useMemo(() => meIcon(), []);
   return (
-    <BaseMap center={center} zoom={15} label={tr('خريطة البلاغات', 'Reports map')} onReady={onReady} recenter={false}>
+    <BaseMap center={center} zoom={15} label="خريطة البلاغات" onReady={onReady} recenter={false}>
       <Marker position={[center.lat, center.lng]} icon={me} interactive={false} keyboard={false} />
       {pins.map((p) => {
         const icon = icons.get(p.id);

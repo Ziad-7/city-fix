@@ -16,9 +16,7 @@ import { prepareTriagePhoto } from '@/services/media';
 import { useReports, useSession } from '@/store';
 import { isQueuedOnDevice } from '@/store/outboxTabs';
 import { useOutbox } from '@/store/useOutbox';
-import { useTr } from '@/i18n';
-import { departmentLabel, labelOfCategory, placeName } from '@/i18n/labels';
-import { localDigits } from '@/utils/digits';
+import { toArabicDigits } from '@/utils/digits';
 import { CategoryPicker } from '@/ui/CategoryGrid';
 import { EmergencyBox } from '@/ui/Hotlines';
 import { ToggleRow } from '@/ui/controls';
@@ -30,7 +28,6 @@ const isCategoryId = (v: string | null): v is CategoryId => !!v && CATEGORIES.so
 
 /** Same flow and rules as apps/mobile/src/app/report/new.tsx, laid out as the web mockup (form + sticky summary). */
 export function ReportForm() {
-  const tr = useTr();
   const router = useRouter();
   const params = useSearchParams();
   const paramCategory = isCategoryId(params.get('category')) ? (params.get('category') as CategoryId) : null;
@@ -133,7 +130,7 @@ export function ReportForm() {
     const room = 2 - photos.length;
     const images = files.filter((f) => f.type.startsWith('image/')).slice(0, room);
     if (files.length && !images.length) {
-      setPhotoError(tr('الملف ده مش صورة. اختار صورة من جهازك.', 'That file is not a photo. Choose a photo from your device.'));
+      setPhotoError('الملف ده مش صورة. اختار صورة من جهازك.');
       return;
     }
     if (!images.length) return;
@@ -145,7 +142,7 @@ export function ReportForm() {
       setPhotoAnalysisConsent(false);
       setErrors((e) => ({ ...e, description: undefined }));
     } catch {
-      setPhotoError(tr('مقدرناش نفتح الصورة دي. جرّب صورة تانية، أو كمّل بوصف المشكلة.', "We couldn't open that photo. Try another one, or just describe the problem."));
+      setPhotoError('مقدرناش نفتح الصورة دي. جرّب صورة تانية، أو كمّل بوصف المشكلة.');
     } finally {
       setPhotoBusy(false);
     }
@@ -189,7 +186,7 @@ export function ReportForm() {
           // A full disk drops the write: never say "saved on your device" when it is not.
           if (!isQueuedOnDevice(res.item.id)) {
             useOutbox.getState().remove(res.item.id);
-            setSubmitError(tr('مفيش مساحة نحفظ البلاغ على جهازك. جرّب تبعته لما النت يرجع.', "There's no room to save your report on this device. Try sending it when you're back online."));
+            setSubmitError('مفيش مساحة نحفظ البلاغ على جهازك. جرّب تبعته لما النت يرجع.');
             setSubmitting(null);
             return;
           }
@@ -198,11 +195,11 @@ export function ReportForm() {
         }
         router.replace('/report/success');
       } catch (e) {
-        setSubmitError(e instanceof Error && e.message && !(e instanceof TypeError) ? e.message : tr('معرفناش نبعت البلاغ، جرّب تاني.', "We couldn't send your report. Try again."));
+        setSubmitError(e instanceof Error && e.message && !(e instanceof TypeError) ? e.message : 'معرفناش نبعت البلاغ، جرّب تاني.');
         setSubmitting(null);
       }
     },
-    [submitting, categoryId, trimmed, photos, place, anonymous, blurFaces, triage, governorate, district, router, voiceNoteUri, tr],
+    [submitting, categoryId, trimmed, photos, place, anonymous, blurFaces, triage, governorate, district, router, voiceNoteUri],
   );
 
   const pickCategory = (id: CategoryId) => {
@@ -215,23 +212,23 @@ export function ReportForm() {
   const cat = categoryId ? getCategory(categoryId) : null;
   const summary = useMemo(
     () => [
-      { k: tr('النوع', 'Type'), v: cat ? labelOfCategory(cat) : tr('لسه مش متحدد', 'Not chosen yet') },
-      { k: tr('المكان', 'Location'), v: place.address || tr('لسه مش مكتوب', 'Not entered yet') },
-      { k: tr('الجهة', 'Handled by'), v: cat ? `${departmentLabel(cat.department)} · ${tr(`حي ${district}`, placeName(district))}` : '—' },
-      { k: tr('الصور', 'Photos'), v: photos.length ? tr(`${localDigits(photos.length)} ${photos.length === 1 ? 'صورة' : 'صور'}`, `${photos.length} ${photos.length === 1 ? 'photo' : 'photos'}`) : tr('من غير صور', 'No photos') },
-      { k: tr('الخصوصية', 'Privacy'), v: [blurFaces ? tr('الوشوش والنمر متغطية', 'Faces and plates blurred') : tr('الصور زي ما هي', 'Photos as they are'), anonymous ? tr('من غير اسم', 'Without my name') : null].filter(Boolean).join(' · ') },
+      { k: 'النوع', v: cat?.labelAr ?? 'لسه مش متحدد' },
+      { k: 'المكان', v: place.address || 'لسه مش مكتوب' },
+      { k: 'الجهة', v: cat ? `${cat.department} · حي ${district}` : '—' },
+      { k: 'الصور', v: photos.length ? `${toArabicDigits(photos.length)} ${photos.length === 1 ? 'صورة' : 'صور'}` : 'من غير صور' },
+      { k: 'الخصوصية', v: [blurFaces ? 'الوشوش والنمر متغطية' : 'الصور زي ما هي', anonymous ? 'من غير اسم' : null].filter(Boolean).join(' · ') },
     ],
-    [cat, place.address, district, photos.length, blurFaces, anonymous, tr],
+    [cat, place.address, district, photos.length, blurFaces, anonymous],
   );
 
   if (queuedId) return <QueuedNotice id={queuedId} />;
 
   return (
     <main className="ftc-web-main" id="main">
-      <Link className="w-back" href="/report/category"><Icon name="arrow-back" size={18} />{tr('نوع المشكلة', 'Type of problem')}</Link>
+      <Link className="w-back" href="/report/category"><Icon name="arrow-back" size={18} />نوع المشكلة</Link>
       <div className="w-page-head">
-        <div><h1 className="w-h1">{tr('بلاغ جديد', 'New report')}</h1><p className="w-sub">{tr('صوّر المشكلة وقولنا مكانها، والباقي علينا.', 'Photograph the problem and tell us where it is. We’ll take it from there.')}</p></div>
-        <span className="w-step">{tr('خطوة ٢ من ٣', 'Step 2 of 3')}</span>
+        <div><h1 className="w-h1">بلاغ جديد</h1><p className="w-sub">صوّر المشكلة وقولنا مكانها، والباقي علينا.</p></div>
+        <span className="w-step">خطوة ٢ من ٣</span>
       </div>
       <div className="w-stepbar" aria-hidden="true"><span className="on" /><span className="on" /><span /></div>
       <div className="r-grid">
@@ -244,11 +241,11 @@ export function ReportForm() {
           }}
         >
           <section className="ftc-card r-sec" aria-labelledby="h-ph">
-            <h2 className="w-h3" id="h-ph"><Icon name="camera" size={20} />{tr('الصور', 'Photos')}</h2>
+            <h2 className="w-h3" id="h-ph"><Icon name="camera" size={20} />الصور</h2>
             <PhotoSlots photos={photos} busy={photoBusy} error={photoError} onAdd={(f) => void addPhotos(f)} onRemove={(i) => { setPhotos((p) => p.filter((_, j) => j !== i)); setPhotoAnalysisConsent(false); }} />
           </section>
 
-          <section className="r-sec" aria-label={tr('التصنيف', 'Category')}>
+          <section className="r-sec" aria-label="التصنيف">
             {triageState === 'idle' ? (
               <CategoryRow selected={categoryId} onPress={() => setPickerOpen(true)} />
             ) : (
@@ -259,16 +256,16 @@ export function ReportForm() {
           </section>
 
           <section className="ftc-card r-sec" aria-labelledby="h-desc">
-            <h2 className="w-h3" id="h-desc">{tr('وصف المشكلة', 'Describe the problem')}</h2>
+            <h2 className="w-h3" id="h-desc">وصف المشكلة</h2>
             <VoiceRow highlight={params.get('voice') === '1'} onText={addSpokenText} onVoiceNote={setVoiceNoteUri} />
             <div className="ftc-field">
-              <label className="w-sr" htmlFor="desc">{tr('وصف المشكلة', 'Describe the problem')}</label>
+              <label className="w-sr" htmlFor="desc">وصف المشكلة</label>
               <textarea
                 className="ftc-textarea"
                 id="desc"
                 data-testid="description-input"
                 rows={4}
-                placeholder={tr('اكتب المشكلة بالعامية، زي: فيه حفرة قدام المدرسة', 'Describe it in your own words, like: There’s a pothole in front of the school')}
+                placeholder="اكتب المشكلة بالعامية، زي: فيه حفرة قدام المدرسة"
                 value={description}
                 aria-invalid={!!errors.description}
                 aria-describedby="desc-help"
@@ -277,31 +274,31 @@ export function ReportForm() {
                   if (errors.description) setErrors((er) => ({ ...er, description: undefined }));
                 }}
               />
-              {errors.description ? <span className="a-err" role="alert" id="desc-help">{errors.description}</span> : <span className="ftc-help" id="desc-help">{tr('لو مفيش صورة، اكتب ١٠ حروف على الأقل.', 'No photo? Type at least 10 characters.')}</span>}
+              {errors.description ? <span className="a-err" role="alert" id="desc-help">{errors.description}</span> : <span className="ftc-help" id="desc-help">لو مفيش صورة، اكتب ١٠ حروف على الأقل.</span>}
             </div>
           </section>
 
           <section className="ftc-card r-sec" aria-labelledby="h-loc">
-            <h2 className="w-h3" id="h-loc">{tr('المكان', 'Location')}</h2>
+            <h2 className="w-h3" id="h-loc">المكان</h2>
             <LocationCard place={place} state={locState} error={errors.address} onEditAddress={setAddress} onLocate={() => void locate()} onMove={setPoint} />
             <div className="ftc-field">
-              <label className="ftc-label" htmlFor="lm">{tr('علامة مميزة (اختياري)', 'Landmark (optional)')}</label>
-              <input className="ftc-input" id="lm" data-testid="landmark-input" type="text" placeholder={tr('مثلًا: قدام مدرسة النصر الإعدادية', 'e.g. in front of Al Nasr Prep School')} value={place.landmark ?? ''} onChange={(e) => setLandmark(e.target.value)} />
+              <label className="ftc-label" htmlFor="lm">علامة مميزة (اختياري)</label>
+              <input className="ftc-input" id="lm" data-testid="landmark-input" type="text" placeholder="مثلًا: قدام مدرسة النصر الإعدادية" value={place.landmark ?? ''} onChange={(e) => setLandmark(e.target.value)} />
             </div>
           </section>
 
           <section className="ftc-card r-sec" aria-labelledby="h-priv">
-            <h2 className="w-h3" id="h-priv">{tr('خصوصيتك', 'Your privacy')}</h2>
-            <ToggleRow icon="eye-off" title={tr('اخفي الوشوش ونمر العربيات', 'Blur faces and car plates')} subtitle={tr('بنعمل blur تلقائي قبل ما الصورة تتنشر', 'We blur them automatically before the photo is published')} on={blurFaces} onChange={setBlurFaces} testId="toggle-blur" />
-            <ToggleRow icon="shield-check" title={tr('بلّغ من غير اسم', 'Report without my name')} subtitle={tr('الحي مش هيشوف اسمك ولا رقمك', 'The district won’t see your name or number')} on={anonymous} onChange={setAnonymous} testId="toggle-anonymous" />
-            {API_MODE === 'api' && mainPhoto ? <ToggleRow icon="shield-check" title={tr('أوافق على تحليل الصورة بالذكاء الاصطناعي', 'Allow AI photo analysis')} subtitle={tr('هنرفع الصورة بشكل خاص ونبعتها لـ Gemini للتحليل. اختياري؛ تقدر تكمل بالوصف بس.', 'The photo will be uploaded privately and sent to Gemini for analysis. Optional; you can continue with text only.')} on={photoAnalysisConsent} onChange={setPhotoAnalysisConsent} testId="toggle-ai-photo-consent" /> : null}
+            <h2 className="w-h3" id="h-priv">خصوصيتك</h2>
+            <ToggleRow icon="eye-off" title="اخفي الوشوش ونمر العربيات" subtitle="بنعمل blur تلقائي قبل ما الصورة تتنشر" on={blurFaces} onChange={setBlurFaces} testId="toggle-blur" />
+            <ToggleRow icon="shield-check" title="بلّغ من غير اسم" subtitle="الحي مش هيشوف اسمك ولا رقمك" on={anonymous} onChange={setAnonymous} testId="toggle-anonymous" />
+            {API_MODE === 'api' && mainPhoto ? <ToggleRow icon="shield-check" title="أوافق على تحليل الصورة بالذكاء الاصطناعي" subtitle="هنرفع الصورة بشكل خاص ونبعتها لـ Gemini للتحليل. اختياري؛ تقدر تكمل بالوصف بس." on={photoAnalysisConsent} onChange={setPhotoAnalysisConsent} testId="toggle-ai-photo-consent" /> : null}
           </section>
           <button type="submit" hidden aria-hidden="true" tabIndex={-1} />
         </form>
 
-        <aside className="r-side" aria-label={tr('ملخص البلاغ', 'Report summary')}>
+        <aside className="r-side" aria-label="ملخص البلاغ">
           <div className="ftc-card r-sum">
-            <h2 className="w-h3" style={{ marginBottom: 12 }}>{tr('ملخص البلاغ', 'Report summary')}</h2>
+            <h2 className="w-h3" style={{ marginBottom: 12 }}>ملخص البلاغ</h2>
             <dl>
               {summary.map((r) => (
                 <div key={r.k} style={{ display: 'contents' }}><dt>{r.k}</dt><dd>{r.v}</dd></div>
@@ -312,10 +309,10 @@ export function ReportForm() {
           {duplicate ? <DuplicatePanel match={duplicate} busy={submitting === 'join'} onJoin={() => void submit(duplicate.incidentId)} onDismiss={() => setDismissedDup(duplicate.incidentId)} /> : null}
           <div className="r-send">
             {submitError ? <span className="a-err" role="alert" style={{ textAlign: 'center' }}>{submitError}</span> : null}
-            {!submitError && errorCount > 0 ? <span className="a-err" role="alert" style={{ textAlign: 'center' }}>{tr('راجع الحقول اللي متعلّمة بالأحمر.', 'Check the fields marked in red.')}</span> : null}
-            <span className="off"><Icon name="wifi" size={14} />{tr('النت ضعيف؟ البلاغ هيتحفظ ويتبعت أول ما يرجع', 'Weak signal? We’ll save your report and send it when you’re back online')}</span>
+            {!submitError && errorCount > 0 ? <span className="a-err" role="alert" style={{ textAlign: 'center' }}>راجع الحقول اللي متعلّمة بالأحمر.</span> : null}
+            <span className="off"><Icon name="wifi" size={14} />النت ضعيف؟ البلاغ هيتحفظ ويتبعت أول ما يرجع</span>
             <button className="ftc-btn ftc-btn--primary" type="button" disabled={!!submitting || photoBusy} onClick={() => void submit()} data-testid="submit-report">
-              {submitting === 'send' ? <span className="a-spin a-spin--on-red" aria-hidden="true" /> : null}{tr('ابعت البلاغ', 'Send report')} <Icon name="arrow-forward" size={20} strokeWidth={2} />
+              {submitting === 'send' ? <span className="a-spin a-spin--on-red" aria-hidden="true" /> : null}ابعت البلاغ <Icon name="arrow-forward" size={20} strokeWidth={2} />
             </button>
           </div>
         </aside>

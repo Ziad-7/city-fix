@@ -3,16 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DEFAULT_PLACE } from '@/domain/locations';
 import type { LatLng, Place } from '@/domain/types';
-import { tr } from '@/i18n';
 
 // Web port of apps/mobile/src/components/report/location.ts (browser geolocation instead of expo-location).
 export type LocationState = 'locating' | 'gps' | 'fallback';
 
 /** What a GPS fix shows as the address: the citizen's coordinates are never sent to a street-name service (see README, Privacy). */
 export const CURRENT_LOCATION_LABEL = 'موقعك الحالي';
-export const CURRENT_LOCATION_LABEL_EN = 'Your current location';
-/** The placeholder address in the current language (call during render / at the time of the fix). */
-export const currentLocationLabel = (): string => tr(CURRENT_LOCATION_LABEL, CURRENT_LOCATION_LABEL_EN);
 
 function currentPosition(timeoutMs: number): Promise<LatLng> {
   return new Promise((resolve, reject) => {
@@ -52,7 +48,7 @@ export function useReportLocation(fallback: LatLng = DEFAULT_PLACE) {
     setState('locating');
     try {
       const { lat, lng } = await currentPosition(10_000);
-      setPlace((prev) => ({ lat, lng, address: edited.current ? prev.address : currentLocationLabel(), landmark: prev.landmark }));
+      setPlace((prev) => ({ lat, lng, address: edited.current ? prev.address : CURRENT_LOCATION_LABEL, landmark: prev.landmark }));
       setState('gps');
     } catch {
       setPlace((prev) => ({ lat: fallback.lat, lng: fallback.lng, address: edited.current ? prev.address : '', landmark: prev.landmark }));

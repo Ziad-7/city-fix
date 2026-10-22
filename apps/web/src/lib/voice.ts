@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getLang, tr } from '@/i18n';
 import { API_MODE } from '@/services';
 import { uploadAndTranscribeVoiceNote } from '@/store';
 import { MAX_VOICE_SECONDS } from '@/shared/components/report/voice';
@@ -9,7 +8,7 @@ import { MAX_VOICE_SECONDS } from '@/shared/components/report/voice';
 // "سجّل بصوتك": the citizen speaks and the words land in the description box.
 // - API mode with MediaRecorder: record, upload as a voice note, POST /ai/transcribe (the contract's path;
 //   the voice note is also attached to the report).
-// - Otherwise, the browser's own speech recognition (Chrome, Edge, Safari) in Egyptian Arabic (US English when the app is in English), which needs
+// - Otherwise, the browser's own speech recognition (Chrome, Edge, Safari) in Egyptian Arabic, which needs
 //   no backend, so it also works in mock mode.
 // - Neither available (e.g. Firefox in mock mode): the row says so and the citizen types.
 
@@ -46,9 +45,9 @@ export function voiceEngine(): VoiceEngine {
 
 export type VoiceState = 'idle' | 'recording' | 'working';
 
-const msgDenied = () => tr('محتاجين إذن المايك. فعّله من إعدادات المتصفح، أو اكتب الوصف.', 'We need microphone permission. Turn it on in your browser settings, or type the description.');
-const msgSilent = () => tr('مسمعناش حاجة. قرّب من المايك وجرّب تاني.', 'We didn’t hear anything. Move closer to the microphone and try again.');
-const msgFailed = () => tr('معرفناش نكتب التسجيل. جرّب تاني، أو اكتب الوصف.', 'We couldn’t turn the recording into text. Try again, or type the description.');
+const MSG_DENIED = 'محتاجين إذن المايك. فعّله من إعدادات المتصفح، أو اكتب الوصف.';
+const MSG_SILENT = 'مسمعناش حاجة. قرّب من المايك وجرّب تاني.';
+const MSG_FAILED = 'معرفناش نكتب التسجيل. جرّب تاني، أو اكتب الوصف.';
 
 /**
  * `onText` gets each finished chunk of speech; `onVoiceNote` the uploaded voice note path (server engine).
@@ -94,7 +93,7 @@ export function useVoiceNote({ onText, onVoiceNote }: { onText: (text: string) =
     const Ctor = recognitionCtor();
     if (!Ctor) return;
     const rec = new Ctor();
-    rec.lang = getLang() === 'en' ? 'en-US' : 'ar-EG';
+    rec.lang = 'ar-EG';
     rec.continuous = true;
     rec.interimResults = true;
     let heard = false;
@@ -115,20 +114,20 @@ export function useVoiceNote({ onText, onVoiceNote }: { onText: (text: string) =
     };
     rec.onerror = (e) => {
       failed = true;
-      setError(e.error === 'not-allowed' || e.error === 'service-not-allowed' ? msgDenied() : e.error === 'no-speech' ? msgSilent() : e.error === 'aborted' ? null : msgFailed());
+      setError(e.error === 'not-allowed' || e.error === 'service-not-allowed' ? MSG_DENIED : e.error === 'no-speech' ? MSG_SILENT : e.error === 'aborted' ? null : MSG_FAILED);
     };
     rec.onend = () => {
       stopRef.current = null;
       setInterim('');
       setState('idle');
-      if (!heard && !failed) setError(msgSilent());
+      if (!heard && !failed) setError(MSG_SILENT);
     };
     stopRef.current = () => rec.stop();
     try {
       rec.start();
     } catch {
       stopRef.current = null;
-      setError(msgFailed());
+      setError(MSG_FAILED);
       return;
     }
     setState('recording');
@@ -142,7 +141,7 @@ export function useVoiceNote({ onText, onVoiceNote }: { onText: (text: string) =
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
       starting.current = false;
-      setError(msgDenied());
+      setError(MSG_DENIED);
       return;
     }
     starting.current = false;
@@ -165,7 +164,7 @@ export function useVoiceNote({ onText, onVoiceNote }: { onText: (text: string) =
         const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
         if (!blob.size) {
           setState('idle');
-          setError(msgSilent());
+          setError(MSG_SILENT);
           return;
         }
         setState('working');
@@ -177,9 +176,9 @@ export function useVoiceNote({ onText, onVoiceNote }: { onText: (text: string) =
             if (alive.current) cbs.current.onVoiceNote?.(uploaded);
           });
           if (!alive.current) return;
-          if (!path) setError(msgFailed());
+          if (!path) setError(MSG_FAILED);
           else if (text) cbs.current.onText(text);
-          else setError(msgSilent());
+          else setError(MSG_SILENT);
         } finally {
           URL.revokeObjectURL(clip);
           if (alive.current) setState('idle');
@@ -192,7 +191,7 @@ export function useVoiceNote({ onText, onVoiceNote }: { onText: (text: string) =
     } catch {
       release();
       stopRef.current = null;
-      setError(msgFailed());
+      setError(MSG_FAILED);
       return;
     }
     setState('recording');
