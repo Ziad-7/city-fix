@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import {
   Drawer,
@@ -58,25 +58,9 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
     enabled: open && !!workOrder?.department,
   });
 
-  const patchMutation = useMutation({
-    mutationFn: (data: { status?: string; team?: string; teamSize?: number; tasks?: WorkOrderTask[] }) =>
-      patchWorkOrder(workOrder!.id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['work-order', workOrder!.id] });
-      queryClient.invalidateQueries({ queryKey: ['work-orders'] });
-      queryClient.invalidateQueries({ queryKey: ['incidents'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      toast.success(`اتحدّث أمر الشغل ${workOrder!.id}.`);
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || 'حصلت مشكلة. جرّب تاني.');
-    },
-  });
-
   const handleTaskToggle = async (index: number) => {
     if (!workOrder) return;
-    const newTasks = [...workOrder.tasks];
-    newTasks[index].done = !newTasks[index].done;
+    const newTasks = workOrder.tasks.map((t, i) => (i === index ? { ...t, done: !t.done } : t));
 
     try {
       await patchWorkOrder(workOrder.id, { tasks: newTasks });
@@ -97,7 +81,9 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
         updateData.teamSize = team.size;
       }
     }
-    patchMutation.mutate(updateData);
+    await patchWorkOrder(workOrder.id, updateData);
+    await queryClient.invalidateQueries({ queryKey: ['work-order', workOrder.id] });
+    await queryClient.invalidateQueries({ queryKey: ['work-orders'] });
   };
 
   if (!workOrder) return null;

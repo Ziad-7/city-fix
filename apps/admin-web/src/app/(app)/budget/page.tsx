@@ -24,6 +24,7 @@ export default function BudgetPage() {
   const session = useSession();
   const toast = useToast();
 
+  const isAdmin = !!session && session.role === 'admin';
   const [budgetValue, setBudgetValue] = useState(300000);
   const [debouncedBudget, setDebouncedBudget] = useState(300000);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -33,7 +34,26 @@ export default function BudgetPage() {
     return () => clearTimeout(timer);
   }, [budgetValue]);
 
-  if (!session || session.role !== 'admin') {
+  const { data: budgetPlan, isLoading, error, refetch } = useQuery({
+    queryKey: ['budget', debouncedBudget],
+    queryFn: () => optimizeBudget(debouncedBudget),
+    enabled: isAdmin,
+  });
+
+  const commitMutation = useMutation({
+    mutationFn: () => commitBudgetPlan(budgetPlan!.selected.map((i) => i.incidentId)),
+    onSuccess: (result) => {
+      setShowConfirmModal(false);
+      const count = result.length;
+      toast.success(`اتعمل ${count} أمر شغل من الخطة.`);
+      router.push('/work-orders');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'حصلت مشكلة. جرّب تاني.');
+    },
+  });
+
+  if (!isAdmin) {
     return (
       <main className="ftc-admin-main">
         <div className="page">
@@ -51,24 +71,6 @@ export default function BudgetPage() {
       </main>
     );
   }
-
-  const { data: budgetPlan, isLoading, error, refetch } = useQuery({
-    queryKey: ['budget', debouncedBudget],
-    queryFn: () => optimizeBudget(debouncedBudget),
-  });
-
-  const commitMutation = useMutation({
-    mutationFn: () => commitBudgetPlan(budgetPlan!.selected.map((i) => i.incidentId)),
-    onSuccess: (result) => {
-      setShowConfirmModal(false);
-      const count = result.length;
-      toast.success(`اتعمل ${count} أمر شغل من الخطة.`);
-      router.push('/work-orders');
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'حصلت مشكلة. جرّب تاني.');
-    },
-  });
 
   const selectedCount = budgetPlan?.selected.length ?? 0;
   const isLoaded = !isLoading && budgetPlan;

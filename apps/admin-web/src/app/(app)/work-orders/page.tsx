@@ -26,22 +26,15 @@ export default function WorkOrdersPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const session = useSession();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
-  const [now, setNow] = useState(Date.now());
-  const openParam = searchParams?.get('open');
+  const [now, setNow] = useState(() => Date.now());
+  // Deep link: ?wo=<id> (spec name); ?open=<id> accepted as alias
+  const selectedId = searchParams?.get('wo') ?? searchParams?.get('open') ?? null;
 
   useEffect(() => {
-    setNow(Date.now());
     const interval = setInterval(() => setNow(Date.now()), 30000);
     return () => clearInterval(interval);
   }, []);
-
-  useEffect(() => {
-    if (openParam) {
-      setSelectedId(openParam);
-    }
-  }, [openParam]);
 
   const { data: workOrders = [], isLoading, error, refetch } = useQuery({
     queryKey: ['work-orders', selectedDepartment],
@@ -105,13 +98,11 @@ export default function WorkOrdersPage() {
   const lateText = lateCount > 0 ? `${formatNumber(lateCount)} متأخرين` : 'مفيش متأخر';
 
   const handleOpenWorkOrder = (id: string) => {
-    setSelectedId(id);
-    router.push(`?open=${id}`);
+    router.push(`?wo=${id}`);
   };
 
   const handleCloseDrawer = () => {
-    setSelectedId(null);
-    router.push('');
+    router.push('/work-orders');
   };
 
   if (!session) return null;
