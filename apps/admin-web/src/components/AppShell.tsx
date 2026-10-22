@@ -14,6 +14,7 @@ const navItems = [
   { href: '/', label: 'نظرة عامة', icon: 'grid' as const },
   { href: '/incidents', label: 'البلاغات', icon: 'alert-triangle' as const, countKey: 'incidentsOpen' },
   { href: '/map', label: 'الخريطة', icon: 'map' as const },
+  { href: '/bins', label: 'الحاويات الذكية', icon: 'trash' as const },
   { href: '/service-requests', label: 'طلبات الخدمات', icon: 'truck' as const, countKey: 'serviceRequestsOpen' },
   { href: '/work-orders', label: 'أوامر الشغل', icon: 'wrench' as const },
   { href: '/budget', label: 'الميزانية', icon: 'wallet' as const, adminOnly: true },

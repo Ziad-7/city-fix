@@ -19,7 +19,7 @@ from app.auth_adapters import DatabaseStaffDirectory, DatabaseUserRepository
 from app.config import settings, validate_settings
 from app.db import SessionLocal, get_db, init_db
 from app.models import Incident
-from app.routers import admin, auth, incidents, map, reports, service_requests, staff_auth, uploads
+from app.routers import admin, auth, bins, incidents, map, reports, service_requests, staff_auth, uploads
 from app.schemas import HealthResponse
 from app.seed import seed_db
 from app.staff_auth import StaffLoginContext
@@ -182,6 +182,8 @@ app.include_router(reports.router)
 app.include_router(incidents.router)
 app.include_router(map.router)
 app.include_router(service_requests.router)
+app.include_router(bins.iot_router)
+app.include_router(bins.admin_router)
 
 
 # ============================================================================

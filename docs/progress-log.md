@@ -1,5 +1,30 @@
 # Progress log
 
+## 2026-10-22 — PR #43 aligned with the latest Command Center/backend merge
+
+- Merged `main` at `770efef` (PR #34) into the smart-bin feature branch. Preserved its database-backed citizen routes, auth, serialization, shared client types, and updated admin UI; mounted the device and staff bin routes alongside them.
+- Migrated smart-bin schemas to the current `app.schemas.CamelModel` and retained the new telemetry tables. Added four API integration tests covering device authentication, retry deduplication, atomic batch rejection, offline backlog ordering, clock-unsynced samples, and department/citizen access boundaries.
+- Verification: backend **295 tests passed**, Ruff lint/format and the scoped seven-file mypy check passed; admin **195 tests passed**, citizen web **222 tests passed**. Both frontends passed typecheck, lint, shared-code checks, and production builds. Documentation links and Git whitespace checks passed. Existing dependency deprecation and React test warnings remain; live hosted-device validation is still pending.
+
+## 2026-10-22 — PR #43 CI fixes
+
+- Fixed the missing `async` on the admin smart-bin history service and applied Ruff's required schema formatting.
+- Replaced website Google Fonts build-time downloads with pinned local copies of the same Readex Pro, IBM Plex Sans Arabic, and Aref Ruqaa families. Font licenses and source hashes are included alongside the assets. This removes the Google URL parsing failure from the build path.
+- Verified admin typecheck and all 161 admin tests, backend Ruff formatting (86 files), and the website production build with network proxies set to an unreachable address. The original Google-font build also passed locally, so the reported CI response could not be reproduced; local fonts remove that external dependency.
+
+## 2026-10-22 — Smart-bin backend and online demo (`feat/smart-bin-demo-enhancements`)
+
+**Done**
+- Added device-authenticated, idempotent telemetry ingestion and admin bin registration to the FastAPI backend. Stored bin readings include fill, temperature, battery, and optional distance/RSSI/firmware fields.
+- Added department-scoped Command Center APIs and an Arabic smart-bin page with fleet status, alert counts, charts, and reading history.
+- Added a public static Vercel simulator with four bins, named scenarios, history charts, and controllable offline/sensor/receiver faults. It stores its sample state in the visitor's browser and cannot change live backend data.
+- Linked the demo from the citizen website footer and documented simulator setup, API routes, free hosting limits, and production database migration needs.
+
+**Still open**
+- The static public demo can be served by the existing Vercel website deployment. To show real data, deploy the FastAPI backend and a persistent database, configure `NEXT_PUBLIC_API_URL`, provision a bin through `POST /admin/bins`, and run the Python simulator in `real` mode. A free backend tier can sleep or have changing quotas; no always-on promise is made.
+- Existing production DBs need a migration for `smart_bins` and `bin_readings`; mobile/physical hardware client integration is still future work.
+- User will verify the backend and web apps; tests/builds were deliberately not run in this implementation turn.
+
 ## 2026-10-22 — CityBrain status and remaining work
 
 - Added [`AI status and remaining work`](ai-status.md) as the current reference for delivered features, test evidence, privacy/quota gates, production integration, and the free-hosting limitations.

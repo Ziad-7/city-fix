@@ -90,7 +90,7 @@ export function createApiServices(): Services {
       },
     },
     uploads: createUploadService(),
-    // POST /ai/transcribe (proposed, member 5) with the uploaded voice-note path.
+    // POST /ai/transcribe with the uploaded voice-note path.
     transcription: {
       transcribe: (path) => http('POST', '/ai/transcribe', { path }, { timeoutMs: 25000 }),
     },

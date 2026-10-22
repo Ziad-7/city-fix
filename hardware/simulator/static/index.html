@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#c8102e"><title>CityCycle smart-bin simulator</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/" aria-label="CityCycle home"><span class="brand-mark">C</span><span><b>CityCycle</b><small>SMART CITY OPERATIONS</small></span></a>
+  <div class="sim-label"><span class="pulse"></span> SIMULATED DATA <i>·</i> <span id="modeLabel">local mock</span></div>
+  <div class="local-chip"><span class="dot"></span> LOCAL DEMO</div>
+</header>
+<main class="shell">
+  <section class="intro">
+    <div><div class="eyebrow">DEVICE LAB <span>/</span> <span id="binId">BIN-SIM-001</span></div><h1>Smart bin <span>simulator</span></h1><p>Explore fill and heat events, offline buffering, and receiver-confirmed delivery.</p></div>
+    <div class="not-connected"><span aria-hidden="true">ⓘ</span><span><b>Local demonstration</b><br>Command Center and mobile apps are not connected.</span></div>
+  </section>
+  <div class="dashboard">
+    <section class="card bin-card">
+      <div class="card-head"><div><div class="eyebrow">LIVE DEVICE</div><h2>Bin condition</h2></div><span class="status-pill" id="deviceStatus">● Online</span></div>
+      <div class="bin-stage">
+        <div class="bin-illustration" aria-label="Illustration of simulated smart bin">
+          <div class="bin-lid"></div><div class="bin-body"><div class="bin-fill" id="binFill"></div><div class="bin-mark"><span>CC</span></div></div><div class="bin-foot"></div><div class="bin-sensor"><span></span></div>
+        </div>
+        <div class="fill-readout"><strong id="fillBig">20<span>%</span></strong><span>FILL LEVEL</span><div class="meter"><i id="fillMeter"></i></div><small id="fillState">Room for more</small></div>
+      </div>
+      <div class="condition-row"><div class="condition"><span class="condition-icon gold">↗</span><div><small>TEMPERATURE</small><b id="tempRead">25 °C</b><em id="heatState">Normal</em></div></div><div class="condition"><span class="condition-icon red">⌁</span><div><small>BATTERY</small><b id="batteryRead">3.90 V</b><em>Simulated voltage</em></div></div></div>
+      <div class="alert-strip" id="localAlert"><span class="alert-icon">✓</span><span><b>Local condition</b><small id="localAlertText">No active alerts</small></span></div>
+    </section>
+
+    <section class="card controls-card">
+      <div class="card-head"><div><div class="eyebrow">DEVICE CONTROLS</div><h2>Adjust sensors</h2></div><span class="small-tag">SIMULATED INPUT</span></div>
+      <div class="control-list">
+        <div class="slider-control"><div class="slider-label"><label for="fillRange">Fill level</label><div class="value-input"><input id="fillNumber" type="number" min="0" max="100" step="1" value="20" aria-label="Fill level percentage"><span>%</span></div></div><input id="fillRange" type="range" min="0" max="100" step="1" value="20"><div class="range-hints"><span>Empty</span><span>Full alert at <b id="fullThreshold">80%</b></span></div></div>
+        <div class="slider-control"><div class="slider-label"><label for="tempRange">Temperature</label><div class="value-input"><input id="tempNumber" type="number" min="-40" max="125" step="0.5" value="25" aria-label="Temperature in degrees Celsius"><span>°C</span></div></div><input id="tempRange" type="range" min="-40" max="125" step="0.5" value="25"><div class="range-hints"><span>-40 °C</span><span>Heat alert at <b id="heatThreshold">60 °C</b></span></div></div>
+        <div class="slider-control"><div class="slider-label"><label for="batteryRange">Battery voltage</label><div class="value-input"><input id="batteryNumber" type="number" min="0" max="6" step="0.01" value="3.9" aria-label="Battery voltage"><span>V</span></div></div><input id="batteryRange" type="range" min="0" max="6" step="0.01" value="3.9"><div class="range-hints"><span>0 V</span><span>6 V</span></div></div>
+      </div>
+      <div class="action-row"><button class="button primary" id="recordBtn">＋ Record reading</button><button class="button secondary" id="sendBtn">Send now <span>↗</span></button></div>
+      <div class="device-tools"><div class="toggle-line"><div><b>Device network</b><small id="networkHint">Telemetry can be delivered</small></div><label class="switch"><input type="checkbox" id="networkToggle" checked aria-label="Device network online"><span></span></label></div><div class="toggle-line auto-line"><div><b>Auto-fill demo</b><small>+5% every 5 seconds · pauses at 100%</small></div><button class="button mini" id="autoBtn" aria-pressed="false"><span class="play-icon">▶</span> Start</button></div></div>
+      <div class="notice" id="actionNotice" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="card delivery-card">
+      <div class="card-head"><div><div class="eyebrow">DELIVERY STATUS</div><h2>Outbox &amp; receiver</h2></div><span class="status-pill muted" id="queuePill">0 queued</span></div>
+      <div class="delivery-flow"><div class="flow-side"><span class="flow-icon device-icon">▣</span><div><small>DEVICE OUTBOX</small><b id="queueCount">0 pending</b><em id="retryStatus">Waiting for readings</em></div></div><span class="flow-arrow" aria-hidden="true">⟶</span><div class="flow-side"><span class="flow-icon server-icon">⌂</span><div><small id="receiverTitle">MOCK RECEIVER</small><b id="receiverCount">0 confirmed</b><em id="receiverStatus">Separate local HTTP service</em></div></div></div>
+      <div class="ack-summary"><div><small>ACKNOWLEDGED</small><b id="ackCount">0</b></div><div class="right"><small>LAST DELIVERY</small><b id="lastDelivery">—</b></div></div>
+      <div class="receiver-latest" id="receiverLatest"><div class="latest-head"><b>Latest receiver-confirmed reading</b><span id="receiverSeq">—</span></div><div class="latest-values"><div><small>FILL</small><b id="receiverFill">—</b></div><div><small>TEMPERATURE</small><b id="receiverTemp">—</b></div><div class="latest-alerts" id="receiverAlerts">Awaiting delivery</div></div></div>
+      <div class="section-subhead"><b>Recent readings</b><span>Newest first</span></div><div class="reading-list" id="readingList"><div class="empty-state">Record a reading to begin the demo.</div></div>
+      <div class="section-subhead event-heading"><b>ACK &amp; delivery log</b><span>Recent activity</span></div><div class="event-list" id="ackLog"><div class="empty-event">No delivery events yet.</div></div>
+    </section>
+
+    <section class="card policy-card" id="policyCard">
+      <div class="card-head"><div><div class="eyebrow">MOCK SERVER</div><h2>Receiver settings</h2></div><span class="server-live"><i></i> READY</span></div>
+      <p class="muted-copy">These settings are returned with the next valid device response. Editing them does not change the device until it receives that response.</p>
+      <div class="policy-grid"><label>Sample interval <span><input id="intervalInput" type="number" min="0.1" max="1440" step="1" value="30"> min</span></label><label>Full threshold <span><input id="fullInput" type="number" min="0" max="100" step="1" value="80"> %</span></label><label>Heat threshold <span><input id="heatInput" type="number" min="-40" max="125" step="1" value="60"> °C</span></label></div>
+      <button class="button secondary wide" id="savePolicy">Update mock settings <span>↗</span></button><div class="device-policy">DEVICE SETTINGS LAST RECEIVED <b id="devicePolicy">30 min · Full 80% · Heat 60 °C</b></div>
+    </section>
+  </div>
+  <footer><span><b>SIMULATED DATA</b> · Distance uses a demo calibration; radio strength is fixed for display.</span><span>CityCycle · Device Lab</span></footer>
+</main>
+<script src="/app.js" defer></script>
+</body></html>
