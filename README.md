@@ -4,7 +4,7 @@
 
 CityFix is a smart-city platform for Egyptian cities. Citizens report problems (potholes, open manholes, broken streetlights, garbage…) and request municipal services from a **mobile app**; the city's **Command Center** triages them with AI, prioritises them transparently, coordinates the fix, and plans repairs within a limited budget.
 
-Built in 7 days by a team of 5 for a hackathon.
+Built in 7 days by a team of 5, joined by a 6th member for hardware (CityCycle), for a hackathon.
 
 ## What's in this repo
 
@@ -13,6 +13,7 @@ Built in 7 days by a team of 5 for a hackathon.
 | `apps/mobile/` | Citizen app — Expo (React Native) + TypeScript, Arabic-first RTL | In progress (Stage 1) |
 | `apps/web/` | Citizen website (client portal) — Next.js, same design as the app | Planned |
 | `apps/admin-web/` | City Command Center — Next.js web dashboard | Built and integrated with the local demo API (`feat/admin-dashboard`); deployment pending |
+| `hardware/` | CityCycle smart bin and hub scale: ESP32 firmware (PlatformIO), schematics, enclosure, BOM in EGP | Planned |
 | `backend/` | FastAPI API (SQLite for now, Supabase/PostGIS later), CityBrain AI, budget optimizer | Built (`feat/admin-dashboard`): shared database-backed auth, citizen, admin and map routes; production PostgreSQL, real OTP and deployment pending |
 | `docs/` | Decisions, design, specs, progress log | Living |
 
@@ -25,6 +26,7 @@ Built in 7 days by a team of 5 for a hackathon.
 | 3 | Admin web (Command Center) | _[name]_ | `apps/admin-web` | [brief](docs/team/admin-web.md) |
 | 4 | Backend API & database | Moataz (citizen API/auth) + teammate (DB/operations; name pending) | `backend/` | [ownership split](docs/team/backend-split.md) |
 | 5 | AI & smart features (CityBrain) | _[name]_ | `backend/app/ai`, `backend/app/optimizer` | [brief](docs/team/ai-features.md) |
+| 6 | Hardware & IoT (CityCycle smart bin) | _[name]_ | `hardware/` | [brief](docs/team/hardware-iot.md) |
 
 Who owns what, hand-offs, the week plan and how we review: **[docs/team/README.md](docs/team/README.md)**. Design for every screen: [docs/design/index.html](docs/design/index.html).
 
@@ -53,6 +55,7 @@ Sign in with `admin@cityfix.demo` / `FixCity2026!`. Details: `backend/README.md`
 
 - **FixFirst** — report → incident management, explainable priority score, budget planning.
 - **CityServe** — municipal service requests (bulky-waste pickup, tree maintenance).
+- **CityCycle** (سيتي سايكل — إعادة التدوير) — waste and recycling: recyclables pickup, collector mode for informal collectors, smart bins, material prices in EGP, impact. Added for the SolveThe17 2.0 Track 4 waste-economy challenge ([vision](docs/vision.md)).
 - **CityOps** — work orders, department assignment, status updates.
 - **CityPulse** — the live incident map.
 - **CityBrain** — AI triage: category + severity from photo and Egyptian Arabic text, duplicate detection, department routing.
@@ -60,6 +63,7 @@ Sign in with `admin@cityfix.demo` / `FixCity2026!`. Details: `backend/README.md`
 ## Documentation
 
 - [Docs index](docs/README.md)
+- [Vision: the complete sustainable-city picture](docs/vision.md) · [CityCycle features per member](docs/features/README.md) · [Decision 0004 — CityCycle](docs/decisions/0004-citycycle-waste-pillar.md)
 - [Decision 0001 — Citizen mobile app instead of a web portal](docs/decisions/0001-mobile-app-instead-of-web-portal.md)
 - [Mobile implementation spec](docs/mobile/implementation-spec.md)
 - [Team roles](docs/team/README.md)

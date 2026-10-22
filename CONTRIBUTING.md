@@ -9,6 +9,7 @@ main                       always runnable; protected
   ├── feat/admin-…           member 3 · apps/admin-web (Command Center)
   ├── feat/api-…             member 4 · backend/ (API, database, deploy)
   ├── feat/ai-…              member 5 · backend/app/ai, backend/app/optimizer
+  ├── feat/hw-…              member 6 · hardware/ (firmware, schematics, enclosure, BOM)
   └── docs/… · design/…      shared docs and design (member 1 approves design)
 ```
 
@@ -27,9 +28,10 @@ One workflow per folder. A workflow runs only when its own folder (or its own wo
 | `web-ci.yml` | `apps/web/**` | the mobile files listed in `apps/web/scripts/check-shared.sh`, `docs/design/css/cityfix.css` | `check:shared`, typecheck, lint, vitest, build, Playwright e2e |
 | `admin-web-ci.yml` | `apps/admin-web/**` | the six shared mobile files in `docs/team/admin-web.md` | `check:shared` (if present), typecheck, lint, test, build |
 | `backend-ci.yml` | `backend/**` | | `ruff check`, `ruff format --check`, `pytest` (Python 3.12, dummy env, no secrets; the paid AI eval is not run) |
+| `hardware-ci.yml` | `hardware/**` | | `pio run` in `hardware/firmware` (PlatformIO, ESP32); skipped until `platformio.ini` exists |
 | `docs-ci.yml` | `docs/**`, `README.md`, `CONTRIBUTING.md`, `apps/*/README.md` | | `scripts/check-doc-links.mjs` (relative links in Markdown and `docs/design` HTML) |
 
-`admin-web-ci.yml` and `backend-ci.yml` finish green without doing anything until `apps/admin-web` / `backend` exist. If you add a shared file to a copy list, add its path to the other app's workflow triggers too.
+`admin-web-ci.yml`, `backend-ci.yml` and `hardware-ci.yml` finish green without doing anything until `apps/admin-web` / `backend` / `hardware/firmware/platformio.ini` exist. If you add a shared file to a copy list, add its path to the other app's workflow triggers too.
 
 Run the same checks locally before opening a PR:
 
@@ -40,6 +42,8 @@ cd apps/mobile && npm ci && npm run typecheck && npm run lint && npm test && EXP
 cd apps/web && npm ci && npm run check:shared && npm run typecheck && npm run lint && npm test && npm run build && npm run test:e2e
 # backend
 cd backend && pip install -e ".[dev]" && ruff check . && ruff format --check . && OTP_MODE=demo JWT_SECRET=dummy pytest
+# hardware firmware
+cd hardware/firmware && pip install platformio && pio run
 # docs (from the repo root)
 node scripts/check-doc-links.mjs
 ```
