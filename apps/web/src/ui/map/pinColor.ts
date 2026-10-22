@@ -1,6 +1,5 @@
 import type { IncidentStatus, MapPin } from '@/domain/types';
 import { STATUS_LABEL_AR } from '@/domain/types';
-import { statusLabel, tr } from '@/i18n';
 import type { PinGlyph } from '../brand';
 import { CRITICAL_COLOR, STATUS_COLOR } from '../StatusChip';
 
@@ -19,5 +18,5 @@ const STATUS_GLYPH: Record<IncidentStatus, PinGlyph> = {
 /** Dot = received, arrow = assigned, clock = in progress, check = resolved, "!" = critical. */
 export const pinGlyph = (p: MapPin): PinGlyph => (p.critical ? 'alert' : STATUS_GLYPH[p.status]);
 
-/** Text for the marker's title and alt: "title · status" (and "· خطر" / "· Danger" when critical). */
-export const pinLabel = (p: MapPin) => `${p.title} · ${statusLabel(p.status, STATUS_LABEL_AR[p.status])}${p.critical ? ` · ${tr('خطر', 'Danger')}` : ''}`;
+/** Text for the marker's title and alt: "title · status" (and "· خطر" when critical). */
+export const pinLabel = (p: MapPin) => `${p.title} · ${STATUS_LABEL_AR[p.status]}${p.critical ? ' · خطر' : ''}`;
