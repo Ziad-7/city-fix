@@ -67,9 +67,9 @@ def incident_timeline(db: Session, incident_id: str, oldest_first: bool = True) 
 
 
 def incident_public(db: Session, incident: Incident, user_id: str = None) -> dict:
-    """Serialize incident for public/citizen view.
+    """CONTRACT: Serialize incident for public/citizen view (Incident shape).
 
-    Includes timeline from activity_log and whether the user is following.
+    Includes location object, priority object, timeline, and isFollowing.
     """
     timeline = incident_timeline(db, incident.id, oldest_first=True)
 
@@ -80,32 +80,47 @@ def incident_public(db: Session, incident: Incident, user_id: str = None) -> dic
             IncidentFollower.user_id == user_id,
         ).first() is not None
 
+    # Get department Arabic name
+    dept = db.query(Department).filter_by(id=incident.department_id).first()
+    dept_name = dept.name_ar if dept else incident.department_id or ""
+
     result = {
         "id": incident.id,
         "categoryId": incident.category_id,
         "title": incident.title,
         "severity": incident.severity,
+        "priority": {
+            "score": incident.priority_score,
+            "factors": incident.priority_factors or [],
+        },
         "status": incident.status,
-        "priorityScore": incident.priority_score,
-        "priorityFactors": incident.priority_factors,
-        "followersCount": incident.followers_count,
-        "lat": incident.lat,
-        "lng": incident.lng,
-        "address": incident.address,
-        "landmark": incident.landmark,
+        "department": dept_name,
+        "estimatedCostEgp": incident.estimated_cost_egp,
+        "linkedReportIds": [r.id for r in db.query(Report).filter_by(incident_id=incident.id).all()],
+        "followers": incident.followers_count,
+        "location": {
+            "lat": incident.lat,
+            "lng": incident.lng,
+            "address": incident.address,
+            "landmark": incident.landmark,
+        },
         "sensitivePlace": incident.sensitive_place,
+        "areaUnderserved": incident.area_underserved,
+        "workOrderId": incident.work_order_id,
+        "eta": incident.eta,
         "timeline": timeline,
-        "isFollowing": is_following,
         "createdAt": iso_z(incident.created_at),
+        "updatedAt": iso_z(incident.updated_at),
+        "isFollowing": is_following if user_id else None,
     }
     # Remove None values
     return {k: v for k, v in result.items() if v is not None}
 
 
 def admin_incident(db: Session, incident: Incident) -> dict:
-    """Serialize incident for admin view.
+    """CONTRACT: Serialize incident for admin view (AdminIncident shape).
 
-    Includes admin-specific fields like linkedReports, triage, dueAt, overdue, etc.
+    Adds linkedReports, triage, dueAt, overdue, external, inBudgetPlan, lastReviewedBy/At to Incident.
     """
     # Get timeline
     timeline = incident_timeline(db, incident.id, oldest_first=True)
@@ -113,12 +128,7 @@ def admin_incident(db: Session, incident: Incident) -> dict:
     # I1: Get linked reports with source from report data
     linked_reports = []
     for report in db.query(Report).filter_by(incident_id=incident.id).all():
-        reporter = db.query(Report).filter_by(id=report.id).first()
-        if reporter:
-            reporter_name = "بلاغ بدون اسم" if report.anonymous else "مواطن"
-        else:
-            reporter_name = "مواطن"
-
+        reporter_name = "بلاغ بدون اسم" if report.anonymous else "مواطن"
         linked_reports.append({
             "id": report.id,
             "reporter": reporter_name,
@@ -144,11 +154,9 @@ def admin_incident(db: Session, incident: Incident) -> dict:
 
     # Get department and external info
     dept = db.query(Department).filter_by(id=incident.department_id).first()
-    external = False
-    external_hotline = None
-    if dept and dept.external_hotline:
-        external = True
-        external_hotline = dept.external_hotline
+    dept_name = dept.name_ar if dept else incident.department_id or ""
+    external = bool(dept.external_hotline) if dept else False
+    external_hotline = dept.external_hotline if dept else None
 
     # Check if in budget plan (last saved plan)
     in_budget_plan = False
@@ -162,7 +170,6 @@ def admin_incident(db: Session, incident: Incident) -> dict:
 
     # Get triage suggestion if any
     triage = None
-    # Get the first report's AI suggestion (simplified)
     first_report = db.query(Report).filter_by(incident_id=incident.id).first()
     if first_report:
         from app.models import AISuggestion
@@ -181,21 +188,35 @@ def admin_incident(db: Session, incident: Incident) -> dict:
                 "confirmed": payload.get("confirmed", False),
             }
 
+    # CONTRACT: Incident base shape
     result = {
         "id": incident.id,
         "categoryId": incident.category_id,
         "title": incident.title,
         "severity": incident.severity,
+        "priority": {
+            "score": incident.priority_score,
+            "factors": incident.priority_factors or [],
+        },
         "status": incident.status,
-        "priorityScore": incident.priority_score,
-        "priorityFactors": incident.priority_factors,
-        "followersCount": incident.followers_count,
-        "lat": incident.lat,
-        "lng": incident.lng,
-        "address": incident.address,
-        "landmark": incident.landmark,
+        "department": dept_name,
+        "estimatedCostEgp": incident.estimated_cost_egp,
+        "linkedReportIds": [r.id for r in linked_reports],
+        "followers": incident.followers_count,
+        "location": {
+            "lat": incident.lat,
+            "lng": incident.lng,
+            "address": incident.address,
+            "landmark": incident.landmark,
+        },
         "sensitivePlace": incident.sensitive_place,
+        "areaUnderserved": incident.area_underserved,
+        "workOrderId": incident.work_order_id,
+        "eta": incident.eta,
         "timeline": timeline,
+        "createdAt": iso_z(incident.created_at),
+        "updatedAt": iso_z(incident.updated_at),
+        # AdminIncident additions
         "linkedReports": linked_reports,
         "triage": triage,
         "dueAt": iso_z(due_at),
@@ -205,7 +226,6 @@ def admin_incident(db: Session, incident: Incident) -> dict:
         "inBudgetPlan": in_budget_plan,
         "lastReviewedBy": last_reviewed_by,
         "lastReviewedAt": last_reviewed_at,
-        "createdAt": iso_z(incident.created_at),
     }
     # Remove None values
     return {k: v for k, v in result.items() if v is not None}
@@ -283,7 +303,10 @@ def work_order(db: Session, wo: WorkOrder) -> dict:
 
 
 def admin_service_request(db: Session, sr: ServiceRequest) -> dict:
-    """Serialize service request for admin view (I3)."""
+    """CONTRACT: Serialize service request for admin view (ServiceRequest shape).
+
+    Includes location object and I3 fields: department, assignee, workOrderId.
+    """
     # I3: Get department from service type mapping
     service_type_to_dept = {
         "bulky_waste": "sanitation",
@@ -305,16 +328,32 @@ def admin_service_request(db: Session, sr: ServiceRequest) -> dict:
     if wo:
         work_order_id = wo.id
 
+    # Get timeline for service request
+    timeline = []
+    for activity in db.query(ActivityLog).filter(
+        ActivityLog.entity_type == "service_request",
+        ActivityLog.entity_id == sr.id,
+    ).order_by(ActivityLog.at.asc()).all():
+        timeline.append({
+            "status": activity.status,
+            "note": activity.note,
+            "actor": activity.actor,
+            "at": iso_z(activity.at),
+        })
+
     result = {
         "id": sr.id,
         "citizenId": sr.citizen_id,
         "serviceType": sr.service_type,
         "details": sr.details,
-        "lat": sr.lat,
-        "lng": sr.lng,
-        "address": sr.address,
-        "landmark": sr.landmark,
+        "location": {
+            "lat": sr.lat,
+            "lng": sr.lng,
+            "address": sr.address,
+            "landmark": sr.landmark,
+        },
         "status": sr.status,
+        "timeline": timeline,
         "paid": sr.paid,
         "department": dept_name,
         "assignee": assignee,
@@ -326,13 +365,16 @@ def admin_service_request(db: Session, sr: ServiceRequest) -> dict:
 
 
 def map_pin(incident: Incident) -> dict:
-    """Serialize incident as a map pin."""
+    """CONTRACT: Serialize incident as a map pin (MapPin shape).
+
+    Returns: id, categoryId, title, status, severity, lat, lng (no address).
+    """
     return {
-        "incidentId": incident.id,
-        "lat": incident.lat,
-        "lng": incident.lng,
+        "id": incident.id,
+        "categoryId": incident.category_id,
+        "title": incident.title,
         "status": incident.status,
         "severity": incident.severity,
-        "title": incident.title,
-        "address": incident.address,
+        "lat": incident.lat,
+        "lng": incident.lng,
     }
