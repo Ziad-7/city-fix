@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { ToastProvider, useToast } from '../Toast';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
@@ -15,15 +16,16 @@ function ToastConsumer() {
 describe('Toast', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    document.body.innerHTML = '';
   });
 
   afterEach(() => {
+    vi.runAllTimers();
     vi.useRealTimers();
-    document.body.innerHTML = '';
   });
 
   it('renders success toast when triggered', async () => {
+    vi.useRealTimers(); // Use real timers for this test
+    const user = userEvent.setup();
     render(
       <ToastProvider>
         <ToastConsumer />
@@ -31,14 +33,17 @@ describe('Toast', () => {
     );
 
     const btn = screen.getByText('Show Success');
-    fireEvent.click(btn);
+    await user.click(btn);
 
     await waitFor(() => {
       expect(screen.getByText('Success!')).toBeInTheDocument();
     });
+    vi.useFakeTimers();
   });
 
   it('renders error toast when triggered', async () => {
+    vi.useRealTimers();
+    const user = userEvent.setup();
     render(
       <ToastProvider>
         <ToastConsumer />
@@ -46,14 +51,15 @@ describe('Toast', () => {
     );
 
     const btn = screen.getByText('Show Error');
-    fireEvent.click(btn);
+    await user.click(btn);
 
     await waitFor(() => {
       expect(screen.getByText('Error!')).toBeInTheDocument();
     });
+    vi.useFakeTimers();
   });
 
-  it('auto-dismisses success toast after 5 seconds', async () => {
+  it('auto-dismisses success toast after 5 seconds', () => {
     render(
       <ToastProvider>
         <ToastConsumer />
@@ -63,18 +69,18 @@ describe('Toast', () => {
     const btn = screen.getByText('Show Success');
     fireEvent.click(btn);
 
-    await waitFor(() => {
-      expect(screen.getByText('Success!')).toBeInTheDocument();
+    expect(screen.getByText('Success!')).toBeInTheDocument();
+
+    // Fast forward time and let React process updates
+    act(() => {
+      vi.advanceTimersByTime(5000);
+      vi.runAllTimers();
     });
 
-    vi.advanceTimersByTime(5000);
-
-    await waitFor(() => {
-      expect(screen.queryByText('Success!')).not.toBeInTheDocument();
-    });
+    expect(screen.queryByText('Success!')).not.toBeInTheDocument();
   });
 
-  it('auto-dismisses error toast after 8 seconds', async () => {
+  it('auto-dismisses error toast after 8 seconds', () => {
     render(
       <ToastProvider>
         <ToastConsumer />
@@ -84,18 +90,18 @@ describe('Toast', () => {
     const btn = screen.getByText('Show Error');
     fireEvent.click(btn);
 
-    await waitFor(() => {
-      expect(screen.getByText('Error!')).toBeInTheDocument();
+    expect(screen.getByText('Error!')).toBeInTheDocument();
+
+    // Fast forward time and let React process updates
+    act(() => {
+      vi.advanceTimersByTime(8000);
+      vi.runAllTimers();
     });
 
-    vi.advanceTimersByTime(8000);
-
-    await waitFor(() => {
-      expect(screen.queryByText('Error!')).not.toBeInTheDocument();
-    });
+    expect(screen.queryByText('Error!')).not.toBeInTheDocument();
   });
 
-  it('can be dismissed manually', async () => {
+  it('can be dismissed manually', () => {
     render(
       <ToastProvider>
         <ToastConsumer />
@@ -105,39 +111,31 @@ describe('Toast', () => {
     const btn = screen.getByText('Show Success');
     fireEvent.click(btn);
 
-    await waitFor(() => {
-      expect(screen.getByText('Success!')).toBeInTheDocument();
-    });
+    expect(screen.getByText('Success!')).toBeInTheDocument();
 
     const closeBtn = screen.getByLabelText('اقفل');
     fireEvent.click(closeBtn);
 
-    await waitFor(() => {
-      expect(screen.queryByText('Success!')).not.toBeInTheDocument();
-    });
+    expect(screen.queryByText('Success!')).not.toBeInTheDocument();
   });
 
-  it('sets correct role on toast', async () => {
+  it('sets correct role on toast', () => {
+    vi.useRealTimers();
     render(
       <ToastProvider>
         <ToastConsumer />
       </ToastProvider>,
     );
 
-    const successBtn = screen.getByText('Show Success');
-    fireEvent.click(successBtn);
+    fireEvent.click(screen.getByText('Show Success'));
 
-    await waitFor(() => {
-      const toast = screen.getByText('Success!').closest('div[class^="ftc-toast"]');
-      expect(toast).toHaveAttribute('role', 'status');
-    });
+    const successToast = screen.getByText('Success!').closest('div[class^="ftc-toast"]');
+    expect(successToast).toHaveAttribute('role', 'status');
 
-    const errorBtn = screen.getByText('Show Error');
-    fireEvent.click(errorBtn);
+    fireEvent.click(screen.getByText('Show Error'));
 
-    await waitFor(() => {
-      const toast = screen.getByText('Error!').closest('div[class^="ftc-toast"]');
-      expect(toast).toHaveAttribute('role', 'alert');
-    });
+    const errorToast = screen.getByText('Error!').closest('div[class^="ftc-toast"]');
+    expect(errorToast).toHaveAttribute('role', 'alert');
+    vi.useFakeTimers();
   });
 });

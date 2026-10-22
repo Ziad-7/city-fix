@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../Icon';
 
@@ -29,8 +29,15 @@ export function useToast(): ToastContextType {
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const timerRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   const dismiss = useCallback((id: string) => {
+    // Clear any pending timeout for this toast
+    const timerId = timerRef.current.get(id);
+    if (timerId) {
+      clearTimeout(timerId);
+      timerRef.current.delete(id);
+    }
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
@@ -40,9 +47,21 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
     const timeout = kind === 'success' ? 5000 : 8000;
     const timerId = setTimeout(() => dismiss(id), timeout);
+    timerRef.current.set(id, timerId);
 
     return { id, timerId };
   }, [dismiss]);
+
+  // Clean up all timeouts on unmount
+  useEffect(() => {
+    const timers = timerRef.current;
+    return () => {
+      timers.forEach((timerId) => {
+        clearTimeout(timerId);
+      });
+      timers.clear();
+    };
+  }, []);
 
   const success = useCallback((msg: string) => {
     add('success', msg);
@@ -55,7 +74,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ success, error }}>
       {children}
-      {typeof window !== 'undefined' &&
+      {toasts.length > 0 &&
         createPortal(
           <div className="ftc-toasts" aria-live="polite">
             {toasts.map((t) => (

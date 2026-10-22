@@ -77,13 +77,11 @@ export function DataTable<T>({
                 key={c.id}
                 scope="col"
                 aria-sort={
-                  c.sortValue
-                    ? sort && sort.id === c.id
-                      ? sort.dir === 'asc'
-                        ? 'ascending'
-                        : 'descending'
-                      : 'none'
-                    : undefined
+                  sort && sort.id === c.id
+                    ? sort.dir === 'asc'
+                      ? 'ascending'
+                      : 'descending'
+                    : 'none'
                 }
               >
                 {c.sortValue ? (

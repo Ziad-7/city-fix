@@ -4,11 +4,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 describe('ConfirmModal', () => {
   beforeEach(() => {
-    document.body.innerHTML = '';
+    // Setup before each test
   });
 
   afterEach(() => {
-    document.body.innerHTML = '';
+    // Cleanup handled by testing-library
   });
 
   it('renders when open', () => {

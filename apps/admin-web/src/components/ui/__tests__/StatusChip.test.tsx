@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { StatusChip, STATUS_CHIP } from '../StatusChip';
 import type { IncidentStatus } from '@/domain/types';
 import type { WorkOrderStatus } from '@/domain/admin-types';
