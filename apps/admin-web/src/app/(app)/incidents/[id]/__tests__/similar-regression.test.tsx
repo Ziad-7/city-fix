@@ -62,14 +62,6 @@ const incident = {
   inBudgetPlan: false,
 } as unknown as AdminIncident;
 
-const similar = {
-  ...incident,
-  id: 'INC-502',
-  title: 'حفرة قريبة',
-  createdAt: '2026-10-12T10:00:00.000Z',
-  linkedReports: [incident.linkedReports[0]],
-} as unknown as AdminIncident;
-
 // Regression: the backend answers /similar with DuplicateMatch[] (no location); the page used to crash with
 // "Cannot read properties of undefined (reading 'lat')". The real service layer runs here, only http is mocked.
 const similarFull = { ...incident, id: 'INC-502', title: 'حفرة قريبة' };
