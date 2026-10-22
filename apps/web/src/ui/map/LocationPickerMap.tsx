@@ -4,6 +4,7 @@ import type L from 'leaflet';
 import { useMemo } from 'react';
 import { Marker, useMapEvents } from 'react-leaflet';
 import type { LatLng } from '@/domain/types';
+import { useTr } from '@/i18n';
 import { pinSvg } from '../brand';
 import { BaseMap, pinIcon } from './LeafletBase';
 
@@ -14,9 +15,10 @@ function ClickToMove({ onMove }: { onMove: (p: LatLng) => void }) {
 
 /** Report location: a draggable red pin; clicking the map moves it too. */
 export default function LocationPickerMap({ point, onMove }: { point: LatLng; onMove: (p: LatLng) => void }) {
+  const tr = useTr();
   const icon = useMemo(() => pinIcon(pinSvg('#C8102E')), []);
   return (
-    <BaseMap center={point} zoom={16} label="خريطة: موقع البلاغ">
+    <BaseMap center={point} zoom={16} label={tr('خريطة: موقع البلاغ', 'Map: report location')}>
       <ClickToMove onMove={onMove} />
       <Marker
         position={[point.lat, point.lng]}

@@ -2,7 +2,7 @@
 
 The browser version of the citizen app: report a problem, follow it, book a CityServe service, browse the map. It mirrors the mobile app screen for screen and follows the web mockups in [`docs/design/screens/web/`](../../docs/design/screens/web/). Brief: [`docs/team/citizen-web-portal.md`](../../docs/team/citizen-web-portal.md).
 
-Next.js (App Router) · TypeScript · Tailwind v4 · Leaflet + OpenStreetMap · zod · zustand · Vitest · Playwright. Arabic, right to left.
+Next.js (App Router) · TypeScript · Tailwind v4 · Leaflet + OpenStreetMap · zod · zustand · Vitest · Playwright. Arabic (right to left) by default, English as a second language.
 
 ## Run it
 
@@ -41,10 +41,18 @@ Sign in with any valid Egyptian mobile number (for example `01012345678`) and th
 | `/report/category` → `/report/new` → `/report/success` | Category, report form (photo, location, details, duplicate check), confirmation |
 | `/requests`, `/requests/[id]` | My requests and the tracking timeline |
 | `/services`, `/services/bulky-waste`, `/services/tree`, `/services/garbage-schedule` | CityServe, the bulky-waste booking, the free tree-trimming booking and the garbage collection schedule |
-| `/map` | Incident map with category filters and pin cards |
-| `/profile` | Name, area, sign-out |
+| `/services/recycling` | CityCycle recyclables pickup: materials and kg, free or paid with an EGP estimate, photo with AI suggestion, place, day and slot, voice note |
+| `/impact` | My recycling impact (kg, EGP; CO₂ only when the backend sends a verified figure) |
+| `/recycling-guide` | Picture sorting guide, printable; open without signing in |
+| `/map` | Incident map with category filters and pin cards, and a smart-bin layer with "report full" |
+| `/notifications` | Notifications, reached from the bell in the top bar |
+| `/profile` | Name, area, language (Arabic / English), CityCycle links, a collector card that points to the app, sign-out |
 
-Everything except `/sign-in` sits in the `(portal)` route group, which sends signed-out visitors to sign-in and brings them back afterwards.
+Pickups appear in `/requests` under the Recycling filter (`RCY-` ids). Everything except `/sign-in` and `/recycling-guide` sits in the `(portal)` route group, which sends signed-out visitors to sign-in and brings them back afterwards. Collector mode is not on the web; collectors use the app.
+
+## Languages
+
+Arabic (right to left) is the default; English (left to right) is a second language, chosen from the sign-in link, the top-bar toggle or the profile. The choice is saved in `localStorage` (`ftc.prefs.v1`) and `<html lang dir>` is set before the first paint. Strings are written inline as `tr('عربي', 'English')` exactly like the mobile app, with domain labels in `src/i18n/labels.ts`; use the bilingual helpers (`localDigits`, `formatDate`, `relativeTime`) rather than the `*Ar` variants.
 
 ## Folder layout
 

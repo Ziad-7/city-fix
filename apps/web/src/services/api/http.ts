@@ -1,3 +1,5 @@
+import { getLang, tr } from '@/i18n';
+
 let token: string | null = null;
 let onUnauthorized: (() => void) | null = null;
 
@@ -16,6 +18,10 @@ export const MSG_GENERIC = 'حصلت مشكلة، جرّب تاني';
 export const MSG_NETWORK = 'مفيش اتصال بالنت، جرّب تاني';
 export const MSG_SERVER = 'السيرفر مش متاح دلوقتي، جرّب بعد شوية';
 
+const msgGeneric = () => tr(MSG_GENERIC, 'Something went wrong. Try again');
+const msgNetwork = () => tr(MSG_NETWORK, 'No internet connection. Try again');
+const msgServer = () => tr(MSG_SERVER, "The server isn't available right now. Try again in a bit");
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -28,7 +34,7 @@ export class ApiError extends Error {
 
 /** Citizen-safe message from an error response: the contract's `{ detail }`, else a friendly Arabic line. */
 function messageFor(status: number, raw: string): string {
-  if (status >= 500) return MSG_SERVER;
+  if (status >= 500) return msgServer();
   try {
     const body = JSON.parse(raw) as { detail?: unknown };
     // FastAPI 422 sends `detail` as an array of validation objects: not for citizens.
@@ -36,7 +42,7 @@ function messageFor(status: number, raw: string): string {
   } catch {
     // not JSON
   }
-  return MSG_GENERIC;
+  return msgGeneric();
 }
 
 export type HttpOptions = { timeoutMs?: number };
@@ -48,7 +54,7 @@ export async function http<T>(
   body?: unknown,
   options: HttpOptions = {},
 ): Promise<T> {
-  if (!API_URL) throw new Error('NEXT_PUBLIC_API_URL مش متحدد');
+  if (!API_URL) throw new Error(tr('NEXT_PUBLIC_API_URL مش متحدد', 'NEXT_PUBLIC_API_URL is not set'));
   const controller = options.timeoutMs ? new AbortController() : undefined;
   let timeout: ReturnType<typeof setTimeout> | undefined;
   const request = async (): Promise<T> => {
@@ -59,14 +65,14 @@ export async function http<T>(
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
-          'Accept-Language': 'ar',
+          'Accept-Language': getLang(),
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: body === undefined ? undefined : JSON.stringify(body),
         ...(controller ? { signal: controller.signal } : {}),
       });
     } catch {
-      throw new ApiError(0, controller?.signal.aborted ? MSG_SERVER : MSG_NETWORK);
+      throw new ApiError(0, controller?.signal.aborted ? msgServer() : msgNetwork());
     }
 
     let raw = '';
@@ -74,7 +80,7 @@ export async function http<T>(
       try {
         raw = await res.text();
       } catch {
-        if (controller?.signal.aborted) throw new ApiError(0, MSG_SERVER);
+        if (controller?.signal.aborted) throw new ApiError(0, msgServer());
       }
     }
     if (!res.ok) {
@@ -87,7 +93,7 @@ export async function http<T>(
     try {
       return JSON.parse(raw) as T;
     } catch {
-      throw new ApiError(res.status, MSG_GENERIC);
+      throw new ApiError(res.status, msgGeneric());
     }
   };
 
@@ -95,7 +101,7 @@ export async function http<T>(
   const deadline = new Promise<never>((_resolve, reject) => {
     timeout = setTimeout(() => {
       controller.abort();
-      reject(new ApiError(0, MSG_SERVER));
+      reject(new ApiError(0, msgServer()));
     }, options.timeoutMs);
   });
   try {

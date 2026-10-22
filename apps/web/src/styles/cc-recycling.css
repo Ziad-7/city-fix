@@ -1,0 +1,56 @@
+/* CityCycle: recycling flow styles (materials, stepper, bins). */
+.cc-badge { display: inline-flex; align-items: center; justify-content: center; flex: none; border-radius: 50%; background: var(--ftc-red-soft); color: var(--ftc-red); }
+.cc-badge.is-on { background: var(--ftc-red); color: var(--ftc-on-red); }
+.cc-material-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.cc-material-cell {
+  flex: 1 1 48%; display: flex; align-items: center; gap: 8px; min-height: 64px; padding: 10px; text-align: start; cursor: pointer;
+  border-radius: var(--ftc-radius-md); border: 1px solid var(--ftc-line); background: var(--ftc-surface); color: var(--ftc-ink); font-family: var(--ftc-font-sans);
+}
+.cc-material-cell.is-on { background: var(--ftc-red-soft); border: 2px solid var(--ftc-red); padding: 9px; }
+.cc-material-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.cc-material-name { font: 600 14px/22px var(--ftc-font-sans); }
+.cc-price-unset { color: var(--ftc-gold-deep); }
+.cc-check { color: var(--ftc-red); flex: none; }
+.cc-material-lines { display: flex; flex-direction: column; gap: 10px; }
+.cc-material-line { display: flex; align-items: center; gap: 10px; }
+.cc-demo-note { margin: 0; color: var(--ftc-gold-deep); }
+
+.cc-stepper { display: inline-flex; align-items: center; gap: 8px; }
+.cc-stepper-btn {
+  width: 44px; height: 44px; border-radius: var(--ftc-radius-pill); border: 1px solid var(--ftc-red); background: var(--ftc-surface); color: var(--ftc-red);
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;
+}
+.cc-stepper-btn:disabled { opacity: .35; cursor: default; }
+.cc-stepper-minus { width: 16px; height: 2.5px; border-radius: 2px; background: var(--ftc-red); }
+.cc-stepper-value { min-width: 64px; text-align: center; font: 600 14px/22px var(--ftc-font-sans); }
+
+.cc-bin-chip {
+  display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border-radius: var(--ftc-radius-pill);
+  color: var(--cc-bin); background: color-mix(in srgb, var(--cc-bin) 10%, transparent); font: 600 12px/18px var(--ftc-font-sans); white-space: nowrap;
+}
+.cc-bin-sheet { background: var(--ftc-surface); border-radius: var(--ftc-radius-lg); padding: 14px; display: flex; flex-direction: column; gap: 10px; box-shadow: var(--ftc-shadow-float); }
+.cc-bin-top { display: flex; align-items: center; gap: 12px; }
+.cc-bin-icon { width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex: none; color: var(--cc-bin); background: color-mix(in srgb, var(--cc-bin) 10%, transparent); }
+.cc-bin-text { flex: 1; min-width: 0; }
+.cc-bin-title { font: 600 15px/24px var(--ftc-font-sans); color: var(--ftc-ink); }
+.cc-bin-close { width: 44px; height: 44px; border-radius: 50%; border: 0; background: transparent; color: var(--ftc-ink-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.cc-bin-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.cc-bin-track { height: 8px; border-radius: 4px; background: var(--ftc-line); overflow: hidden; }
+.cc-bin-track > span { display: block; height: 100%; border-radius: 4px; background: var(--cc-bin); }
+.cc-bin-warn { margin: 0; color: var(--ftc-urgent-deep); }
+.cc-bin-error { margin: 6px 0 0; color: var(--ftc-urgent); }
+.cc-bin-sent { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; color: var(--ftc-status-resolved); }
+.cc-bin-actions { display: flex; flex-direction: column; }
+
+/* Recycling pickup form (services/recycling). */
+.cc-suggest { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: var(--ftc-radius-md); background: var(--ftc-red-soft); }
+.cc-suggest-head { display: flex; align-items: center; gap: 6px; color: var(--ftc-red); }
+.cc-suggest-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.cc-estimate { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: var(--ftc-radius-md); background: var(--ftc-gold-soft); color: var(--ftc-gold-deep); }
+.cc-estimate .ftc-help { display: block; color: var(--ftc-gold-deep); }
+.cc-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cc-mode .w-choice { flex-direction: row; }
+.cc-mode-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.cc-mode-text small { font-size: 12px; line-height: 18px; color: var(--ftc-ink-muted); }
+.cc-guide-link { align-self: flex-start; }
+@media (max-width: 640px) { .cc-mode { grid-template-columns: 1fr; } }

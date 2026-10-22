@@ -1,5 +1,20 @@
 # Progress log
 
+## 2026-10-22 — Citizen website: CityCycle screens and English (branch `feat/web-citycycle-english`)
+
+**Done** (planned and reviewed by Claude Opus 5.5, implemented by Sonnet 5.5 agents in parallel with disjoint file ownership)
+- **CityCycle on the web (mock mode first):** recycling pickup form (`/services/recycling`), pickups inside My requests (Recycling filter, `RCY-` detail with timeline, cancel while requested, confirm weighing), impact page, picture sorting guide (works signed out, printable), notifications page, smart-bin layer on the map with "report full", CityCycle entries on home, services and profile, and a collector card that points to the app.
+- **English as a second language:** language toggle (sign-in, top bar, profile), `<html lang dir>` set before first paint and kept in sync, report flow, services, requests, map, home, profile and the page chrome translated, `Accept-Language` sent to the API, English speech recognition, LTR style fixes. Arabic stays the default and unchanged.
+- Nothing under `src/shared`, `src/i18n` or the copied store and service files changed, so `check:shared` still passes.
+- Verification: typecheck, lint (0 errors), 222 unit tests, production build in mock mode, and the Playwright suite at desktop and phone widths.
+
+**How to test**: `cd apps/web && npm run dev`, sign in with `01012345678` / `123456`, give recyclables from Services, follow the pickup in My requests, open the bins layer on the map, switch to English from the profile or the top bar.
+
+**Known gaps**
+- Mock data lives in one browser, so "a pickup made on the phone appears on the website" works only in API mode, and the backend has no `/recycling`, `/collectors` or price-list routes yet.
+- `/ai/waste-classify` is mocked until the AI member delivers it.
+- No web design mockups exist for the new pages; they reuse the app's tokens and components.
+
 ## 2026-10-22 — Demo seed works on PostgreSQL
 
 - PostgreSQL enforces foreign keys statement by statement, and the seed inserted categories and staff accounts before their parent rows were flushed (SQLite does not check this). The seed now flushes departments and profiles first. Verified by seeding a real PostgreSQL 16 database (34 incidents).
