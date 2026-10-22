@@ -1,5 +1,11 @@
 # Progress log
 
+## 2026-10-23 — Citizen website: features restored, voice back on the browser engine (branch `feat/web-restore-browser-voice`)
+
+- Restored the CityCycle screens and English for the website (PR #46) after the temporary revert in #47. The tree is identical to the PR #46 merge.
+- **Voice:** the website had worked at its first deploy because it ran in mock mode, where voice uses the browser's own speech recognition. Switching `NEXT_PUBLIC_API_MODE` to `api` on 22 Oct 23:37 (Cairo) made it use the server path (`/ai/transcribe`), which needs a Gemini key and private storage that the `city-fix-api` project does not have, so voice failed with no fallback. `voiceEngine()` now prefers the browser's speech recognition in every mode and uses the server path only when the browser has none and the site is in API mode. The Gemini privacy notice shows only when the server path is the one in use.
+- Not changed: the mobile app (native speech path) and the backend transcription endpoint. To use Gemini on the web later, set `GEMINI_API_KEY` and the Supabase storage variables on `city-fix-api` and check that FFmpeg is available there.
+
 ## 2026-10-22 — Citizen website: CityCycle screens and English (branch `feat/web-citycycle-english`)
 
 **Done** (planned and reviewed by Claude Opus 5.5, implemented by Sonnet 5.5 agents in parallel with disjoint file ownership)

@@ -8,7 +8,6 @@ import { SEVERITY_LABEL_AR, STATUS_LABEL_AR, type AlreadyReported, type Category
 import { reportedBy } from '@/components/report/text';
 import { useTr } from '@/i18n';
 import { labelOfCategory, severityLabel, statusLabel } from '@/i18n/labels';
-import { API_MODE } from '@/services';
 import type { LocationState } from '@/lib/location';
 import { MAX_SECONDS, useVoiceNote } from '@/lib/voice';
 import { formatTimer } from '@/shared/components/report/voice';
@@ -204,7 +203,7 @@ export function VoiceRow({ highlight, onText, onVoiceNote }: { highlight?: boole
         </button>
         <span className="tx"><span className="w-t" aria-live="polite">{title}</span><span className="w-m">{sub}</span></span>
       </div>
-      {API_MODE === 'api' ? <span className="ftc-help">{tr('التسجيل هيرتفع بشكل خاص ويتبعت لـ Gemini لتحويله لنص. النسخة المجانية ممكن تستخدم التسجيلات لتحسين منتجات Google؛ التسجيل اختياري وتقدر تكتب بدلًا منه.', 'The recording is uploaded privately and sent to Gemini for transcription. Google may use content submitted on its free tier to improve its products. Recording is optional; you can type instead.')}</span> : null}
+      {engine === 'server' ? <span className="ftc-help">{tr('التسجيل هيرتفع بشكل خاص ويتبعت لـ Gemini لتحويله لنص. النسخة المجانية ممكن تستخدم التسجيلات لتحسين منتجات Google؛ التسجيل اختياري وتقدر تكتب بدلًا منه.', 'The recording is uploaded privately and sent to Gemini for transcription. Google may use content submitted on its free tier to improve its products. Recording is optional; you can type instead.')}</span> : null}
       {interim ? <span className="ftc-help" aria-live="polite">«{interim}»</span> : null}
       {error ? <span className="a-err" role="alert" data-testid="voice-error">{error}</span> : null}
     </div>

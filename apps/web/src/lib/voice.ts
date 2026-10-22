@@ -7,11 +7,12 @@ import { uploadAndTranscribeVoiceNote } from '@/store';
 import { MAX_VOICE_SECONDS } from '@/shared/components/report/voice';
 
 // "سجّل بصوتك": the citizen speaks and the words land in the description box.
-// - API mode with MediaRecorder: record, upload as a voice note, POST /ai/transcribe (the contract's path;
-//   the voice note is also attached to the report).
-// - Otherwise, the browser's own speech recognition (Chrome, Edge, Safari) in Egyptian Arabic (US English when the app is in English), which needs
-//   no backend, so it also works in mock mode.
-// - Neither available (e.g. Firefox in mock mode): the row says so and the citizen types.
+// - First choice, in every mode: the browser's own speech recognition (Chrome, Edge, Safari) in Egyptian Arabic
+//   (US English when the app is in English). It needs no key, storage or backend, so it works in mock and api mode.
+// - Fallback, only in API mode and only when the browser has no speech recognition (e.g. Firefox) but can record:
+//   record, upload as a voice note, POST /ai/transcribe (the contract's path; the voice note is also attached to
+//   the report). That path needs the API to have a Gemini key and private storage configured.
+// - Neither available: the row says so and the citizen types.
 
 export const MAX_SECONDS = MAX_VOICE_SECONDS;
 
@@ -39,8 +40,8 @@ const canRecord = () => typeof window !== 'undefined' && 'MediaRecorder' in wind
 export type VoiceEngine = 'server' | 'browser' | null;
 
 export function voiceEngine(): VoiceEngine {
-  if (API_MODE === 'api' && canRecord()) return 'server';
   if (recognitionCtor()) return 'browser';
+  if (API_MODE === 'api' && canRecord()) return 'server';
   return null;
 }
 
