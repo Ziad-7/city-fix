@@ -30,6 +30,8 @@ export const colors = {
   iconMuted: '#C9D1D4',
   /** Ground colour of the static map illustration. */
   mapGround: '#F1EEE8',
+  /** Dark translucent chip over a photo (remove-photo button). */
+  scrim: 'rgba(22,22,22,0.72)',
 } as const;
 
 export const spacing = { s1: 4, s2: 8, s3: 12, s4: 16, s6: 24, s8: 32 } as const;

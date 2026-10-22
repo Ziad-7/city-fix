@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
-import { MaterialBadge, MaterialLines, PickupStatusChip, QueueBanner } from '@/components/citycycle';
+import { DemoPricesNote, MaterialBadge, MaterialLines, PickupStatusChip, QueueBanner } from '@/components/citycycle';
 import { StateMessage } from '@/components/requests';
 import { dayText, slotLabel } from '@/components/requests/labels';
 import { AppText, Button, Card, ChoiceChip, Screen, ScreenHeader, TextField } from '@/components/ui';
@@ -22,6 +22,7 @@ import { useTr } from '@/i18n';
 import { useCollector, useCollectorQueue } from '@/store';
 import { queuedFor } from '@/store/collectorQueue';
 import { colors, fonts } from '@/theme/tokens';
+import { isolateLtr } from '@/utils/digits';
 import { formatDistance } from '@/utils/geo';
 
 /** One job for a collector: the open request before accepting; after accepting, the exact pin, weighing and finishing. */
@@ -57,7 +58,7 @@ export default function CollectorJobScreen() {
     }
   };
 
-  const header = <ScreenHeader title={id ? `#${id}` : tr('طلب', 'Request')} />;
+  const header = <ScreenHeader title={id ? isolateLtr(`#${id}`) : tr('طلب', 'Request')} />;
 
   if (!pickup && !job) {
     return (
@@ -80,7 +81,7 @@ export default function CollectorJobScreen() {
           <Row icon="coins" text={pickupModeLabel(job.mode)} />
           {job.note ? <Row icon="info" text={job.note} /> : null}
         </Card>
-        <AppText variant="caption" color={colors.inkMuted}>{tr('الموقع بالظبط بيظهر بعد ما تقبل.', 'The exact location appears once you accept.')}</AppText>
+        <AppText variant="caption" color={colors.inkMuted}>{tr('المكان تقريبي لحد ما تقبل، والموقع بالظبط بيظهر بعدها.', 'The place is approximate until you accept; the exact location shows after.')}</AppText>
         {error ? <AppText variant="caption" color={colors.urgent} accessibilityRole="alert">{error}</AppText> : null}
         {notice ? <AppText variant="caption" color={colors.goldDeep}>{notice}</AppText> : null}
         <Button label={tr('اقبل الطلب', 'Accept this request')} loading={busy === 'accept'} onPress={() => run('accept', () => accept(job))} testID="job-accept" />
@@ -153,6 +154,7 @@ export default function CollectorJobScreen() {
             </View>
           ))}
           <AppText variant="smallStrong">{tr('الإجمالي', 'Total')}: {formatKg(totals.totalKg)}{!totals.hasUnpriced ? ` · ${formatEgp(totals.totalValueEgp)}` : ''}</AppText>
+          <DemoPricesNote />
         </Card>
       ) : null}
 

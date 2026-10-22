@@ -51,7 +51,7 @@ export const collectorDisplayName = (p: Pick<RecyclingPickup, 'collectorName'>):
 
 export type PickupListFilter = 'all' | 'reports' | 'services' | 'open' | 'fixed' | 'recycling';
 
-/** Does a recycling pickup belong under this "طلباتي" chip? Open = still moving, fixed = done or cancelled. */
+/** Does a recycling pickup belong under this "طلباتي" chip? Open = still moving. Finished pickups are not "Fixed": they show under all and recycling. */
 export function pickupInFilter(status: PickupStatus, filter: PickupListFilter): boolean {
   switch (filter) {
     case 'all':
@@ -60,7 +60,7 @@ export function pickupInFilter(status: PickupStatus, filter: PickupListFilter): 
     case 'open':
       return status === 'requested' || status === 'accepted' || status === 'weighed';
     case 'fixed':
-      return status === 'completed' || status === 'cancelled';
+      return false; // "اتصلّحت" is for reports and services; finished pickups live under "تدوير" and "الكل"
     default:
       return false; // reports and services chips never show pickups
   }

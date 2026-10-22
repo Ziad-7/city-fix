@@ -2,9 +2,10 @@ import { StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { dayText, slotLabel } from '@/components/requests/labels';
 import { AppText, Card } from '@/components/ui';
-import { formatEgp, formatKg, pickupModeLabel, type CollectorJob } from '@/domain/citycycle';
+import { estimateValue, formatEgp, formatKg, pickupModeLabel, type CollectorJob } from '@/domain/citycycle';
 import { useTr } from '@/i18n';
 import { materialsSummary } from '@/logic/citycycle';
+import { useRecycling } from '@/store';
 import { colors, radius } from '@/theme/tokens';
 import { localDigits } from '@/utils/digits';
 import { formatDistance } from '@/utils/geo';
@@ -14,6 +15,8 @@ import { MaterialBadge } from './MaterialParts';
 export function JobCard({ job, onPress, pending }: { job: CollectorJob; onPress: () => void; pending?: boolean }) {
   const tr = useTr();
   const title = materialsSummary(job.items, (n) => tr(`+${localDigits(n)}`, `+${n}`));
+  const prices = useRecycling((s) => s.prices);
+  const partial = estimateValue(job.items, prices).unpriced.length > 0;
   return (
     <Card onPress={onPress} accessibilityLabel={`${title}, ${formatKg(job.estimatedKg)}`} testID={`job-${job.id}`} style={styles.card}>
       <View style={styles.top}>
@@ -26,7 +29,7 @@ export function JobCard({ job, onPress, pending }: { job: CollectorJob; onPress:
           <AppText variant="smallStrong" numberOfLines={2}>{title}</AppText>
           <AppText variant="caption" color={colors.inkMuted}>
             {tr('تقريبًا', 'About')} {formatKg(job.estimatedKg)}
-            {job.mode === 'paid' && job.estimatedValueEgp !== undefined ? ` · ${formatEgp(job.estimatedValueEgp)}` : ''}
+            {job.mode === 'paid' && job.estimatedValueEgp !== undefined ? ` · ${partial ? tr('من ', 'From ') : ''}${formatEgp(job.estimatedValueEgp)}` : ''}
           </AppText>
         </View>
         {job.distanceM !== undefined ? (

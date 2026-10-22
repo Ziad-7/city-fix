@@ -197,7 +197,7 @@ export default function RecyclingPickupScreen() {
         </FormSection>
       ) : null}
 
-      <FormSection title={tr('صورة (اختياري)', 'Photo (optional)')} hint={tr('بنقترح الخامة من الصورة وإنت اللي بتأكّد.', 'We suggest the material from the photo, and you confirm.')}>
+      <FormSection title={tr('صورة (اختياري)', 'Photo (optional)')} hint={tr('بنقترح الخامة من الصورة والتأكيد ليك.', 'We suggest the material from the photo, and you confirm.')}>
         {photo ? (
           <View style={styles.photoBox}>
             <Image source={{ uri: photo }} accessibilityLabel={tr('صورة الخامات', 'Photo of the materials')} style={StyleSheet.absoluteFill} resizeMode="cover" />
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
   weights: { gap: 10 },
   weightRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   photoBox: { height: 150, borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.statusReceivedBg },
-  remove: { position: 'absolute', top: 8, end: 8, width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(22,22,22,0.72)', alignItems: 'center', justifyContent: 'center' },
+  remove: { position: 'absolute', top: 8, end: 8, width: 28, height: 28, borderRadius: 14, backgroundColor: colors.scrim, alignItems: 'center', justifyContent: 'center' },
   suggest: { gap: 8 },
   suggestHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   suggestChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

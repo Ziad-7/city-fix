@@ -93,7 +93,7 @@ function Pending() {
   const [busy, setBusy] = useState(false);
   return (
     <>
-      <StateMessage icon="clock" title={collectorStatusLabel('pending')} body={tr('مكتب الحي بيراجع طلبك. هتقدر تشوف الطلبات أول ما يتفعّل.', 'The district office is reviewing your application. You can see requests as soon as it is approved.')} actionLabel={tr('حدّث', 'Refresh')} onAction={() => void loadMe()} />
+      <StateMessage icon="clock" title={collectorStatusLabel('pending')} body={tr('مكتب الحي بيراجع طلبك. الطلبات هتظهر أول ما يتفعّل.', 'The district office is reviewing your application. You can see requests as soon as it is approved.')} actionLabel={tr('حدّث', 'Refresh')} onAction={() => void loadMe()} />
       {API_MODE === 'mock' ? (
         <Button
           label={tr('(تجربة) اعتبرني موثّق', '(Demo) Mark me as verified')}
