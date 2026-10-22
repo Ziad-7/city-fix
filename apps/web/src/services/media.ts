@@ -15,6 +15,16 @@ export function fitWithin(width: number, height: number, max = MAX_PHOTO_SIDE): 
   return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) };
 }
 
+/** Random v4 UUID for an `Idempotency-Key` header (stored with a queued item so every retry sends the same one). */
+export function newIdempotencyKey(): string {
+  const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
+  if (c?.randomUUID) return c.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (ch) => {
+    const r = Math.floor(Math.random() * 16);
+    return (ch === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
+
 /** A device-local file that must be uploaded (a storage path returned by the API must not be). */
 export function needsUpload(uri: string | undefined | null): uri is string {
   return !!uri && /^(file|blob|content|ph|assets-library|data):/i.test(uri);
@@ -107,4 +117,22 @@ export async function prepareReportInput(input: NewReportInput, upload: Upload):
   let voiceNoteUri = input.voiceNoteUri;
   if (needsUpload(voiceNoteUri)) voiceNoteUri = await upload(voiceNoteUri, 'voice_note', voiceContentType(voiceNoteUri));
   return { ...input, photoUris, voiceNoteUri };
+}
+
+/**
+ * Before a report waits in the offline queue: copy its device-local photos and voice note somewhere that survives
+ * the OS clearing the cache (`persist` is the platform's copy: app storage on the phone, a data URI on the web).
+ * A file that cannot be copied keeps its original URI.
+ */
+export async function persistReportFiles(input: NewReportInput, persist: (uri: string) => Promise<string>): Promise<NewReportInput> {
+  const keep = async (uri: string): Promise<string> => {
+    if (!needsUpload(uri)) return uri;
+    try {
+      return await persist(uri);
+    } catch {
+      return uri;
+    }
+  };
+  const photoUris = await Promise.all(input.photoUris.map(keep));
+  return { ...input, photoUris, ...(input.voiceNoteUri ? { voiceNoteUri: await keep(input.voiceNoteUri) } : {}) };
 }

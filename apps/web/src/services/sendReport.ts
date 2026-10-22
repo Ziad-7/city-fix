@@ -11,8 +11,9 @@ export async function sendReport(
   userId: string,
   input: NewReportInput,
   onPrepared?: (prepared: NewReportInput) => void,
+  idempotencyKey?: string,
 ): Promise<{ report: Report; incident: Incident }> {
   const prepared = await prepareReportInput(input, (uri, kind, type) => services.uploads.upload(uri, kind, type));
   onPrepared?.(prepared);
-  return services.incidents.submitReport(userId, prepared);
+  return services.incidents.submitReport(userId, prepared, idempotencyKey);
 }

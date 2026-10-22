@@ -45,7 +45,8 @@ function messageFor(status: number, raw: string): string {
   return msgGeneric();
 }
 
-export type HttpOptions = { timeoutMs?: number };
+/** `headers` are extra request headers, e.g. `Idempotency-Key` on POSTs that create something. */
+export type HttpOptions = { timeoutMs?: number; headers?: Record<string, string> };
 
 /** Minimal typed JSON fetch against EXPO_PUBLIC_API_URL. Empty bodies (204) resolve to `undefined`. */
 export async function http<T>(
@@ -65,6 +66,7 @@ export async function http<T>(
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
+          ...(options.headers ?? {}),
           'Accept-Language': getLang(),
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },

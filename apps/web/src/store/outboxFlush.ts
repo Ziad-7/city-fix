@@ -1,5 +1,5 @@
 import { tr } from '@/i18n';
-import { classifyFailure } from '@/services/media';
+import { classifyFailure, newIdempotencyKey } from '@/services/media';
 import { isOffline } from '@/services/network';
 import { sendReport } from '@/services/sendReport';
 import { backoffMs, reloadOutbox, useOutbox, withOutboxLock, type OutboxItem } from './useOutbox';
@@ -104,8 +104,11 @@ async function runFlush(opts: FlushOptions): Promise<FlushResult> {
 
 async function deliver(item: OutboxItem): Promise<'sent' | 'dropped' | 'kept' | 'auth'> {
   const outbox = useOutbox.getState();
+  // Items queued before keys existed get one now, kept for every later attempt.
+  const key = item.idempotencyKey ?? newIdempotencyKey();
+  if (!item.idempotencyKey) outbox.update(item.id, { idempotencyKey: key });
   try {
-    const res = await sendReport(item.userId, item.input, (prepared) => outbox.update(item.id, { input: prepared }));
+    const res = await sendReport(item.userId, item.input, (prepared) => outbox.update(item.id, { input: prepared }), key);
     // Only into the signed-in user's lists (the session may have ended while the POST was in flight).
     if (useSession.getState().userId === item.userId) useReports.getState().ingestSubmitted(res, { last: false });
     outbox.remove(item.id);

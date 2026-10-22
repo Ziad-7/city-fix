@@ -31,7 +31,7 @@ import { services } from '@/services';
 import { PHOTO_CONTENT_TYPE } from '@/services/media';
 import { useRecycling, useSession } from '@/store';
 import { DemoPricesNote, MaterialGrid } from '@/ui/citycycle';
-import { ChoiceGroup } from '@/ui/controls';
+import { ChoiceGroup, ToggleRow } from '@/ui/controls';
 import { DayPicker } from '@/ui/DayPicker';
 import { Icon } from '@/ui/Icon';
 import { LocationCard, VoiceRow } from '../../report/new/parts';
@@ -55,6 +55,7 @@ export default function RecyclingPickupPage() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoProblem, setPhotoProblem] = useState<string | null>(null);
+  const [photoAnalysisConsent, setPhotoAnalysisConsent] = useState(false);
   const [suggestion, setSuggestion] = useState<Suggestion>({ state: 'none' });
   const [mode, setMode] = useState<PickupMode>('paid');
   const [day, setDay] = useState(days[0]);
@@ -110,15 +111,27 @@ export default function RecyclingPickupPage() {
     }
     setPhotoBusy(false);
     setPhoto(uri);
-    // The AI check is a suggestion only: any failure just means no suggestion.
+    photoTicket.current += 1;
+    setSuggestion({ state: 'none' });
+    if (photoAnalysisConsent) void suggest(uri);
+  };
+  const suggest = async (uri: string) => {
     const ticket = ++photoTicket.current;
     setSuggestion({ state: 'loading' });
     try {
       const path = await uploadPhoto(uri);
-      const value = await services.waste.classify(path);
+      const value = await services.waste.classify(path, true);
       if (ticket === photoTicket.current) setSuggestion(value.materials.length > 0 ? { state: 'ready', value } : { state: 'none' });
     } catch {
       if (ticket === photoTicket.current) setSuggestion({ state: 'none' });
+    }
+  };
+  const onConsentChange = (on: boolean) => {
+    setPhotoAnalysisConsent(on);
+    if (on && photo && suggestion.state === 'none') void suggest(photo);
+    if (!on) {
+      photoTicket.current += 1;
+      setSuggestion({ state: 'none' });
     }
   };
   const removePhoto = () => {
@@ -185,6 +198,14 @@ export default function RecyclingPickupPage() {
 
           <section className="ftc-card v-sec" aria-labelledby="c3">
             <header><h2 className="w-h3" id="c3">{tr('صورة (اختياري)', 'Photo (optional)')}</h2><span>{tr('بنقترح الخامة من الصورة والقرار في إيدك.', 'We suggest the material from the photo, and you confirm.')}</span></header>
+            <ToggleRow
+              testId="toggle-waste-photo-consent"
+              icon="shield-check"
+              title={tr('أوافق على تحليل الصورة بالذكاء الاصطناعي', 'Allow AI photo analysis')}
+              subtitle={tr('هنرفع الصورة بشكل خاص ونحلّلها عشان نقترح الخامات. اختياري؛ تقدر تختار الخامات بنفسك.', 'The photo is uploaded privately and analysed to suggest materials. Optional; you can pick the materials yourself.')}
+              on={photoAnalysisConsent}
+              onChange={onConsentChange}
+            />
             <PhotoBlock photo={photo} busy={photoBusy} problem={photoProblem} suggestion={suggestion} selected={selected} onFiles={(f) => void addPhoto(f)} onRemove={removePhoto} onAccept={acceptSuggestion} />
           </section>
 

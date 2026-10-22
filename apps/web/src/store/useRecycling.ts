@@ -18,7 +18,8 @@ type RecyclingState = {
   impactStatus: LoadStatus;
   refresh: () => Promise<void>;
   loadPrices: () => Promise<void>;
-  createPickup: (input: NewRecyclingPickupInput) => Promise<RecyclingPickup>;
+  /** Pass the same `idempotencyKey` when retrying the same request after a failure. */
+  createPickup: (input: NewRecyclingPickupInput, idempotencyKey?: string) => Promise<RecyclingPickup>;
   /** Deep link / uncached id: fetches one pickup. Resolves false when it does not exist. */
   loadPickup: (id: string) => Promise<boolean>;
   cancelPickup: (id: string, note?: string) => Promise<void>;
@@ -65,8 +66,8 @@ export const useRecycling = create<RecyclingState>((set, get) => ({
     }
   },
 
-  async createPickup(input) {
-    const p = await services.recycling.create(uid(), input);
+  async createPickup(input, idempotencyKey) {
+    const p = await services.recycling.create(uid(), input, idempotencyKey);
     set((s) => ({ pickups: replace(s.pickups, p), status: 'ready' }));
     return p;
   },

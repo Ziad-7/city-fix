@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useIsRTL } from '@/i18n';
+import { useIsRTL, useTr } from '@/i18n';
 import { colors, radius, shadows } from '@/theme/tokens';
 import { AppText } from './AppText';
 import { Icon } from '../Icon';
@@ -18,6 +18,7 @@ export type SelectFieldProps = {
 
 /** Dropdown replacement: a 48 px field that opens a bottom-sheet list. */
 export function SelectField({ label, value, options, onChange, testID }: SelectFieldProps) {
+  const tr = useTr();
   const [open, setOpen] = useState(false);
   const insets = useSafeAreaInsets();
   const rtl = useIsRTL();
@@ -30,7 +31,7 @@ export function SelectField({ label, value, options, onChange, testID }: SelectF
         <Icon name="chevron-down" size={18} color={colors.inkMuted} />
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable style={[styles.backdrop, { direction: rtl ? 'rtl' : 'ltr' }]} onPress={() => setOpen(false)}>
+        <Pressable accessible={false} importantForAccessibility="no" style={[styles.backdrop, { direction: rtl ? 'rtl' : 'ltr' }]} onPress={() => setOpen(false)}>
           <View style={[styles.sheet, { paddingBottom: 16 + insets.bottom }]}>
             <AppText variant="h3" style={styles.sheetTitle}>{label}</AppText>
             <FlatList
@@ -54,6 +55,9 @@ export function SelectField({ label, value, options, onChange, testID }: SelectF
                 );
               }}
             />
+            <Pressable accessibilityRole="button" accessibilityLabel={tr('إغلاق', 'Close')} onPress={() => setOpen(false)} style={styles.close}>
+              <AppText variant="smallStrong" color={colors.inkMuted}>{tr('إغلاق', 'Close')}</AppText>
+            </Pressable>
           </View>
         </Pressable>
       </Modal>
@@ -62,6 +66,7 @@ export function SelectField({ label, value, options, onChange, testID }: SelectF
 }
 
 const styles = StyleSheet.create({
+  close: { alignItems: 'center', paddingVertical: 12 },
   wrap: { flex: 1, gap: 6 },
   field: { height: 48, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
   value: { flex: 1 },

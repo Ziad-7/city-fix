@@ -39,10 +39,11 @@ export interface AuthService {
 
 export interface IncidentService {
   /** POST /reports. Creates a report and a new incident, or links to `linkToIncidentId`. */
-  submitReport(userId: string, input: NewReportInput): Promise<{ report: Report; incident: Incident }>;
+  /** `idempotencyKey` is sent as the `Idempotency-Key` header: a retry of the same submit must reuse it. */
+  submitReport(userId: string, input: NewReportInput, idempotencyKey?: string): Promise<{ report: Report; incident: Incident }>;
   /** GET /reports (mine), newest first. */
   listMyReports(userId: string): Promise<Report[]>;
-  getReport(id: string): Promise<Report | null>;
+  getReport(userId: string, id: string): Promise<Report | null>;
   /** GET /incidents */
   listIncidents(): Promise<Incident[]>;
   /** GET /incidents/{id} */
@@ -104,7 +105,7 @@ export interface RecyclingService {
   /** GET /recycling/materials?district= : one row per material, `priceEgpPerKg` null where no price is set. */
   materials(district: string): Promise<MaterialPrice[]>;
   /** POST /recycling/pickups */
-  create(userId: string, input: NewRecyclingPickupInput): Promise<RecyclingPickup>;
+  create(userId: string, input: NewRecyclingPickupInput, idempotencyKey?: string): Promise<RecyclingPickup>;
   /** GET /recycling/pickups (mine), newest first. */
   listMine(userId: string): Promise<RecyclingPickup[]>;
   /** GET /recycling/pickups/{id}: null when missing or not the caller's. */
@@ -149,7 +150,8 @@ export interface BinService {
 
 /** POST /ai/waste-classify (member 5): a suggestion only, the person confirms. Never rejects: falls back. */
 export interface WasteAiService {
-  classify(path: string): Promise<WasteClassification>;
+  /** `photoConsent` must be true only after the person accepted the photo-analysis notice; without it the backend returns the fallback. */
+  classify(path: string, photoConsent?: boolean): Promise<WasteClassification>;
 }
 
 export type Services = {
