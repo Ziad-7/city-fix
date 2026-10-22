@@ -9,7 +9,7 @@ import { LocationCard } from '@/components/report/ReportParts';
 import { VoiceNote, type VoiceStatus } from '@/components/report/VoiceNote';
 import { appendTranscript } from '@/components/report/voice';
 import { DayTile, FormSection, gridStyles } from '@/components/services';
-import { AppText, Button, Card, ChoiceChip, Screen, ScreenHeader, TextField } from '@/components/ui';
+import { AppText, Button, Card, ChoiceChip, Screen, ScreenHeader, TextField, ToggleRow } from '@/components/ui';
 import {
   DEFAULT_KG,
   MATERIAL_IDS,
@@ -29,7 +29,7 @@ import { SLOTS, nextWorkingDays } from '@/domain/services-catalog';
 import type { SlotId } from '@/domain/types';
 import { slotLabel, useTr } from '@/i18n';
 import { services } from '@/services';
-import { PHOTO_CONTENT_TYPE, compressImage } from '@/services/media';
+import { PHOTO_CONTENT_TYPE, compressImage, newIdempotencyKey } from '@/services/media';
 import { uploadAndTranscribeVoiceNote, useRecycling, useSession } from '@/store';
 import { colors, radius } from '@/theme/tokens';
 import { localDigits } from '@/utils/digits';
@@ -54,6 +54,7 @@ export default function RecyclingPickupScreen() {
   const [kgById, setKgById] = useState<Partial<Record<MaterialId, number>>>({});
   const [photo, setPhoto] = useState<string | null>(null);
   const [photoProblem, setPhotoProblem] = useState(false);
+  const [photoAnalysisConsent, setPhotoAnalysisConsent] = useState(false);
   const [suggestion, setSuggestion] = useState<{ state: 'loading' } | { state: 'ready'; value: WasteClassification } | { state: 'none' }>({ state: 'none' });
   const [mode, setMode] = useState<PickupMode>('paid');
   const [day, setDay] = useState(days[0]);
@@ -65,6 +66,8 @@ export default function RecyclingPickupScreen() {
   const [busy, setBusy] = useState(false);
   const uploaded = useRef<{ local: string; path: string } | null>(null);
   const photoTicket = useRef(0);
+  /** One key per request: pressing "send" again after a failure must not create a second pickup. */
+  const submitKey = useRef({ key: newIdempotencyKey(), sig: '' });
   const voiceTicket = useRef(0);
 
   useEffect(() => {
@@ -93,22 +96,34 @@ export default function RecyclingPickupScreen() {
     return path;
   }, []);
 
+  /** The AI check is a suggestion only, and runs only after the person accepted the photo-analysis notice. */
+  const suggest = async (uri: string) => {
+    const ticket = ++photoTicket.current;
+    setSuggestion({ state: 'loading' });
+    try {
+      const path = await uploadPhoto(uri);
+      const value = await services.waste.classify(path, true);
+      if (ticket === photoTicket.current) setSuggestion(value.materials.length > 0 ? { state: 'ready', value } : { state: 'none' });
+    } catch {
+      if (ticket === photoTicket.current) setSuggestion({ state: 'none' });
+    }
+  };
+  const onConsentChange = (on: boolean) => {
+    setPhotoAnalysisConsent(on);
+    if (on && photo && suggestion.state === 'none') void suggest(photo);
+    if (!on) {
+      photoTicket.current += 1;
+      setSuggestion({ state: 'none' });
+    }
+  };
+
   const quality = dataSaver ? 0.5 : 0.8;
   const addPhoto = async (source: 'camera' | 'gallery') => {
     const res = await (source === 'camera' ? takePhoto(quality) : pickFromGallery(quality));
     if (res.kind === 'photo') {
       setPhoto(res.uri);
       setPhotoProblem(false);
-      // The AI check is a suggestion only: any failure just means no suggestion.
-      const ticket = ++photoTicket.current;
-      setSuggestion({ state: 'loading' });
-      try {
-        const path = await uploadPhoto(res.uri);
-        const value = await services.waste.classify(path);
-        if (ticket === photoTicket.current) setSuggestion(value.materials.length > 0 ? { state: 'ready', value } : { state: 'none' });
-      } catch {
-        if (ticket === photoTicket.current) setSuggestion({ state: 'none' });
-      }
+      if (photoAnalysisConsent) void suggest(res.uri);
     } else if (res.kind === 'denied' || res.kind === 'failed') {
       setPhotoProblem(true);
     }
@@ -152,7 +167,11 @@ export default function RecyclingPickupScreen() {
     setBusy(true);
     try {
       const photoUris = photo ? [await uploadPhoto(photo)] : [];
-      const p = await createPickup({ items, photoUris, location, day, slot, mode, note: note.trim() || undefined });
+      const body = { items, photoUris, location, day, slot, mode, note: note.trim() || undefined };
+      // The same request retried keeps its key; an edited one gets a new key.
+      const sig = JSON.stringify(body);
+      if (submitKey.current.sig !== sig) submitKey.current = { key: newIdempotencyKey(), sig };
+      const p = await createPickup(body, submitKey.current.key);
       router.replace(`/requests/${p.id}`);
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : tr('معرفناش نبعت الطلب، جرّب تاني', "We couldn't send your request. Please try again."));
@@ -215,6 +234,14 @@ export default function RecyclingPickupScreen() {
             </View>
           </View>
         )}
+        <ToggleRow
+          testID="toggle-waste-photo-consent"
+          icon="shield-check"
+          title={tr('أوافق على تحليل الصورة بالذكاء الاصطناعي', 'Allow AI photo analysis')}
+          subtitle={tr('هنرفع الصورة بشكل خاص ونحلّلها عشان نقترح الخامات. اختياري؛ تقدر تختار الخامات بنفسك.', 'The photo is uploaded privately and analysed to suggest materials. Optional; you can pick the materials yourself.')}
+          value={photoAnalysisConsent}
+          onValueChange={onConsentChange}
+        />
         {photoProblem ? (
           <AppText variant="caption" color={colors.goldDeep} accessibilityRole="alert">
             {tr('مقدرناش نفتح الكاميرا. اختار صورة من المعرض أو كمّل من غير صورة.', 'We couldn’t open the camera. Pick a photo from your gallery, or continue without one.')}

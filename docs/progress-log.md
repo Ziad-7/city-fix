@@ -1,11 +1,28 @@
 # Progress log
 
-## 2026-10-23 — Backend: CityCycle API complete (branch `feat/backend-complete`, PR #60)
+## 2026-10-23 — Mobile: localised severity in AI triage summary, offline banner (branch `feat/mobile-complete`, PR #49)
 
-- **Added:** recycling pickups (create, list, detail, cancel, confirm), price list, `/me/impact`, collectors (apply, jobs with ~100 m pin privacy, first-accept-wins, idempotent weighings, complete, earnings), public `/bins`, `POST /bins/{id}/report-full`, hub weighings, bin key rotation, admin pickups/collectors/prices/payouts/summary and `POST /ai/waste-classify` (Gemini only with key, photo analysis on and `photoConsent`; deterministic fallback otherwise). Demo seed, `backend/migrations/001_citycycle.sql` (idempotent, RLS on), contract and README updated.
-- **Safety:** `/uploads/sign` answers 503 when media storage is not configured, unless the local stub is allowed (`ALLOW_LOCAL_UPLOAD_STUB`; default only on SQLite). Admin writes are admin-only and department staff see districts, not households. Suspending a collector frees their unweighed jobs; cancel and weighing are atomic against each other. `POST /reports` and `POST /recycling/pickups` accept `Idempotency-Key` (a concurrent duplicate returns the first result, not a 500). The fallback triage summary uses the Arabic severity label.
-- **Not done:** bin forecast, route optimisation, hotspots, SMS gateway, a notifications endpoint (no client calls one). Incident ids stay unpadded (`INC-501`).
-- **Owner must:** configure Supabase Storage variables, set real district prices with `PUT /admin/material-prices`, apply the SQL (or let `create_all` do it; not yet run against a real Supabase), and have the clients send `photoConsent: true` to get model results from waste-classify.
+**Done**
+- The backend fallback triage writes the raw enum into the Arabic summary ("... — high، ..."). `cleanTriageSummary` now replaces only that lowercase token (case-sensitive, only in summaries that contain Arabic) with the Arabic or English severity label; model summaries in English are never touched. Used in the API triage service and the AI suggestion card.
+- Global offline banner; SelectField sheet got a separate close button and an inert backdrop for screen readers.
+- Shared files re-copied to `apps/web` (`triage-mock.ts`, its test, `services/api/index.ts`); `check:shared` passes.
+
+**Follow-up fixes (same PR)**
+- Waste-photo analysis: `POST /ai/waste-classify` gets `photoConsent: true` only after the person turns on the new "Allow AI photo analysis" toggle in the recycling pickup form (default off); without it no photo is uploaded for analysis and no call is made.
+- English UI: the server's Arabic fallback triage line is rebuilt in English.
+- Mock `getReport(userId, id)` returns only the caller's report (as the API's 403).
+- Offline queue: photos and the voice note are copied to app storage when a report is queued (web: small blob photos become data URIs); every report carries a stored `Idempotency-Key` (also sent on `POST /recycling/pickups`, reused on retry). Unknown header is harmless until the backend supports it.
+- CityCycle API client checked against `backend/app/routers/recycling.py` and `bins.py`: paths, query names and body shapes match; route test added.
+
+**Known issues**
+- Backend root cause (`backend/app/ai/keywords.py` uses `severity.value`) still to fix (W3).
+- Not tried on a device.
+## 2026-10-23 — End-to-end workflow check (branch `feat/e2e-workflow`, PR #54)
+
+- Ran the whole flow locally (SQLite backend, citizen web in api mode, admin web): citizen sign-in, photo upload, report, tracking; admin queue, detail, work order, status change with a note, resolve; citizen sees the update; reopen.
+- **Fixed:** the admin incident detail crashed ("reading 'lat'") when a nearby same-category incident existed, because the client read `/admin/incidents/{id}/similar` as full incidents while the backend returns `DuplicateMatch[]`. The service now resolves the matches; unit and page-level regression tests added.
+- **Open:** local upload stub discards files (backend W3 making it fail loudly); no recycling routes yet, so the CityCycle pickup path was not run; incident ids are not zero-padded. Details in [`e2e-bug-report.md`](e2e-bug-report.md).
+- **Not verified:** voice input, Gemini photo triage, the mobile app.
 
 ## 2026-10-23 — Command Center shows report photos (branch `fix/admin-report-photos`)
 
@@ -13,6 +30,12 @@
 - **Fix:** `GET /admin/incidents/{id}` adds `photoUrls` (15-minute signed reads) to each linked report, after the existing department-scope check. Signing uses the report author's id, so the storage ownership check and the private bucket stay as they were. Paths that cannot be signed (old `photos/...` stub paths saved before storage was configured) are skipped and logged instead of failing the response. `PhotosCard` renders the images (all photos, up to 6), opens the full image in a new tab and falls back to the placeholder when a URL has expired.
 - Tests: `backend/tests/test_admin_photos.py` (real `SupabaseMediaStorage` against an `httpx.MockTransport` fake of Supabase Storage: admin detail, admin report read, legacy paths, other-department staff 403, local demo) and `PhotosCard.test.tsx`.
 - Note: 1 of the 5 production reports with photos has a legacy `photos/...` path (uploaded through the stub before the storage keys were set); that file was never stored, so it stays a placeholder.
+## 2026-10-23 — Backend: CityCycle API complete (branch `feat/backend-complete`, PR #60)
+
+- **Added:** recycling pickups (create, list, detail, cancel, confirm), price list, `/me/impact`, collectors (apply, jobs with ~100 m pin privacy, first-accept-wins, idempotent weighings, complete, earnings), public `/bins`, `POST /bins/{id}/report-full`, hub weighings, bin key rotation, admin pickups/collectors/prices/payouts/summary and `POST /ai/waste-classify` (Gemini only with key, photo analysis on and `photoConsent`; deterministic fallback otherwise). Demo seed, `backend/migrations/001_citycycle.sql` (idempotent, RLS on), contract and README updated.
+- **Safety:** `/uploads/sign` answers 503 when media storage is not configured, unless the local stub is allowed (`ALLOW_LOCAL_UPLOAD_STUB`; default only on SQLite). Admin writes are admin-only and department staff see districts, not households. Suspending a collector frees their unweighed jobs; cancel and weighing are atomic against each other. `POST /reports` and `POST /recycling/pickups` accept `Idempotency-Key` (a concurrent duplicate returns the first result, not a 500). The fallback triage summary uses the Arabic severity label.
+- **Not done:** bin forecast, route optimisation, hotspots, SMS gateway, a notifications endpoint (no client calls one). Incident ids stay unpadded (`INC-501`).
+- **Owner must:** configure Supabase Storage variables, set real district prices with `PUT /admin/material-prices`, apply the SQL (or let `create_all` do it; not yet run against a real Supabase), and have the clients send `photoConsent: true` to get model results from waste-classify.
 
 ## 2026-10-23 — Citizen website: features restored, voice back on the browser engine (branch `feat/web-restore-browser-voice`)
 

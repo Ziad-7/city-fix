@@ -40,6 +40,17 @@ describe('offline queue', () => {
     submit.mockRestore();
   });
 
+  it('keeps one Idempotency-Key across the direct attempt, the queue and the retry', async () => {
+    submit.mockRejectedValueOnce(new ApiError(0, 'x'));
+    await useReports.getState().submitReport(input);
+    const queuedKey = useOutbox.getState().items[0].idempotencyKey;
+    expect(queuedKey).toBeTruthy();
+    expect(submit.mock.calls[0][2]).toBe(queuedKey);
+    submit.mockResolvedValueOnce(result(9));
+    await flushOutbox({ force: true });
+    expect(submit.mock.calls[1][2]).toBe(queuedKey);
+  });
+
   it('submitReport queues instead of failing when offline', async () => {
     netinfo.fetch.mockResolvedValue(offline);
     const res = await useReports.getState().submitReport(input);

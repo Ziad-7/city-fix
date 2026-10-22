@@ -16,6 +16,7 @@ import { useEffect } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { colors } from '@/theme/tokens';
 import { OutboxToast } from '@/components/OutboxToast';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { onNotificationTapped, setupOsNotifications } from '@/notifications/os';
 import { refreshAll, startNotificationSync, useIsSignedIn, useOutboxSync, useSessionHydrated } from '@/store';
 import { isRtlLang, useLang } from '@/i18n';
@@ -93,6 +94,7 @@ export default function RootLayout() {
         </Stack.Protected>
       </Stack>
       <OutboxToast />
+      <OfflineBanner />
     </View>
   );
 }

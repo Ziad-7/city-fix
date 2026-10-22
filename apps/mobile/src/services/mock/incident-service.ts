@@ -109,9 +109,10 @@ export function createMockIncidentService(): IncidentService {
         .map(reportView);
     },
 
-    async getReport(id) {
+    async getReport(userId, id) {
       const db = await loadDb();
-      const found = db.reports.find((r) => r.id === id);
+      // Like the API (403 -> null): only the reporter can open a report.
+      const found = db.reports.find((r) => r.id === id && r.reporterId === userId);
       return found ? reportView(found) : null;
     },
 

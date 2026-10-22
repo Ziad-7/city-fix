@@ -21,6 +21,7 @@ from app.logic.recycling import (
     pickup_views,
     resolve_district,
 )
+from app.media import MediaStorage, get_media
 from app.models import Collector, MaterialPriceRow, Profile, RecyclingPickup, Weighing
 from app.recycling_schemas import CollectorPatchInput, CollectorStatus, PickupAdminPatchInput, PricesPutInput
 
@@ -89,6 +90,7 @@ def admin_pickups(
     to: str | None = None,
     limit: Annotated[int, Query(ge=1, le=500)] = 100,
     db: Session = Depends(get_db),
+    storage: MediaStorage | None = Depends(get_media),
 ):
     if status and status not in PICKUP_STATUSES:
         raise HTTPException(422, "البيانات مش مكتملة")
@@ -103,7 +105,9 @@ def admin_pickups(
     if end:
         q = q.filter(RecyclingPickup.created_at <= end)
     rows = q.order_by(RecyclingPickup.created_at.desc(), RecyclingPickup.id.desc()).limit(limit).all()
-    return _with_district(pickup_views(db, rows, viewer="admin"), rows, claims)
+    return _with_district(
+        pickup_views(db, rows, viewer="admin", storage=storage if claims["role"] == "admin" else None), rows, claims
+    )
 
 
 def _staff_view(view: dict, p: RecyclingPickup, claims: dict) -> dict:
@@ -122,11 +126,15 @@ def _with_district(views: list[dict], rows: list[RecyclingPickup], claims: dict)
 
 
 @router.get("/recycling/pickups/{pickup_id}")
-def admin_pickup(pickup_id: str, claims: Staff, db: Session = Depends(get_db)):
+def admin_pickup(
+    pickup_id: str, claims: Staff, db: Session = Depends(get_db), storage: MediaStorage | None = Depends(get_media)
+):
     p = db.get(RecyclingPickup, pickup_id)
     if not p:
         raise HTTPException(404, "مش موجود")
-    view = _staff_view(pickup_view(db, p, viewer="admin"), p, claims)
+    view = _staff_view(
+        pickup_view(db, p, viewer="admin", storage=storage if claims["role"] == "admin" else None), p, claims
+    )
     profile = db.get(Profile, p.citizen_id)
     if claims["role"] == "admin" and profile and profile.name:
         view["citizenName"] = profile.name
@@ -134,7 +142,13 @@ def admin_pickup(pickup_id: str, claims: Staff, db: Session = Depends(get_db)):
 
 
 @router.patch("/recycling/pickups/{pickup_id}")
-def admin_patch_pickup(pickup_id: str, body: PickupAdminPatchInput, claims: Admin, db: Session = Depends(get_db)):
+def admin_patch_pickup(
+    pickup_id: str,
+    body: PickupAdminPatchInput,
+    claims: Admin,
+    db: Session = Depends(get_db),
+    storage: MediaStorage | None = Depends(get_media),
+):
     """Dispatch: ``cancelled`` (while requested/accepted), ``accepted`` + ``collectorId`` (assign a verified
     collector to a requested pickup), or a note-only entry. Anything else is ``409``."""
     p = db.get(RecyclingPickup, pickup_id)
@@ -171,14 +185,23 @@ def admin_patch_pickup(pickup_id: str, body: PickupAdminPatchInput, claims: Admi
             raise HTTPException(409, "الطلب ده اتاخد أو اتلغى.")
         if collector.profile_id == p.citizen_id:
             raise HTTPException(409, "مينفعش الجامع ياخد طلب بتاعه.")
-        p.status = "accepted"
-        p.collector_id = collector.id
-        p.accepted_at = now_utc()
+        result = db.execute(
+            update(RecyclingPickup)
+            .where(
+                RecyclingPickup.id == p.id,
+                RecyclingPickup.status == "requested",
+                RecyclingPickup.collector_id.is_(None),
+            )
+            .values(status="accepted", collector_id=collector.id, accepted_at=now_utc())
+        )
+        if result.rowcount != 1:
+            raise HTTPException(409, "الطلب ده اتاخد أو اتلغى.")
+        db.refresh(p)
         log(db, p.id, "accepted", actor, note or f"اتحدد الجامع {first_name(collector.name)}")
     else:
         raise HTTPException(409, "الحالة دي بتتغير من الجامع أو المواطن.")
     db.commit()
-    view = pickup_view(db, p, viewer="admin")
+    view = pickup_view(db, p, viewer="admin", storage=storage)
     view["district"] = p.district
     return view
 

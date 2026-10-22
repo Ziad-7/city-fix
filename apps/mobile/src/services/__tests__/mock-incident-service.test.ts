@@ -31,6 +31,13 @@ describe('mock services', () => {
     expect(await s.serviceRequests.listMine(DEMO_USER_ID)).toHaveLength(1);
   });
 
+  it('getReport returns only the current user\'s report', async () => {
+    const s = createMockServices();
+    const { report } = await s.incidents.submitReport(DEMO_USER_ID, input());
+    expect((await s.incidents.getReport(DEMO_USER_ID, report.id))?.id).toBe(report.id);
+    expect(await s.incidents.getReport('someone-else', report.id)).toBeNull();
+  });
+
   it('submit report -> listed first with status received', async () => {
     const s = createMockServices();
     const { report, incident } = await s.incidents.submitReport(DEMO_USER_ID, input());

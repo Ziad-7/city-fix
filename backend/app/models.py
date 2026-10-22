@@ -29,6 +29,14 @@ def utc_now():
 Base = declarative_base()
 
 
+class ReadableIdCounter(Base):
+    """Transactional reservations for CityCycle readable IDs."""
+
+    __tablename__ = "readable_id_counters"
+    prefix = Column(String(10), primary_key=True)
+    last_value = Column(BigInteger, nullable=False)
+
+
 class IncidentStatusEnum(str, enum.Enum):
     """Incident status enumeration."""
 

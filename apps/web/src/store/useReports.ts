@@ -3,7 +3,8 @@ import { create } from 'zustand';
 import type { Incident, NewReportInput, Report } from '@/domain/types';
 import { tr } from '@/i18n';
 import { services } from '@/services';
-import { classifyFailure } from '@/services/media';
+import { classifyFailure, newIdempotencyKey, persistReportFiles } from '@/services/media';
+import { persistLocalFile } from '@/services/persistFile';
 import { isOffline } from '@/services/network';
 import { sendReport } from '@/services/sendReport';
 import { reloadOutbox, useOutbox, type OutboxItem } from './useOutbox';
@@ -106,16 +107,20 @@ export const useReports = create<ReportsState>((set, get) => ({
 
   async submitReport(input) {
     const userId = uid();
+    // One key per submit: if the POST reached the server but the answer was lost, the queued retry reuses it.
+    const idempotencyKey = newIdempotencyKey();
     const queue = async (original: NewReportInput): Promise<SubmitResult> => {
       await reloadOutbox(); // website: another tab may have queued a report, never write a stale queue over it
-      return { queued: true, item: useOutbox.getState().enqueue(userId, original) };
+      // Cache and temp files can be cleared before the retry: keep the photos and the voice note in app storage.
+      const kept = await persistReportFiles(original, persistLocalFile);
+      return { queued: true, item: useOutbox.getState().enqueue(userId, kept, idempotencyKey) };
     };
     if (await isOffline()) return queue(input);
     let toSend = input;
     try {
       const res = await sendReport(userId, input, (prepared) => {
         toSend = prepared;
-      });
+      }, idempotencyKey);
       get().ingestSubmitted(res);
       return { queued: false, ...res };
     } catch (e) {
@@ -126,7 +131,7 @@ export const useReports = create<ReportsState>((set, get) => ({
   },
 
   async loadReport(id) {
-    const report = await services.incidents.getReport(id);
+    const report = await services.incidents.getReport(uid(), id);
     if (!report) return false;
     const incident = await services.incidents.getIncident(report.incidentId).catch(() => null);
     set((s) => ({

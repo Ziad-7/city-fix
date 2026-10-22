@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.helpers import iso_z, now_utc
 from app.logic.serialize import clean, timeline_entry
-from app.media import MediaStorage
+from app.media import MediaStorage, signed_reads
 from app.models import ActivityLog, Collector, MaterialPriceRow, RecyclingPickup, Weighing
 from app.recycling_schemas import MATERIAL_IDS
 
@@ -162,8 +162,8 @@ def pickup_view(
     collector = collectors.get(p.collector_id) if p.collector_id else None
     total_kg, total_value = totals(weighings)
     photos = list(p.photo_paths or [])
-    if viewer == "citizen" and storage is not None:
-        photos = [storage.sign_read(p.citizen_id, path) for path in photos]
+    if viewer in {"citizen", "admin"} and storage is not None:
+        photos = signed_reads(storage, p.citizen_id, photos)
     elif viewer == "collector":
         photos = []  # owner-scoped media is not shared with collectors
     view = {

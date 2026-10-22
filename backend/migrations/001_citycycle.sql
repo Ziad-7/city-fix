@@ -129,3 +129,11 @@ CREATE TABLE IF NOT EXISTS idempotency_keys (
 	CONSTRAINT uq_idempotency_user_scope_key UNIQUE (user_id, scope, key)
 );
 ALTER TABLE idempotency_keys ENABLE ROW LEVEL SECURITY;
+
+-- Lazily seeded to the existing numeric maximum. Reservations roll back with the caller.
+-- Backend-only: no anon/authenticated policies. Legacy prefixes retain their existing allocator.
+CREATE TABLE IF NOT EXISTS readable_id_counters (
+    prefix VARCHAR(10) PRIMARY KEY,
+    last_value BIGINT NOT NULL
+);
+ALTER TABLE readable_id_counters ENABLE ROW LEVEL SECURITY;
