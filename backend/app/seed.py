@@ -62,6 +62,8 @@ def seed_db(db: Session) -> None:
     ]
     for d in departments:
         db.add(d)
+    # PostgreSQL enforces foreign keys per statement: parents must be flushed first.
+    db.flush()
 
     # ========================================================================
     # Categories
@@ -103,6 +105,7 @@ def seed_db(db: Session) -> None:
     # Anonymous reporter profile for anonymous reports
     anonymous_citizen = Profile(id="citizen-anonymous", phone=None, name="بلاغ بدون اسم", role="citizen")
     db.add(anonymous_citizen)
+    db.flush()
 
     # ========================================================================
     # Staff accounts
@@ -114,6 +117,7 @@ def seed_db(db: Session) -> None:
         district="القاهرة · حي مدينة نصر أول",
     )
     db.add(admin_profile)
+    db.flush()
     admin_account = StaffAccount(
         profile_id="admin-001",
         email="admin@cityfix.demo",
@@ -128,6 +132,7 @@ def seed_db(db: Session) -> None:
         district="القاهرة · حي مدينة نصر أول",
     )
     db.add(staff_profile)
+    db.flush()
     staff_account = StaffAccount(
         profile_id="staff-001",
         email="roads@cityfix.demo",
@@ -156,6 +161,7 @@ def seed_db(db: Session) -> None:
             district=district,
         )
         db.add(staff_prof)
+        db.flush()
         staff_acct = StaffAccount(
             profile_id=profile_id,
             email=email,

@@ -1,5 +1,37 @@
 # Progress log
 
+## 2026-10-23 — Citizen website: features restored, voice back on the browser engine (branch `feat/web-restore-browser-voice`)
+
+- Restored the CityCycle screens and English for the website (PR #46) after the temporary revert in #47. The tree is identical to the PR #46 merge.
+- **Voice:** the website had worked at its first deploy because it ran in mock mode, where voice uses the browser's own speech recognition. Switching `NEXT_PUBLIC_API_MODE` to `api` on 22 Oct 23:37 (Cairo) made it use the server path (`/ai/transcribe`), which needs a Gemini key and private storage that the `city-fix-api` project does not have, so voice failed with no fallback. `voiceEngine()` now prefers the browser's speech recognition in every mode and uses the server path only when the browser has none and the site is in API mode. The Gemini privacy notice shows only when the server path is the one in use.
+- Not changed: the mobile app (native speech path) and the backend transcription endpoint. To use Gemini on the web later, set `GEMINI_API_KEY` and the Supabase storage variables on `city-fix-api` and check that FFmpeg is available there.
+
+## 2026-10-22 — Citizen website: CityCycle screens and English (branch `feat/web-citycycle-english`)
+
+**Done** (planned and reviewed by Claude Opus 5.5, implemented by Sonnet 5.5 agents in parallel with disjoint file ownership)
+- **CityCycle on the web (mock mode first):** recycling pickup form (`/services/recycling`), pickups inside My requests (Recycling filter, `RCY-` detail with timeline, cancel while requested, confirm weighing), impact page, picture sorting guide (works signed out, printable), notifications page, smart-bin layer on the map with "report full", CityCycle entries on home, services and profile, and a collector card that points to the app.
+- **English as a second language:** language toggle (sign-in, top bar, profile), `<html lang dir>` set before first paint and kept in sync, report flow, services, requests, map, home, profile and the page chrome translated, `Accept-Language` sent to the API, English speech recognition, LTR style fixes. Arabic stays the default and unchanged.
+- Nothing under `src/shared`, `src/i18n` or the copied store and service files changed, so `check:shared` still passes.
+- Verification: typecheck, lint (0 errors), 222 unit tests, production build in mock mode, and the Playwright suite at desktop and phone widths.
+
+**How to test**: `cd apps/web && npm run dev`, sign in with `01012345678` / `123456`, give recyclables from Services, follow the pickup in My requests, open the bins layer on the map, switch to English from the profile or the top bar.
+
+**Known gaps**
+- Mock data lives in one browser, so "a pickup made on the phone appears on the website" works only in API mode, and the backend has no `/recycling`, `/collectors` or price-list routes yet.
+- `/ai/waste-classify` is mocked until the AI member delivers it.
+- No web design mockups exist for the new pages; they reuse the app's tokens and components.
+
+## 2026-10-22 — Demo seed works on PostgreSQL
+
+- PostgreSQL enforces foreign keys statement by statement, and the seed inserted categories and staff accounts before their parent rows were flushed (SQLite does not check this). The seed now flushes departments and profiles first. Verified by seeding a real PostgreSQL 16 database (34 incidents).
+
+## 2026-10-22 — Backend can run on Vercel with Supabase Postgres
+
+- Added the `psycopg` driver (also in `uv.lock`, which Vercel installs from), a `DATABASE_URL` normaliser that accepts Supabase's plain `postgresql://` string, connection-pool settings for non-SQLite databases, and `backend/vercel.json`.
+- New test `backend/tests/test_database_url.py`; full backend suite: **301 passed**. Ruff lint/format passed.
+- How to deploy: see "Deploy on Vercel" in [backend/README.md](../backend/README.md).
+- Known issues: no FFmpeg on Vercel (voice notes), photo upload is a stub without Supabase storage, readable IDs are not transactional (fine for solo testing). Bundle size is verified on the first build.
+
 ## 2026-10-22 — PR #39 / #43 smart-bin integration fixes
 
 - Aligned backend telemetry ingestion with the existing device contract: temperature and battery are optional, unavailable temperature never raises a heat alert, numeric booleans/strings are rejected, and the Command Center shows unavailable readings and distinguishes unsynced device time from effective/receive time.

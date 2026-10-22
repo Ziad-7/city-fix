@@ -5,6 +5,11 @@
 @import '../styles/web.css';
 /* Website-only additions: states and pieces the static mockups don't draw. */
 @import '../styles/app.css';
+/* CityCycle (recycling) styles. */
+@import '../styles/cc-recycling.css';
+@import '../styles/cc-requests.css';
+@import '../styles/cc-map.css';
+@import '../styles/cc-pages.css';
 
 /* Tailwind theme from docs/design/tokens.json (same values as the --ftc-* variables). */
 @theme {

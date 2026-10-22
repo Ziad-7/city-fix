@@ -3,7 +3,7 @@
    q- requests, t- tracking, v- services, m- map, p- profile. Keep in sync with the mockups. */
 html{scroll-behavior:smooth}
 button{font-family:inherit}
-.flip{transform:scaleX(-1)}
+[dir=rtl] .flip{transform:scaleX(-1)}
 .w-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .w-top{gap:20px}
 .w-logo img{height:40px;width:auto}
@@ -14,6 +14,9 @@ button{font-family:inherit}
 .w-actions{margin-inline-start:auto;display:flex;align-items:center;gap:12px}
 .w-iconbtn{position:relative;width:44px;height:44px;border-radius:50%;border:1px solid var(--ftc-line);background:var(--ftc-surface);color:var(--ftc-ink);display:flex;align-items:center;justify-content:center}
 .w-iconbtn:hover{color:var(--ftc-red)}
+.w-badge{position:absolute;top:-4px;inset-inline-end:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--ftc-red);color:var(--ftc-on-red);border:2px solid var(--ftc-surface);font:700 11px/16px var(--ftc-font-sans);text-align:center;box-sizing:border-box}
+.w-lang{height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--ftc-line);background:var(--ftc-surface);color:var(--ftc-ink);font:600 14px/1 var(--ftc-font-sans);cursor:pointer}
+.w-lang:hover{color:var(--ftc-red)}
 .w-dot{position:absolute;top:9px;inset-inline-end:11px;width:9px;height:9px;border-radius:50%;background:var(--ftc-gold);border:2px solid #fff}
 .w-account{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px 0 6px;border:1px solid var(--ftc-line);border-radius:999px;color:var(--ftc-ink);font:600 14px/1 var(--ftc-font-sans);background:var(--ftc-surface)}
 .w-account[aria-current=page]{border-color:var(--ftc-red);color:var(--ftc-red-deep)}
@@ -125,12 +128,13 @@ body{background:var(--ftc-paper)}
 .s-cc{display:flex;align-items:center;gap:8px;padding:0 14px;border-inline-end:1px solid var(--ftc-line);font:600 16px/1 var(--ftc-font-sans);direction:ltr}
 .w-flag{display:inline-flex;flex-direction:column;width:22px;height:15px;border-radius:2px;overflow:hidden;border:1px solid var(--ftc-line)}
 .w-flag i{flex:1;display:block}
-.s-phone input{border:0;outline:0;flex:1;min-width:0;padding:0 14px;font:500 20px/28px var(--ftc-font-display);direction:ltr;text-align:right;background:transparent;color:var(--ftc-ink);letter-spacing:.5px}
+.s-phone input{border:0;outline:0;flex:1;min-width:0;padding:0 14px;font:500 20px/28px var(--ftc-font-display);direction:ltr;text-align:start;background:transparent;color:var(--ftc-ink);letter-spacing:.5px}
 .s-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .s-privacy{display:flex;gap:10px;align-items:flex-start;background:var(--ftc-surface);border-radius:var(--ftc-radius-md);padding:12px 14px;font-size:13px;line-height:21px;box-shadow:var(--ftc-shadow-card)}
 .s-privacy svg{color:var(--ftc-red);flex:none;margin-top:2px}
 .s-links{display:flex;gap:16px;justify-content:center;font:600 14px/22px var(--ftc-font-sans)}
 .s-links i{color:var(--ftc-line);font-style:normal}
+[dir=rtl] .s-phone input{text-align:right}
 .s-otp{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;direction:ltr}
 .s-otp input{width:100%;height:60px;text-align:center;border:1.5px solid var(--ftc-line);border-radius:var(--ftc-radius-sm);font:600 26px/1 var(--ftc-font-display);background:#fff;color:var(--ftc-ink)}
 .s-otp input.f{border-color:var(--ftc-red)}

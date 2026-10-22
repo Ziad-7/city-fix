@@ -50,6 +50,19 @@ python -m pytest -q
 | `CORS_ORIGIN_REGEX` | `^http://(localhost\|127\.0\.0\.1)(:\d+)?$` | Also allow any localhost port; set to your deployed origins (e.g. the Vercel domains) in production |
 | `VERSION` | `0.1.0` | Reported by `/health` |
 
+## Deploy on Vercel (with Supabase Postgres)
+
+The API runs as a Vercel FastAPI project with **Root Directory `backend`** (`app/main.py` is the entrypoint, `vercel.json` sets the function limits). The filesystem is read-only there, so SQLite does not work: use PostgreSQL.
+
+1. Set `DATABASE_URL` to the Supabase **session pooler** string (`postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`). The `postgres://` and `postgresql://` prefixes are rewritten to `postgresql+psycopg://` automatically.
+2. Set `JWT_SECRET` (random, 32+ bytes), `OTP_MODE=demo`, `SEED_ON_START=true`, `DEMO_RESET_ENABLED=true` for a test deployment.
+3. Set `CORS_ORIGINS` to the two frontend URLs (comma-separated).
+4. Turn off Vercel Authentication for the API project, or browsers get a login page instead of JSON.
+5. Call `/health` once; the first start creates the tables and seeds the demo data.
+6. In the frontends set `NEXT_PUBLIC_API_URL` to the API URL (and `NEXT_PUBLIC_API_MODE=api` for `apps/web`), then redeploy: these values are inlined at build time.
+
+Limits on Vercel: no FFmpeg (voice-note validation and `/ai/transcribe` are unavailable; the UI falls back to typing), and photo upload is a stub unless the Supabase storage variables are set.
+
 ## Demo accounts
 
 | Who | Login | Notes |

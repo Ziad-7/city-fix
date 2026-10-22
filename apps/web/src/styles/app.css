@@ -18,6 +18,10 @@ button.w-link:disabled { opacity: .6; cursor: default; }
 .a-spin { display: inline-block; width: 20px; height: 20px; border-radius: 50%; border: 2.5px solid var(--ftc-red-soft); border-top-color: var(--ftc-red); animation: a-spin .8s linear infinite; flex: none; }
 .a-spin--on-red { border-color: rgba(255, 255, 255, .35); border-top-color: #fff; }
 .a-spin--page { display: block; margin: 80px auto; width: 32px; height: 32px; }
+/* English: Aref Ruqaa is Arabic only, slogans use the display font in bold */
+html[dir="ltr"] .ftc-slogan,html[dir="ltr"] .ftc-slogan-sm{font-family:var(--ftc-font-display);font-weight:700}
+/* LTR (English): the account pill's padding mirrors the RTL one */
+@media (min-width:761px){ [dir=ltr] .w-account{padding:0 6px 0 16px} }
 @keyframes a-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .a-spin { animation-duration: 2.4s; } html { scroll-behavior: auto; } }
 

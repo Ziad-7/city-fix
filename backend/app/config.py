@@ -1,8 +1,18 @@
 """Configuration from environment variables."""
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_JWT_SECRET = "dev-secret-change-in-production-now!!"
+
+
+def normalize_database_url(url: str) -> str:
+    """Map ``postgres://`` and ``postgresql://`` to ``postgresql+psycopg://`` (the driver we ship)."""
+    url = url.strip()
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix) :]
+    return url
 
 
 class Settings(BaseSettings):
@@ -12,6 +22,12 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str = "sqlite:///./fixthecity.db"
+
+    @field_validator("database_url")
+    @classmethod
+    def _use_psycopg_driver(cls, value: str) -> str:
+        """Accept a plain ``postgresql://`` URL (as Supabase shows it) and use the psycopg 3 driver."""
+        return normalize_database_url(value)
 
     # JWT (must be >= 32 bytes for HS256)
     jwt_secret: str = DEFAULT_JWT_SECRET
