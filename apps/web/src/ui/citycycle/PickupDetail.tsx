@@ -17,6 +17,7 @@ import {
 } from '@/domain/citycycle';
 import { useLang, useTr } from '@/i18n';
 import { buildPickupSteps, collectorDisplayName, materialsSummary } from '@/logic/citycycle';
+import { usePageTitle } from '@/lib/usePageTitle';
 import { useRecycling } from '@/store';
 import { localDigits } from '@/utils/digits';
 import { formatDateTime, formatTime } from '@/utils/time';
@@ -72,6 +73,7 @@ export function PickupDetail({ id }: { id: string }) {
     [pickup, lang]);
 
   const back = <Link className="w-back" href="/requests"><Icon name="arrow-back" size={18} />{tr('طلباتي', 'My requests')}</Link>;
+  usePageTitle(tr('متابعة طلب التدوير', 'Track your recycling pickup'));
 
   if (!pickup) {
     return (

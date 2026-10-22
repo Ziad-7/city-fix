@@ -39,7 +39,7 @@ export default function ImpactPage() {
       <>
         <div className="cc-impact__hero" data-testid="impact-total">
           <span className="cc-impact__big">{formatKg(impact.totalKg)}</span>
-          <span className="w-sub">{tr(`اتدوّروا من ${localDigits(impact.pickups)} طلب`, `recycled across ${impact.pickups} pickups`)}</span>
+          <span className="w-sub">{tr(`اتدوّروا من ${localDigits(impact.pickups)} طلب`, `recycled from ${impact.pickups} ${impact.pickups === 1 ? 'pickup' : 'pickups'}`)}</span>
           {impact.earnedEgp !== undefined ? <span className="cc-impact__earn">{tr('كسبت', 'You earned')} {formatEgp(impact.earnedEgp)}</span> : null}
           {impact.earnedEgp !== undefined ? <DemoPricesNote /> : null}
           {impact.co2AvoidedKg !== undefined ? (

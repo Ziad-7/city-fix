@@ -4,7 +4,7 @@
 
 .cc-binpin__b {
   display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%;
-  background: #fff; color: var(--cc-bin); border: 3px solid var(--cc-bin); box-shadow: 0 2px 4px rgba(22, 22, 22, .3);
+  background: var(--ftc-surface); color: var(--cc-bin); border: 3px solid var(--cc-bin); box-shadow: 0 2px 4px rgba(22, 22, 22, .3);
 }
 .a-pin.cc-binpin.is-sel .cc-binpin__b { transform: scale(1.25); }
 

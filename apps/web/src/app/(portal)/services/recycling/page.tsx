@@ -147,7 +147,7 @@ export default function RecyclingPickupPage() {
     try {
       const photoUris = photo ? [await uploadPhoto(photo)] : [];
       const p = await createPickup({ items, photoUris, location, day, slot, mode, note: note.trim() || undefined });
-      router.push(`/requests/${p.id}`);
+      router.replace(`/requests/${p.id}`);
     } catch (e) {
       setSubmitError(e instanceof Error && e.message ? e.message : tr('معرفناش نبعت الطلب، جرّب تاني', 'We couldn’t send your request. Please try again.'));
       setBusy(false);

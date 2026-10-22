@@ -34,7 +34,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: '#C8102E', width: 'device-width', initialScale: 1 };
 
 /** Runs before first paint: applies the saved language (localStorage 'ftc.prefs.v1' -> state.lang) to <html>, so English never flashes as Arabic/RTL. */
-const LANG_SCRIPT = `(function(){try{var s=JSON.parse(localStorage.getItem('ftc.prefs.v1')||'null');var l=s&&s.state&&s.state.lang;var d=document.documentElement;if(l==='en'){d.lang='en';d.dir='ltr';}else{d.lang='ar';d.dir='rtl';}}catch(e){}})();`;
+const LANG_SCRIPT = `(function(){try{var s=JSON.parse(localStorage.getItem('ftc.prefs.v1')||'null');var l=s&&s.state&&s.state.lang;var d=document.documentElement;if(l==='en'){d.lang='en';d.dir='ltr';document.title='CityFix';}else{d.lang='ar';d.dir='rtl';}}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

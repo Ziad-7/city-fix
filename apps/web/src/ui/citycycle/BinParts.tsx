@@ -60,7 +60,7 @@ export function BinSheet({ bin, busy, result, onReportFull, onOpenRequests, onCl
 
       <div className="cc-bin-meta">
         <BinStateChip state={bin.state} />
-        {fill !== undefined ? <span className="ftc-help">{tr('مليان', 'Filled')} {localDigits(Math.round(fill))}٪</span> : null}
+        {fill !== undefined ? <span className="ftc-help">{tr('مليان', 'Filled')} {localDigits(Math.round(fill))}{tr('٪', '%')}</span> : null}
         {bin.tempC !== undefined ? <span className="ftc-help">{localDigits(Math.round(bin.tempC))}°</span> : null}
         {bin.lastSeenAt ? <span className="ftc-help">{tr('آخر إشارة', 'Last signal')} {relativeTime(bin.lastSeenAt)}</span> : null}
       </div>
