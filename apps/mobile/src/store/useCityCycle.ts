@@ -54,7 +54,8 @@ type CityCycleState = {
   refreshPickups: () => Promise<void>;
   refreshImpact: () => Promise<void>;
   /** Bins only (the map's own refresh). */
-  refreshBins: () => Promise<void>;
+  /** `poll: true` is the map's timer (the mock drifts the fill levels); other callers just read. */
+  refreshBins: (opts?: { poll?: boolean }) => Promise<void>;
   /** Deep link / uncached id. Resolves false when it does not exist. */
   loadPickup: (id: string) => Promise<boolean>;
   /**
@@ -125,9 +126,9 @@ export const useCityCycle = create<CityCycleState>((set, get) => ({
     }
   },
 
-  async refreshBins() {
+  async refreshBins(opts) {
     try {
-      set({ bins: await services.cityCycle.listBins() });
+      set({ bins: await services.cityCycle.listBins(opts) });
     } catch {
       // the map keeps the bins it has
     }

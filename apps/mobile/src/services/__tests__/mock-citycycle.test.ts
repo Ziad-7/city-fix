@@ -134,20 +134,49 @@ describe('mock CityCycle: bins', () => {
     expect(Object.keys(bins[0])).not.toContain('driftPct');
   });
 
-  it('fill levels drift up on every refresh, and cross into full', async () => {
+  it('fill levels only move when the map polls, and cross into full', async () => {
     const { cityCycle } = createMockServices();
     const first = await cityCycle.listBins();
-    const second = await cityCycle.listBins();
+    const again = await cityCycle.listBins();
+    expect(again.map((b) => b.fillPct)).toEqual(first.map((b) => b.fillPct)); // a plain read never drifts
+    const second = await cityCycle.listBins({ poll: true });
     const filling = first.find((b) => b.id === 'BIN-013')!;
     expect(second.find((b) => b.id === 'BIN-013')!.fillPct).toBeGreaterThan(filling.fillPct as number);
     // the full bin and the heat-alert bin do not move
     expect(second.find((b) => b.id === 'BIN-014')!.fillPct).toBe(first.find((b) => b.id === 'BIN-014')!.fillPct);
+    expect(second.find((b) => b.id === 'BIN-017')!.fillPct).toBe(first.find((b) => b.id === 'BIN-017')!.fillPct);
     let last = second;
-    for (let i = 0; i < 12; i++) last = await cityCycle.listBins();
-    const b = last.find((x) => x.id === 'BIN-013')!;
-    expect(b.fillPct).toBeGreaterThanOrEqual(BIN_THRESHOLDS.fullPct);
-    expect(b.state).toBe('full');
+    let reachedFull = false;
+    for (let i = 0; i < 12; i++) {
+      last = await cityCycle.listBins({ poll: true });
+      if (last.find((x) => x.id === 'BIN-013')!.state === 'full') reachedFull = true;
+    }
+    expect(reachedFull).toBe(true);
     expect(Math.max(...last.map((x) => x.fillPct ?? 0))).toBeLessThanOrEqual(100);
+  });
+
+  it('a bin that stays full is emptied by a simulated collection, so the map never ends up all full', async () => {
+    const { cityCycle } = createMockServices();
+    const driftingIds = ['BIN-011', 'BIN-012', 'BIN-013', 'BIN-015', 'BIN-016', 'BIN-018'];
+    let sawCollection = false;
+    let prev = await cityCycle.listBins();
+    for (let i = 0; i < 50; i++) {
+      const bins = await cityCycle.listBins({ poll: true });
+      const drifting = bins.filter((b) => driftingIds.includes(b.id));
+      expect(drifting.every((b) => b.state === 'full')).toBe(false);
+      for (const b of drifting) {
+        const before = prev.find((x) => x.id === b.id)!;
+        if ((b.fillPct as number) < (before.fillPct as number)) {
+          sawCollection = true;
+          expect(b.fillPct).toBeLessThanOrEqual(15);
+        }
+      }
+      prev = bins;
+    }
+    expect(sawCollection).toBe(true);
+    // the demo's seeded full and heat bins stay as they are
+    expect(prev.find((b) => b.id === 'BIN-014')!.state).toBe('full');
+    expect(prev.find((b) => b.id === 'BIN-017')!.state).toBe('hot');
   });
 
   it('a full bin report creates a garbage report at the bin, once a day per person', async () => {

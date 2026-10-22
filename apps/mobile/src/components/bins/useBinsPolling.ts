@@ -16,8 +16,8 @@ export function useBinsPolling(intervalMs: number | null) {
   useFocusEffect(
     useCallback(() => {
       if (intervalMs === null) return undefined;
-      void refreshBins();
-      timer.current = setInterval(() => void refreshBins(), intervalMs);
+      void refreshBins({ poll: true });
+      timer.current = setInterval(() => void refreshBins({ poll: true }), intervalMs);
       return stop;
     }, [intervalMs, refreshBins, stop]),
   );

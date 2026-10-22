@@ -115,8 +115,11 @@ export interface CityCycleService {
   confirmPickup(userId: string, id: string): Promise<RecyclingPickup>;
   /** GET /me/impact . The caller's own impact. */
   getMyImpact(userId: string): Promise<Impact>;
-  /** GET /bins . Mock: fill levels drift up a little on every call, so the map feels alive. */
-  listBins(): Promise<Bin[]>;
+  /**
+   * GET /bins . Mock: with `poll` (the map's timer) the filling bins gain a few points, and a bin that stayed full for a
+   * few polls is emptied by a simulated collection. Without it the readings stay as they are.
+   */
+  listBins(opts?: { poll?: boolean }): Promise<Bin[]>;
   /** POST /bins/{id}/report-full . Creates a garbage report linked to the bin. */
   reportFullBin(userId: string, binId: string, input?: ReportFullBinInput): Promise<void>;
   /** POST /ai/waste-classify with an uploaded photo path. A suggestion; never throws (falls back to `source: "fallback"`). */

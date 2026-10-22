@@ -105,10 +105,12 @@ describe('useCityCycle', () => {
     expect(useReports.getState().reports).toHaveLength(before + 1);
   });
 
-  it('bins drift on each refreshBins', async () => {
-    await useCityCycle.getState().refreshBins();
+  it('bins drift on each polled refreshBins, not on a general refresh', async () => {
+    await useCityCycle.getState().refreshBins({ poll: true });
     const a = useCityCycle.getState().bins.find((b) => b.id === 'BIN-013')?.fillPct as number;
     await useCityCycle.getState().refreshBins();
+    expect(useCityCycle.getState().bins.find((b) => b.id === 'BIN-013')?.fillPct).toBe(a);
+    await useCityCycle.getState().refreshBins({ poll: true });
     expect(useCityCycle.getState().bins.find((b) => b.id === 'BIN-013')?.fillPct).toBeGreaterThan(a);
   });
 

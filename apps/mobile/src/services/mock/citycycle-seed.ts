@@ -25,6 +25,8 @@ export type DbBin = Bin & {
   driftPct: number;
   /** Mock only: reading counter, like the device's `seq`. */
   seq: number;
+  /** Mock only: polls in a row the bin has stayed full. After a few, a simulated collection empties it. */
+  fullPolls?: number;
 };
 export type DbCollector = Collector & { userId: string; nameEn: string; vehicleEn?: string };
 export type DbBinReport = { id: string; binId: string; userId: string; reportId: string; note?: string; at: string };

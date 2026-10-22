@@ -44,7 +44,7 @@ export function jobView(p: DbPickup, distanceM?: number): CollectorJob {
 }
 
 export function binView(b: DbBin): Bin {
-  const { nameEn, addressEn, driftPct: _d, seq: _s, ...rest } = b;
+  const { nameEn, addressEn, driftPct: _d, seq: _s, fullPolls: _f, ...rest } = b;
   return {
     ...rest,
     name: en() ? (nameEn ?? b.name) : b.name,

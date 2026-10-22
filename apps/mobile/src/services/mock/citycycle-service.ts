@@ -1,4 +1,4 @@
-import { binStateFromReading } from '@/domain/bins';
+import { BIN_THRESHOLDS, binStateFromReading } from '@/domain/bins';
 import { type MaterialId, type WasteClassification, type WasteSize } from '@/domain/citycycle';
 import {
   aggregateWeighings,
@@ -17,7 +17,7 @@ import { binView, pickupView } from './citycycle-localize';
 import { pickupTimelineEntry } from './citycycle-timeline';
 import { delay, loadDb, saveDb } from './db';
 import { createMockIncidentService } from './incident-service';
-import type { DbPickup } from './citycycle-seed';
+import type { DbBin, DbPickup } from './citycycle-seed';
 import { DEMO_COLLECTOR_USER_ID } from './citycycle-seed';
 
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -60,6 +60,23 @@ export function mockClassification(path: string): WasteClassification {
     estimatedKgRange: CLASSIFY_SIZES[size],
     source: 'model',
   };
+}
+
+/** Polls a bin may stay full before the simulated collection empties it. */
+const FULL_POLLS_BEFORE_COLLECTION = 3;
+
+/** One new reading for a filling bin: a few points more; after a few full polls a collection empties it to 5-15 %. */
+function driftBin(b: DbBin, now: number): DbBin {
+  const lastSeenAt = new Date(now).toISOString();
+  const seq = b.seq + 1;
+  let fillPct = Math.min(100, (b.fillPct ?? 0) + b.driftPct);
+  let fullPolls = fillPct >= BIN_THRESHOLDS.fullPct ? (b.fullPolls ?? 0) + 1 : 0;
+  if (fullPolls > FULL_POLLS_BEFORE_COLLECTION) {
+    fillPct = 5 + (hash(`${b.id}:${seq}`) % 11);
+    fullPolls = 0;
+  }
+  const next = { ...b, fillPct, fullPolls, lastSeenAt, seq };
+  return { ...next, state: binStateFromReading(next, now) };
 }
 
 export function createMockCityCycleService(): CityCycleService {
@@ -158,18 +175,15 @@ export function createMockCityCycleService(): CityCycleService {
       return computeImpact(done.flatMap((p) => p.weighings), done.length, { includeEarned: !!collector });
     },
 
-    async listBins() {
+    async listBins(opts) {
       await delay(200);
       const db = await loadDb();
-      const now = Date.now();
-      // The map feels alive: every refresh the filling bins gain a few points, like a new reading arrived.
-      db.bins = db.bins.map((b) => {
-        const fillPct = Math.min(100, (b.fillPct ?? 0) + b.driftPct);
-        const lastSeenAt = new Date(now).toISOString();
-        const next = { ...b, fillPct, lastSeenAt, seq: b.seq + 1 };
-        return { ...next, state: binStateFromReading(next, now) };
-      });
-      await saveDb(db);
+      // Only the map's polling moves the readings (like a new device reading). A general refresh just reads them.
+      if (opts?.poll) {
+        const now = Date.now();
+        db.bins = db.bins.map((b) => (b.driftPct > 0 ? driftBin(b, now) : b));
+        await saveDb(db);
+      }
       return db.bins.map(binView);
     },
 
