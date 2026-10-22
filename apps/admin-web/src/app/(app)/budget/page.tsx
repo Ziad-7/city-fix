@@ -79,7 +79,7 @@ export default function BudgetPage() {
         <PageHead
           title="ميزانية الإصلاحات"
           subtitle="أحسن خطة إصلاح تجيب أعلى أولوية بالميزانية المتاحة · التكاليف تقديرية للمحاكاة"
-          action={
+          actions={
             <Button
               variant="primary"
               onClick={() => setShowConfirmModal(true)}
@@ -118,13 +118,13 @@ export default function BudgetPage() {
               <KpiCard
                 label="تكلفة الخطة"
                 value={formatEgp(budgetPlan.totalCost)}
-                sub={`${selectedCount} إصلاحات من ${selectedCount + budgetPlan.skipped.length}`}
+                note={`${selectedCount} إصلاحات من ${selectedCount + budgetPlan.skipped.length}`}
                 size="md"
               />
               <KpiCard
                 label="المتبقي"
                 value={formatEgp(budgetPlan.remaining)}
-                sub={
+                note={
                   budgetPlan.skipped.length > 0
                     ? 'مفيش إصلاح تاني يكفّيه'
                     : 'كل الإصلاحات داخلة في الخطة.'
@@ -134,7 +134,7 @@ export default function BudgetPage() {
               <KpiCard
                 label="الأولوية المغطّاة"
                 value={`${Math.round((budgetPlan.coveredPriority / budgetPlan.totalPriority) * 100)}%`}
-                sub={
+                footer={
                   <span style={{ display: 'block', marginTop: 8, height: 4, background: '#e0e0e0', borderRadius: 2, overflow: 'hidden' }}>
                     <span style={{ display: 'block', height: '100%', width: `${(budgetPlan.coveredPriority / budgetPlan.totalPriority) * 100}%`, background: 'var(--ftc-red)' }} />
                   </span>
@@ -144,7 +144,7 @@ export default function BudgetPage() {
               <KpiCard
                 label="مواطنين هيشوفوا حل"
                 value={budgetPlan.citizensServed}
-                sub={`من ${budgetPlan.citizensTotal} بلّغوا`}
+                note={`من ${budgetPlan.citizensTotal} بلّغوا`}
                 size="md"
               />
             </div>
@@ -209,22 +209,24 @@ export default function BudgetPage() {
           open={showConfirmModal}
           onClose={() => setShowConfirmModal(false)}
           title="تحويل الخطة لأوامر شغل"
+          actions={
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <Button variant="secondary" onClick={() => setShowConfirmModal(false)}>
+                إلغاء
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => commitMutation.mutate()}
+                disabled={commitMutation.isPending}
+              >
+                حوّل الخطة
+              </Button>
+            </div>
+          }
         >
           <p>
             هنعمل أمر شغل لكل إصلاح من الـ {selectedCount} إصلاحات اللي في الخطة (تكلفة {budgetPlan ? formatEgp(budgetPlan.totalCost) : '…'}). البلاغات اللي ليها أمر شغل بالفعل مش هتتكرر.
           </p>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 20 }}>
-            <Button variant="secondary" onClick={() => setShowConfirmModal(false)}>
-              إلغاء
-            </Button>
-            <Button
-              variant="primary"
-              onClick={() => commitMutation.mutate()}
-              disabled={commitMutation.isPending}
-            >
-              حوّل الخطة
-            </Button>
-          </div>
         </Modal>
       </div>
     </main>

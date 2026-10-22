@@ -16,11 +16,12 @@ import {
 import { useToast } from '@/components/ui/Toast';
 import { Icon } from '@/components/Icon';
 import { StatusChangeForm } from '@/components/incidents/StatusChangeForm';
-import type { WorkOrder, Team } from '@/domain/admin-types';
+import type { WorkOrder } from '@/domain/admin-types';
 import { patchWorkOrder } from '@/services/workOrders';
 import { getTeams } from '@/services/departments';
 import { formatDayWithTime, formatEgp } from '@/lib/format';
 import { priorityLevel } from '@/logic/priority';
+import type { IncidentStatus } from '@/domain/types';
 
 const WORK_ORDER_STATUSES: Record<string, string> = {
   open: 'اتسلّم',
@@ -29,15 +30,15 @@ const WORK_ORDER_STATUSES: Record<string, string> = {
   done: 'اتحلّت',
 };
 
-function previewStatusFor(status: string) {
+function previewStatusFor(status: string): IncidentStatus {
   // Map work order status to incident status for preview
-  const map: Record<string, string> = {
+  const map: Record<string, IncidentStatus> = {
     open: 'received',
     assigned: 'assigned',
     in_progress: 'in_progress',
     done: 'resolved',
   };
-  return map[status] as any;
+  return map[status] || 'received';
 }
 
 export interface WorkOrderDrawerProps {
@@ -51,14 +52,15 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
   const toast = useToast();
   const queryClient = useQueryClient();
 
-  const { data: teams = [] } = useQuery({
+  const { data: teams = [], error: _teamsError } = useQuery({
     queryKey: ['teams'],
     queryFn: getTeams,
     enabled: open && !!workOrder?.department,
   });
 
   const patchMutation = useMutation({
-    mutationFn: (data: any) => patchWorkOrder(workOrder!.id, data),
+    mutationFn: (data: { status?: string; team?: string; teamSize?: number; tasks?: any[] }) =>
+      patchWorkOrder(workOrder!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['work-order', workOrder!.id] });
       queryClient.invalidateQueries({ queryKey: ['work-orders'] });
@@ -66,7 +68,7 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       toast.success(`اتحدّث أمر الشغل ${workOrder!.id}.`);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'حصلت مشكلة. جرّب تاني.');
     },
   });
@@ -87,7 +89,7 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
 
   const handleStatusChange = async ({ status, note }: { status: string; note: string }) => {
     if (!workOrder) return;
-    const updateData: any = { status, note };
+    const updateData: { status: string; team?: string; teamSize?: number; note: string } = { status, note };
     if (selectedTeam && status === 'assigned') {
       const team = teams.find((t) => t.name === selectedTeam);
       if (team) {
@@ -173,7 +175,7 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
 
         {/* Chips and Status */}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '12px 0' }}>
-          <StatusChip status={workOrder.status} workorder />
+          <StatusChip kind="workorder" status={workOrder.status} />
           {workOrder.priorityScore && (
             <Tag tone={priorityLevel(workOrder.priorityScore) === 'critical' ? 'danger' : 'gold'}>
               أولوية {priorityLevel(workOrder.priorityScore)} · {workOrder.priorityScore}
@@ -227,17 +229,18 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
 
         {/* Team selection for open orders */}
         {isOpenStatus && !workOrder.external && (
-          <SelectField
-            id="team"
-            label="الفريق"
-            value={selectedTeam || ''}
-            onChange={setSelectedTeam}
-            options={[
-              { value: '', label: 'من غير فريق' },
-              ...departmentTeams.map((t) => ({ value: t.name, label: t.name })),
-            ]}
-            style={{ marginTop: 12 }}
-          />
+          <div style={{ marginTop: 12 }}>
+            <SelectField
+              id="team"
+              label="الفريق"
+              value={selectedTeam || ''}
+              onChange={setSelectedTeam}
+              options={[
+                { value: '', label: 'من غير فريق' },
+                ...departmentTeams.map((t) => ({ value: t.name, label: t.name })),
+              ]}
+            />
+          </div>
         )}
 
         {/* Updates Timeline */}
@@ -246,7 +249,8 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
             <hr className="ftc-divider hr0" style={{ margin: '16px 0' }} />
             <h3 style={{ margin: '0 0 10px', fontSize: 14, fontWeight: 600 }}>آخر تحديثات</h3>
             <Timeline
-              items={[...workOrder.updates].reverse().map((update) => ({
+              items={[...workOrder.updates].reverse().map((update, idx) => ({
+                id: `update-${idx}`,
                 title: update.note,
                 who: `${update.at} · ${update.actor}`,
                 state: 'done',

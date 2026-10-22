@@ -57,10 +57,9 @@ export default function WorkOrdersPage() {
     queryFn: getDepartments,
     staleTime: Infinity,
   });
-
-  const { data: selectedWorkOrder } = useQuery({
+  const { data: selectedWorkOrder } = useQuery<WorkOrder | undefined>({
     queryKey: ['work-order', selectedId],
-    queryFn: () => (selectedId ? getWorkOrder(selectedId) : null),
+    queryFn: () => (selectedId ? getWorkOrder(selectedId) : undefined),
     enabled: !!selectedId,
   });
 

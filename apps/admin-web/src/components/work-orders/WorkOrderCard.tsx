@@ -5,7 +5,6 @@ import { Icon } from '@/components/Icon';
 import { Tag } from '@/components/ui';
 import type { WorkOrder } from '@/domain/admin-types';
 import { formatDayDM, formatDayWithTime, formatDueLabel, shortAddress } from '@/lib/format';
-import cx from 'clsx';
 
 export interface WorkOrderCardProps {
   wo: WorkOrder;
@@ -44,13 +43,20 @@ function handleLinkClick(e: React.MouseEvent) {
 
 export function WorkOrderCard({ wo, selected, now, onOpen }: WorkOrderCardProps) {
   const late = wo.overdue && wo.status !== 'done';
-  const hoursLate = late ? Math.round((Date.now() - new Date(wo.dueAt).getTime()) / (1000 * 60 * 60)) : 0;
+  const hoursLate = late ? Math.round((now - new Date(wo.dueAt).getTime()) / (1000 * 60 * 60)) : 0;
+
+  const classes = ['wo'];
+  if (late) classes.push('is-late');
+  if (selected) classes.push('is-open');
+
+  const dueClasses = ['due'];
+  if (late) dueClasses.push('late');
 
   return (
     <div
       role="button"
       tabIndex={0}
-      className={cx('wo', late && 'is-late', selected && 'is-open')}
+      className={classes.join(' ')}
       onClick={() => onOpen(wo.id)}
       onKeyDown={(e) => handleKeyDown(e, onOpen, wo.id)}
       aria-label={`أمر الشغل ${wo.id}: ${wo.title}`}
@@ -84,7 +90,7 @@ export function WorkOrderCard({ wo, selected, now, onOpen }: WorkOrderCardProps)
       </span>
       <span className="row">
         <Icon name={wo.status === 'done' ? 'check' : 'calendar'} size={14} />
-        <span className={cx('due', late && 'late')}>{dueLine(wo, now)}</span>
+        <span className={dueClasses.join(' ')}>{dueLine(wo, now)}</span>
       </span>
     </div>
   );
