@@ -24,7 +24,7 @@ const TILES: Tile[] = [
   { icon: 'tree', ar: 'صيانة الشجر', en: 'Tree care', href: '/services/tree', testID: 'tile-tree' },
   { icon: 'map', ar: 'خريطة المدينة', en: 'City map', href: '/map', testID: 'tile-map' },
   { icon: 'clipboard', ar: 'طلباتي', en: 'My requests', href: '/requests', testID: 'tile-requests' },
-  { icon: 'bulb', ar: 'إنارة الشوارع', en: 'Streetlights', href: '/report/new?category=streetlight_out', testID: 'tile-streetlight' },
+  { icon: 'recycle', ar: 'تدوير', en: 'Recycling', href: '/services/recycling', testID: 'tile-recycling' },
 ];
 
 export default function HomeScreen() {

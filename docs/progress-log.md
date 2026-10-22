@@ -124,7 +124,39 @@ Newest first. Each entry: what was done, how to test it, known issues.
 - In-memory users and signing key reset on restart. This harness is local only; teammate must supply persistence and application assembly.
 - Real OTP, attempt/rate limits, staff login, token refresh/revocation, and other citizen endpoints are not implemented in this first slice. Proposed staff/upload contracts still require agreement.
 - Local runtime is Python 3.14; CI targets the planned Python 3.12.
+## 2026-10-22 — Mobile app: CityCycle features (branch `feat/mobile-citycycle`)
 
+**Done**
+- Citizen: recycling pickup form (materials, weights, photo with AI suggestion, free or paid with estimate, place, time, voice note), pickup tracking inside طلباتي (`RCY-` ids), cancel and confirm weighing, sorting guide, my impact, smart-bin layer on the map with "report full", entry points on home, services and profile.
+- Collector mode: apply, pending (demo verify in mock), jobs list and map, accept, manual weights, finish, earnings; offline-first queue with ordered flush and 4xx drop rules.
+- Mock services with a separate mock DB, real API services for every call, domain/logic/store tests.
+- Contract updated (`/collector/pickups`, new pickup fields, queue and privacy rules); linking checklist in [`mobile/citycycle-backend-linking.md`](mobile/citycycle-backend-linking.md).
+
+**How to test**: `cd apps/mobile && npm run typecheck && npm run lint && npm test`, then the manual list in the linking checklist.
+
+**Known issues**: Bluetooth scale and read-aloud guide not built; no design mockups for the new screens; CO₂ shown only if the backend sends it; web copy under `apps/web` not synced yet.
+
+## 2026-10-22 — Mobile remaining-work checklist
+
+**Done**
+- [`mobile/remaining-work.md`](mobile/remaining-work.md): what is left on the citizen app (real-device checks, backend-dependent items, known gaps, shared-code duty), collected from the README stubs, reviews and this log.
+
+## 2026-10-22 — CityCycle waste pillar and hardware member (branch `docs/citycycle-and-hardware`)
+
+**Done** (documentation only, nothing existing changed or removed)
+- **Direction:** CityFix is entered in SolveThe17 2.0, Track 4 · SDG 11 "Unlocking Egypt's Waste Economy". Waste and recycling becomes a main pillar, **CityCycle** (سيتي سايكل — إعادة التدوير), with a 6th team member for hardware ([0004](decisions/0004-citycycle-waste-pillar.md)).
+- [`vision.md`](vision.md): all pillars, how they connect, who benefits, impact metrics, and a map of the five grading criteria. Numbers not from the theme are marked "to verify".
+- [`features/`](features/README.md): the CityCycle feature plan, one file per member with priorities, acceptance checks and dependencies, plus the hackathon deliverable owners.
+- [`team/hardware-iot.md`](team/hardware-iot.md): member 6 brief (smart bin, hub scale, telemetry protocol, Egyptian field conditions, BOM template in EGP, testing plan, work plan).
+- [`api-contract.md`](api-contract.md): new "CityCycle — proposed" section (pickups, collectors, material prices, bins and readings with device auth, impact, admin, AI). Pickups are a separate entity; `ServiceType` is unchanged.
+- Additions to the team README (row, diagram, hand-offs, week plan), root README, docs index, CONTRIBUTING (branch prefix, CI row), CODEOWNERS (commented), and a new `hardware-ci.yml` that skips until `hardware/firmware/platformio.ini` exists.
+
+**How to test**
+- `node scripts/check-doc-links.mjs`; `actionlint .github/workflows/hardware-ci.yml`.
+
+**Open**
+- Material prices, CO₂ factors, bin thresholds and every BOM price are unknown on purpose and must be filled from real sources.
+- The CityCycle contract section needs agreement from members 1–4 by PR before anyone builds on it. The `hardware/` folder does not exist yet.
 ## 2026-10-22 — Citizen website review fixes (branch `fix/citizen-web-review`)
 
 **Done** ([review](reviews/2026-10-21-citizen-web-review.md), every finding has a Resolution)

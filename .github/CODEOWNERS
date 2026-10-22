@@ -19,6 +19,9 @@
 # /backend/app/optimizer/      @owner-ai
 # /backend/ai-eval/            @owner-ai
 
+# ⑥ Hardware & IoT (CityCycle smart bin)
+# /hardware/                   @owner-hw
+
 # Shared
 # /docs/api-contract.md        @owner-api @owner-mobile @owner-web @owner-admin
 # /docs/design/                @owner-mobile

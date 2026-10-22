@@ -22,7 +22,9 @@ export type IconName =
   | 'pin' | 'shield-check' | 'wifi' | 'users' | 'share' | 'check' | 'plus'
   | 'search' | 'clock' | 'zap' | 'droplets' | 'pipe' | 'manhole' | 'pothole'
   | 'cone' | 'paw' | 'sidewalk' | 'more' | 'phone' | 'sparkles' | 'eye-off'
-  | 'whatsapp' | 'x' | 'image' | 'locate' | 'info' | 'flame' | 'calendar' | 'refresh';
+  | 'whatsapp' | 'x' | 'image' | 'locate' | 'info' | 'flame' | 'calendar' | 'refresh'
+  // CityCycle (recycling) icons
+  | 'recycle' | 'bottle' | 'box' | 'can' | 'jar' | 'plug' | 'drop' | 'leaf' | 'truck' | 'scale' | 'coins' | 'chart';
 
 export type LatLng = { lat: number; lng: number };
 
