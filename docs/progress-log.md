@@ -2,6 +2,11 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-22 — Mobile remaining-work checklist
+
+**Done**
+- [`mobile/remaining-work.md`](mobile/remaining-work.md): what is left on the citizen app (real-device checks, backend-dependent items, known gaps, shared-code duty), collected from the README stubs, reviews and this log.
+
 ## 2026-10-22 — CityCycle waste pillar and hardware member (branch `docs/citycycle-and-hardware`)
 
 **Done** (documentation only, nothing existing changed or removed)
