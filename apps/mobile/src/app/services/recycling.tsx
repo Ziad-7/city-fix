@@ -197,7 +197,7 @@ export default function RecyclingPickupScreen() {
         </FormSection>
       ) : null}
 
-      <FormSection title={tr('صورة (اختياري)', 'Photo (optional)')} hint={tr('بنقترح الخامة من الصورة والتأكيد ليك.', 'We suggest the material from the photo, and you confirm.')}>
+      <FormSection title={tr('صورة (اختياري)', 'Photo (optional)')} hint={tr('بنقترح الخامة من الصورة والقرار في إيدك.', 'We suggest the material from the photo, and you confirm.')}>
         {photo ? (
           <View style={styles.photoBox}>
             <Image source={{ uri: photo }} accessibilityLabel={tr('صورة الخامات', 'Photo of the materials')} style={StyleSheet.absoluteFill} resizeMode="cover" />

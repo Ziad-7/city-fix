@@ -16,7 +16,9 @@ export function JobCard({ job, onPress, pending }: { job: CollectorJob; onPress:
   const tr = useTr();
   const title = materialsSummary(job.items, (n) => tr(`+${localDigits(n)}`, `+${n}`));
   const prices = useRecycling((s) => s.prices);
-  const partial = estimateValue(job.items, prices).unpriced.length > 0;
+  // Only once the price list has loaded: an empty list would make every item look unpriced.
+  const pricesReady = useRecycling((s) => s.pricesStatus === 'ready');
+  const partial = pricesReady && estimateValue(job.items, prices).unpriced.length > 0;
   return (
     <Card onPress={onPress} accessibilityLabel={`${title}, ${formatKg(job.estimatedKg)}`} testID={`job-${job.id}`} style={styles.card}>
       <View style={styles.top}>

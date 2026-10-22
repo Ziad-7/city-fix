@@ -18,7 +18,8 @@ export function PickupCard({ pickup }: { pickup: RecyclingPickup }) {
   const title = `${tr('جمع تدوير', 'Recycling pickup')} · ${materialsSummary(pickup.items, (n) => tr(`+${localDigits(n)}`, `+${n}`))}`;
   const total = pickup.totalKg ?? sumKg(pickup.items);
   const prices = useRecycling((s) => s.prices);
-  const partial = pickup.totalValueEgp === undefined && estimateValue(pickup.items, prices).unpriced.length > 0;
+  const pricesReady = useRecycling((s) => s.pricesStatus === 'ready');
+  const partial = pricesReady && pickup.totalValueEgp === undefined && estimateValue(pickup.items, prices).unpriced.length > 0;
   return (
     <Card
       onPress={() => router.push(`/requests/${pickup.id}`)}

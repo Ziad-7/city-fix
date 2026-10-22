@@ -434,7 +434,7 @@ Suggestion only: the citizen or collector confirms the materials and the size. O
 - **Prices:** `priceEgpPerKg` comes only from the district price table; never hard-coded in an app. If it is `null`, apps show "السعر هيتحدد" / "price to be set" and no value.
 - **Weighings are the source of truth** for kg and EGP. A manual weight and a scale weight use the same endpoint; the `source` is recorded.
 - **Offline:** collector writes carry a client-generated `clientId`; the server de-duplicates.
-- **Privacy:** a collector sees the address, landmark and materials of an open job, never the citizen's phone or name; the exact pin appears only after accept. A citizen sees the collector's first name only. An open job shows the street-level address (no building number), the landmark and an approximate pin; the exact pin arrives with accept. Earnings are visible to the collector and to admins only. Bin telemetry holds no personal data.
+- **Privacy:** a collector sees the materials, the address and landmark (street level, no building number) and an approximate pin of an open job, never the citizen's phone or name; the exact pin appears only after accept. A citizen sees the collector's first name, district and verified badge (collectors are always verified). Earnings are visible to the collector and to admins only. Bin telemetry holds no personal data.
 - **Money** is recorded, not processed: the platform logs cash paid and the value at the price list. No payment-provider integration in the MVP.
 - Timeline entries for pickups use the same `TimelineEntry` shape and `activity_log` table (entity type `recycling_pickup`).
 
@@ -444,7 +444,7 @@ The app implements every endpoint above against the mock, and calls the real rou
 
 - **Collector offline queue.** Accept, weigh and complete are saved on the phone when the network or server fails (`ApiError` 5xx or no connection) and sent later **in order**. A `4xx` answer (for example `409` "already taken") drops that action and all later queued actions for the same pickup, and tells the collector. So accept, weighings and complete must return plain `4xx` for business-rule refusals, and `5xx`/timeouts only for real trouble.
 - **`clientId`** is made by the app (`c-<time>-<seq>-<random>`) and re-sent unchanged on every retry.
-- **Pin privacy.** `GET /collector/jobs` rows have the address, landmark, a distance and an approximate (server-rounded, about 100 m) `lat`/`lng` for the map only. The exact `lat`/`lng` of the household arrives with `POST …/accept` and `GET /collector/pickups`. Neither shows the citizen's name or phone. The household sees the collector's first name only.
+- **Pin privacy.** `GET /collector/jobs` rows have the address, landmark, a distance and an approximate (server-rounded, about 100 m) `lat`/`lng` for the map only. Dropping the building number from `address` is the backend's duty; the mock does not do it. The exact `lat`/`lng` of the household arrives with `POST …/accept` and `GET /collector/pickups`. Neither shows the citizen's name or phone. The household sees the collector's first name and a verified badge (the app shows no district).
 - **Prices.** The app never keeps a price. `null` price means "السعر هيتحدد". The mock ships DEMO prices; remove none of this logic when real prices arrive.
 - **Waste classify.** The app shows the result as a suggestion; any failure just hides the suggestion.
 - **CO₂.** `co2AvoidedKg` is shown only when the backend sends it.

@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { MaterialBadge } from '@/components/citycycle';
+import { DemoPricesNote, MaterialBadge } from '@/components/citycycle';
 import { StateMessage } from '@/components/requests';
 import { AppText, Button, Card, Screen, ScreenHeader } from '@/components/ui';
 import { formatEgp, formatKg, materialLabel } from '@/domain/citycycle';
@@ -27,7 +27,7 @@ export default function ImpactScreen() {
     body = <StateMessage tone="error" icon="wifi" title={tr('مقدرناش نحمّل أثرك', "We couldn't load your impact")} actionLabel={tr('جرّب تاني', 'Try again')} onAction={() => void load()} />;
   } else if (impact.pickups === 0) {
     body = (
-      <StateMessage icon="leaf" title={tr('لسه مفيش تدوير', 'No recycling yet')} body={tr('أول ما جامع يخلّص طلب ليك هتشوف أثرك هنا.', 'Once a collector completes a request for you, your impact shows up here.')} actionLabel={tr('اطلب جمع تدوير', 'Request a pickup')} onAction={() => router.push('/services/recycling')} />
+      <StateMessage icon="leaf" title={tr('لسه مفيش تدوير', 'No recycling yet')} body={tr('أول ما جامع يخلّص أول طلب تدوير هتشوف أثرك هنا.', 'Once a collector completes a request for you, your impact shows up here.')} actionLabel={tr('اطلب جمع تدوير', 'Request a pickup')} onAction={() => router.push('/services/recycling')} />
     );
   } else {
     const max = Math.max(...impact.byMaterial.map((m) => m.kg), 1);
@@ -41,6 +41,7 @@ export default function ImpactScreen() {
           {impact.earnedEgp !== undefined ? (
             <AppText variant="smallStrong" color={colors.goldDeep}>{tr('كسبت', 'You earned')} {formatEgp(impact.earnedEgp)}</AppText>
           ) : null}
+          {impact.earnedEgp !== undefined ? <DemoPricesNote /> : null}
           {impact.co2AvoidedKg !== undefined ? (
             <AppText variant="smallStrong" color={colors.statusResolved} testID="impact-co2">{tr(`وفّرت حوالي ${localDigits(Math.round(impact.co2AvoidedKg))} كجم انبعاثات كربون`, `About ${Math.round(impact.co2AvoidedKg)} kg of CO₂ avoided`)}</AppText>
           ) : null}

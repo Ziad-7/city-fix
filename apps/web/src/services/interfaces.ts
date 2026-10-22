@@ -113,7 +113,7 @@ export interface RecyclingService {
   cancel(userId: string, id: string, note?: string): Promise<RecyclingPickup>;
   /** POST /recycling/pickups/{id}/confirm: the household accepts the weighing; the pickup becomes `completed`. */
   confirm(userId: string, id: string): Promise<RecyclingPickup>;
-  /** GET /me/impact: the caller's confirmed recycling. */
+  /** GET /me/impact?as=citizen: the caller's confirmed recycling as a citizen (one account can also be a collector). */
   impact(userId: string): Promise<Impact>;
 }
 
