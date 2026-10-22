@@ -219,6 +219,10 @@ RecyclingPickup = {
   estimatedValueEgp?: number,      // from the district price list; absent if no price is set
   status: PickupStatus, collectorId?: string, collectorName?: string,
   weighings: Weighing[], totalKg?: number, totalValueEgp?: number,
+  paidToHouseholdEgp?: number,     // cash the collector says they paid (mode "paid"), set by /complete
+  collectorFinishedAt?: string,    // set by /complete
+  confirmedAt?: string,            // set by the household's /confirm
+  note?: string,
   timeline: TimelineEntry[], createdAt
 }
 NewRecyclingPickupInput = { items, photoUris?, location, day, slot, mode, note? }
@@ -235,7 +239,7 @@ Collector = {
 }   // phone and national ID are never sent to other users
 
 CollectorJob = {   // a pickup as seen by a verified collector (no citizen phone or exact name)
-  id, items, location: Place /* address and landmark; exact pin after accept */,
+  id, items, location: Place /* address, landmark and an APPROXIMATE lat/lng (the server rounds to about 100 m); the exact pin arrives only with accept */,
   day, slot, mode, estimatedKg: number, estimatedValueEgp?: number, distanceM?: number
 }
 
@@ -285,17 +289,18 @@ Photos and voice notes use the existing `/uploads/sign` flow (`kind: "report_pho
 | --- | --- | --- | --- | --- |
 | POST | `/collectors/apply` | `{ name, district, materials, vehicle? }` | `Collector` (`pending`) | A signed-in user applies; staff verify in the Command Center. Role `collector` is granted on verification. |
 | GET | `/collectors/me` | — | `Collector` | |
-| GET | `/collector/jobs` | query `lat`, `lng`, `radiusM`, `materialId?` | `CollectorJob[]` | Verified collectors only; open (`requested`) pickups near the point, nearest first. |
-| POST | `/collector/jobs/{id}/accept` | — | `RecyclingPickup` | First accept wins; `409` if already taken. Reveals the exact pin to the collector. |
-| POST | `/collector/jobs/{id}/weighings` | `{ materialId, kg, source, scaleId?, clientId }` | `Weighing` | Idempotent on `clientId` (offline-first sync). Sets the pickup to `weighed`. |
-| POST | `/collector/jobs/{id}/complete` | `{ paidToHouseholdEgp?: number }` | `RecyclingPickup` | Records what was paid in cash (for `mode: "paid"`). The household then confirms. |
+| GET | `/collector/pickups` | — | `RecyclingPickup[]` | **Added by the app.** The pickups this collector accepted (any status), newest first, with the exact pin. Drives "شغلي" / "My jobs". |
+| GET | `/collector/jobs` | query `lat`, `lng`, `radiusM`, `materialId?` | `CollectorJob[]` | Verified collectors only (`403` otherwise); open (`requested`) pickups near the point, nearest first. Never includes the caller's own household pickups. |
+| POST | `/collector/jobs/{id}/accept` | — | `RecyclingPickup` | First accept wins; `409` if already taken or cancelled. Reveals the exact pin to the collector. |
+| POST | `/collector/jobs/{id}/weighings` | `{ materialId, kg, source, scaleId?, clientId }` | `Weighing` | Idempotent on `clientId` (offline-first sync): a repeat returns the same `Weighing` with `200`. Only the collector who accepted the pickup, and only while it is `accepted` or `weighed` (`403`/`409` otherwise). Sets the pickup to `weighed`. `kg` is 0.5 to 500. |
+| POST | `/collector/jobs/{id}/complete` | `{ paidToHouseholdEgp?: number }` | `RecyclingPickup` | Records what was paid in cash (for `mode: "paid"`) and `collectorFinishedAt`. Needs at least one weighing (`409` otherwise). The household then confirms; the pickup stays `weighed` until `/recycling/pickups/{id}/confirm`. |
 | GET | `/collector/earnings` | query `from`, `to` | `Earnings` | |
 
 ### Smart bins and hubs
 
 | Method | Path | Body | Response | Notes |
 | --- | --- | --- | --- | --- |
-| GET | `/bins` | query `bbox` | `Bin[]` | Public fields for the map layer: location, state, fill level. |
+| GET | `/bins` | query `bbox?` (the app sends none yet; return the caller's district) | `Bin[]` | Public fields for the map layer: location, state, fill level. |
 | POST | `/bins/{id}/report-full` | `{ note?, photoUri? }` | `204` | A citizen reports a full bin; creates a FixFirst `garbage` incident linked to the bin. |
 | POST | `/iot/bins/{id}/readings` | `{ readings: BinReading[] }` | `202 { accepted: number[], intervalMin, fullPct, heatC }` | **Device auth:** `X-Device-Key` header, no user token. Idempotent on `(binId, seq)`. Owner member 6 (payload) + member 4 (endpoint). |
 | POST | `/iot/hubs/{id}/weighings` | `{ seq, at, material, kg, pickupId? }` | `202` | Hub scale; same device auth and rules. |
@@ -341,3 +346,16 @@ Suggestion only: the citizen or collector confirms the materials and the size. O
 - **Privacy:** a collector sees the address, landmark and materials of an open job, never the citizen's phone or name; the exact pin appears only after accept. A citizen sees the collector's first name, district and verified badge. Earnings are visible to the collector and to admins only. Bin telemetry holds no personal data.
 - **Money** is recorded, not processed: the platform logs cash paid and the value at the price list. No payment-provider integration in the MVP.
 - Timeline entries for pickups use the same `TimelineEntry` shape and `activity_log` table (entity type `recycling_pickup`).
+
+### What the mobile app does with this (2026-10-22)
+
+The app implements every endpoint above against the mock, and calls the real routes with `EXPO_PUBLIC_API_MODE=api`. Behaviour the backend must match:
+
+- **Collector offline queue.** Accept, weigh and complete are saved on the phone when the network or server fails (`ApiError` 5xx or no connection) and sent later **in order**. A `4xx` answer (for example `409` "already taken") drops that action and all later queued actions for the same pickup, and tells the collector. So accept, weighings and complete must return plain `4xx` for business-rule refusals, and `5xx`/timeouts only for real trouble.
+- **`clientId`** is made by the app (`c-<time>-<seq>-<random>`) and re-sent unchanged on every retry.
+- **Pin privacy.** `GET /collector/jobs` rows have the address, landmark, a distance and an approximate (server-rounded, about 100 m) `lat`/`lng` for the map only. The exact `lat`/`lng` of the household arrives with `POST …/accept` and `GET /collector/pickups`. Neither shows the citizen's name or phone. The household sees the collector's first name only.
+- **Prices.** The app never keeps a price. `null` price means "السعر هيتحدد". The mock ships DEMO prices; remove none of this logic when real prices arrive.
+- **Waste classify.** The app shows the result as a suggestion; any failure just hides the suggestion.
+- **CO₂.** `co2AvoidedKg` is shown only when the backend sends it.
+- **Report a full bin.** The app calls `POST /bins/{id}/report-full` and then refreshes the report list, so the new garbage incident must be returned by `GET /incidents` and `GET /reports` for that citizen.
+- Request ids starting with `RCY-` open the pickup screen; keep that prefix.
