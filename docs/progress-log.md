@@ -2,6 +2,51 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-22 — Citizen API route slice
+
+**Branch:** `feat/api-auth` (extends the documented backend split/auth work).
+
+**Done**
+- Added contract-shaped report create/list/detail, incident list/detail/follow, map filters, and service-request create/list/detail routes behind an injectable `CitizenRepository`.
+- Added validation and access control, admin masking for anonymous reporters, media ownership hooks, and future Sunday–Thursday bulky-waste day checks.
+- Added opt-in staff login with Argon2 verification and local attempt limiting, plus an opt-in signed-upload endpoint. Both proposed routes await agreement before production registration.
+- Added a local in-memory HTTP harness and adapter for parallel work before database setup; documented how the teammate plugs in persistent repository/storage implementations.
+
+**How to test**
+- From `backend/`, install `requirements-dev.txt`, then run `python -m pytest -q`, `python -m ruff check app tests`, `python -m ruff format --check app tests`, and `python -m mypy app --ignore-missing-imports`.
+- Run `OTP_MODE=demo python -m uvicorn app.citizen_demo:create_app --factory --host 127.0.0.1` from Git Bash and exercise `/docs`.
+
+**Validation**
+- 35 tests pass; Ruff lint, Ruff formatting, mypy, and `git diff --check` pass locally on Python 3.14. Python 3.12 GitHub Actions has not run remotely. Starlette emits an upstream TestClient/httpx deprecation warning.
+
+**Still needs teammate or team agreement**
+- Database-backed `UserRepository` and `CitizenRepository`, migrations, transactional persistence, production priority and PostGIS duplicate logic, shared app assembly, deployment.
+- Actual private-bucket storage adapter and client agreement for the proposed upload route; client agreement for the proposed staff-login route.
+- Real OTP delivery, distributed abuse limits and token refresh/revocation.
+
+## 2026-10-21 — Backend split and citizen auth
+
+**Branch:** `feat/api-auth` (based on local `main` at `5345972`).
+
+**Done**
+- Documented [two-person ownership](team/backend-split.md): Moataz owns citizen API/auth; teammate owns database, operations and deployment. AI remains a separate role.
+- Added citizen demo OTP request/verification matching existing camelCase auth responses; JWT issue/validation with expiry, issuer and audience; shared current-user, role and department checks.
+- Added an injectable user repository contract and an explicitly enabled local in-memory harness so auth can be tested before the database adapter lands.
+- Added tests, a Python 3.12 CI workflow, [run/integration instructions](../backend/README.md), and a [PR description](../backend/PR-auth.md).
+
+**How to test**
+- From `backend/`, install `requirements-dev.txt`, then run `python -m pytest -q`, `python -m ruff check app tests`, and `python -m mypy app --ignore-missing-imports`.
+- Git Bash: `OTP_MODE=demo python -m uvicorn app.auth_demo:create_app --factory --host 127.0.0.1`; use `/docs` to request/verify `01012345678` with `123456`.
+
+**Validation**
+- Local checks: 20 tests pass; Ruff lint and mypy pass. Tests ran outside the Windows sandbox because asyncio's internal socket-pair setup stalled inside it. One upstream Starlette warning notes that its httpx test adapter is deprecated; tests still pass.
+- Remote CI, teammate review and comparison with latest remote main are pending; this is not a merged or deployed stage.
+
+**Known limitations / next steps**
+- In-memory users and signing key reset on restart. This harness is local only; teammate must supply persistence and application assembly.
+- Real OTP, attempt/rate limits, staff login, token refresh/revocation, and other citizen endpoints are not implemented in this first slice. Proposed staff/upload contracts still require agreement.
+- Local runtime is Python 3.14; CI targets the planned Python 3.12.
+
 ## 2026-10-21 — Design follow-ups
 
 **Done**

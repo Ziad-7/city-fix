@@ -6,6 +6,8 @@
 
 ## Your mission
 
+This role is split between two people: **Moataz owns citizen API/authentication; the teammate owns database, operations and deployment**. The [backend split](backend-split.md) defines file ownership, integration interfaces and delivery stages and supersedes the single-owner assignment above.
+
 Build the FastAPI backend and the Supabase database that **all three clients** run on: the citizen mobile app, the citizen website and the admin Command Center. The mobile app already works on mock data behind the exact API in [`docs/api-contract.md`](../api-contract.md); the two websites are built the same way. When your endpoints are live, each client switches over with one setting — so the contract is your spec.
 
 **Done means:** a citizen report sent from the phone is stored, gets a priority, shows up on `/incidents` and `/map/incidents`, and status changes made by an admin appear in the citizen's timeline — on a deployed URL, with tests.

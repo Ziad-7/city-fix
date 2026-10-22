@@ -1,0 +1,6 @@
+# Runtime dependencies for the citizen/auth backend slice; merge with the DB stack.
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+PyJWT>=2.10,<3
+pwdlib[argon2]>=0.2,<1
+tzdata>=2025.1,<2027

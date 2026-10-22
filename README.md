@@ -13,7 +13,7 @@ Built in 7 days by a team of 5 for a hackathon.
 | `apps/mobile/` | Citizen app — Expo (React Native) + TypeScript, Arabic-first RTL | In progress (Stage 1) |
 | `apps/web/` | Citizen website (client portal) — Next.js, same design as the app | Planned |
 | `apps/admin-web/` | City Command Center — Next.js web dashboard | Planned |
-| `backend/` | FastAPI + Supabase (PostgreSQL/PostGIS, Storage) API, CityBrain AI, OR-Tools budget optimizer | Planned |
+| `backend/` | FastAPI + Supabase API; planned CityBrain AI and OR-Tools optimizer | Auth slice started; database and remaining API planned |
 | `docs/` | Decisions, design, specs, progress log | Living |
 
 ## Team
@@ -23,7 +23,7 @@ Built in 7 days by a team of 5 for a hackathon.
 | 1 | Citizen mobile app | Abood + Claude | `apps/mobile` | [spec](docs/mobile/implementation-spec.md) |
 | 2 | Citizen website (client portal) | _[name]_ | `apps/web` | [brief](docs/team/citizen-web-portal.md) |
 | 3 | Admin web (Command Center) | _[name]_ | `apps/admin-web` | [brief](docs/team/admin-web.md) |
-| 4 | Backend API & database | _[name]_ | `backend/` | [brief](docs/team/api-database.md) |
+| 4 | Backend API & database | Moataz (citizen API/auth) + teammate (DB/operations; name pending) | `backend/` | [ownership split](docs/team/backend-split.md) |
 | 5 | AI & smart features (CityBrain) | _[name]_ | `backend/app/ai`, `backend/app/optimizer` | [brief](docs/team/ai-features.md) |
 
 Who owns what, hand-offs, the week plan and how we review: **[docs/team/README.md](docs/team/README.md)**. Design for every screen: [docs/design/index.html](docs/design/index.html).
