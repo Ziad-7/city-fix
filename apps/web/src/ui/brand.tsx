@@ -1,8 +1,10 @@
 /* eslint-disable @next/next/no-img-element -- the brand SVGs are tiny static files; next/image adds nothing here */
+import { useLang } from '@/i18n';
 
-/** Arabic lockup from docs/design/assets (never redrawn). */
+/** Arabic or English lockup from docs/design/assets (never redrawn). */
 export function Logo({ height = 40 }: { height?: number }) {
-  return <img src="/brand/cityfix-lockup-ar.svg" alt="سيتي فيكس" height={height} style={{ height, width: 'auto' }} />;
+  const lang = useLang();
+  return <img src={`/brand/cityfix-lockup-${lang === 'en' ? 'en' : 'ar'}.svg`} alt={lang === 'en' ? 'CityFix' : 'سيتي فيكس'} height={height} style={{ height, width: 'auto' }} />;
 }
 
 export function LogoMark({ size = 48 }: { size?: number }) {
