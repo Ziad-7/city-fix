@@ -72,4 +72,4 @@ jobs:
       - name: Pytest
         if: steps.guard.outputs.exists == 'true'
         working-directory: backend
-        run: pytest
+        run: python -m pytest
