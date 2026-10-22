@@ -6,6 +6,7 @@ import { useRef, useState } from 'react';
 import { getCategory } from '@/domain/categories';
 import { SEVERITY_LABEL_AR, STATUS_LABEL_AR, type AlreadyReported, type CategoryId, type DuplicateMatch, type Place, type TriageSuggestion } from '@/domain/types';
 import { reportedByAr } from '@/components/report/text';
+import { API_MODE } from '@/services';
 import type { LocationState } from '@/lib/location';
 import { MAX_SECONDS, useVoiceNote } from '@/lib/voice';
 import { toArabicDigits } from '@/utils/digits';
@@ -193,6 +194,7 @@ export function VoiceRow({ highlight, onText, onVoiceNote }: { highlight?: boole
         </button>
         <span className="tx"><span className="w-t" aria-live="polite">{title}</span><span className="w-m">{sub}</span></span>
       </div>
+      {API_MODE === 'api' ? <span className="ftc-help">التسجيل هيرتفع بشكل خاص ويتبعت لـ Gemini لتحويله لنص. النسخة المجانية ممكن تستخدم التسجيلات لتحسين منتجات Google؛ التسجيل اختياري وتقدر تكتب بدلًا منه.</span> : null}
       {interim ? <span className="ftc-help" aria-live="polite">«{interim}»</span> : null}
       {error ? <span className="a-err" role="alert" data-testid="voice-error">{error}</span> : null}
     </div>

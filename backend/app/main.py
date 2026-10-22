@@ -18,6 +18,7 @@ from app.seed import seed_db
 from app.ai.integrations import find_nearby_incidents
 from app.ai.llm import GeminiClient
 from app.ai.router import create_triage_router
+from app.ai.transcribe import GeminiAudioTranscriber, create_transcription_router
 from app.storage import SupabaseMediaStorage
 
 
@@ -27,6 +28,14 @@ async def load_approved_triage_photo(path: str, user_id: str, consent: bool) -> 
     if storage is None or not callable(getattr(storage, "read_approved", None)):
         raise HTTPException(503, "تحليل الصور مش متاح لحد ما التخزين الخاص يكون جاهز.")
     return await storage.read_approved(user_id, path, "report_photo", consent)
+
+
+async def load_authorized_voice_note(path: str, user_id: str) -> tuple[bytes, str]:
+    """Read only an authenticated caller-owned voice note from private storage."""
+    storage = getattr(app.state, "media_storage", None)
+    if storage is None or not callable(getattr(storage, "read_voice_note", None)):
+        raise HTTPException(503, "تحويل الصوت لنص مش متاح لحد ما التخزين الخاص يكون جاهز.")
+    return await storage.read_voice_note(user_id, path)
 
 
 @asynccontextmanager
@@ -127,6 +136,20 @@ app.include_router(
             else None
         ),
         photo_analysis_enabled=settings.gemini_photo_analysis_enabled,
+    )
+)
+app.include_router(
+    create_transcription_router(
+        get_current_user=current_user,
+        load_authorized_voice=load_authorized_voice_note,
+        provider=(
+            GeminiAudioTranscriber(
+                api_key=settings.gemini_api_key,
+                model=settings.gemini_model,
+            )
+            if settings.gemini_api_key.strip()
+            else None
+        ),
     )
 )
 app.include_router(staff_auth.router)

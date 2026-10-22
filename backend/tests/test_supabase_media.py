@@ -99,6 +99,29 @@ def test_read_approved_verifies_owner_before_returning_photo_bytes():
     assert Image.open(BytesIO(returned)).format == "JPEG"
 
 
+def test_read_voice_note_checks_owner_and_returns_supported_audio():
+    calls = []
+
+    def handle(request):
+        calls.append(request.method)
+        if request.url.path.endswith("/bucket/report-media"):
+            return httpx.Response(200, json={"id": "report-media", "public": False})
+        headers = {"content-type": "audio/mp4", "content-length": "5"}
+        if request.method == "HEAD":
+            return httpx.Response(200, headers=headers)
+        return httpx.Response(200, content=b"audio", headers=headers)
+
+    storage = SupabaseMediaStorage(
+        "https://project.supabase.co", "secret", transport=httpx.MockTransport(handle)
+    )
+    assert asyncio.run(storage.read_voice_note("u1", "u1/voice.m4a")) == (b"audio", "audio/mp4")
+    assert calls == ["GET", "HEAD", "GET"]
+
+    with pytest.raises(HTTPException) as denied:
+        asyncio.run(storage.read_voice_note("u1", "u2/voice.m4a"))
+    assert denied.value.status_code == 403
+
+
 def test_rejects_unsafe_paths_and_wrong_media_type():
     storage = SupabaseMediaStorage("https://project.supabase.co", "secret")
     for path in ("u1/../secret.jpg", "u1//photo.jpg", "https://evil/photo.jpg"):

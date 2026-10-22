@@ -161,7 +161,7 @@ This drops all tables, recreates them, and re-seeds with demo data.
 - Replace the local SQLite demo setup with agreed migrations and production PostgreSQL/PostGIS, provision private Supabase media storage, and connect a real OTP provider.
 - Replace demo readable-ID allocation with a transactional database sequence before concurrent or multi-worker deployment.
 - Add deployment configuration, production CORS/secrets, and connect the mobile, citizen web, and admin clients to a deployed API.
-- Add transcription and budget-optimization services; implement photo face/plate blurring and the client consent flow before enabling image triage.
+- Validate the voice-transcription provider and photo face/plate blur on representative Egyptian recordings and images before enabling those AI paths in production.
 
 ## Environment Variables
 
@@ -216,3 +216,5 @@ Install the combined development dependencies with `python -m pip install -r req
 Photo inference is disabled unless `GEMINI_PHOTO_ANALYSIS_ENABLED=true`. Create a **private** Supabase Storage bucket, then configure `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_MEDIA_BUCKET` (default `report-media`) to enable `/uploads/sign`. The adapter refuses public buckets, scopes random object paths to the authenticated user, verifies uploaded MIME type and size, and issues 15-minute read URLs. The `/triage` request must include `photoConsent: true` to read a photo for AI analysis. Before a photo reaches Gemini, the backend strips metadata, caps dimensions, and blurs regions detected by OpenCV's bundled frontal-face and Russian-plate Haar cascades. These detectors can miss faces or Egyptian plates; keep photo inference disabled until they are validated on representative images and the client shows informed consent. Gemini's free tier may use submitted content to improve Google products.
 
 The route uses the existing `/triage` response contract with an optional `photoConsent` request field. A device-local URI or browser data URL is not accepted by the API; clients must upload first and send the returned storage path.
+
+`POST /ai/transcribe` is mounted in the main app. It reads an uploaded voice note only from the authenticated caller's private storage path, then uses the configured Gemini model to return a short Egyptian Arabic transcription. The app discloses the provider and free-tier data-use policy before recording in API mode. If Gemini or storage is unavailable, the client leaves the description editable so the citizen can type it. Verify availability and transcription quality on representative Egyptian Arabic clips before production rollout.

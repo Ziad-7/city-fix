@@ -196,6 +196,29 @@ class SupabaseMediaStorage:
             raise HTTPException(415, "نوع الصورة المرفوعة غير مطابق.")
         return response.content
 
+    async def read_voice_note(self, user_id: str, path: str) -> tuple[bytes, str]:
+        """Read an authenticated caller-owned voice note for transcription."""
+        self._validate_owned_path(user_id, path)
+        await self._ensure_private_bucket_async()
+        endpoint = f"/object/{self._quoted_bucket}/{self._quoted_path(path)}"
+        try:
+            metadata = await self._async_client.head(endpoint)
+        except httpx.HTTPError as error:
+            raise HTTPException(503, "تعذر التحقق من التسجيل.") from error
+        self._validate_upload_response(metadata, "voice_note")
+        content_type = metadata.headers.get("content-type", "").split(";")[0].lower()
+        try:
+            response = await self._async_client.get(endpoint)
+            response.raise_for_status()
+        except httpx.HTTPError as error:
+            raise HTTPException(404, "التسجيل مش متاح.") from error
+        if len(response.content) > MAX_VOICE_BYTES:
+            raise HTTPException(413, "حجم التسجيل أكبر من المسموح.")
+        actual_type = response.headers.get("content-type", "").split(";")[0].lower()
+        if actual_type not in MEDIA_TYPES["voice_note"] or actual_type != content_type:
+            raise HTTPException(415, "نوع التسجيل المرفوع غير مطابق.")
+        return response.content, actual_type
+
     async def _ensure_private_bucket_async(self) -> None:
         if self._async_private_bucket_verified:
             return

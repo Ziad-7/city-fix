@@ -172,12 +172,12 @@ From the plan (§7). Admin role required.
 
 `GET /incidents` and `GET /incidents/{id}` with a staff token also return `linkedReports` (anonymised: `reporter: "مواطن" | "بلاغ بدون اسم"`) and the stored triage suggestion — *proposed*.
 
-### AI (CityBrain) — proposed, owner member 5
+### AI (CityBrain)
 | Method | Path | Body | Response |
 | --- | --- | --- | --- |
 | POST | `/ai/transcribe` | `{ path }` (an uploaded voice note) | `{ text, language: "ar-EG", confidence }` |
 
-The app calls `/ai/transcribe` right after uploading a recording and appends `text` to the description (still editable); it ignores `language`. Any error just leaves the description for the citizen to type. The voice note itself is sent with the report as `voiceNoteUri` even when transcription failed.
+The app calls `/ai/transcribe` after the citizen records a voice note and appends `text` to the description (still editable); it ignores `language`. The authenticated API reads only a caller-owned `voice_note` from private storage. Any provider or storage error leaves the citizen free to type the description; the voice note itself is still sent with the report as `voiceNoteUri`. In API mode, the recording control discloses that the file is uploaded privately and sent to Gemini; the free tier may use submitted content to improve Google products.
 
 Proposed additions to `TriageSuggestion`: `source: "model" | "fallback"` and `emergency?: boolean` (true when the text mentions gas, fire, injury or collapse; clients then show the emergency numbers first).
 
