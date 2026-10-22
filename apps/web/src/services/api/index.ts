@@ -45,7 +45,7 @@ export function createApiServices(): Services {
       return all.filter((i) => i.isFollowing).map((i) => i.id);
     },
     followIncident: (_userId, id) => http<Incident>('POST', `/incidents/${encodeURIComponent(id)}/follow`),
-    simulateProgress: () => Promise.reject(new Error('simulateProgress متاح في وضع mock بس')),
+    simulateProgress: () => Promise.reject(new Error(tr('simulateProgress متاح في وضع mock بس', 'simulateProgress is only available in mock mode'))),
     reopenIncident: (_userId, id, note) => http<Incident>('POST', `/incidents/${encodeURIComponent(id)}/reopen`, { note }),
   };
 
@@ -76,7 +76,7 @@ export function createApiServices(): Services {
       book: (_userId, input) => http<ServiceRequest>('POST', '/service-requests', input),
       listMine: () => http<ServiceRequest[]>('GET', '/service-requests'),
       get: (id) => orNull(http<ServiceRequest | null>('GET', `/service-requests/${encodeURIComponent(id)}`)),
-      simulateProgress: () => Promise.reject(new Error('simulateProgress متاح في وضع mock بس')),
+      simulateProgress: () => Promise.reject(new Error(tr('simulateProgress متاح في وضع mock بس', 'simulateProgress is only available in mock mode'))),
     },
     triage: {
       async analyze({ userId: _userId, ...body }) {
