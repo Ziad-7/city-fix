@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from typing import Annotated, Literal
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
 from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -13,6 +13,7 @@ from app.admin_auth import current_claims
 from app.db import get_db
 from app.helpers import iso_z, now_utc
 from app.logic.duplicates import haversine_m
+from app.logic.idempotency import clean_key, lookup, remember
 from app.logic.ids import next_id
 from app.logic.recycling import (
     approx,
@@ -57,7 +58,19 @@ def list_materials(claims: Claims, district: str | None = None, db: Session = De
 
 
 @router.post("/recycling/pickups")
-def create_pickup(body: NewRecyclingPickupInput, storage: Storage, claims: Claims, db: Session = Depends(get_db)):
+def create_pickup(
+    body: NewRecyclingPickupInput,
+    storage: Storage,
+    claims: Claims,
+    db: Session = Depends(get_db),
+    idempotency_key: Annotated[str | None, Header()] = None,
+):
+    """Create a pickup. An optional ``Idempotency-Key`` makes a retry by the same user return the original."""
+    key = clean_key(idempotency_key)
+    earlier_id = lookup(db, claims["sub"], "recycling_pickup", key)
+    earlier = db.get(RecyclingPickup, earlier_id) if earlier_id else None
+    if earlier is not None:
+        return pickup_view(db, earlier, viewer="citizen", storage=storage)
     if body.day < datetime.now(ZoneInfo("Africa/Cairo")).date().isoformat():
         raise HTTPException(422, "اختار يوم جاي.")
     user_id = claims["sub"]
@@ -88,6 +101,7 @@ def create_pickup(body: NewRecyclingPickupInput, storage: Storage, claims: Claim
     db.add(pickup)
     db.flush()
     log(db, pickup.id, "requested", "سيتي سايكل", "طلبك وصل وبندوّر على جامع قريب")
+    remember(db, claims["sub"], "recycling_pickup", key, pickup.id)
     db.commit()
     return pickup_view(db, pickup, viewer="citizen", storage=storage)
 
@@ -355,9 +369,20 @@ def add_weighing(job_id: str, body: WeighingInput, response: Response, claims: C
         client_id=body.client_id,
         at=now_utc(),
     )
-    db.add(weighing)
     first = pickup.status == "accepted"
-    pickup.status = "weighed"
+    # Atomic against a concurrent admin cancel: only an accepted/weighed, unfinished pickup may take a weighing.
+    moved = db.execute(
+        update(RecyclingPickup)
+        .where(
+            RecyclingPickup.id == job_id,
+            RecyclingPickup.status.in_(("accepted", "weighed")),
+            RecyclingPickup.collector_finished_at.is_(None),
+        )
+        .values(status="weighed")
+    )
+    if moved.rowcount != 1:
+        raise HTTPException(409, "مينفعش تضيف وزن للطلب ده.")
+    db.add(weighing)
     try:
         db.flush()
     except IntegrityError:  # concurrent retry with the same clientId

@@ -437,3 +437,18 @@ class HubWeighing(Base):
     pickup_id = Column(String(50), ForeignKey("recycling_pickups.id"), nullable=True)
 
     __table_args__ = (UniqueConstraint("hub_id", "seq", name="uq_hub_weighing_sequence"),)
+
+
+class IdempotencyKey(Base):
+    """``Idempotency-Key`` header values already used by a user for a create endpoint."""
+
+    __tablename__ = "idempotency_keys"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String(50), nullable=False)
+    scope = Column(String(30), nullable=False)  # report, recycling_pickup
+    key = Column(String(100), nullable=False)
+    resource_id = Column(String(50), nullable=False)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+
+    __table_args__ = (UniqueConstraint("user_id", "scope", "key", name="uq_idempotency_user_scope_key"),)

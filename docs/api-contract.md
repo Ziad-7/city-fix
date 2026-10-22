@@ -15,7 +15,7 @@ This is what the citizen mobile app sends and expects. The app already runs on m
 - Auth: `Authorization: Bearer <token>` on everything except `/auth/*` and `/health`.
 - The app sends `Accept-Language: ar`; error messages should be short Egyptian Arabic.
 - Errors: HTTP status + `{ "detail": "رسالة قصيرة" }`. 400 validation, 401 no/expired token, 403 not your resource / not admin, 404 not found, 409 conflict (e.g. already following), 422 FastAPI validation.
-- IDs are human-readable strings: reports `FTC-1042`, incidents `INC-0042`, service requests `SRV-2001`, work orders `WO-318`.
+- IDs are human-readable strings: reports `FTC-1042`, incidents `INC-501` (unpadded, as stored; clients must treat ids as opaque strings), service requests `SRV-2001`, work orders `WO-318`.
 - Lists are newest first.
 - CORS: allow the citizen web and admin web origins (`http://localhost:3000`, `http://localhost:3001`, the Vercel domains) with the `Authorization` header. Mobile needs no CORS.
 
@@ -455,6 +455,8 @@ Suggestion only: the citizen or collector confirms the materials and the size. O
 ### Backend behaviour (CityCycle)
 
 - **One permission rule for CityCycle admin routes:** reads are staff (`staff` or `admin`), every write is admin only (`PATCH /admin/recycling/pickups/{id}`, `PATCH /admin/collectors/{id}`, `PUT /admin/material-prices`, bin `PATCH`). Department staff never see a household's exact location or name.
+- **Idempotency.** `POST /reports` and `POST /recycling/pickups` accept an optional `Idempotency-Key` header (up to 100 characters). A repeat with the same key by the same user returns the original resource (same body, `200`) instead of creating a second one; keys are scoped per user and per endpoint, and a longer key is `422`.
+- **Suspension releases jobs.** `PATCH /admin/collectors/{id}` to anything but `verified` returns that collector's `accepted` pickups (no weighing yet) to `requested` with a timeline note; `weighed` but unfinished ones stay with the collector and get a timeline flag for staff. Admin cancel and a collector's weighing are mutually atomic: a cancel with an existing weighing is `409`.
 - **Collector role is derived** from `collectors.status == 'verified'` (not from `profiles.role`). There is no `collector` value on `profiles.role`: a user is a collector when a `collectors` row exists for them, and may use `/collector/*` only while its `status` is `verified` (`403` otherwise, `404` on `GET /collectors/me` before applying). One account can be citizen and collector. A second `POST /collectors/apply` returns `409`.
 - **District prices.** A pickup is priced against the price-list district matching the caller's profile district (exact, then containment, default `مدينة نصر أول`). `GET /recycling/materials?district=` uses the same matching. The seeded prices are DEMO values; set real ones with `PUT /admin/material-prices`.
 - **Status codes.** Weighing: `201` new, `200` repeat of the same `clientId`; `403` not the accepting collector, `409` pickup not `accepted`/`weighed` or already finished, `422` kg outside 0.5 to 500. Accept: `409` taken or cancelled (a retry by the same collector returns `200`), `403` for the caller's own household pickup. Complete: `409` without a weighing (a repeat returns `200`). Confirm: `409` until the collector has completed (a repeat returns `200`). Cancel: `409` once accepted. Pickup `day` must be today or later (Cairo), else `422`.

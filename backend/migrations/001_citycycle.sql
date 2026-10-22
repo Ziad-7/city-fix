@@ -117,3 +117,15 @@ CREATE TABLE IF NOT EXISTS hub_weighings (
 );
 
 ALTER TABLE hub_weighings ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE IF NOT EXISTS idempotency_keys (
+	id SERIAL NOT NULL,
+	user_id VARCHAR(50) NOT NULL,
+	scope VARCHAR(30) NOT NULL,
+	key VARCHAR(100) NOT NULL,
+	resource_id VARCHAR(50) NOT NULL,
+	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+	PRIMARY KEY (id),
+	CONSTRAINT uq_idempotency_user_scope_key UNIQUE (user_id, scope, key)
+);
+ALTER TABLE idempotency_keys ENABLE ROW LEVEL SECURITY;

@@ -3,6 +3,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import exists, update
 from sqlalchemy.orm import Session
 
 from app.admin_auth import require_admin, require_staff
@@ -146,9 +147,19 @@ def admin_patch_pickup(pickup_id: str, body: PickupAdminPatchInput, claims: Admi
             raise HTTPException(422, "البيانات مش مكتملة")
         log(db, p.id, p.status, actor, note)
     elif body.status == "cancelled":
-        if p.status not in ("requested", "accepted"):
+        # Conditional UPDATE: loses cleanly against a concurrent weighing or accept.
+        result = db.execute(
+            update(RecyclingPickup)
+            .where(
+                RecyclingPickup.id == p.id,
+                RecyclingPickup.status.in_(("requested", "accepted")),
+                ~exists().where(Weighing.pickup_id == RecyclingPickup.id),
+            )
+            .values(status="cancelled")
+        )
+        if result.rowcount != 1:
             raise HTTPException(409, "مينفعش يتلغى في الحالة دي.")
-        p.status = "cancelled"
+        db.refresh(p)
         log(db, p.id, "cancelled", actor, note or "اتلغى من إدارة الحي")
     elif body.status == "accepted":
         collector = db.get(Collector, body.collector_id) if body.collector_id else None
@@ -194,6 +205,22 @@ def admin_collectors(
     return out
 
 
+def _release_jobs(db: Session, c: Collector, claims: dict) -> None:
+    """A collector who is no longer verified must not keep jobs: accepted ones go back to the open pool;
+    ones already weighed (a household is waiting) stay with a timeline flag for staff to follow up."""
+    actor = actor_name(db, claims)
+    for p in db.query(RecyclingPickup).filter(RecyclingPickup.collector_id == c.id).all():
+        if p.status == "accepted":
+            has_weighing = db.query(Weighing.id).filter(Weighing.pickup_id == p.id).first() is not None
+            if not has_weighing:
+                p.status = "requested"
+                p.collector_id = None
+                p.accepted_at = None
+                log(db, p.id, "requested", actor, "الجامع اتوقف، الطلب رجع للقايمة وبندوّر على جامع تاني")
+        elif p.status == "weighed" and not p.collector_finished_at:
+            log(db, p.id, "weighed", actor, "الجامع اتوقف قبل ما يخلّص، محتاج متابعة من الإدارة")
+
+
 @router.patch("/collectors/{collector_id}")
 def admin_patch_collector(collector_id: str, body: CollectorPatchInput, claims: Staff, db: Session = Depends(get_db)):
     c = db.get(Collector, collector_id)
@@ -202,6 +229,8 @@ def admin_patch_collector(collector_id: str, body: CollectorPatchInput, claims: 
     c.status = body.status
     if body.note is not None:
         c.review_note = body.note
+    if c.status != "verified":
+        _release_jobs(db, c, claims)
     db.commit()
     return collector_view(c)
 

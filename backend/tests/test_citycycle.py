@@ -509,6 +509,80 @@ def test_sql_migration_covers_every_citycycle_table():
         "recycling_weighings",
         "bin_reports",
         "hub_weighings",
+        "idempotency_keys",
     ):
         assert f"CREATE TABLE IF NOT EXISTS {table}" in sql
         assert f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY" in sql
+
+
+# --------------------------------------------------------------------------- suspension, atomic cancel, idempotency
+def test_suspending_a_collector_releases_accepted_jobs(client, admin_h, collector_h, citizen_h):
+    accepted = client.post("/collector/jobs/RCY-3001/accept", headers=collector_h).json()
+    assert accepted["status"] == "accepted"
+    client.post("/collector/jobs/RCY-3002/accept", headers=collector_h)
+    assert weigh(client, collector_h, "RCY-3002", "w1", "glass", 2).status_code == 201
+    r = client.patch("/admin/collectors/COL-1", json={"status": "suspended"}, headers=admin_h)
+    assert r.status_code == 200
+    freed = client.get("/admin/recycling/pickups/RCY-3001", headers=admin_h).json()
+    assert freed["status"] == "requested" and "collectorId" not in freed
+    assert freed["timeline"][-1]["status"] == "requested" and "اتوقف" in freed["timeline"][-1]["note"]
+    held = client.get("/admin/recycling/pickups/RCY-3002", headers=admin_h).json()
+    assert held["status"] == "weighed" and held["collectorId"] == "COL-1" and "اتوقف" in held["timeline"][-1]["note"]
+    # another verified collector can take the released job
+    client.patch("/admin/collectors/COL-2", json={"status": "verified"}, headers=admin_h)
+    other = _bearer(citizen_session(client, PENDING_PHONE)["token"])
+    assert client.post("/collector/jobs/RCY-3001/accept", headers=other).status_code == 200
+    # verifying again does not touch jobs
+    client.patch("/admin/collectors/COL-1", json={"status": "verified"}, headers=admin_h)
+    assert client.get("/admin/recycling/pickups/RCY-3002", headers=admin_h).json()["collectorId"] == "COL-1"
+
+
+def test_weighing_is_refused_after_admin_cancel(client, admin_h, collector_h, pickup):
+    pid = pickup["id"]
+    client.post(f"/collector/jobs/{pid}/accept", headers=collector_h)
+    assert (
+        client.patch(f"/admin/recycling/pickups/{pid}", json={"status": "cancelled"}, headers=admin_h).status_code
+        == 200
+    )
+    assert weigh(client, collector_h, pid).status_code == 409
+    assert client.get(f"/admin/recycling/pickups/{pid}", headers=admin_h).json()["weighings"] == []
+
+
+def test_pickup_idempotency_key(client, citizen_h, other_citizen_h):
+    h = {**citizen_h, "Idempotency-Key": "k-1"}
+    first = client.post("/recycling/pickups", json=pickup_body(), headers=h)
+    again = client.post("/recycling/pickups", json=pickup_body(), headers=h)
+    assert first.status_code == again.status_code == 200 and first.json()["id"] == again.json()["id"]
+    assert len(client.get("/recycling/pickups", headers=citizen_h).json()) == 2  # seeded RCY-3100 + one
+    # another user, or no key, creates a new one
+    assert (
+        client.post(
+            "/recycling/pickups", json=pickup_body(), headers={**other_citizen_h, "Idempotency-Key": "k-1"}
+        ).json()["id"]
+        != first.json()["id"]
+    )
+    assert client.post("/recycling/pickups", json=pickup_body(), headers=citizen_h).json()["id"] != first.json()["id"]
+    long = {**citizen_h, "Idempotency-Key": "x" * 101}
+    assert client.post("/recycling/pickups", json=pickup_body(), headers=long).status_code == 422
+
+
+def test_report_idempotency_key(client, citizen_h, other_citizen_h):
+    body = {
+        "categoryId": "pothole",
+        "description": "حفرة كبيرة في الشارع قدام المدرسة",
+        "photoUris": [],
+        "location": {"lat": 30.1, "lng": 31.4, "address": "شارع الاختبار"},
+    }
+    h = {**citizen_h, "Idempotency-Key": "rep-1"}
+    first = client.post("/reports", json=body, headers=h)
+    again = client.post("/reports", json=body, headers=h)
+    assert first.status_code == again.status_code == 200
+    assert first.json()["report"]["id"] == again.json()["report"]["id"]
+    assert again.json()["incident"]["id"] == first.json()["incident"]["id"]
+    assert len(client.get("/reports", headers=citizen_h).json()) == len(
+        {r["id"] for r in client.get("/reports", headers=citizen_h).json()}
+    )
+    mine = [r for r in client.get("/reports", headers=citizen_h).json() if r["description"] == body["description"]]
+    assert len(mine) == 1
+    other = client.post("/reports", json=body, headers={**other_citizen_h, "Idempotency-Key": "rep-1"})
+    assert other.json()["report"]["id"] != first.json()["report"]["id"]

@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
 from app.admin_auth import current_claims
@@ -10,6 +10,7 @@ from app.db import get_db
 from app.helpers import now_utc
 from app.logic.domain import create_report
 from app.logic.duplicates import is_within_radius
+from app.logic.idempotency import clean_key, lookup, remember
 from app.logic.serialize import incident_public, load_ctx, report_view
 from app.logic.triage import triage_text
 from app.media import MediaStorage, get_media, report_for_reader, validate_media
@@ -45,8 +46,21 @@ def post_report(
     storage: Annotated[MediaStorage | None, Depends(get_media)],
     payload: dict = Depends(current_claims),
     db: Session = Depends(get_db),
+    idempotency_key: Annotated[str | None, Header()] = None,
 ):
-    """Create a report; with ``linkToIncidentId`` attach to that incident (reporter becomes a follower)."""
+    """Create a report; with ``linkToIncidentId`` attach to that incident (reporter becomes a follower).
+
+    An optional ``Idempotency-Key`` makes a retry by the same user return the original result.
+    """
+    key = clean_key(idempotency_key)
+    earlier = db.get(Report, lookup(db, payload["sub"], "report", key)) if key else None
+    if earlier is not None:
+        incident = db.get(Incident, earlier.incident_id)
+        ctx = load_ctx(db, [incident], payload["sub"])
+        return {
+            "report": report_for_reader(report_view(earlier), payload["sub"], storage),
+            "incident": incident_public(ctx, incident),
+        }
     if not body.photo_uris and len(body.description.strip()) < MIN_DESCRIPTION:
         raise HTTPException(status_code=400, detail="اكتب وصف أو صوّر المشكلة")
     category = db.get(Category, body.category_id)
@@ -80,6 +94,7 @@ def post_report(
                 created_at=now_utc(),
             )
         )
+    remember(db, user_id, "report", key, report.id)
     db.commit()
     ctx = load_ctx(db, [incident], user_id)
     return {
