@@ -13,7 +13,10 @@ async function boot() {
   return { http, AsyncStorage, ...store };
 }
 
+const secure = () => (globalThis as unknown as { __secureStore: Map<string, string> }).__secureStore;
+
 describe('session token', () => {
+  beforeEach(() => secure()?.clear());
   const fetchMock = jest.fn();
   beforeEach(() => {
     fetchMock.mockReset();
@@ -27,7 +30,21 @@ describe('session token', () => {
     await http.http('GET', '/reports');
     expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer tok-1');
     await new Promise((r) => setTimeout(r, 0));
-    expect(await AsyncStorage.getItem('ftc.session.v1')).toContain('tok-1');
+    // the token is in SecureStore, not in the AsyncStorage copy of the session
+    expect(await AsyncStorage.getItem('ftc.session.v1')).not.toContain('tok-1');
+    expect(secure().get('ftc.token')).toBe('tok-1');
+  });
+
+  it('migrates a token left in AsyncStorage by an older build, and signing out wipes SecureStore', async () => {
+    const { useSession, AsyncStorage } = await boot();
+    await AsyncStorage.setItem('ftc.session.v1', JSON.stringify({ state: { userId: 'u9', phone: '010', token: 'legacy' }, version: 0 }));
+    await useSession.persist.rehydrate();
+    expect(useSession.getState().token).toBe('legacy');
+    expect(secure().get('ftc.token')).toBe('legacy');
+    expect(await AsyncStorage.getItem('ftc.session.v1')).not.toContain('legacy');
+    useSession.getState().clear();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(secure().has('ftc.token')).toBe(false);
   });
 
   it('is restored on hydration after an app restart (no more tokenless 401s)', async () => {
@@ -36,7 +53,8 @@ describe('session token', () => {
     await new Promise((r) => setTimeout(r, 0));
 
     const saved = await first.AsyncStorage.getItem('ftc.session.v1');
-    expect(saved).toContain('tok-2');
+    expect(saved).not.toContain('tok-2');
+    expect(secure().get('ftc.token')).toBe('tok-2');
 
     const { http, useSession, AsyncStorage } = await boot(); // fresh modules = a new app process
     await AsyncStorage.setItem('ftc.session.v1', saved as string); // the disk survives the restart

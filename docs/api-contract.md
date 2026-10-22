@@ -65,7 +65,12 @@ NewReportInput = {
 
 ServiceRequest = {
   id, citizenId, serviceType,
-  details: { items: string[], day: string /* YYYY-MM-DD */, slot: SlotId, payment: PaymentMethod, note?: string },
+  details: {
+    items: string[], day: string /* YYYY-MM-DD */, slot: SlotId, note?: string,
+    payment?: PaymentMethod,  // *proposed:* optional; absent for free district services (tree_maintenance)
+    workType?: string,        // *proposed:* tree_maintenance only, e.g. "تقليم" (also sent as items[0])
+    photoUris?: string[]      // *proposed:* tree_maintenance only, upload paths (kind "report_photo")
+  },
   location: Place, status: IncidentStatus, timeline: TimelineEntry[], createdAt
 }
 NewServiceRequestInput = { serviceType, details, location }
@@ -108,6 +113,7 @@ TriageSuggestion  = {
 | GET | `/incidents` | — | `Incident[]` | Citizens: all incidents, public fields only (no reporter identities). |
 | GET | `/incidents/{id}` | — | `Incident` | |
 | POST | `/incidents/{id}/follow` | — | `Incident` | "أنا كمان". Idempotent per user; increments `followers` once. |
+| POST | `/incidents/{id}/reopen` | `{ note }` | `Incident` | *Proposed.* "لسه المشكلة موجودة": only a reporter or follower, only on `resolved`; status back to `received`, timeline entry with the note. |
 | GET | `/map/incidents` | — | `MapPin[]` | Optional query: `status`, `categoryId`, `bbox=minLng,minLat,maxLng,maxLat`. |
 
 ### Service requests (CityServe)
@@ -117,6 +123,14 @@ TriageSuggestion  = {
 | GET | `/service-requests` | — | `ServiceRequest[]` (the caller's) |
 | GET | `/service-requests/{id}` | — | `ServiceRequest` |
 
+- *Proposed:* `tree_maintenance` bookings are free: `details.payment` is omitted, `details.workType` says what is needed and `details.photoUris` may carry one uploaded photo. `bulky_waste` still requires `payment`.
+- The app treats `404` and `403` on any `GET …/{id}` as "not found" (it shows "مش لاقيين الطلب ده"), other errors as a load failure with a retry.
+
+### Garbage collection schedule — proposed
+| Method | Path | Response |
+| --- | --- | --- |
+| GET | `/services/garbage-schedule?district=…` | `{ district, days: ("sun"\|"mon"\|"tue"\|"wed"\|"thu"\|"fri"\|"sat")[], window: "٨ م – ١١ م", note? }` (the app uses static demo data until this exists, and falls back to it on any error) |
+
 ### Triage (CityBrain)
 | Method | Path | Body | Response |
 | --- | --- | --- | --- |
@@ -125,13 +139,13 @@ TriageSuggestion  = {
 - Until the AI agent is ready, return a deterministic keyword classifier (port `apps/mobile/src/logic/triage-mock.ts`). Duplicates come from the database (see below).
 - Must answer within ~5 s; on model failure return the keyword result rather than an error (manual fallback).
 
-### Photo uploads (proposed — needs agreement)
-The app currently sends local photo URIs. Proposal:
+### Photo and voice-note uploads (proposed — needs agreement)
+The mobile app implements this flow in API mode (mock mode keeps local URIs).
 | Method | Path | Body | Response |
 | --- | --- | --- | --- |
-| POST | `/uploads/sign` | `{ kind: "report_photo" \| "voice_note", contentType: "image/jpeg" }` | `{ uploadUrl, path }` |
+| POST | `/uploads/sign` | `{ kind: "report_photo" \| "voice_note", contentType }` | `{ uploadUrl, path }` |
 
-The mobile app and the website both `PUT` the file to `uploadUrl` (the URL must accept a browser `PUT` with CORS) (a Supabase Storage signed upload URL), then sends `path` in `photoUris`. Reads use short-lived signed URLs returned by the API. Faces and plates are blurred before a photo is shown to anyone but the reporter and admins (stretch: run the blur on upload).
+`contentType` is `image/jpeg` for photos (the app resizes them to a 1600 px long side, JPEG quality 0.7) and the recorder's audio type for voice notes (`audio/mp4` for `.m4a`; also `audio/mpeg`, `audio/wav`, `audio/webm`, `audio/3gpp`, `audio/x-caf`). The `PUT` must use the same `Content-Type` as signed. The mobile app and the website both `PUT` the file to `uploadUrl` (the URL must accept a browser `PUT` with CORS) (a Supabase Storage signed upload URL), then send `path` in `photoUris`, in `voiceNoteUri`, or (*proposed*) in a tree booking's `details.photoUris`. Values in those fields that are not local URIs are treated as already uploaded, so an offline-queued report that was half prepared is not uploaded twice. A failed `PUT` is retried later by the app's offline queue; a `4xx` from `/uploads/sign` or `/reports` drops the queued report with the server's `detail`. Reads use short-lived signed URLs returned by the API. Faces and plates are blurred before a photo is shown to anyone but the reporter and admins (stretch: run the blur on upload).
 
 ### Staff auth (Command Center) — proposed
 | Method | Path | Body | Response |
@@ -162,6 +176,8 @@ From the plan (§7). Admin role required.
 | Method | Path | Body | Response |
 | --- | --- | --- | --- |
 | POST | `/ai/transcribe` | `{ path }` (an uploaded voice note) | `{ text, language: "ar-EG", confidence }` |
+
+The app calls `/ai/transcribe` right after uploading a recording and appends `text` to the description (still editable); it ignores `language`. Any error just leaves the description for the citizen to type. The voice note itself is sent with the report as `voiceNoteUri` even when transcription failed.
 
 Proposed additions to `TriageSuggestion`: `source: "model" | "fallback"` and `emergency?: boolean` (true when the text mentions gas, fire, injury or collapse; clients then show the emergency numbers first).
 

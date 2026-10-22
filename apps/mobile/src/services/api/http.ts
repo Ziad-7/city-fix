@@ -1,3 +1,4 @@
+import { getLang, tr } from '@/i18n';
 let token: string | null = null;
 let onUnauthorized: (() => void) | null = null;
 
@@ -16,6 +17,11 @@ export const MSG_GENERIC = 'حصلت مشكلة، جرّب تاني';
 export const MSG_NETWORK = 'مفيش اتصال بالنت، جرّب تاني';
 export const MSG_SERVER = 'السيرفر مش متاح دلوقتي، جرّب بعد شوية';
 
+// The constants above are the Arabic wording; errors are built with the current language at throw time.
+const msgGeneric = () => tr(MSG_GENERIC, 'Something went wrong. Try again');
+const msgNetwork = () => tr(MSG_NETWORK, 'No internet connection. Try again');
+const msgServer = () => tr(MSG_SERVER, "The server isn't available right now. Try again in a bit");
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -26,9 +32,9 @@ export class ApiError extends Error {
   }
 }
 
-/** Citizen-safe message from an error response: the contract's `{ detail }`, else a friendly Arabic line. */
+/** Citizen-safe message from an error response: the contract's `{ detail }`, else a friendly line in the current language. */
 function messageFor(status: number, raw: string): string {
-  if (status >= 500) return MSG_SERVER;
+  if (status >= 500) return msgServer();
   try {
     const body = JSON.parse(raw) as { detail?: unknown };
     // FastAPI 422 sends `detail` as an array of validation objects: not for citizens.
@@ -36,12 +42,12 @@ function messageFor(status: number, raw: string): string {
   } catch {
     // not JSON
   }
-  return MSG_GENERIC;
+  return msgGeneric();
 }
 
 /** Minimal typed JSON fetch against EXPO_PUBLIC_API_URL. Empty bodies (204) resolve to `undefined`. */
 export async function http<T>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<T> {
-  if (!API_URL) throw new Error('EXPO_PUBLIC_API_URL مش متحدد');
+  if (!API_URL) throw new Error(tr('EXPO_PUBLIC_API_URL مش متحدد', 'EXPO_PUBLIC_API_URL is not set'));
   let res: Response;
   try {
     res = await fetch(`${API_URL}${path}`, {
@@ -49,13 +55,13 @@ export async function http<T>(method: 'GET' | 'POST', path: string, body?: unkno
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        'Accept-Language': 'ar',
+        'Accept-Language': getLang(),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
-    throw new ApiError(0, MSG_NETWORK);
+    throw new ApiError(0, msgNetwork());
   }
 
   const raw = res.status === 204 ? '' : await res.text().catch(() => '');
@@ -69,6 +75,6 @@ export async function http<T>(method: 'GET' | 'POST', path: string, body?: unkno
   try {
     return JSON.parse(raw) as T;
   } catch {
-    throw new ApiError(res.status, MSG_GENERIC);
+    throw new ApiError(res.status, msgGeneric());
   }
 }

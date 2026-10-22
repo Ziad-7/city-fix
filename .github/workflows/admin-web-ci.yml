@@ -1,0 +1,84 @@
+name: admin-web-ci
+
+on:
+  push:
+    paths:
+      - 'apps/admin-web/**'
+      - '.github/workflows/admin-web-ci.yml'
+      - 'apps/mobile/src/domain/types.ts'
+      - 'apps/mobile/src/domain/categories.ts'
+      - 'apps/mobile/src/logic/priority.ts'
+      - 'apps/mobile/src/utils/time.ts'
+      - 'apps/mobile/src/utils/geo.ts'
+      - 'apps/mobile/src/utils/digits.ts'
+  pull_request:
+    paths:
+      - 'apps/admin-web/**'
+      - '.github/workflows/admin-web-ci.yml'
+      - 'apps/mobile/src/domain/types.ts'
+      - 'apps/mobile/src/domain/categories.ts'
+      - 'apps/mobile/src/logic/priority.ts'
+      - 'apps/mobile/src/utils/time.ts'
+      - 'apps/mobile/src/utils/geo.ts'
+      - 'apps/mobile/src/utils/digits.ts'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# Skipped cleanly (job still reports green) until apps/admin-web exists.
+# The mobile paths above are the shared files the admin app copies unchanged (docs/team/admin-web.md).
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v7
+      - name: Detect app
+        id: guard
+        run: |
+          if [ -f apps/admin-web/package.json ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "apps/admin-web/package.json not found, skipping."
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@v7
+        if: steps.guard.outputs.exists == 'true'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/admin-web/package-lock.json
+      - name: Install
+        if: steps.guard.outputs.exists == 'true'
+        working-directory: apps/admin-web
+        run: npm ci
+      - name: Shared files match the mobile app
+        if: steps.guard.outputs.exists == 'true'
+        working-directory: apps/admin-web
+        run: |
+          if npm run | grep -q 'check:shared'; then npm run check:shared; else echo "no check:shared script yet"; fi
+      - name: Typecheck
+        if: steps.guard.outputs.exists == 'true'
+        working-directory: apps/admin-web
+        run: npm run typecheck
+      - name: Lint
+        if: steps.guard.outputs.exists == 'true'
+        working-directory: apps/admin-web
+        run: npm run lint
+      - name: Test
+        if: steps.guard.outputs.exists == 'true'
+        working-directory: apps/admin-web
+        run: npm test
+      - name: Build
+        if: steps.guard.outputs.exists == 'true'
+        working-directory: apps/admin-web
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_MODE: mock

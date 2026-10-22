@@ -2,6 +2,66 @@
 
 Newest first. Each entry: what was done, how to test it, known issues.
 
+## 2026-10-22 — Citizen website review fixes (branch `fix/citizen-web-review`)
+
+**Done** ([review](reviews/2026-10-21-citizen-web-review.md), every finding has a Resolution)
+- **Rename:** سيتي فيكس / CityFix everywhere visible on the website, `cityfix-*.svg` assets.
+- **Services:** the two missing pages `/services/tree` (free booking, photo, map pin, day and slot) and `/services/garbage-schedule`; tree bookings show their own details on the tracking page and in the list.
+- **Reopen card** for resolved reports; **map pins** carry a status glyph and the status in their title; **photo picker** has a camera and a gallery input; **keyboard**: arrows move focus in every radio group.
+- **Offline queue across tabs:** shared outbox got a lock/reload seam (mobile first, no-op there); the website uses Web Locks, re-reads the queue before queuing or sending and follows other tabs; a full disk is reported; the old queue format is converted.
+- **Privacy:** the GPS fix is no longer sent to a public geocoder (`NEXT_PUBLIC_GEOCODER_URL` removed).
+- Gender-neutral copy, neutral Nasr City street names in the shared seed and tests (mobile first), sign-in error messages, voice notes through the shared upload service, per-page titles, accessibility fixes.
+- `check-shared.sh` now also reports mobile helpers that were never copied; `web-ci.yml` paths match it. New Playwright specs (services, keyboard, reopen, two tabs, photo picker); the flaky offline spec is deterministic.
+- Checks: mobile typecheck, lint, 211 tests, web export; website check:shared, typecheck, lint, 180 unit tests, build, 48 e2e tests (two full runs), doc links.
+
+**Left**
+- Notifications page (W16), English text on the website (W22, W29 `withEnglish`), Next patch for the `postcss` advisory (W31). W25 was not a defect.
+
+**How to test**
+- `cd apps/web && npm ci && npm run check:shared && npm run typecheck && npm run lint && npm test && NEXT_PUBLIC_API_MODE=mock npm run build && npm run test:e2e`.
+
+## 2026-10-21 — English as a second language (merged into `feat/mobile-phase-d`, PR #10)
+
+**Done** (language layer by Claude; screens translated by three Sonnet 5.5 agents in parallel; reviewed and fixed by Opus 5.5 — [review](reviews/2026-10-21-english-review.md))
+- Profile → Language (العربية / English) or "English" on sign-in. Switches instantly; the whole layout flips to left-to-right; no restart.
+- Every screen, notice, error, notification and accessibility label is translated ([glossary](mobile/english-glossary.md)). Western digits, English dates and times in English; Arabic is unchanged.
+- Category, status, department, district, service, hotline and medal names have English versions (`src/i18n/labels.ts`); demo data has English titles; the server gets `Accept-Language`.
+- The emergency check also understands English ("I smell gas"). The garbage-schedule button now reads «شوف المواعيد» / "See the times".
+- Checks: typecheck, lint, 205 tests in 37 suites; English and Arabic screens checked in the web preview.
+
+**Still open**
+- Live language switch not yet tried on a real Android/iPhone.
+
+## 2026-10-21 — Phase D: remaining citizen features + rename to CityFix (branch `feat/mobile-phase-d`)
+
+**Done** (three Sonnet 5.5 implementers in parallel, reviewed and fixed by Opus 5.5 — [review](reviews/2026-10-21-phase-d-review.md))
+- **Report form:** voice notes (record, play, re-record, 60 s max) turned into editable text; map pin picker (tap/drag, "استخدم موقعي", address from the map); emergency box with ١٢٢ ١٢٣ ١٨٠ ١٢٩ when the text mentions gas, fire, injury or a collapse (also when the AI suggestion fails).
+- **Reliability:** photos resized to 1600 px and uploaded through `/uploads/sign`; offline queue (reports sent automatically when the connection returns, "مستني النت" cards in طلباتي); login token in secure storage; requests open directly from a link; pull-to-refresh.
+- **Account and services:** notifications centre with a badge on Home and phone notifications; "خط أكبر"; tree maintenance booking (free); garbage collection schedule; reopen a fixed report ("لسه المشكلة موجودة؟").
+- **Rename:** the product is now **CityFix / سيتي فيكس** ([0003](decisions/0003-rename-to-cityfix.md)): app name, logo, screens, design pack, docs. Package id, slug, link scheme and `FTC-` numbers stay.
+- Checks: typecheck, lint, 172 tests in 30 suites, web export.
+
+**How to test**
+- Install a new APK (`eas build -p android --profile preview`) or use Expo Go 57. Try: a voice note on a new report, moving the pin, typing "فيه ريحة غاز", airplane mode then sending a report, "محاكاة تحديث الحالة" on a report to see a notification, booking a tree service, the garbage schedule, and reopening a fixed report.
+
+**Still open**
+- Needs a pass on a real phone (recording, map picker, notifications, secure storage). API mode untested against a real backend. English is still a stub.
+## 2026-10-21 — Citizen website (`apps/web`)
+
+**Done**
+- Next.js App Router site in `apps/web` with every citizen screen from the web mockups: sign-in, home, report flow (category, form with photo, location and duplicate check, success), my requests and tracking timeline, CityServe and bulky-waste booking, Leaflet map with filters, profile. RTL Arabic, desktop and phone layouts.
+- Domain, logic, utils and service code copied unchanged from `apps/mobile/src`; `npm run check:shared` fails on drift. Mock mode (localStorage, code `123456`) and API mode, same as mobile.
+- Report form extras: voice note (browser speech recognition, or upload + `/ai/transcribe` in API mode), offline queue that sends saved reports when the connection is back, and street names from GPS via OSM Nominatim. Implemented by Claude, reviewed and hardened by a Sonnet 5.5 agent (cross-tab send lock, mic released on unmount, debounced geocoding).
+- 100 Vitest tests and 11 Playwright journeys (desktop and phone) pass. CI workflow `.github/workflows/web-ci.yml`.
+
+**How to test**
+- `cd apps/web && npm install && npm run dev`, sign in with `01012345678` and `123456`.
+- `npm run check:shared && npm run typecheck && npm run lint && npm test && npm run test:e2e`.
+
+**Known issues**
+- See the "Known gaps" list in `apps/web/README.md`: token in localStorage, upload and transcribe endpoints not built yet, API mode untested.
+- Map tiles could not be loaded in the build sandbox, so the map was checked with its fallback background only.
+
 ## 2026-10-21 — Android APK startup crash: root cause and fix
 
 **Done**
@@ -65,7 +125,7 @@ Newest first. Each entry: what was done, how to test it, known issues.
 ## 2026-10-21 — Design pack: identity guide + screens for every surface (branch `design/identity-and-screens`)
 
 **Done** (three Sonnet 5.5 implementers in parallel, reviewed and fixed by Opus 5.5 — [review](reviews/2026-10-21-design-pack-review.md))
-- **Identity everyone follows:** [`design/identity.html`](design/identity.html) (logo, colours, type, spacing, icons, components, voice, Egypt rules, per-surface rules, accessibility, don'ts, CSS/Tailwind snippets) and the shared stylesheet [`design/css/fixthecity.css`](design/css/fixthecity.css). `tokens.json` stays the source of truth (now light-only, with six missing tokens added).
+- **Identity everyone follows:** [`design/identity.html`](design/identity.html) (logo, colours, type, spacing, icons, components, voice, Egypt rules, per-surface rules, accessibility, don'ts, CSS/Tailwind snippets) and the shared stylesheet [`design/css/fixthecity.css`](design/css/cityfix.css). `tokens.json` stays the source of truth (now light-only, with six missing tokens added).
 - **28 HTML screens:** `screens/mobile/` (10, incl. new Requests, Map, Profile), `screens/web/` (10 citizen website pages, desktop + phone layout), `screens/admin/` (8 Command Center pages: Login, Overview, Incidents, IncidentDetail, Map, ServiceRequests, WorkOrders, Budget). Old design-tool exports cleaned into plain HTML.
 - **Design hub:** [`design/index.html`](design/index.html) and [`design/README.md`](design/README.md) with online preview links for every screen.
 - Demo data aligned across surfaces (pothole FTC-1042 priority = 66 from `priority.ts`).

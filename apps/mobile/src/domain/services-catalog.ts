@@ -11,7 +11,7 @@ export type CatalogService = {
   icon: IconName;
   group: ServiceGroup;
   /** App route to open; services without one are shown as "قريبًا". */
-  route?: '/services/bulky-waste';
+  route?: '/services/bulky-waste' | '/services/tree' | '/services/garbage-schedule';
 };
 
 export const SERVICE_GROUPS: { id: ServiceGroup | 'all'; labelAr: string }[] = [
@@ -23,9 +23,13 @@ export const SERVICE_GROUPS: { id: ServiceGroup | 'all'; labelAr: string }[] = [
 
 export const SERVICES: CatalogService[] = [
   { id: 'bulky', serviceType: 'bulky_waste', titleAr: 'رفع مخلفات كبيرة', subtitleAr: 'عفش قديم، أجهزة، مخلفات بناء · خلال ٤٨ ساعة', icon: 'trash', group: 'cleaning', route: '/services/bulky-waste' },
-  { id: 'tree', serviceType: 'tree_maintenance', titleAr: 'تقليم أو إزالة شجرة', subtitleAr: 'إدارة الحدائق · خلال ٥ أيام', icon: 'tree', group: 'gardens' },
-  { id: 'garbage-schedule', titleAr: 'مواعيد جمع القمامة', subtitleAr: 'شوف ميعاد العربية في شارعك', icon: 'clock', group: 'cleaning' },
+  { id: 'tree', serviceType: 'tree_maintenance', titleAr: 'تقليم أو إزالة شجرة', subtitleAr: 'إدارة الحدائق · خلال ٥ أيام', icon: 'tree', group: 'gardens', route: '/services/tree' },
+  { id: 'garbage-schedule', titleAr: 'مواعيد جمع القمامة', subtitleAr: 'شوف ميعاد العربية في شارعك', icon: 'clock', group: 'cleaning', route: '/services/garbage-schedule' },
 ];
+
+export const TREE_WORK_TYPES = ['تقليم', 'إزالة شجرة واقعة', 'شجرة مايلة أو خطر', 'رش / مكافحة آفات'];
+
+export const FREE_SERVICE_LABEL = 'الخدمة مجانية من إدارة الحدائق';
 
 export const BULKY_ITEMS = ['كنبة', 'تلاجة قديمة', 'سرير', 'مخلفات بناء'];
 

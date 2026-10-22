@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import { STATUS_LABEL_AR, type IncidentStatus } from '@/domain/types';
+import { statusLabel, tr, useLang } from '@/i18n';
 import { colors, fonts, radius } from '@/theme/tokens';
 import { AppText } from './AppText';
 
@@ -20,14 +21,15 @@ export const statusColor = (s: IncidentStatus) => STATUS_COLORS[s].fg;
 
 export type StatusChipProps = {
   status: ChipKind;
-  /** Override the Arabic label (default: the status label; critical = "خطر"). */
+  /** Override the Arabic label (default: the status label; critical = "خطر" / "Danger"). */
   label?: string;
 };
 
 /** Pill with a 6 px dot and an Arabic word: status is never colour-only. */
 export function StatusChip({ status, label }: StatusChipProps) {
+  useLang();
   const c = STATUS_COLORS[status];
-  const text = label ?? (status === 'critical' ? 'خطر' : STATUS_LABEL_AR[status]);
+  const text = label ?? (status === 'critical' ? tr('خطر', 'Danger') : statusLabel(status, STATUS_LABEL_AR[status]));
   return (
     <View style={[styles.chip, { backgroundColor: c.bg }]}>
       <View style={[styles.dot, { backgroundColor: c.fg }]} />

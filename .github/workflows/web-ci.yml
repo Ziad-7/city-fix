@@ -1,0 +1,199 @@
+name: web-ci
+
+on:
+  push:
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/web-ci.yml'
+      - 'apps/mobile/src/domain/**'
+      - 'apps/mobile/src/logic/**'
+      - 'apps/mobile/src/utils/**'
+      - 'apps/mobile/src/components/icon-shapes.ts'
+      - 'apps/mobile/src/components/services/day.ts'
+      - 'apps/mobile/src/components/services/day.test.ts'
+      - 'apps/mobile/src/components/services/filter.test.ts'
+      - 'apps/mobile/src/components/services/filter.ts'
+      - 'apps/mobile/src/components/services/tree.ts'
+      - 'apps/mobile/src/components/services/tree.test.ts'
+      - 'apps/mobile/src/components/report/validation.ts'
+      - 'apps/mobile/src/components/report/text.ts'
+      - 'apps/mobile/src/components/report/report.test.ts'
+      - 'apps/mobile/src/components/report/report.en.test.ts'
+      - 'apps/mobile/src/components/report/address.ts'
+      - 'apps/mobile/src/components/report/voice.ts'
+      - 'apps/mobile/src/components/report/voice.test.ts'
+      - 'apps/mobile/src/components/home/nearby.test.ts'
+      - 'apps/mobile/src/components/home/nearby.ts'
+      - 'apps/mobile/src/components/requests/timeline.ts'
+      - 'apps/mobile/src/components/requests/filters.ts'
+      - 'apps/mobile/src/components/requests/labels.test.ts'
+      - 'apps/mobile/src/components/requests/timeline.test.ts'
+      - 'apps/mobile/src/components/requests/labels.ts'
+      - 'apps/mobile/src/components/requests/filters.test.ts'
+      - 'apps/mobile/src/components/requests/english.test.ts'
+      - 'apps/mobile/src/components/map-screen/filters.ts'
+      - 'apps/mobile/src/components/map-screen/filters.test.ts'
+      - 'apps/mobile/src/services/interfaces.ts'
+      - 'apps/mobile/src/services/api/index.ts'
+      - 'apps/mobile/src/services/mock/auth-service.ts'
+      - 'apps/mobile/src/services/mock/incident-service.ts'
+      - 'apps/mobile/src/services/mock/index.ts'
+      - 'apps/mobile/src/services/mock/seed.ts'
+      - 'apps/mobile/src/services/mock/service-request-service.ts'
+      - 'apps/mobile/src/services/mock/timeline.ts'
+      - 'apps/mobile/src/services/mock/triage-service.ts'
+      - 'apps/mobile/src/services/mock/localize.ts'
+      - 'apps/mobile/src/services/mock/upload-service.ts'
+      - 'apps/mobile/src/services/mock/transcription-service.ts'
+      - 'apps/mobile/src/services/media.ts'
+      - 'apps/mobile/src/services/sendReport.ts'
+      - 'apps/mobile/src/services/garbage-schedule.ts'
+      - 'apps/mobile/src/services/__tests__/mock-incident-service.test.ts'
+      - 'apps/mobile/src/services/__tests__/mock-english.test.ts'
+      - 'apps/mobile/src/services/__tests__/mock-transcription.test.ts'
+      - 'apps/mobile/src/services/__tests__/reopen.test.ts'
+      - 'apps/mobile/src/services/__tests__/garbage-schedule.test.ts'
+      - 'apps/mobile/src/store/actions.ts'
+      - 'apps/mobile/src/store/index.ts'
+      - 'apps/mobile/src/store/useReports.ts'
+      - 'apps/mobile/src/store/useRequests.ts'
+      - 'apps/mobile/src/store/useServiceRequests.ts'
+      - 'apps/mobile/src/store/usePrefs.ts'
+      - 'apps/mobile/src/store/useNotifications.ts'
+      - 'apps/mobile/src/store/useOutbox.ts'
+      - 'apps/mobile/src/store/outboxFlush.ts'
+      - 'apps/mobile/src/i18n/index.ts'
+      - 'apps/mobile/src/i18n/labels.ts'
+      - 'apps/mobile/src/i18n/__tests__/i18n.test.ts'
+      - 'docs/design/css/cityfix.css'
+  pull_request:
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/web-ci.yml'
+      - 'apps/mobile/src/domain/**'
+      - 'apps/mobile/src/logic/**'
+      - 'apps/mobile/src/utils/**'
+      - 'apps/mobile/src/components/icon-shapes.ts'
+      - 'apps/mobile/src/components/services/day.ts'
+      - 'apps/mobile/src/components/services/day.test.ts'
+      - 'apps/mobile/src/components/services/filter.test.ts'
+      - 'apps/mobile/src/components/services/filter.ts'
+      - 'apps/mobile/src/components/services/tree.ts'
+      - 'apps/mobile/src/components/services/tree.test.ts'
+      - 'apps/mobile/src/components/report/validation.ts'
+      - 'apps/mobile/src/components/report/text.ts'
+      - 'apps/mobile/src/components/report/report.test.ts'
+      - 'apps/mobile/src/components/report/report.en.test.ts'
+      - 'apps/mobile/src/components/report/address.ts'
+      - 'apps/mobile/src/components/report/voice.ts'
+      - 'apps/mobile/src/components/report/voice.test.ts'
+      - 'apps/mobile/src/components/home/nearby.test.ts'
+      - 'apps/mobile/src/components/home/nearby.ts'
+      - 'apps/mobile/src/components/requests/timeline.ts'
+      - 'apps/mobile/src/components/requests/filters.ts'
+      - 'apps/mobile/src/components/requests/labels.test.ts'
+      - 'apps/mobile/src/components/requests/timeline.test.ts'
+      - 'apps/mobile/src/components/requests/labels.ts'
+      - 'apps/mobile/src/components/requests/filters.test.ts'
+      - 'apps/mobile/src/components/requests/english.test.ts'
+      - 'apps/mobile/src/components/map-screen/filters.ts'
+      - 'apps/mobile/src/components/map-screen/filters.test.ts'
+      - 'apps/mobile/src/services/interfaces.ts'
+      - 'apps/mobile/src/services/api/index.ts'
+      - 'apps/mobile/src/services/mock/auth-service.ts'
+      - 'apps/mobile/src/services/mock/incident-service.ts'
+      - 'apps/mobile/src/services/mock/index.ts'
+      - 'apps/mobile/src/services/mock/seed.ts'
+      - 'apps/mobile/src/services/mock/service-request-service.ts'
+      - 'apps/mobile/src/services/mock/timeline.ts'
+      - 'apps/mobile/src/services/mock/triage-service.ts'
+      - 'apps/mobile/src/services/mock/localize.ts'
+      - 'apps/mobile/src/services/mock/upload-service.ts'
+      - 'apps/mobile/src/services/mock/transcription-service.ts'
+      - 'apps/mobile/src/services/media.ts'
+      - 'apps/mobile/src/services/sendReport.ts'
+      - 'apps/mobile/src/services/garbage-schedule.ts'
+      - 'apps/mobile/src/services/__tests__/mock-incident-service.test.ts'
+      - 'apps/mobile/src/services/__tests__/mock-english.test.ts'
+      - 'apps/mobile/src/services/__tests__/mock-transcription.test.ts'
+      - 'apps/mobile/src/services/__tests__/reopen.test.ts'
+      - 'apps/mobile/src/services/__tests__/garbage-schedule.test.ts'
+      - 'apps/mobile/src/store/actions.ts'
+      - 'apps/mobile/src/store/index.ts'
+      - 'apps/mobile/src/store/useReports.ts'
+      - 'apps/mobile/src/store/useRequests.ts'
+      - 'apps/mobile/src/store/useServiceRequests.ts'
+      - 'apps/mobile/src/store/usePrefs.ts'
+      - 'apps/mobile/src/store/useNotifications.ts'
+      - 'apps/mobile/src/store/useOutbox.ts'
+      - 'apps/mobile/src/store/outboxFlush.ts'
+      - 'apps/mobile/src/i18n/index.ts'
+      - 'apps/mobile/src/i18n/labels.ts'
+      - 'apps/mobile/src/i18n/__tests__/i18n.test.ts'
+      - 'docs/design/css/cityfix.css'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# The website copies shared files from apps/mobile/src (see apps/web/scripts/check-shared.sh),
+# so the mobile paths above are exactly the files that script compares.
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      # The website's copy of the shared mobile code must match apps/mobile/src.
+      - run: npm run check:shared
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_API_MODE: mock
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: check
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+        env:
+          CI: 'true'
+      # Flake guard (pull requests): the timing-sensitive specs (offline queue, two tabs) run 10 times on both
+      # projects with no retry, so a race fails on the PR instead of after the merge.
+      - name: Flake guard (offline and multi-tab specs x10)
+        if: github.event_name == 'pull_request'
+        run: npx playwright test e2e/report-extras.spec.ts e2e/outbox-tabs.spec.ts --repeat-each=10 --retries=0
+        env:
+          CI: 'true'
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7

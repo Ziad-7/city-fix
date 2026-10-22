@@ -1,19 +1,30 @@
 import type { Incident, MapPin, Report, ServiceRequest, Session, TriageSuggestion } from '@/domain/types';
 import type { Services } from '../interfaces';
-import { http, setApiToken } from './http';
+import { ApiError, http, setApiToken } from './http';
+import { createUploadService } from './uploads';
+
+/** GET by id: 404 (missing) or 403 (someone else's) means "not found" on the detail screen, not a load error with a retry. */
+async function orNull<T>(p: Promise<T | null>): Promise<T | null> {
+  try {
+    return (await p) ?? null;
+  } catch (e) {
+    if (e instanceof ApiError && (e.status === 404 || e.status === 403)) return null;
+    throw e;
+  }
+}
 
 /**
  * Real backend (FastAPI), following docs/api-contract.md.
- * Not wired by default: set EXPO_PUBLIC_API_MODE=api and EXPO_PUBLIC_API_URL.
+ * Not wired by default: set the app's API_MODE=api and API_URL env (EXPO_PUBLIC_* on mobile, NEXT_PUBLIC_* on the website).
  * The bearer token lives in the persisted session (store/useSession) and is handed to http.ts from there.
  */
 export function createApiServices(): Services {
   const incidents: Services['incidents'] = {
     submitReport: (_userId, input) => http<{ report: Report; incident: Incident }>('POST', '/reports', input),
     listMyReports: () => http<Report[]>('GET', '/reports'),
-    getReport: (id) => http<Report | null>('GET', `/reports/${encodeURIComponent(id)}`),
+    getReport: (id) => orNull(http<Report | null>('GET', `/reports/${encodeURIComponent(id)}`)),
     listIncidents: () => http<Incident[]>('GET', '/incidents'),
-    getIncident: (id) => http<Incident | null>('GET', `/incidents/${encodeURIComponent(id)}`),
+    getIncident: (id) => orNull(http<Incident | null>('GET', `/incidents/${encodeURIComponent(id)}`)),
     listMapPins: () => http<MapPin[]>('GET', '/map/incidents'),
     async listFollowing() {
       // Proposed contract field: `Incident.isFollowing` for the authenticated caller.
@@ -22,6 +33,7 @@ export function createApiServices(): Services {
     },
     followIncident: (_userId, id) => http<Incident>('POST', `/incidents/${encodeURIComponent(id)}/follow`),
     simulateProgress: () => Promise.reject(new Error('simulateProgress متاح في وضع mock بس')),
+    reopenIncident: (_userId, id, note) => http<Incident>('POST', `/incidents/${encodeURIComponent(id)}/reopen`, { note }),
   };
 
   return {
@@ -41,7 +53,7 @@ export function createApiServices(): Services {
     serviceRequests: {
       book: (_userId, input) => http<ServiceRequest>('POST', '/service-requests', input),
       listMine: () => http<ServiceRequest[]>('GET', '/service-requests'),
-      get: (id) => http<ServiceRequest | null>('GET', `/service-requests/${encodeURIComponent(id)}`),
+      get: (id) => orNull(http<ServiceRequest | null>('GET', `/service-requests/${encodeURIComponent(id)}`)),
       simulateProgress: () => Promise.reject(new Error('simulateProgress متاح في وضع mock بس')),
     },
     triage: {
@@ -51,5 +63,8 @@ export function createApiServices(): Services {
         return { ...res, duplicates: res.duplicates ?? [], alreadyReported: res.alreadyReported ?? [] };
       },
     },
+    uploads: createUploadService(),
+    // POST /ai/transcribe (proposed, member 5) with the uploaded voice-note path.
+    transcription: { transcribe: (path) => http('POST', '/ai/transcribe', { path }) },
   };
 }

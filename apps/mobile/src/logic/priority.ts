@@ -1,3 +1,5 @@
+import { PRIORITY_LEVEL_EN } from '@/i18n/labels';
+import { usePrefs } from '@/store/usePrefs';
 import { toArabicDigits } from '@/utils/digits';
 import type { Priority, PriorityFactor, Severity } from '@/domain/types';
 
@@ -45,6 +47,7 @@ export function priorityLevel(score: number): PriorityLevel {
   return 'low';
 }
 
+/** Arabic labels; use priorityLevelLabel() in UI. */
 export const PRIORITY_LABEL_AR: Record<PriorityLevel, string> = {
   critical: 'أولوية عاجلة',
   high: 'أولوية عالية',
@@ -64,12 +67,25 @@ export function isCriticalIncident(i: { severity: Severity; priority: Pick<Prior
  */
 export function priorityReason(p: Priority, reporters: number, sensitivePlace?: string): string {
   const level = priorityLevel(p.score);
+  const sev = p.factors.find((f) => f.key === 'severity');
+  const highSeverity = !!sev && sev.points >= SEVERITY_POINTS.high;
+  if (usePrefs.getState().lang === 'en') {
+    const label = PRIORITY_LEVEL_EN[level];
+    if (level === 'low') return label;
+    const parts: string[] = [];
+    if (sensitivePlace) parts.push('near a school or hospital');
+    if (reporters > 1) parts.push(`${reporters} reports`);
+    if (highSeverity) parts.push('high risk');
+    return parts.length ? `${label}: ${parts.join(', ')}` : label;
+  }
   const label = PRIORITY_LABEL_AR[level];
   if (level === 'low') return label;
   const parts: string[] = [];
   if (sensitivePlace) parts.push(`قريب من ${sensitivePlace}`);
   if (reporters > 1) parts.push(`${toArabicDigits(reporters)} بلاغات`);
-  const sev = p.factors.find((f) => f.key === 'severity');
-  if (sev && sev.points >= SEVERITY_POINTS.high) parts.push('خطورة عالية');
+  if (highSeverity) parts.push('خطورة عالية');
   return parts.length ? `${label}: ${parts.join(' + ')}` : label;
 }
+
+/** Priority level label in the current language. */
+export const priorityLevelLabel = (level: PriorityLevel): string => (usePrefs.getState().lang === 'en' ? PRIORITY_LEVEL_EN[level] : PRIORITY_LABEL_AR[level]);

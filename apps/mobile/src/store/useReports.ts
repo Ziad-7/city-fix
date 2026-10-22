@@ -1,10 +1,18 @@
 import { useMemo } from 'react';
 import { create } from 'zustand';
 import type { Incident, NewReportInput, Report } from '@/domain/types';
+import { tr } from '@/i18n';
 import { services } from '@/services';
+import { classifyFailure } from '@/services/media';
+import { isOffline } from '@/services/network';
+import { sendReport } from '@/services/sendReport';
+import { reloadOutbox, useOutbox, type OutboxItem } from './useOutbox';
 import { useSession } from './useSession';
 
 type LoadStatus = 'idle' | 'loading' | 'ready' | 'error';
+
+/** `queued`: saved on the phone (offline or the server was unreachable); it is sent when the network is back. */
+export type SubmitResult = ({ queued?: false } & { report: Report; incident: Incident }) | { queued: true; item: OutboxItem };
 
 type ReportsState = {
   status: LoadStatus;
@@ -18,17 +26,23 @@ type ReportsState = {
   /** Result of the latest submitReport, read by the success screen. */
   lastSubmitted: { report: Report; incident: Incident } | null;
   refresh: () => Promise<void>;
-  submitReport: (input: NewReportInput) => Promise<{ report: Report; incident: Incident }>;
+  submitReport: (input: NewReportInput) => Promise<SubmitResult>;
+  /** Adds a report the server accepted (also used by the offline queue when it delivers one). */
+  ingestSubmitted: (res: { report: Report; incident: Incident }, opts?: { last?: boolean }) => void;
+  /** Deep link / uncached id: fetches one report and its incident. Resolves false when it does not exist. */
+  loadReport: (id: string) => Promise<boolean>;
   /** "أنا كمان" */
   followIncident: (incidentId: string) => Promise<void>;
   /** Dev only: advance an incident to its next status. */
   simulateProgress: (incidentId: string) => Promise<void>;
+  /** "افتح البلاغ تاني": a resolved incident goes back to received with the citizen's note. */
+  reopenIncident: (incidentId: string, note: string) => Promise<void>;
   reset: () => void;
 };
 
 const uid = () => {
   const id = useSession.getState().userId;
-  if (!id) throw new Error('لازم تسجّل دخول الأول');
+  if (!id) throw new Error(tr('لازم تسجّل دخول الأول', 'Please sign in first'));
   return id;
 };
 
@@ -36,6 +50,13 @@ const upsertIncident = (list: Incident[], inc: Incident) =>
   list.some((i) => i.id === inc.id) ? list.map((i) => (i.id === inc.id ? inc : i)) : [inc, ...list];
 
 const addId = (ids: string[], id: string) => (ids.includes(id) ? ids : [...ids, id]);
+
+/**
+ * Reports accepted while a refresh may have been in flight (form submit, offline queue), kept until a fetched list
+ * contains them. Without this a refresh that started before the POST (sign-in refresh + queue flush, pull-to-refresh)
+ * overwrites the list and the new report disappears until the next refresh.
+ */
+const unconfirmed = new Map<string, { report: Report; incident: Incident }>();
 
 export const useReports = create<ReportsState>((set, get) => ({
   status: 'idle',
@@ -54,21 +75,65 @@ export const useReports = create<ReportsState>((set, get) => ({
         services.incidents.listIncidents(),
         services.incidents.listFollowing(userId),
       ]);
-      set({ reports, incidents, followingIds, status: 'ready' });
+      let merged = { reports, incidents, followingIds };
+      for (const [id, res] of unconfirmed) {
+        if (reports.some((r) => r.id === id)) {
+          unconfirmed.delete(id);
+          continue;
+        }
+        merged = {
+          reports: [res.report, ...merged.reports],
+          incidents: merged.incidents.some((i) => i.id === res.incident.id) ? merged.incidents : [res.incident, ...merged.incidents],
+          followingIds: addId(merged.followingIds, res.incident.id),
+        };
+      }
+      merged.reports.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      set({ ...merged, status: 'ready' });
     } catch (e) {
-      set({ status: 'error', error: e instanceof Error ? e.message : 'حصلت مشكلة، جرّب تاني' });
+      set({ status: 'error', error: e instanceof Error ? e.message : tr('حصلت مشكلة، جرّب تاني', 'Something went wrong. Try again') });
     }
   },
 
-  async submitReport(input) {
-    const res = await services.incidents.submitReport(uid(), input);
+  ingestSubmitted(res, opts) {
+    unconfirmed.set(res.report.id, res);
     set((s) => ({
-      reports: [res.report, ...s.reports],
+      reports: s.reports.some((r) => r.id === res.report.id) ? s.reports : [res.report, ...s.reports],
       incidents: upsertIncident(s.incidents, res.incident),
       followingIds: addId(s.followingIds, res.incident.id),
-      lastSubmitted: res,
+      ...(opts?.last === false ? {} : { lastSubmitted: res }),
     }));
-    return res;
+  },
+
+  async submitReport(input) {
+    const userId = uid();
+    const queue = async (original: NewReportInput): Promise<SubmitResult> => {
+      await reloadOutbox(); // website: another tab may have queued a report, never write a stale queue over it
+      return { queued: true, item: useOutbox.getState().enqueue(userId, original) };
+    };
+    if (await isOffline()) return queue(input);
+    let toSend = input;
+    try {
+      const res = await sendReport(userId, input, (prepared) => {
+        toSend = prepared;
+      });
+      get().ingestSubmitted(res);
+      return { queued: false, ...res };
+    } catch (e) {
+      // No connection / server down: keep the report on the phone instead of losing it. A 4xx (validation) is shown.
+      if (classifyFailure(e) === 'retry') return queue(toSend);
+      throw e;
+    }
+  },
+
+  async loadReport(id) {
+    const report = await services.incidents.getReport(id);
+    if (!report) return false;
+    const incident = await services.incidents.getIncident(report.incidentId).catch(() => null);
+    set((s) => ({
+      reports: s.reports.some((r) => r.id === report.id) ? s.reports.map((r) => (r.id === report.id ? report : r)) : [report, ...s.reports].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+      incidents: incident ? upsertIncident(s.incidents, incident) : s.incidents,
+    }));
+    return true;
   },
 
   async followIncident(incidentId) {
@@ -81,7 +146,15 @@ export const useReports = create<ReportsState>((set, get) => ({
     set((s) => ({ incidents: upsertIncident(s.incidents, inc) }));
   },
 
-  reset: () => set({ status: 'idle', error: null, reports: [], incidents: [], followingIds: [], lastSubmitted: null }),
+  async reopenIncident(incidentId, note) {
+    const inc = await services.incidents.reopenIncident(uid(), incidentId, note);
+    set((s) => ({ incidents: upsertIncident(s.incidents, inc) }));
+  },
+
+  reset: () => {
+    unconfirmed.clear();
+    set({ status: 'idle', error: null, reports: [], incidents: [], followingIds: [], lastSubmitted: null });
+  },
 }));
 
 /** Incident ids the user follows or reported, from the store (not screen-local state). */

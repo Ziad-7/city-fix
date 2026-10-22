@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useIsRTL } from '@/i18n';
 import { colors, radius, shadows } from '@/theme/tokens';
 import { AppText } from './AppText';
 import { Icon } from '../Icon';
@@ -19,6 +20,7 @@ export type SelectFieldProps = {
 export function SelectField({ label, value, options, onChange, testID }: SelectFieldProps) {
   const [open, setOpen] = useState(false);
   const insets = useSafeAreaInsets();
+  const rtl = useIsRTL();
   const current = options.find((o) => o.value === value)?.label ?? value;
   return (
     <View style={styles.wrap}>
@@ -28,7 +30,7 @@ export function SelectField({ label, value, options, onChange, testID }: SelectF
         <Icon name="chevron-down" size={18} color={colors.inkMuted} />
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
+        <Pressable style={[styles.backdrop, { direction: rtl ? 'rtl' : 'ltr' }]} onPress={() => setOpen(false)}>
           <View style={[styles.sheet, { paddingBottom: 16 + insets.bottom }]}>
             <AppText variant="h3" style={styles.sheetTitle}>{label}</AppText>
             <FlatList
@@ -63,7 +65,7 @@ const styles = StyleSheet.create({
   wrap: { flex: 1, gap: 6 },
   field: { height: 48, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
   value: { flex: 1 },
-  backdrop: { flex: 1, direction: 'rtl', backgroundColor: 'rgba(22,22,22,0.4)', justifyContent: 'flex-end', alignItems: 'center' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(22,22,22,0.4)', justifyContent: 'flex-end', alignItems: 'center' },
   sheet: { width: '100%', maxWidth: 480, maxHeight: '70%', backgroundColor: colors.surface, borderTopStartRadius: radius.lg, borderTopEndRadius: radius.lg, paddingTop: 16, paddingBottom: 16, ...shadows.float },
   sheetTitle: { paddingHorizontal: 20, paddingBottom: 8 },
   option: { flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingHorizontal: 20 },
