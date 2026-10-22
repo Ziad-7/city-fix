@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Icon } from '@/components/Icon';
 import { Tag } from '@/components/ui';
 import type { WorkOrder } from '@/domain/admin-types';
-import { formatDayDM, formatDayWithTime, formatDueLabel, shortAddress } from '@/lib/format';
+import { formatDayDM, formatDayWithTime, formatDueLabel } from '@/lib/format';
 
 export interface WorkOrderCardProps {
   wo: WorkOrder;

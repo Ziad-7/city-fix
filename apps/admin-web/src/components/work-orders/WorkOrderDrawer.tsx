@@ -82,7 +82,7 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
       await patchWorkOrder(workOrder.id, { tasks: newTasks });
       queryClient.invalidateQueries({ queryKey: ['work-order', workOrder.id] });
       queryClient.invalidateQueries({ queryKey: ['work-orders'] });
-    } catch (_error) {
+    } catch {
       toast.error('مقدرناش نحفظ المهمة. جرّب تاني.');
     }
   };
