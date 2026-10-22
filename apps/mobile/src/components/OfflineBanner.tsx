@@ -16,7 +16,7 @@ export function OfflineBanner() {
 
   useEffect(() => {
     try {
-      return NetInfo.addEventListener((s) => setOffline(s.isConnected === false || (s.isConnected === true && !isOnlineState(s))));
+      return NetInfo.addEventListener((s) => setOffline(s.isConnected !== null && !isOnlineState(s)));
     } catch {
       return undefined;
     }

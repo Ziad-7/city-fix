@@ -1,5 +1,16 @@
 # Progress log
 
+## 2026-10-23 — Mobile: localised severity in AI triage summary, offline banner (branch `feat/mobile-complete`, PR #49)
+
+**Done**
+- The backend fallback triage writes the raw enum into the Arabic summary ("... — high، ..."). `cleanTriageSummary` now replaces only that lowercase token (case-sensitive, only in summaries that contain Arabic) with the Arabic or English severity label; model summaries in English are never touched. Used in the API triage service and the AI suggestion card.
+- Global offline banner; SelectField sheet got a separate close button and an inert backdrop for screen readers.
+- Shared files re-copied to `apps/web` (`triage-mock.ts`, its test, `services/api/index.ts`); `check:shared` passes.
+
+**Known issues**
+- Backend root cause (`backend/app/ai/keywords.py` uses `severity.value`) still to fix (W3).
+- Not tried on a device.
+
 ## 2026-10-23 — Citizen website: features restored, voice back on the browser engine (branch `feat/web-restore-browser-voice`)
 
 - Restored the CityCycle screens and English for the website (PR #46) after the temporary revert in #47. The tree is identical to the PR #46 merge.

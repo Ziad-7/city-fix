@@ -144,7 +144,9 @@ export function triageOfflineFallback(input: TriageInput): TriageSuggestion | nu
   return suggestion;
 }
 
-const RAW_SEVERITY = /\b(low|medium|high|critical)\b/i;
+/** A lowercase enum token (low/medium/high/critical) standing alone, as the backend writes it. Case-sensitive on purpose. */
+const RAW_SEVERITY_TOKEN = /(^|[^A-Za-z])(low|medium|high|critical)(?=[^A-Za-z]|$)/g;
+const HAS_ARABIC = /[\u0600-\u06FF]/;
 
 /** Summary line in the current language, built from the top option and severity (never a raw enum value). */
 export function triageSummaryFor(s: Pick<TriageSuggestion, 'options' | 'severity'>): string {
@@ -156,15 +158,14 @@ export function triageSummaryFor(s: Pick<TriageSuggestion, 'options' | 'severity
 }
 
 /**
- * Server summaries can carry the raw enum ("... — high، ..."), and English UI gets an Arabic line.
- * Rebuild the line locally when it shows a raw severity word or the language does not match.
+ * The backend's fallback writes the raw enum into the Arabic line ("... — high، ..."). Replace only that
+ * token with the label in the current language. Summaries without Arabic (model text in English) are never touched.
  */
 export function cleanTriageSummary(s: TriageSuggestion): TriageSuggestion {
-  if (!s.options.length) return s;
-  const english = /[A-Za-z]{3}/.test(s.summary) && !/[؀-ۿ]/.test(s.summary);
-  const wantsEnglish = tr('ar', 'en') === 'en';
-  if (RAW_SEVERITY.test(s.summary) || (s.summary && english !== wantsEnglish && s.source !== 'model')) {
-    return { ...s, summary: triageSummaryFor(s) };
-  }
-  return s;
+  if (!s.summary || !HAS_ARABIC.test(s.summary)) return s;
+  const summary = s.summary.replace(RAW_SEVERITY_TOKEN, (_m, pre: string, token: string) => {
+    const sev = token as Severity;
+    return `${pre}${severityLabel(sev, SEVERITY_LABEL_AR[sev])}`;
+  });
+  return summary === s.summary ? s : { ...s, summary };
 }

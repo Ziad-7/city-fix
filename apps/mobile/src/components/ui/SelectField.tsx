@@ -31,7 +31,7 @@ export function SelectField({ label, value, options, onChange, testID }: SelectF
         <Icon name="chevron-down" size={18} color={colors.inkMuted} />
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable accessibilityRole="button" accessibilityLabel={tr('إغلاق', 'Close')} style={[styles.backdrop, { direction: rtl ? 'rtl' : 'ltr' }]} onPress={() => setOpen(false)}>
+        <Pressable accessible={false} importantForAccessibility="no" style={[styles.backdrop, { direction: rtl ? 'rtl' : 'ltr' }]} onPress={() => setOpen(false)}>
           <View style={[styles.sheet, { paddingBottom: 16 + insets.bottom }]}>
             <AppText variant="h3" style={styles.sheetTitle}>{label}</AppText>
             <FlatList
@@ -55,6 +55,9 @@ export function SelectField({ label, value, options, onChange, testID }: SelectF
                 );
               }}
             />
+            <Pressable accessibilityRole="button" accessibilityLabel={tr('إغلاق', 'Close')} onPress={() => setOpen(false)} style={styles.close}>
+              <AppText variant="smallStrong" color={colors.inkMuted}>{tr('إغلاق', 'Close')}</AppText>
+            </Pressable>
           </View>
         </Pressable>
       </Modal>
@@ -63,6 +66,7 @@ export function SelectField({ label, value, options, onChange, testID }: SelectF
 }
 
 const styles = StyleSheet.create({
+  close: { alignItems: 'center', paddingVertical: 12 },
   wrap: { flex: 1, gap: 6 },
   field: { height: 48, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface },
   value: { flex: 1 },
