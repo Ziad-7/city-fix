@@ -10,7 +10,7 @@ const mockData = [
 
 describe('OpenByCategory', () => {
   it('renders category labels', () => {
-    render(
+    const { container } = render(
       <OpenByCategory
         data={mockData}
         open={28}
@@ -18,7 +18,7 @@ describe('OpenByCategory', () => {
       />
     );
 
-    expect(screen.getByText('حفرة أو مطب عشوائي')).toBeInTheDocument();
+    expect(container.textContent).toContain('حفرة أو مطب عشوائي');
   });
 
   it('displays counts correctly', () => {

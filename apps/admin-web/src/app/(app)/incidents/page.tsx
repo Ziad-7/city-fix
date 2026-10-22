@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import {
@@ -30,12 +30,16 @@ import { useSession } from '@/lib/session';
 import { CATEGORIES, getCategory } from '@/domain/categories';
 import { isOpenStatus } from '@/domain/types';
 import { priorityLevel } from '@/logic/priority';
+import { SEVERITY_AI_AR } from '@/lib/text';
 import {
   formatSpan,
   formatRelative,
   shortAddress,
+  formatDayDM,
 } from '@/lib/format';
 import { StatusChangeForm } from '@/components/incidents/StatusChangeForm';
+import { patchIncident } from '@/services/incidents';
+import { getNextIncidentStatuses } from '@/logic/status-flow';
 import type { AdminIncident } from '@/domain/admin-types';
 import type { IncidentStatus } from '@/domain/types';
 
@@ -53,7 +57,7 @@ const INCIDENT_STATUS_OPTIONS: Record<string, string> = {
 export default function IncidentsPage() {
   const session = useSession();
   const [view, setView] = useState<'all' | 'high' | 'critical' | 'overdue' | 'budget'>('all');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState<'open' | 'all' | IncidentStatus>('open');
   const [categoryId, setCategoryId] = useState('');
   const [department, setDepartment] = useState('');
   const [search, setSearch] = useState('');
@@ -65,6 +69,11 @@ export default function IncidentsPage() {
     const timer = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(timer);
   }, [search]);
+
+  // Set document title
+  useEffect(() => {
+    document.title = 'FixTheCity — مركز القيادة: البلاغات';
+  }, []);
 
   // Fetch data
   const { data: dashboard, isLoading: dashboardLoading } = useQuery({
@@ -83,7 +92,7 @@ export default function IncidentsPage() {
     queryKey: ['incidents', { status, categoryId, department, critical: view === 'critical', overdue: view === 'overdue', q: debouncedSearch }],
     queryFn: () =>
       getIncidents({
-        status: status || undefined,
+        status: status !== 'open' && status !== 'all' ? status : undefined,
         categoryId: categoryId || undefined,
         department: department || undefined,
         critical: view === 'critical' ? true : undefined,
@@ -106,10 +115,11 @@ export default function IncidentsPage() {
       result = result.filter((inc) => inc.inBudgetPlan);
     }
 
-    // Apply open status filter for the default view
-    if (view === 'all' && !status) {
+    // Apply status filter: 'open' shows only open statuses, 'all' shows all
+    if (status === 'open') {
       result = result.filter((inc) => isOpenStatus(inc.status));
     }
+    // status === 'all' shows everything (already filtered by API if specific status)
 
     return result.slice(0, 100);
   }, [incidents, view, status]);
@@ -124,28 +134,14 @@ export default function IncidentsPage() {
 
   const handleClearFilters = () => {
     setView('all');
-    setStatus('');
+    setStatus('open');
     setCategoryId('');
     setDepartment('');
     setSearch('');
     setSelectedIncidentId(undefined);
   };
 
-  const getNextStatuses = (): string[] => {
-    if (!selectedIncident) return [];
-    const current = selectedIncident.status;
-    const map: Record<IncidentStatus, IncidentStatus[]> = {
-      received: ['triaged', 'assigned'],
-      triaged: ['assigned'],
-      assigned: ['in_progress'],
-      in_progress: ['resolved'],
-      resolved: ['closed'],
-      closed: [],
-    };
-    return map[current] || [];
-  };
-
-  const nextStatuses = getNextStatuses();
+  const nextStatuses = selectedIncident ? getNextIncidentStatuses(selectedIncident.status) : [];
   const statusOptions = [
     { value: selectedIncident?.status || '', label: `${INCIDENT_STATUS_OPTIONS[selectedIncident?.status || '']} (الحالة الحالية)` },
     ...nextStatuses.map((s) => ({
@@ -233,7 +229,7 @@ export default function IncidentsPage() {
       <PageHead
         title="قائمة البلاغات"
         subtitle={
-          dashboard ? `مرتّبة حسب الأولوية · آخر تحديث ${formatRelative(dashboard.activity[0]?.at || new Date().toISOString())}` : undefined
+          dashboard ? `مرتّبة حسب الأولوية · آخر تحديث ${formatRelative(new Date().toISOString())}` : undefined
         }
         search={{
           value: search,
@@ -262,11 +258,11 @@ export default function IncidentsPage() {
       {/* Filter row */}
       <Card padded={false} className="fbar">
         <div className="chips" role="group" aria-label="المشاهد">
-          <FilterChip label="كل البلاغات" pressed={view === 'all'} onClick={() => { setView('all'); setStatus(''); setCategoryId(''); setSelectedIncidentId(undefined); }} />
-          <FilterChip label="أولوية عالية" pressed={view === 'high'} onClick={() => { setView('high'); setStatus(''); setCategoryId(''); setSelectedIncidentId(undefined); }} />
-          <FilterChip label="خطر" pressed={view === 'critical'} onClick={() => { setView('critical'); setStatus(''); setCategoryId(''); setSelectedIncidentId(undefined); }} />
-          <FilterChip label="متأخرة" pressed={view === 'overdue'} onClick={() => { setView('overdue'); setStatus(''); setCategoryId(''); setSelectedIncidentId(undefined); }} />
-          <FilterChip label="في خطة الميزانية" pressed={view === 'budget'} onClick={() => { setView('budget'); setStatus(''); setCategoryId(''); setSelectedIncidentId(undefined); }} />
+          <FilterChip label="كل البلاغات" pressed={view === 'all'} onClick={() => { setView('all'); setStatus('open'); setCategoryId(''); setSelectedIncidentId(undefined); }} />
+          <FilterChip label="أولوية عالية" pressed={view === 'high'} onClick={() => { setView('high'); setStatus('open'); setCategoryId(''); setSelectedIncidentId(undefined); }} />
+          <FilterChip label="خطر" pressed={view === 'critical'} onClick={() => { setView('critical'); setStatus('open'); setCategoryId(''); setSelectedIncidentId(undefined); }} />
+          <FilterChip label="متأخرة" pressed={view === 'overdue'} onClick={() => { setView('overdue'); setStatus('open'); setCategoryId(''); setSelectedIncidentId(undefined); }} />
+          <FilterChip label="في خطة الميزانية" pressed={view === 'budget'} onClick={() => { setView('budget'); setStatus('open'); setCategoryId(''); setSelectedIncidentId(undefined); }} />
         </div>
 
         {/* Selects */}
@@ -275,11 +271,11 @@ export default function IncidentsPage() {
           label="الحالة"
           value={status}
           onChange={(v) => {
-            setStatus(v === 'all' ? '' : v);
+            setStatus(v as 'open' | 'all' | IncidentStatus);
             setSelectedIncidentId(undefined);
           }}
           options={[
-            { value: '', label: 'الحالة: المفتوحة' },
+            { value: 'open', label: 'الحالة: المفتوحة' },
             { value: 'received', label: 'وصل' },
             { value: 'triaged', label: 'اتصنّف' },
             { value: 'assigned', label: 'اتحوّل' },
@@ -309,7 +305,7 @@ export default function IncidentsPage() {
           variant="pill"
         />
 
-        {session?.role === 'admin' && (
+        {session?.role === 'admin' ? (
           <SelectField
             id="department-select"
             label="الجهة"
@@ -324,6 +320,17 @@ export default function IncidentsPage() {
                 value: d.id,
                 label: d.nameAr,
               })),
+            ]}
+            variant="pill"
+          />
+        ) : (
+          <SelectField
+            id="department-select"
+            label="الجهة"
+            value={session?.department || ''}
+            disabled
+            options={[
+              { value: session?.department || '', label: `الجهة: ${session?.department || '—'}` },
             ]}
             variant="pill"
           />
@@ -365,7 +372,7 @@ export default function IncidentsPage() {
                 title={incidents.length === 0 ? 'مفيش بلاغات مفتوحة' : 'مفيش بلاغات بالفلاتر دي'}
                 message={incidents.length === 0 ? 'كل البلاغات اتحلّت.' : 'غيّر الفلاتر أو امسحها.'}
                 action={
-                  (view !== 'all' || status || categoryId || department || search) ? (
+                  (view !== 'all' || (status !== 'open' && status !== 'all') || categoryId || department || search) ? (
                     <Button variant="secondary" size="sm" onClick={handleClearFilters}>
                       امسح الفلاتر
                     </Button>
@@ -385,7 +392,7 @@ export default function IncidentsPage() {
                 tableClassName="inc-table"
                 minWidth={640}
               />
-              {filteredIncidents.length >= 100 && (
+              {filteredIncidents.length === 100 && incidents.length > 100 && (
                 <p className="ftc-body-sm" style={{ color: 'var(--ftc-ink-muted)', padding: '12px 16px' }}>
                   بنعرض أول 100 بلاغ. ضيّق البحث بالفلاتر.
                 </p>
@@ -415,14 +422,11 @@ export default function IncidentsPage() {
                     اقتراح الذكاء الاصطناعي
                   </div>
                   <div className="line">
-                    {getCategory(selectedIncident.triage.options[0].categoryId).labelAr} · {Math.round(selectedIncident.triage.options[0].confidence * 100)}% ·{' '}
-                    {selectedIncident.triage.severity?.toUpperCase()}
+                    {getCategory(selectedIncident.triage.options[0].categoryId).labelAr} · {Math.round(selectedIncident.triage.options[0].confidence * 100)}% · {SEVERITY_AI_AR[selectedIncident.triage.severity || 'low']}
                   </div>
-                  {selectedIncident.triage.source === 'model' && (
-                    <span className="mini">
-                      الجهة المسؤولة: {getCategory(selectedIncident.triage.options[0].categoryId).department}
-                    </span>
-                  )}
+                  <span className="mini">
+                    الجهة: {selectedIncident.department}
+                  </span>
                   {selectedIncident.lastReviewedBy ? (
                     <span className="mini">راجعه: {selectedIncident.lastReviewedBy}</span>
                   ) : (
@@ -435,20 +439,28 @@ export default function IncidentsPage() {
               <PriorityBreakdown variant="compact" priority={selectedIncident.priority} />
 
               {/* Work order summary */}
-              {selectedIncident.workOrderId && workOrder ? (
-                <div className="wo-sum">
-                  <span className="strong small">أمر الشغل {workOrder.id}</span>
-                  <KvList
-                    items={[
-                      { label: 'الفريق', value: workOrder.team || '—' },
-                      { label: 'الحالة', value: <StatusChip kind="workorder" status={workOrder.status} /> },
-                      { label: 'التسليم', value: workOrder.dueAt ? formatRelative(workOrder.dueAt) : '—' },
-                    ]}
-                  />
-                  <Link href={`/work-orders#${workOrder.id}`} className="ttl">
-                    افتح أمر الشغل
-                  </Link>
-                </div>
+              {selectedIncident.workOrderId ? (
+                workOrder ? (
+                  <div className="wo-sum">
+                    <span className="strong small">أمر الشغل {workOrder.id}</span>
+                    <KvList
+                      items={[
+                        { label: 'الفريق', value: workOrder.team || '—' },
+                        { label: 'الحالة', value: <StatusChip kind="workorder" status={workOrder.status} /> },
+                        { label: 'التسليم', value: workOrder.dueAt ? formatDayDM(workOrder.dueAt) : '—' },
+                      ]}
+                    />
+                    <Link href={`/work-orders?wo=${workOrder.id}`} className="ttl">
+                      افتح أمر الشغل
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="wo-sum" aria-busy="true">
+                    <span className="strong small">أمر الشغل</span>
+                    <p className="sr-only">جاري التحميل…</p>
+                    <SkeletonTable rows={3} cols={2} />
+                  </div>
+                )
               ) : (
                 <div className="wo-sum">
                   <span className="strong small">أمر الشغل</span>
@@ -471,8 +483,8 @@ export default function IncidentsPage() {
                   previewStatusFor={(value) => value as IncidentStatus}
                   citizensCount={selectedIncident.linkedReports.length}
                   compact
+                  disabledReason={session?.role === 'staff' && session?.department && session.department !== selectedIncident.department ? 'مش من صلاحياتك تغيّر حالة البلاغ ده' : undefined}
                   onSubmit={async ({ status: newStatus, note }) => {
-                    const { patchIncident } = await import('@/services/incidents');
                     await patchIncident(selectedIncident.id, { status: newStatus, note });
                   }}
                 />

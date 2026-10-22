@@ -40,7 +40,7 @@ describe('OverdueList', () => {
   });
 
   it('shows "متأخر" for positive hoursLate', () => {
-    render(
+    const { container } = render(
       <OverdueList
         overdueList={mockOverdueList}
         overdueTotal={2}
@@ -48,11 +48,11 @@ describe('OverdueList', () => {
       />
     );
 
-    expect(screen.getByText(/متأخر/)).toBeInTheDocument();
+    expect(container.textContent).toContain('متأخر 6 س');
   });
 
   it('shows "باقي" for negative hoursLate', () => {
-    render(
+    const { container } = render(
       <OverdueList
         overdueList={mockOverdueList}
         overdueTotal={2}
@@ -60,7 +60,7 @@ describe('OverdueList', () => {
       />
     );
 
-    expect(screen.getByText(/باقي/)).toBeInTheDocument();
+    expect(container.textContent).toContain('باقي 5 س');
   });
 
   it('renders empty state when no overdue items', () => {

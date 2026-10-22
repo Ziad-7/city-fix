@@ -1,14 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import type L from 'leaflet';
 import dynamic from 'next/dynamic';
 import { useQuery } from '@tanstack/react-query';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { getIncidents } from '@/services/incidents';
 import { getDepartments } from '@/services/departments';
 import {
   PageHead,
-  Card,
   FilterChip,
   SelectField,
   TextField,
@@ -18,10 +18,9 @@ import {
   Skeleton,
 } from '@/components/ui';
 import { Icon } from '@/components/Icon';
-import { incidentToPin, filterPins, type MapPinModel, type PinKind, pinSvg, clusterIcon as clusterIconFn } from '@/components/map/map-utils';
-import { formatRelative, formatDayDM } from '@/lib/format';
+import { incidentToPin, type PinKind, pinSvg } from '@/components/map/map-utils';
+import { formatRelative } from '@/lib/format';
 import { useSession } from '@/lib/session';
-import type { AdminIncident } from '@/domain/admin-types';
 
 const MapView = dynamic(() => import('@/components/map/MapView').then(m => ({ default: m.MapView })), {
   ssr: false,
@@ -46,20 +45,14 @@ interface FilterState {
 }
 
 export default function MapPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { district } = useSession();
-  const [mapRef, setMapRef] = useState<any>(null);
+  const [mapRef, setMapRef] = useState<L.Map | null>(null);
   const [filters, setFilters] = useState<FilterState>({
     statuses: new Set(['received', 'assigned', 'progress', 'resolved', 'critical']),
     period: '7d',
   });
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const focus = searchParams.get('focus');
-    if (focus) setSelectedId(focus);
-  }, [searchParams]);
+  const [selectedId, setSelectedId] = useState<string | null>(searchParams.get('focus'));
 
   const { data: incidents = [], isLoading, error, refetch } = useQuery({
     queryKey: ['incidents', filters],

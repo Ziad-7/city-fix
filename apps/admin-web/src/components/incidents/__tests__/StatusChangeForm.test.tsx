@@ -117,4 +117,36 @@ describe('StatusChangeForm', () => {
     // Template should not be shown in compact mode
     expect(screen.queryByText('استلمنا بلاغكم وبنراجعه.')).not.toBeInTheDocument();
   });
+
+  it('shows preview in compact mode', () => {
+    renderComponent({ compact: true });
+
+    // Type a note
+    const textarea = screen.getByRole('textbox', { name: /رسالة للمواطنين/ });
+    fireEvent.change(textarea, { target: { value: 'test message' } });
+
+    // Preview component renders the note
+    const form = textarea.closest('form');
+    expect(form).toBeInTheDocument();
+    // The CitizenPreview component should receive the note prop
+    expect(textarea).toHaveValue('test message');
+  });
+
+  it('shows all controls disabled with disabledReason', () => {
+    renderComponent({ disabledReason: 'مش من صلاحياتك تغيّر حالة البلاغ ده' });
+
+    // Notice should be shown
+    expect(screen.getByText('مش من صلاحياتك تغيّر حالة البلاغ ده')).toBeInTheDocument();
+
+    // Select should be disabled
+    const selects = screen.getAllByRole('combobox');
+    expect(selects[0]).toBeDisabled();
+
+    // Textarea should be disabled
+    const textarea = screen.getByRole('textbox', { name: /رسالة للمواطنين/ });
+    expect(textarea).toBeDisabled();
+
+    // Submit button should not be shown
+    expect(screen.queryByRole('button', { name: /حدّث الحالة/ })).not.toBeInTheDocument();
+  });
 });

@@ -61,7 +61,7 @@ describe('OverviewKpis', () => {
   });
 
   it('renders correct period label for 7d range', () => {
-    render(
+    const { container } = render(
       <OverviewKpis
         dashboard={mockDashboard}
         range="7d"
@@ -69,6 +69,7 @@ describe('OverviewKpis', () => {
       />
     );
 
-    expect(screen.getByText('الأسبوع اللي فات')).toBeInTheDocument();
+    // Check that the period label appears anywhere in the component
+    expect(container.textContent).toContain('الأسبوع اللي فات');
   });
 });

@@ -127,65 +127,70 @@ export function StatusChangeForm({
     }
   };
 
-  if (disabledReason) {
-    return (
-      <div>
-        <Notice tone="gold">{disabledReason}</Notice>
-      </div>
-    );
-  }
-
   return (
-    <form className="side-form" noValidate onSubmit={handleSubmit}>
-      <SelectField
-        id="st"
-        label="الحالة الجديدة"
-        options={options}
-        value={status}
-        onChange={(v) => {
-          setStatus(v);
-          setStatusError('');
-        }}
-        error={statusError}
-      />
-      <TextArea
-        id="note"
-        label="رسالة للمواطنين"
-        value={note}
-        onChange={(v) => {
-          setNote(v);
-          setNoteError('');
-        }}
-        maxLength={500}
-        error={noteError}
-        rows={compact ? 2 : undefined}
-        help={!compact ? 'بتظهر في تتبع البلاغ. اكتبها قصيرة وفيها اللي هيحصل بعد كده.' : undefined}
-      />
-      {!note && !compact && (
-        <div className="chips" role="group" aria-label="رسايل جاهزة">
-          {getTemplate() && (
-            <button
-              type="button"
-              className="ftc-filter"
-              onClick={() => setNote(getTemplate())}
-            >
-              {getTemplate()}
-            </button>
-          )}
-        </div>
-      )}
-      {!compact && <CitizenPreview status={previewStatusFor(status)} note={note} />}
-      {citizensCount && (
-        <Checkbox
-          id="notify"
-          checked
-          disabled
-          label={`ابعتها للـ ${citizensCount} مواطنين على واتساب (أو SMS)`}
+    <>
+      {disabledReason && <Notice tone="gold">{disabledReason}</Notice>}
+      <form className="side-form" noValidate onSubmit={handleSubmit}>
+        <SelectField
+          id="st"
+          label="الحالة الجديدة"
+          options={options}
+          value={status}
+          onChange={(v) => {
+            setStatus(v);
+            setStatusError('');
+          }}
+          error={statusError}
+          disabled={!!disabledReason || busy}
         />
-      )}
-      <Button type="submit" block loading={busy}>
-        {submitLabel}
-      </Button>
-    </form>
+        <TextArea
+          id="note"
+          label="رسالة للمواطنين"
+          value={note}
+          onChange={(v) => {
+            setNote(v);
+            setNoteError('');
+          }}
+          maxLength={500}
+          error={noteError}
+          rows={compact ? 2 : undefined}
+          help={!compact ? 'بتظهر في تتبع البلاغ. اكتبها قصيرة وفيها اللي هيحصل بعد كده.' : undefined}
+          disabled={!!disabledReason || busy}
+          onBlur={() => {
+            if (!note.trim()) {
+              setNoteError('اكتب رسالة للمواطنين');
+            }
+          }}
+        />
+        {!note && !compact && (
+          <div className="chips" role="group" aria-label="رسايل جاهزة">
+            {getTemplate() && (
+              <button
+                type="button"
+                className="ftc-filter"
+                onClick={() => setNote(getTemplate())}
+                disabled={!!disabledReason || busy}
+              >
+                {getTemplate()}
+              </button>
+            )}
+          </div>
+        )}
+        <CitizenPreview status={previewStatusFor(status)} note={note} />
+        {citizensCount ? (
+          <Checkbox
+            id="notify"
+            checked
+            disabled
+            label={`ابعتها للـ ${citizensCount} مواطنين على واتساب (أو SMS)`}
+          />
+        ) : null}
+        {!disabledReason && (
+          <Button type="submit" block loading={busy}>
+            {submitLabel}
+          </Button>
+        )}
+      </form>
+    </>
   );
 }

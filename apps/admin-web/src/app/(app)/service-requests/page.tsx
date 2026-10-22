@@ -1,12 +1,10 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getServiceRequests, patchServiceRequest } from '@/services/serviceRequests';
-import { getDepartments } from '@/services/departments';
 import {
   PageHead,
-  Card,
   KpiCard,
   FilterChip,
   SelectField,
@@ -17,14 +15,13 @@ import {
   Skeleton,
   StatusChip,
   TextArea,
-  SelectField as SelectFieldComponent,
   Modal,
   TextField,
+  Card,
 } from '@/components/ui';
 import { Icon } from '@/components/Icon';
 import { useToast } from '@/components/ui/Toast';
-import { formatDayDM, formatSlot, formatLongDate, formatRelative } from '@/lib/format';
-import { useSession } from '@/lib/session';
+import { formatDayDM, formatSlot, formatLongDate } from '@/lib/format';
 import type { AdminServiceRequest } from '@/domain/admin-types';
 
 const SERVICE_TYPE_LABELS: Record<string, string> = {
@@ -62,7 +59,6 @@ interface FilterState {
 }
 
 export default function ServiceRequestsPage() {
-  const { department } = useSession();
   const toast = useToast();
   const queryClient = useQueryClient();
 
@@ -73,14 +69,11 @@ export default function ServiceRequestsPage() {
   const [scheduleSlot, setScheduleSlot] = useState('');
   const [scheduleNote, setScheduleNote] = useState('');
 
+  const now = useMemo(() => new Date(), []);
+
   const { data: requests = [], isLoading, error, refetch } = useQuery({
     queryKey: ['service-requests'],
     queryFn: getServiceRequests,
-  });
-
-  const { data: departments = [] } = useQuery({
-    queryKey: ['departments'],
-    queryFn: getDepartments,
   });
 
   const patchMutation = useMutation({
@@ -175,17 +168,6 @@ export default function ServiceRequestsPage() {
       assignee,
     });
   };
-
-  const handleStatusChange = async (status: string, note: string) => {
-    if (!selected) return;
-    await patchMutation.mutateAsync({
-      id: selected.id,
-      status,
-      note,
-    });
-  };
-
-  const dataUpdatedAt = new Date().toISOString();
 
   return (
     <main className="ftc-admin-main">
@@ -414,7 +396,7 @@ export default function ServiceRequestsPage() {
                 </div>
 
                 <form className="side-form" style={{ marginTop: '14px' }}>
-                  <SelectFieldComponent
+                  <SelectField
                     id="status"
                     label="الحالة"
                     value={selected.status}
@@ -428,7 +410,7 @@ export default function ServiceRequestsPage() {
                     ]}
                   />
 
-                  <SelectFieldComponent
+                  <SelectField
                     id="truck"
                     label="العربية أو الفريق"
                     value={selected.assignee || ''}

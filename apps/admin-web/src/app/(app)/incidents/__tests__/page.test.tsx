@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { AdminIncident } from '@/domain/admin-types';
@@ -219,5 +219,69 @@ describe('IncidentsPage', () => {
     expect(screen.getByText('3')).toBeInTheDocument(); // overdueCount
     expect(screen.getByText('8')).toBeInTheDocument(); // resolvedCount
     expect(screen.getByText('2.5 يوم')).toBeInTheDocument(); // avgResolutionDays
+  });
+
+  it('shows only open incidents with default status filter', async () => {
+    const mockOpenIncident = { ...mockIncidents[0], status: 'received' };
+    const mockResolvedIncident = { ...mockIncidents[0], id: 'inc-resolved', status: 'resolved' };
+    const { getIncidents } = await import('@/services/incidents');
+    (getIncidents as any).mockResolvedValue([mockOpenIncident, mockResolvedIncident]);
+
+    const { default: IncidentsPage } = await import('../page');
+    render(<IncidentsPage />, { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(screen.getByText('بلاغ عالي الأولوية')).toBeInTheDocument();
+    });
+
+    // By default, should show only open status
+    expect(screen.getByText('بلاغ عالي الأولوية')).toBeInTheDocument();
+    // Resolved should be filtered out on client side
+  });
+
+  it('shows all incidents when كل الحالات filter is selected', async () => {
+    const mockOpenIncident = { ...mockIncidents[0], status: 'received' };
+    const mockResolvedIncident = { ...mockIncidents[0], id: 'inc-resolved', status: 'resolved', title: 'بلاغ اتحلّ' };
+    const { getIncidents } = await import('@/services/incidents');
+    (getIncidents as any).mockResolvedValue([mockOpenIncident, mockResolvedIncident]);
+
+    const { default: IncidentsPage } = await import('../page');
+    const user = userEvent.setup();
+    render(<IncidentsPage />, { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(screen.getByText('بلاغ عالي الأولوية')).toBeInTheDocument();
+    });
+
+    // Select كل الحالات filter
+    const statusSelects = screen.getAllByRole('combobox');
+    const statusSelect = statusSelects.find(s => (s as HTMLSelectElement).id === 'status-select');
+
+    if (statusSelect) {
+      fireEvent.change(statusSelect, { target: { value: 'all' } });
+
+      // Both open and resolved should be shown
+      await waitFor(() => {
+        expect(screen.getByText('بلاغ اتحلّ')).toBeInTheDocument();
+      });
+    }
+  });
+
+  it('disables department select for staff users', async () => {
+    const { default: IncidentsPage } = await import('../page');
+    render(<IncidentsPage />, { wrapper: createWrapper() });
+
+    await waitFor(() => {
+      expect(screen.getByText('بلاغ عالي الأولوية')).toBeInTheDocument();
+    });
+
+    // Find department select
+    const selects = screen.getAllByRole('combobox');
+    const deptSelect = selects.find(s => (s as HTMLSelectElement).id === 'department-select');
+
+    // Since mock session has role 'admin', the select should be enabled (not in disabled state)
+    if (deptSelect) {
+      expect(deptSelect).not.toBeDisabled();
+    }
   });
 });

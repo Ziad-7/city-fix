@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvent, Circle } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { pinIcon, type MapPinModel, type PinKind } from './map-utils';
+import { pinIcon, type MapPinModel } from './map-utils';
 
 export interface MapViewProps {
   pins: MapPinModel[];
@@ -17,14 +17,6 @@ export interface MapViewProps {
   circle?: { lat: number; lng: number; radiusM: number };
   onMapReady?: (map: L.Map) => void;
 }
-
-const LEGEND_LABEL: Record<PinKind, string> = {
-  received: 'وصل',
-  assigned: 'اتحوّل',
-  progress: 'جاري التنفيذ',
-  resolved: 'اتصلّح',
-  critical: 'خطر · محتاج تدخّل فوري',
-};
 
 function MapContent({
   pins,
@@ -51,7 +43,7 @@ function MapContent({
   }, [selected, map]);
 
   // Handle keyboard navigation
-  useMapEvent('keydown', (e) => {
+  useMapEvent('keydown', () => {
     if (!interactive) return;
     // Implementation for marker focus would go here
   });
