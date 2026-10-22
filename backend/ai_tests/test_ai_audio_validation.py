@@ -27,7 +27,9 @@ class AudioInspectionTests(unittest.TestCase):
             ),
         )
         with patch("app.ai.transcribe.shutil.which", return_value="/usr/bin/ffmpeg"):
-            with patch("app.ai.transcribe.subprocess.run", return_value=completed) as run:
+            with patch(
+                "app.ai.transcribe.subprocess.run", return_value=completed
+            ) as run:
                 analysis = inspect_audio(b"audio", "audio/mp4")
 
         self.assertAlmostEqual(analysis.duration_seconds, 12.5, places=3)
@@ -87,16 +89,16 @@ class TranscriptionAudioRouteTests(unittest.TestCase):
                 calls.append("provider")
                 from app.ai.transcribe import Transcription
 
-                return Transcription(
-                    text="فيه حفرة", language="ar-EG", confidence=0.9
-                )
+                return Transcription(text="فيه حفرة", language="ar-EG", confidence=0.9)
 
         router = create_transcription_router(
             get_current_user=authenticate,
             load_authorized_voice=load_voice,
             provider=Provider(),
         )
-        endpoint = next(route.endpoint for route in router.routes if route.path == "/ai/transcribe")
+        endpoint = next(
+            route.endpoint for route in router.routes if route.path == "/ai/transcribe"
+        )
 
         async def call_endpoint():
             async def inspect_in_process(callback, *args):
@@ -107,7 +109,9 @@ class TranscriptionAudioRouteTests(unittest.TestCase):
                 return_value=analysis,
                 side_effect=inspection_error,
             ):
-                with patch("app.ai.transcribe.asyncio.to_thread", new=inspect_in_process):
+                with patch(
+                    "app.ai.transcribe.asyncio.to_thread", new=inspect_in_process
+                ):
                     result = await endpoint(
                         TranscriptionRequest(path="citizen-1/voice.m4a"),
                         current_user=User(),

@@ -46,9 +46,7 @@ async def test_transcription_route_reads_only_the_callers_voice_note(monkeypatch
         async def transcribe(self, audio, mime_type):
             assert audio == b"audio"
             assert mime_type == "audio/mp4"
-            return Transcription(
-                text="فيه حفرة", language="ar-EG", confidence=0.91
-            )
+            return Transcription(text="فيه حفرة", language="ar-EG", confidence=0.91)
 
     app = FastAPI()
     app.include_router(
@@ -189,7 +187,9 @@ def test_audio_analysis_uses_bounded_ffmpeg(monkeypatch):
             ),
         )
 
-    monkeypatch.setattr("app.ai.transcribe.shutil.which", lambda _name: "/usr/bin/ffmpeg")
+    monkeypatch.setattr(
+        "app.ai.transcribe.shutil.which", lambda _name: "/usr/bin/ffmpeg"
+    )
     monkeypatch.setattr("app.ai.transcribe.subprocess.run", run)
 
     analysis = inspect_audio(b"voice", "audio/mp4")
@@ -264,9 +264,7 @@ async def test_gemini_transcriber_sends_audio_and_validates_arabic_output():
     )
     result = await provider.transcribe(b"voice-bytes", "audio/mp4")
 
-    assert result == Transcription(
-        text="فيه حفرة", language="ar-EG", confidence=0.9
-    )
+    assert result == Transcription(text="فيه حفرة", language="ar-EG", confidence=0.9)
     assert requests[0].headers["x-goog-api-key"] == "secret"
     sent = requests[0].read().decode()
     assert "dm9pY2UtYnl0ZXM=" in sent

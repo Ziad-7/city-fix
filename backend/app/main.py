@@ -34,7 +34,9 @@ async def load_authorized_voice_note(path: str, user_id: str) -> tuple[bytes, st
     """Read only an authenticated caller-owned voice note from private storage."""
     storage = getattr(app.state, "media_storage", None)
     if storage is None or not callable(getattr(storage, "read_voice_note", None)):
-        raise HTTPException(503, "تحويل الصوت لنص مش متاح لحد ما التخزين الخاص يكون جاهز.")
+        raise HTTPException(
+            503, "تحويل الصوت لنص مش متاح لحد ما التخزين الخاص يكون جاهز."
+        )
     return await storage.read_voice_note(user_id, path)
 
 

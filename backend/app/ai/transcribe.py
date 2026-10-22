@@ -287,9 +287,7 @@ def create_transcription_router(
         if not isinstance(user_id, str) or not user_id.strip():
             raise HTTPException(401, "محتاج تسجل دخول الأول")
         if provider is None:
-            raise HTTPException(
-                503, "تحويل الصوت لنص مش متاح دلوقتي."
-            )
+            raise HTTPException(503, "تحويل الصوت لنص مش متاح دلوقتي.")
         loop = asyncio.get_running_loop()
         deadline = loop.time() + TRANSCRIPTION_DEADLINE_SECONDS
         try:
@@ -317,9 +315,7 @@ def create_transcription_router(
                 timeout=min(FFMPEG_TIMEOUT_SECONDS + 0.25, remaining),
             )
             if analysis.duration_seconds > MAX_TRANSCRIPTION_DURATION_SECONDS:
-                raise HTTPException(
-                    413, "مدة التسجيل لازم تكون ٣٠ ثانية أو أقل."
-                )
+                raise HTTPException(413, "مدة التسجيل لازم تكون ٣٠ ثانية أو أقل.")
             if analysis.peak_dbfs <= SILENCE_PEAK_DBFS:
                 raise HTTPException(422, "مستوى الصوت واطي جدًا؛ اكتب الوصف بنفسك.")
         except HTTPException:
@@ -329,7 +325,9 @@ def create_transcription_router(
                 422, "مقدرناش نتحقق من التسجيل؛ جرّب مقطع أقصر أو اكتب الوصف."
             ) from error
         except ValueError as error:
-            raise HTTPException(422, "ملف التسجيل غير صالح أو مدته غير واضحة.") from error
+            raise HTTPException(
+                422, "ملف التسجيل غير صالح أو مدته غير واضحة."
+            ) from error
         except RuntimeError as error:
             logger.error("Voice duration validation is not configured")
             raise HTTPException(503, "التحقق من التسجيل مش متاح دلوقتي.") from error

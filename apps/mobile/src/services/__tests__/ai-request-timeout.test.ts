@@ -32,12 +32,16 @@ describe('AI API request deadlines', () => {
       kind === 'triage'
         ? services.triage.analyze({ userId: 'citizen-1', description: 'حفرة في الشارع' })
         : services.transcription.transcribe('citizen-1/voice.m4a');
+    const requestFailure = request.then(
+      () => null,
+      (error: unknown) => error,
+    );
     const signal = (fetchMock.mock.calls[0][1] as RequestInit).signal;
 
     await jest.advanceTimersByTimeAsync(timeoutMs - 1);
     expect(signal?.aborted).toBe(false);
     await jest.advanceTimersByTimeAsync(1);
-    await expect(request).rejects.toMatchObject({ status: 0 });
+    await expect(requestFailure).resolves.toMatchObject({ status: 0 });
     expect(signal?.aborted).toBe(true);
   });
 });

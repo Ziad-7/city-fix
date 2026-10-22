@@ -114,7 +114,10 @@ def test_read_voice_note_checks_owner_and_returns_supported_audio():
     storage = SupabaseMediaStorage(
         "https://project.supabase.co", "secret", transport=httpx.MockTransport(handle)
     )
-    assert asyncio.run(storage.read_voice_note("u1", "u1/voice.m4a")) == (b"audio", "audio/mp4")
+    assert asyncio.run(storage.read_voice_note("u1", "u1/voice.m4a")) == (
+        b"audio",
+        "audio/mp4",
+    )
     assert calls == ["GET", "HEAD", "GET"]
 
     with pytest.raises(HTTPException) as denied:
