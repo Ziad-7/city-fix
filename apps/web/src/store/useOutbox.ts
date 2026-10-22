@@ -4,6 +4,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import type { NewReportInput } from '@/domain/types';
 import { tr } from '@/i18n';
 import { newIdempotencyKey } from '@/services/media';
+import { releasePersistedFiles } from '@/services/persistFile';
 
 /** A report saved on the phone, waiting for the network. */
 export type OutboxItem = {
@@ -54,12 +55,15 @@ export function setOutboxSync(hooks?: OutboxSync) {
 export const withOutboxLock = <T>(job: () => Promise<T>): Promise<T> => sync.lock(job);
 export const reloadOutbox = (): Promise<void> => sync.reload();
 
+/** Every device-local file a queued report points to (photos and the voice note). */
+export const queuedFileUris = (input: NewReportInput): string[] => [...input.photoUris, ...(input.voiceNoteUri ? [input.voiceNoteUri] : [])];
+
 let seq = 0;
 const newId = () => `Q-${Date.now().toString(36)}-${(seq++).toString(36)}`;
 
 export const useOutbox = create<OutboxState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       items: [],
       notice: null,
       enqueue(userId, input, idempotencyKey) {
@@ -67,8 +71,20 @@ export const useOutbox = create<OutboxState>()(
         set((s) => ({ items: [item, ...s.items] }));
         return item;
       },
-      update: (id, patch) => set((s) => ({ items: s.items.map((i) => (i.id === id ? { ...i, ...patch } : i)) })),
-      remove: (id) => set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
+      update(id, patch) {
+        // Files the new input no longer refers to (uploaded, so replaced by server paths) are not needed on the phone.
+        const old = get().items.find((i) => i.id === id);
+        if (old && patch.input) {
+          const still = new Set(queuedFileUris(patch.input));
+          void releasePersistedFiles(queuedFileUris(old.input).filter((u) => !still.has(u)));
+        }
+        set((s) => ({ items: s.items.map((i) => (i.id === id ? { ...i, ...patch } : i)) }));
+      },
+      remove(id) {
+        const old = get().items.find((i) => i.id === id);
+        if (old) void releasePersistedFiles(queuedFileUris(old.input));
+        set((s) => ({ items: s.items.filter((i) => i.id !== id) }));
+      },
       noteSent: () => set((s) => ({ notice: { n: (s.notice?.n ?? 0) + 1, ok: true, text: tr('بلاغك اتبعت', 'Your report was sent') } })),
       noteDropped: (text) => set((s) => ({ notice: { n: (s.notice?.n ?? 0) + 1, ok: false, text } })),
       notify: (ok, text) => set((s) => ({ notice: { n: (s.notice?.n ?? 0) + 1, ok, text } })),
