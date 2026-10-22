@@ -209,4 +209,18 @@ describe('Toast', () => {
 
     expect(screen.queryByText('Success!')).not.toBeInTheDocument();
   });
+
+  it('renders live region after mount', () => {
+    render(
+      <ToastProvider>
+        <ToastConsumer />
+      </ToastProvider>,
+    );
+
+    // Live region should be mounted and available as a status container
+    const liveRegion = document.querySelector('.ftc-toasts');
+    expect(liveRegion).toBeInTheDocument();
+    expect(liveRegion).toHaveAttribute('role', 'status');
+    expect(liveRegion).toHaveAttribute('aria-live', 'polite');
+  });
 });

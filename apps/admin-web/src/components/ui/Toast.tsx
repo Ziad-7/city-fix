@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, useEffect, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../Icon';
 
@@ -32,6 +32,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const timerRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
   const pausedRef = useRef<Set<string>>(new Set());
   const counterRef = useRef<number>(0);
+
+  // Track client-side mount to avoid hydration mismatch
+  const mounted = useSyncExternalStore(
+    () => () => {}, // subscribe (no-op for this use case)
+    () => true,      // getSnapshot (client)
+    () => false,     // getServerSnapshot (server)
+  );
 
   const dismiss = useCallback((id: string) => {
     // Clear any pending timeout for this toast
@@ -109,7 +116,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ success, error }}>
       {children}
-      {typeof document !== 'undefined' && createPortal(
+      {mounted && createPortal(
         <div
           className="ftc-toasts"
           role="status"
