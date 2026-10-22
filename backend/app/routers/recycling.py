@@ -260,7 +260,7 @@ def collector_jobs(
     material_id: Annotated[MaterialId | None, Query(alias="materialId")] = None,
     db: Session = Depends(get_db),
 ):
-    """Open pickups near a point, nearest first. Street-level address, ~100 m pin, no name or phone."""
+    """Open pickups near a point, nearest first. Street-level address, ~100 m pin; no name, phone, landmark or note."""
     _verified(db, claims["sub"])
     rows = (
         db.query(RecyclingPickup)
@@ -269,14 +269,13 @@ def collector_jobs(
     )
     jobs: list[tuple[float, dict]] = []
     for p in rows:
-        distance = haversine_m(lat, lng, p.lat, p.lng)
+        # Distance and pin both come from the ~100 m rounded point, so repeated queries cannot recover the exact home.
+        distance = haversine_m(lat, lng, approx(p.lat), approx(p.lng))
         if distance > radius_m:
             continue
         if material_id and not any(i["materialId"] == material_id for i in p.items):
             continue
         location = {"lat": approx(p.lat), "lng": approx(p.lng), "address": street_level(p.address)}
-        if p.landmark:
-            location["landmark"] = p.landmark
         job = {
             "id": p.id,
             "items": p.items,
@@ -287,8 +286,6 @@ def collector_jobs(
             "estimatedKg": round(sum(i["estimatedKg"] for i in p.items), 3),
             "distanceM": round(distance),
         }
-        if p.note:
-            job["note"] = p.note
         if p.estimated_value_egp is not None:
             job["estimatedValueEgp"] = p.estimated_value_egp
         jobs.append((distance, job))

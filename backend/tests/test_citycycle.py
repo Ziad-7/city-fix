@@ -155,6 +155,7 @@ def test_jobs_are_private_and_sorted(client, citizen_h, collector_h, pickup):
     assert [j["distanceM"] for j in jobs] == sorted(j["distanceM"] for j in jobs)
     mine = next(j for j in jobs if j["id"] == pickup["id"])
     assert mine["location"]["address"] == "شارع النصر، مدينة نصر"  # building number dropped
+    assert "landmark" not in mine["location"] and "note" not in mine  # free text only after accept
     assert mine["location"]["lat"] == 30.05 and mine["location"]["lng"] == 31.34  # ~100 m rounding
     assert "citizenId" not in mine and "photoUris" not in mine and mine["estimatedKg"] == 5
     far = client.get("/collector/jobs", params={"lat": 31.2, "lng": 29.9, "radiusM": 1000}, headers=collector_h)
@@ -163,6 +164,23 @@ def test_jobs_are_private_and_sorted(client, citizen_h, collector_h, pickup):
         "/collector/jobs", params={**NASR, "radiusM": 5000, "materialId": "glass"}, headers=collector_h
     ).json()
     assert [j["id"] for j in glass] == ["RCY-3002"]
+
+
+def test_job_distance_cannot_locate_the_exact_home(client, collector_h, pickup):
+    """Distance is measured to the rounded pin, so two nearby query points see consistent coarse values."""
+    from app.logic.duplicates import haversine_m
+
+    exact = (30.0501, 31.3401)
+
+    def dist(lat, lng):
+        jobs = client.get(
+            "/collector/jobs", params={"lat": lat, "lng": lng, "radiusM": 3000}, headers=collector_h
+        ).json()
+        return next(j for j in jobs if j["id"] == pickup["id"])["distanceM"]
+
+    for q in ((30.0510, 31.3401), (30.0501, 31.3412), (30.0490, 31.3390)):
+        assert dist(*q) == round(haversine_m(*q, 30.05, 31.34))  # rounded pin, never the exact one
+    assert dist(30.05, 31.34) == 0 and haversine_m(*exact, 30.05, 31.34) > 0
 
 
 def test_jobs_exclude_own_household_pickups(client, collector_h):
@@ -294,6 +312,28 @@ def test_admin_prices_put_is_admin_only(client, admin_h, roads_h, citizen_h):
     assert client.put("/admin/material-prices", json=bad, headers=admin_h).status_code == 422
 
 
+def test_admin_pickup_patch_is_admin_only_and_staff_views_are_redacted(client, admin_h, roads_h):
+    assert (
+        client.patch("/admin/recycling/pickups/RCY-3001", json={"status": "cancelled"}, headers=roads_h).status_code
+        == 403
+    )
+    staff = client.get("/admin/recycling/pickups/RCY-3100", headers=roads_h).json()
+    assert staff["location"] == {"address": "مدينة نصر أول"} and "citizenName" not in staff and staff["citizenId"] == ""
+    assert staff["district"] == "مدينة نصر أول" and "note" not in staff
+    rows = client.get("/admin/recycling/pickups", headers=roads_h).json()
+    assert all("lat" not in r["location"] and r["citizenId"] == "" for r in rows)
+    full = client.get("/admin/recycling/pickups/RCY-3100", headers=admin_h).json()
+    assert "lat" in full["location"] and full["citizenName"] == "أحمد محمد"
+
+
+def test_admin_cannot_cancel_a_weighed_pickup(client, admin_h, collector_h, pickup):
+    pid = pickup["id"]
+    client.post(f"/collector/jobs/{pid}/accept", headers=collector_h)
+    assert weigh(client, collector_h, pid).status_code == 201
+    r = client.patch(f"/admin/recycling/pickups/{pid}", json={"status": "cancelled"}, headers=admin_h)
+    assert r.status_code == 409
+
+
 def test_admin_summary_pickups_payouts(client, admin_h):
     s = client.get("/admin/recycling/summary", headers=admin_h).json()
     assert s["totalKg"] == 13.5 and s["tonnes"] == 0.0135 and s["pickups"] == 5
@@ -404,6 +444,10 @@ def test_hub_weighings_device_auth_and_idempotency(client, admin_h):
     key = client.patch("/admin/bins/HUB-001", json={"rotateKey": True}, headers=admin_h).json()["deviceKey"]
     h = {"X-Device-Key": key}
     body = {"seq": 1, "at": "2026-10-22T10:00:00Z", "material": "glass", "kg": 12.5}
+    street_key = client.patch("/admin/bins/BIN-011", json={"rotateKey": True}, headers=admin_h).json()["deviceKey"]
+    assert (
+        client.post("/iot/hubs/BIN-011/weighings", json=body, headers={"X-Device-Key": street_key}).status_code == 404
+    )
     assert client.post("/iot/hubs/HUB-001/weighings", json=body).status_code == 401
     assert client.post("/iot/hubs/HUB-001/weighings", json=body, headers={"X-Device-Key": "wrong"}).status_code == 401
     assert client.post("/iot/hubs/HUB-001/weighings", json=body, headers=h).status_code == 202
@@ -431,6 +475,15 @@ def test_uploads_sign_503_without_storage_when_stub_disallowed(client, citizen_h
     r = client.post("/uploads/sign", json={"kind": "report_photo", "contentType": "image/jpeg"}, headers=citizen_h)
     assert r.status_code == 503 and "التخزين" in r.json()["detail"]
     assert client.put("/uploads/local/photos/x/y.jpg", content=b"x").status_code == 404
+
+
+def test_blank_upload_stub_env_means_unset(monkeypatch):
+    from app.config import Settings
+
+    monkeypatch.setenv("ALLOW_LOCAL_UPLOAD_STUB", "")
+    assert Settings(_env_file=None).allow_local_upload_stub is None
+    monkeypatch.setenv("ALLOW_LOCAL_UPLOAD_STUB", "true")
+    assert Settings(_env_file=None).allow_local_upload_stub is True
 
 
 def test_upload_stub_default_depends_on_database(monkeypatch):

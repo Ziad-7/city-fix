@@ -102,13 +102,22 @@ def admin_pickups(
     if end:
         q = q.filter(RecyclingPickup.created_at <= end)
     rows = q.order_by(RecyclingPickup.created_at.desc(), RecyclingPickup.id.desc()).limit(limit).all()
-    return _with_district(pickup_views(db, rows, viewer="admin"), rows)
+    return _with_district(pickup_views(db, rows, viewer="admin"), rows, claims)
 
 
-def _with_district(views: list[dict], rows: list[RecyclingPickup]) -> list[dict]:
-    for v, p in zip(views, rows, strict=True):
-        v["district"] = p.district
-    return views
+def _staff_view(view: dict, p: RecyclingPickup, claims: dict) -> dict:
+    """Admins see everything; department staff get the district only (no name, exact address or pin)."""
+    view["district"] = p.district
+    if claims["role"] != "admin":
+        view["location"] = {"address": p.district}
+        view["citizenId"] = ""
+        view["photoUris"] = []
+        view.pop("note", None)
+    return view
+
+
+def _with_district(views: list[dict], rows: list[RecyclingPickup], claims: dict) -> list[dict]:
+    return [_staff_view(v, p, claims) for v, p in zip(views, rows, strict=True)]
 
 
 @router.get("/recycling/pickups/{pickup_id}")
@@ -116,16 +125,15 @@ def admin_pickup(pickup_id: str, claims: Staff, db: Session = Depends(get_db)):
     p = db.get(RecyclingPickup, pickup_id)
     if not p:
         raise HTTPException(404, "مش موجود")
-    view = pickup_view(db, p, viewer="admin")
-    view["district"] = p.district
+    view = _staff_view(pickup_view(db, p, viewer="admin"), p, claims)
     profile = db.get(Profile, p.citizen_id)
-    if profile and profile.name:
+    if claims["role"] == "admin" and profile and profile.name:
         view["citizenName"] = profile.name
     return view
 
 
 @router.patch("/recycling/pickups/{pickup_id}")
-def admin_patch_pickup(pickup_id: str, body: PickupAdminPatchInput, claims: Staff, db: Session = Depends(get_db)):
+def admin_patch_pickup(pickup_id: str, body: PickupAdminPatchInput, claims: Admin, db: Session = Depends(get_db)):
     """Dispatch: ``cancelled`` (while requested/accepted), ``accepted`` + ``collectorId`` (assign a verified
     collector to a requested pickup), or a note-only entry. Anything else is ``409``."""
     p = db.get(RecyclingPickup, pickup_id)

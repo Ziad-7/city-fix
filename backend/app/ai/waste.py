@@ -178,10 +178,13 @@ def create_waste_router(
         hint = re.sub(r"\s+", " ", request.description or "")
         if classifier is None or not photo_analysis_enabled or not request.photo_consent:
             return fallback_result(hint)
+
+        async def run() -> dict:
+            raw = await load_authorized_photo(request.path, user_id, True)
+            return await classifier.classify(prepare_photo(raw))  # prepare_photo strips metadata, blurs faces/plates
+
         try:
-            raw = await asyncio.wait_for(load_authorized_photo(request.path, user_id, True), WASTE_DEADLINE_SECONDS)
-            photo = prepare_photo(raw)  # strips metadata, blurs faces/plates
-            return await asyncio.wait_for(classifier.classify(photo), WASTE_DEADLINE_SECONDS)
+            return await asyncio.wait_for(run(), WASTE_DEADLINE_SECONDS)
         except Exception as error:  # never surface a model/storage problem to the person
             logger.warning("waste-classify fell back (%s)", type(error).__name__)
             return fallback_result(hint)

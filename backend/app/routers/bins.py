@@ -461,6 +461,8 @@ def ingest_hub_weighing(
 ) -> dict:
     """A hub scale reports a weighing. Same device auth; idempotent on ``(hubId, seq)``."""
     hub = db.query(SmartBin).filter_by(id=hub_id, is_active=True).first()
+    if hub is not None and not hub.id.upper().startswith("HUB"):
+        raise HTTPException(404, "not a hub")
     if not hub or not device_key:
         raise HTTPException(401, "device authentication failed")
     if not compare_digest(hashlib.sha256(device_key.encode("utf-8")).hexdigest(), hub.device_key_hash):

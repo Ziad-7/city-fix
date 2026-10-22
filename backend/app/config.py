@@ -68,6 +68,14 @@ class Settings(BaseSettings):
     # production-like deployment never silently loses uploads. Set true/false to force either way.
     allow_local_upload_stub: bool | None = None
 
+    @field_validator("allow_local_upload_stub", mode="before")
+    @classmethod
+    def _blank_is_unset(cls, value):
+        """An empty ``ALLOW_LOCAL_UPLOAD_STUB=`` line (as in .env.example) means unset."""
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
+
     @property
     def local_upload_stub_allowed(self) -> bool:
         if self.allow_local_upload_stub is not None:
