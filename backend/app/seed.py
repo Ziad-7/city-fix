@@ -1207,3 +1207,7 @@ def seed_db(db: Session) -> None:
         ai_suggestion_counter[0] += 1
 
     db.commit()
+
+    from app.seed_citycycle import seed_citycycle
+
+    seed_citycycle(db)

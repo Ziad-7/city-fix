@@ -14,12 +14,25 @@ from app.ai.llm import GeminiClient
 from app.ai.router import create_triage_router
 from app.ai.schemas import CategoryId
 from app.ai.transcribe import GeminiAudioTranscriber, create_transcription_router
+from app.ai.waste import GeminiWasteClassifier, create_waste_router
 from app.auth import AuthContext, AuthSettings, current_user
 from app.auth_adapters import DatabaseStaffDirectory, DatabaseUserRepository
 from app.config import settings, validate_settings
 from app.db import SessionLocal, get_db, init_db
 from app.models import Incident
-from app.routers import admin, auth, bins, incidents, map, reports, service_requests, staff_auth, uploads
+from app.routers import (
+    admin,
+    auth,
+    bins,
+    incidents,
+    map,
+    recycling,
+    recycling_admin,
+    reports,
+    service_requests,
+    staff_auth,
+    uploads,
+)
 from app.schemas import HealthResponse
 from app.seed import seed_db
 from app.staff_auth import StaffLoginContext
@@ -67,6 +80,10 @@ async def lifespan(app: FastAPI):
     # Startup
     validate_settings()
     init_db()
+    if getattr(app.state, "media_storage", None) is None and not settings.local_upload_stub_allowed:
+        logger.warning(
+            "Media storage is not configured: /uploads/sign answers 503 (set SUPABASE_* or ALLOW_LOCAL_UPLOAD_STUB)"
+        )
 
     # Check if we should seed
     if settings.seed_on_start:
@@ -175,6 +192,18 @@ app.include_router(
         ),
     )
 )
+app.include_router(
+    create_waste_router(
+        get_current_user=current_user,
+        load_authorized_photo=load_approved_triage_photo,
+        classifier=(
+            GeminiWasteClassifier(settings.gemini_api_key, settings.gemini_model)
+            if settings.gemini_api_key.strip()
+            else None
+        ),
+        photo_analysis_enabled=settings.gemini_photo_analysis_enabled,
+    )
+)
 app.include_router(staff_auth.router)
 app.include_router(admin.router)
 app.include_router(admin.top_level_router)
@@ -184,6 +213,9 @@ app.include_router(map.router)
 app.include_router(service_requests.router)
 app.include_router(bins.iot_router)
 app.include_router(bins.admin_router)
+app.include_router(bins.public_router)
+app.include_router(recycling.router)
+app.include_router(recycling_admin.router)
 
 
 # ============================================================================

@@ -299,6 +299,8 @@ Optional keys are omitted, never `null`. Dashboard semantics: `open` is always t
 
 ## CityCycle — proposed
 
+> **Backend status (2026-10):** every route in this section is implemented in `backend/` except `GET /admin/bins/forecast`, `POST /admin/recycling/routes/optimize`, `GET /admin/hotspots` (member 5) and `POST /gateway/sms` (stretch). Tests: `backend/tests/test_citycycle.py`, `test_waste_classify.py`. Exact behaviours the backend added are in *Backend behaviour* below.
+
 Waste and recycling pillar ([vision](vision.md), [decision 0004](decisions/0004-citycycle-waste-pillar.md)). **Everything in this section is *proposed*:** agree it by contract PR before building on it. It only **adds** to the contract above; nothing above changes (`ServiceType` stays `bulky_waste | tree_maintenance`). Owner: member 4 (API & DB); AI routes member 5; device (IoT) routes member 6. Feature plan: [`features/`](features/README.md).
 
 ### New enums
@@ -421,30 +423,45 @@ Admin or staff role required; collectors never see these.
 
 | Method | Path | Notes |
 | --- | --- | --- |
-| GET | `/admin/recycling/summary` | Query `from`, `to`, `district`: tonnes diverted (total, by material, by district), pickups, average response time |
-| GET | `/admin/collectors` | Query `status`, `district`; `PATCH /admin/collectors/{id}` `{ status, note? }` verifies or suspends |
-| GET | `/admin/material-prices` | Query `district` |
-| PUT | `/admin/material-prices` | `{ district, prices: { materialId, priceEgpPerKg }[] }`; admin only; prices are set by the district, not by this repo |
-| GET | `/admin/bins` | With latest readings; `POST /admin/bins` registers a bin and returns its device key **once**; `PATCH /admin/bins/{id}` edits or revokes the key |
+| GET | `/admin/recycling/summary` | Query `from`, `to` (date or ISO datetime), `district`. Returns `{ totalKg, tonnes, byMaterial: {materialId, kg}[], byDistrict: {district, kg}[], pickups, byStatus: {status: n}, avgResponseMinutes \| null }`. Kg are from weighings; `pickups` counts requests created in the range. |
+| GET | `/admin/recycling/pickups` | Query `status`, `district`, `from`, `to`, `limit` (default 100): `RecyclingPickup[]` newest first, each with `district` and the exact pin. `GET /admin/recycling/pickups/{id}` adds `citizenName` (never the phone). |
+| PATCH | `/admin/recycling/pickups/{id}` | `{ status?, collectorId?, note? }` dispatch: `status: "cancelled"` (only while `requested`/`accepted`), `status: "accepted"` + `collectorId` (assign a *verified* collector to a `requested` pickup; `409` otherwise), or a note only. Other statuses return `409`. Returns the pickup (+ `district`). |
+| GET | `/admin/collectors` | Query `status`, `district`: `Collector[]` plus `userId`, `phone` and `note` (staff only). `PATCH /admin/collectors/{id}` `{ status, note? }` verifies or suspends and returns the `Collector` |
+| GET | `/admin/material-prices` | Query `district` (staff read-only): `MaterialPrice[]`, one per material, `null` where unset |
+| PUT | `/admin/material-prices` | `{ district, prices: { materialId, priceEgpPerKg \| null }[] }`; admin only (`403` for staff); a `null` clears a price; returns the full `MaterialPrice[]` for the district. Prices are set by the district, not by this repo |
+| GET | `/admin/bins` | With latest readings; `POST /admin/bins` registers a bin and returns its device key **once**; `PATCH /admin/bins/{id}` (admin) `{ name?, isActive?, fullPct?, heatC?, intervalMin?, rotateKey? }`: `isActive: false` revokes device auth, `rotateKey: true` returns a new `deviceKey` **once** (`{ bin, deviceKey? }`) |
 | GET | `/admin/bins/{id}/readings` | Query `from`, `to` |
 | GET | `/admin/bins/forecast` | Fill forecast per bin — owner member 5 |
 | POST | `/admin/recycling/routes/optimize` | `{ date, collectors?, binIds? }` → ordered stops per vehicle — owner member 5 |
 | GET | `/admin/hotspots` | Dumping hotspots with counts and status — owner member 5 (detection), member 4 (storage) |
-| GET | `/admin/payouts` | Query `from`, `to`, `collectorId?`: kg, value at the price list and cash paid to households per collector |
+| GET | `/admin/payouts` | Query `from`, `to`, `collectorId?`: `{ collectorId, collectorName, kg, valueEgp, paidToHouseholdsEgp, jobs }[]` (recorded, not processed) |
 
 ### AI (CityBrain) — CityCycle, owner member 5
 
 | Method | Path | Body | Response |
 | --- | --- | --- | --- |
-| POST | `/ai/waste-classify` | `{ path }` (an uploaded photo) | `WasteClassification` |
+| POST | `/ai/waste-classify` | `{ path, photoConsent?, description? }` (an uploaded photo) | `WasteClassification` |
 
 Suggestion only: the citizen or collector confirms the materials and the size. On timeout or error return a fallback result with `source: "fallback"`, never an error to the person.
+
+*Backend behaviour:* Gemini (`source: "model"`) is used only when `GEMINI_API_KEY` is set, `GEMINI_PHOTO_ANALYSIS_ENABLED=true`, **and** the request carries `photoConsent: true` (same privacy gate as `/triage`: the photo is read from the caller's private storage and redacted before the model sees it). Otherwise the deterministic fallback answers: with no usable `description` hint it returns `materials: []`, `size: "medium"`, `estimatedKgRange: [3, 10]`; with a hint it keyword-matches materials. Clients that want model results must show the disclosure and send `photoConsent: true`.
 
 ### SMS / USSD reporting gateway — proposed, stretch
 
 | Method | Path | Notes |
 | --- | --- | --- |
 | POST | `/gateway/sms` | Provider webhook: a short coded message (for example a district code + material + "pickup") creates a pickup for a feature phone. Provider and codes to decide; replies in Egyptian Arabic. |
+
+### Backend behaviour (CityCycle)
+
+- **Collector role is derived.** There is no `collector` value on `profiles.role`: a user is a collector when a `collectors` row exists for them, and may use `/collector/*` only while its `status` is `verified` (`403` otherwise, `404` on `GET /collectors/me` before applying). One account can be citizen and collector. A second `POST /collectors/apply` returns `409`.
+- **District prices.** A pickup is priced against the price-list district matching the caller's profile district (exact, then containment, default `مدينة نصر أول`). `GET /recycling/materials?district=` uses the same matching. The seeded prices are DEMO values; set real ones with `PUT /admin/material-prices`.
+- **Status codes.** Weighing: `201` new, `200` repeat of the same `clientId`; `403` not the accepting collector, `409` pickup not `accepted`/`weighed` or already finished, `422` kg outside 0.5 to 500. Accept: `409` taken or cancelled (a retry by the same collector returns `200`), `403` for the caller's own household pickup. Complete: `409` without a weighing (a repeat returns `200`). Confirm: `409` until the collector has completed (a repeat returns `200`). Cancel: `409` once accepted. Pickup `day` must be today or later (Cairo), else `422`.
+- **Pin privacy** is enforced as described above (`street_level` address without building number, coordinates rounded to 3 decimals ~100 m, distance computed from the exact pin). Collector views of a pickup send `citizenId: ""` and no `photoUris`.
+- **Timeline** (`activity_log`, entity `recycling_pickup`): `requested`, `accepted`, `weighed` (first weighing, and again on complete), `completed`, `cancelled`.
+- **Impact** counts weighings of pickups that are `weighed` or `completed`; `co2AvoidedKg` is never sent. `GET /collector/earnings` defaults to the last 30 days.
+- **Bins.** `GET /bins` returns active bins (any authenticated user) with optional `bbox=minLng,minLat,maxLng,maxLat` and `district`; `kind` is `hub` when the id starts with `HUB`; `location.address` is the bin name; `state` maps `normal`->`ok`, `heat`->`hot`. `POST /bins/{id}/report-full` returns `204`: a `garbage` report at the bin's pin, joining the bin's open incident when one exists (a person who already reported it is a no-op); `404` unknown bin. `POST /iot/hubs/{id}/weighings` takes `{ seq, at?, material, kg, pickupId? }`, device auth, idempotent on `(hubId, seq)` (`409` on different data) and answers `202 { accepted: seq }`.
+- **Uploads fail loudly.** With no media storage configured, `POST /uploads/sign` answers `503` (and `PUT /uploads/local/*` `404`) unless the local stub is allowed: `ALLOW_LOCAL_UPLOAD_STUB` unset means allowed only on SQLite (local dev/tests); set it to `true` to keep the discarding stub on a deployed demo, `false` to forbid it everywhere.
 
 ### Rules for CityCycle
 

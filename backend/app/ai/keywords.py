@@ -1,6 +1,7 @@
 import re
 
 from app.ai.schemas import CategoryId, Severity, TriageOption, TriageSuggestion
+from app.logic.timeline import SEVERITY_LABEL_AR
 
 
 def normalize_ar(value: str) -> str:
@@ -316,7 +317,9 @@ def classify_keywords(description: str, category_hint: CategoryId | None = None)
     if not description.strip() and category_hint is None:
         summary = "مش قادر أحدد نوع المشكلة من الصورة دلوقتي؛ محتاج وصف بسيط للمشكلة."
     else:
-        summary = f'الغالب إنها "{CATEGORY_LABELS[top]}" — {severity.value}، وهتروح لـ{DEPARTMENTS[top]}.'
+        summary = (
+            f'الغالب إنها "{CATEGORY_LABELS[top]}" — {SEVERITY_LABEL_AR[severity.value]}، وهتروح لـ{DEPARTMENTS[top]}.'
+        )
     return TriageSuggestion(
         options=options,
         severity=severity,

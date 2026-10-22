@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 
-from app.models import BudgetPlan, Incident, Report, ServiceRequest, WorkOrder
+from app.models import BudgetPlan, Collector, Incident, RecyclingPickup, Report, ServiceRequest, Weighing, WorkOrder
 
 # prefix -> (model, first sequence number when the table is empty)
 _SEQUENCES = {
@@ -11,6 +11,9 @@ _SEQUENCES = {
     "WO": (WorkOrder, 334),
     "SRV": (ServiceRequest, 2009),
     "BP": (BudgetPlan, 1),
+    "RCY": (RecyclingPickup, 3101),
+    "COL": (Collector, 1),
+    "WGH": (Weighing, 1),
 }
 
 
@@ -19,7 +22,7 @@ def format_id(prefix: str, seq: int) -> str:
 
 
 def next_id(db: Session, entity_type: str) -> str:
-    """Next free id for 'INC', 'FTC', 'WO', 'SRV' or 'BP' (numeric max + 1, not string order)."""
+    """Next free id for 'INC', 'FTC', 'WO', 'SRV', 'BP', 'RCY', 'COL' or 'WGH' (numeric max + 1, not string order)."""
     if entity_type not in _SEQUENCES:
         raise ValueError(f"Unknown entity type: {entity_type}")
     model, first = _SEQUENCES[entity_type]
