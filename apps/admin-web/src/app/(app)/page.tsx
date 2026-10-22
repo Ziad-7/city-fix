@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { PageHead, FilterChipGroup, FilterChip, Card, CardHead, ErrorState, Skeleton } from '@/components/ui';
-import { Icon } from '@/components/Icon';
+import { PageHead, FilterChipGroup, FilterChip, Card, ErrorState, Skeleton } from '@/components/ui';
 import { getDashboard, getInsights } from '@/services/dashboard';
 import { getIncidents } from '@/services/incidents';
 import { useSession } from '@/lib/session';
@@ -23,20 +22,13 @@ export default function OverviewPage() {
   const searchParams = useSearchParams();
   const session = useSession();
 
-  const [range, setRange] = useState<'today' | '7d' | '30d'>('7d');
+  const urlRange = searchParams.get('range');
+  const range: 'today' | '7d' | '30d' =
+    urlRange === 'today' || urlRange === '7d' || urlRange === '30d' ? urlRange : '7d';
   const [search, setSearch] = useState('');
 
-  // Sync range from URL
-  useEffect(() => {
-    const urlRange = searchParams.get('range') as 'today' | '7d' | '30d' | null;
-    if (urlRange && ['today', '7d', '30d'].includes(urlRange)) {
-      setRange(urlRange);
-    }
-  }, [searchParams]);
-
-  // Update URL when range changes
+  // Update URL when range changes (range is derived from the URL)
   const handleRangeChange = (newRange: 'today' | '7d' | '30d') => {
-    setRange(newRange);
     router.push(`/?range=${newRange}`);
   };
 
@@ -132,7 +124,7 @@ export default function OverviewPage() {
         )}
 
         {/* KPIs */}
-        <section className="kpis" aria-label="مؤشرات الأداء">
+        <section aria-label="مؤشرات الأداء">
           <OverviewKpis
             dashboard={dashboard}
             range={range}
@@ -146,7 +138,7 @@ export default function OverviewPage() {
         )}
 
         {/* Grid B: Open by category + Status */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '20px' }}>
+        <div className="grid-b">
           {dashboardLoading ? (
             <>
               <Card>
@@ -175,7 +167,7 @@ export default function OverviewPage() {
         </div>
 
         {/* Grid C: Overdue + Departments */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.25fr', gap: '20px' }}>
+        <div className="grid-c">
           {dashboardLoading ? (
             <>
               <Card>
@@ -201,7 +193,7 @@ export default function OverviewPage() {
         </div>
 
         {/* Grid D: Map + Activity */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.25fr 1fr', gap: '20px' }}>
+        <div className="grid-d">
           {dashboardLoading ? (
             <>
               <Card>
