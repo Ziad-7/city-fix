@@ -172,3 +172,90 @@ Proposed additions to `TriageSuggestion`: `source: "model" | "fallback"` and `em
 - **Priority:** deterministic, same formula as `apps/mobile/src/logic/priority.ts` (severity 5/15/28/40; sensitive place +20; reporters `min(20, (n-1)×3)`; age `min(15, round(daysOpen/targetDays×10))`; underserved area +5; cap 100). Recompute when reporters/followers change and daily for age. Return every factor so the UI can explain the score.
 - **Timeline:** every status change writes an `activity_log` row; `Incident.timeline` / `ServiceRequest.timeline` are built from it, oldest first.
 - **Privacy:** citizens never see other citizens' phone numbers or names; anonymous reports hide the reporter from admins too (keep the id for abuse handling only).
+
+
+## Command Center (admin web) — implemented in `backend/`
+
+Status of the staff/admin API used by `apps/admin-web`. Everything below is **implemented** unless marked otherwise. Staff tokens (`role: "staff"`) only see and change their own department (403 `"مش مسموح"` otherwise); `budget/*` and `demo/reset` are admin only; a citizen token on `/admin/*` is 403. Invalid enum values in any body are `422 {"detail": "البيانات مش مكتملة"}`.
+
+### Admin shapes
+
+```ts
+StaffSession = { userId, name, title, role: 'staff'|'admin', department?: string /* Arabic name, absent for admin */, district, token }
+// GET /auth/me returns the same without `token`.
+Department = { id, nameAr, external: boolean, externalHotline?: string }
+LinkedReport = { id, reporter: 'مواطن'|'بلاغ بدون اسم', description, source: 'app'|'web', photoCount, createdAt }
+
+AdminIncident = Incident & {
+  linkedReports: LinkedReport[],
+  triage?: TriageSuggestion & { source: 'model'|'fallback', confirmed: boolean },
+  dueAt: string,            // createdAt + category targetDays (calendar days)
+  overdue: boolean,         // open && now > dueAt
+  external: boolean, externalHotline?: string,
+  inBudgetPlan: boolean,    // selected in the last saved budget plan
+  lastReviewedBy?: string, lastReviewedAt?: string
+}
+
+WorkOrderTask = { label: string, done: boolean }
+WorkOrderUpdate = { status: WorkOrderStatus, note: string, actor: string, at: string }
+WorkOrderStatus = 'open'|'assigned'|'in_progress'|'done'
+WorkOrder = {
+  id, incidentId?, serviceRequestId?, title, address, department, external: boolean, externalHotline?,
+  team?, teamSize?, supervisor?, status: WorkOrderStatus, dueAt, overdue: boolean, estimatedCostEgp: number,
+  priorityScore?, followers?, tasks: WorkOrderTask[], updates: WorkOrderUpdate[], createdAt, updatedAt, resolvedAt?
+}
+AdminServiceRequest = ServiceRequest & { department: string, paid: boolean, assignee?: string, workOrderId?: string }
+
+DashboardStats = {
+  open, openDelta, overdue, resolvedThisWeek, resolvedDelta, avgResolutionDays, avgResolutionDeltaDays,
+  byCategory: { categoryId, count }[],               // open only, desc
+  byStatus: { status, count }[],                     // the 4 open statuses (current) + resolved within the range
+  overdueList: { incidentId, title, department, address, priorityScore, dueAt, hoursLate, external, externalHotline? }[],
+  overdueTotal, departments: { department, external, externalHotline?, open, overdue, avgResolutionDays, loadPct }[],
+  activity: { actor, text, entityId?, status?, at }[], nav: { incidentsOpen, serviceRequestsOpen }
+}
+BudgetItem = { incidentId, title, categoryId, costEgp, priorityScore, followers, reason }
+BudgetPlan = { budgetEgp, selected: BudgetItem[], skipped: BudgetItem[], totalCost, remaining, coveredPriority, totalPriority, citizensServed, citizensTotal }
+Insights = { summary, hotspots: { address, count }[], risingCategories: { categoryId, delta }[], overdueDepartments: string[] }
+```
+
+Optional keys are omitted, never `null`. Dashboard semantics: `open` is always the current open count (never range-filtered); `range` (`today|7d|30d`, default `7d`) windows `resolvedThisWeek`, `openDelta` (created in window minus resolved in window), `avgResolutionDays` (mean days created to resolved, 1 decimal) and the `*Delta` values (current window minus the previous equal window). `overdue`/`overdueTotal` count open incidents past `dueAt`; `overdueList` also includes those due within 12 h (`hoursLate` is negative then), priority desc, max 5. Staff dashboards count only their department.
+
+### Endpoints (all implemented)
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| POST | `/auth/staff-login` | `{email,password}` to `StaffSession`; 401 `"البريد أو كلمة السر غلط"` |
+| GET | `/auth/me` | `StaffSession` without token |
+| GET | `/admin/departments`, `/admin/teams` | `Department[]`; `{ name, department, size }[]` |
+| GET | `/admin/dashboard?range=` | `DashboardStats` |
+| GET | `/admin/incidents?status=&categoryId=&department=&critical=&overdue=&q=` | `AdminIncident[]`, priority desc. No `status` filter returns open + resolved + closed. `department` takes an id or the Arabic name; `q` searches title, address, id |
+| GET | `/admin/incidents/{id}` | `AdminIncident` |
+| PATCH | `/incidents/{id}` | `{status?, severity?, categoryId?, department?, note?}`. `note` required on a real status change (400 `"اكتب رسالة للمواطنين"`); a note alone appends a timeline entry with the current status. Severity/category change recomputes priority; a category change also moves the department unless `department` is given. `/admin/incidents/{id}` PATCH is an alias. `GET /incidents/{id}` (citizen) shares the path |
+| POST | `/admin/incidents/{id}/triage/confirm` | `{categoryId?, severity?}`; records reviewer, marks triage confirmed, moves only `received` to `triaged` (note `"اتأكّد التصنيف: <label>"`) |
+| GET | `/admin/incidents/{id}/similar` | `DuplicateMatch[]` (open, same category, 250 m, not itself, nearest first) |
+| POST | `/admin/incidents/{id}/merge` | `{intoIncidentId}`; moves reports and followers, closes the source with a note, returns the target |
+| GET | `/admin/work-orders?status=&department=`, `/admin/work-orders/{id}` | `WorkOrder[]` newest first |
+| POST | `/admin/work-orders` | `{incidentId?, serviceRequestId?, department (id or Arabic name), team?, teamSize?, supervisor?, dueAt?, tasks?: string[]}`; at least one target; 409 if it already has a work order. Tasks default from the category; moves the incident to `assigned` only from `received`/`triaged` |
+| PATCH | `/admin/work-orders/{id}` | `{status?, team?, teamSize?, supervisor?, dueAt?, tasks?: WorkOrderTask[], note?}`; `in_progress`/`done` need a note (400) and move the linked incident/request to `in_progress`/`resolved` |
+| GET | `/admin/service-requests?status=&serviceType=&day=&payment=` | `AdminServiceRequest[]`, day asc then slot; `assignee` is admin-only (not in citizen `details`) |
+| PATCH | `/admin/service-requests/{id}` | `{status?, day?, slot?, assignee?, note?}`; note required on status change |
+| POST | `/admin/budget/optimize` | admin; `{budgetEgp > 0, incidentIds?}`; exact 0/1 knapsack, cost in units of 100 EGP (rounded up), ties by followers; empty `incidentIds` means all open; saved as the current plan |
+| POST | `/admin/budget/commit` | admin; `{incidentIds}` creates `WorkOrder[]` (same creation path as `POST /admin/work-orders`) |
+| GET | `/admin/insights` | `Insights` (deterministic, computed from data) |
+| POST | `/admin/demo/reset` | admin; re-seeds |
+
+### Citizen endpoints (implemented)
+
+`POST/GET /reports`, `GET /reports/{id}` (403 for another citizen's, admins read all), `GET /incidents`, `GET /incidents/{id}` (staff tokens also get the AdminIncident fields), `POST /incidents/{id}/follow` (idempotent), `POST /incidents/{id}/reopen` (reporter/follower, only from `resolved`, else 403/409), `GET /map/incidents` (`status`, `categoryId`, `bbox`), `POST/GET /service-requests`, `GET /service-requests/{id}`, `POST /triage`, `POST /uploads/sign`. Not implemented yet: `/ai/transcribe`, `/services/garbage-schedule`.
+
+### Deviations from the text above
+
+- `POST /auth/otp` answers `204` with an empty body.
+- `GET /map/incidents` needs a Bearer token like every other non-auth route.
+- Duplicates use haversine in Python (no PostGIS locally); same 250 m rule.
+- `POST /triage` also returns `source: "fallback"` (and `emergency: true` on gas/fire/injury/collapse words) and always includes `alreadyReported` (empty array when none).
+- A new incident also stores a keyword triage suggestion (`source: "fallback"`, `confirmed: false`) so the admin AI card has data.
+- `POST /uploads/sign` is a local stub: `uploadUrl` points to `/uploads/local/{path}` on the API, which accepts a `PUT` and discards it.
+- `StaffSession.department` is the Arabic department name; the JWT carries the department id.
+- Timeline `actor` for staff changes is the staff member's display name.
