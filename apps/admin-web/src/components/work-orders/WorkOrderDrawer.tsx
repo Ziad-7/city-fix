@@ -30,6 +30,13 @@ const WORK_ORDER_STATUSES: Record<string, string> = {
   done: 'اتحلّت',
 };
 
+/** Current status first, then only the later ones (open -> assigned -> in_progress -> done). */
+function forwardStatuses(current: string): [string, string][] {
+  const all = Object.entries(WORK_ORDER_STATUSES);
+  const idx = all.findIndex(([value]) => value === current);
+  return idx < 0 ? all : all.slice(idx);
+}
+
 function previewStatusFor(status: string): IncidentStatus {
   // Map work order status to incident status for preview
   const map: Record<string, IncidentStatus> = {
@@ -200,9 +207,10 @@ export function WorkOrderDrawer({ open, workOrder, onClose }: WorkOrderDrawerPro
           <Notice>الأمر ده اتحلّ خلاص.</Notice>
         ) : (
           <StatusChangeForm
+            key={`${workOrder.id}:${workOrder.status}`}
             kind="workorder"
             currentStatus={workOrder.status}
-            options={Object.entries(WORK_ORDER_STATUSES).map(([value, label]) => ({
+            options={forwardStatuses(workOrder.status).map(([value, label]) => ({
               value,
               label,
             }))}

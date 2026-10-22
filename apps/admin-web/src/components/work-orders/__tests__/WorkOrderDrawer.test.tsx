@@ -83,4 +83,27 @@ describe('WorkOrderDrawer', () => {
     expect(screen.getByText('الأمر ده اتحلّ خلاص.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /حدّث الحالة/ })).not.toBeInTheDocument();
   });
+
+  it('offers only the current and forward statuses', () => {
+    renderDrawer({ ...base, status: 'in_progress' });
+    const values = Array.from(screen.getByLabelText('الحالة الجديدة').querySelectorAll('option')).map(
+      (o) => (o as HTMLOptionElement).value,
+    );
+    expect(values).toEqual(['in_progress', 'done']);
+  });
+
+  it('resets the form to the new status after the work order status changes (no backwards move)', () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const ui = (wo: WorkOrder) => (
+      <QueryClientProvider client={qc}>
+        <ToastProvider>
+          <WorkOrderDrawer open workOrder={wo} onClose={() => {}} />
+        </ToastProvider>
+      </QueryClientProvider>
+    );
+    const { rerender } = render(ui(base));
+    expect((screen.getByLabelText('الحالة الجديدة') as HTMLSelectElement).value).toBe('assigned');
+    rerender(ui({ ...base, status: 'in_progress' }));
+    expect((screen.getByLabelText('الحالة الجديدة') as HTMLSelectElement).value).toBe('in_progress');
+  });
 });

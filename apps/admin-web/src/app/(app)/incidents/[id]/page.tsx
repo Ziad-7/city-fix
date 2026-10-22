@@ -52,34 +52,34 @@ export default function IncidentDetailPage() {
     const status = (error as { status?: number }).status;
     if (status === 404) {
       return (
-        <main className="ftc-admin-main">
+        <div className="ftc-admin-main">
           <div className="page">
             <ErrorState variant="notfound" onRetry={() => refetch()} />
           </div>
-        </main>
+        </div>
       );
     }
     if (status === 403) {
       return (
-        <main className="ftc-admin-main">
+        <div className="ftc-admin-main">
           <div className="page">
             <ErrorState variant="forbidden" />
           </div>
-        </main>
+        </div>
       );
     }
     return (
-      <main className="ftc-admin-main">
+      <div className="ftc-admin-main">
         <div className="page">
           <ErrorState variant="error" onRetry={() => refetch()} />
         </div>
-      </main>
+      </div>
     );
   }
 
   if (isLoading) {
     return (
-      <main className="ftc-admin-main">
+      <div className="ftc-admin-main">
         <div className="page" aria-busy="true">
           <nav className="crumbs">
             <Skeleton variant="line" width="200px" />
@@ -103,24 +103,24 @@ export default function IncidentDetailPage() {
             </div>
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 
   if (!incident) {
     return (
-      <main className="ftc-admin-main">
+      <div className="ftc-admin-main">
         <div className="page">
           <ErrorState variant="notfound" />
         </div>
-      </main>
+      </div>
     );
   }
 
   const canAct = session?.role === 'admin' || incident.department === session?.department;
 
   return (
-    <main className="ftc-admin-main">
+    <div className="ftc-admin-main">
       <div className="page">
         <IncidentDetailContent
           incident={incident}
@@ -132,6 +132,6 @@ export default function IncidentDetailPage() {
           session={session ?? undefined}
         />
       </div>
-    </main>
+    </div>
   );
 }

@@ -108,7 +108,7 @@ export default function WorkOrdersPage() {
   if (!session) return null;
 
   return (
-    <main className="ftc-admin-main">
+    <div className="ftc-admin-main">
       <div className="page">
         <PageHead
           title="أوامر الشغل"
@@ -192,6 +192,6 @@ export default function WorkOrdersPage() {
           onClose={handleCloseDrawer}
         />
       </div>
-    </main>
+    </div>
   );
 }

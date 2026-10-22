@@ -55,7 +55,7 @@ export default function BudgetPage() {
 
   if (!isAdmin) {
     return (
-      <main className="ftc-admin-main">
+      <div className="ftc-admin-main">
         <div className="page">
           <PageHead title="الميزانية" />
           <ErrorState
@@ -68,7 +68,7 @@ export default function BudgetPage() {
             }
           />
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -76,7 +76,7 @@ export default function BudgetPage() {
   const isLoaded = !isLoading && budgetPlan;
 
   return (
-    <main className="ftc-admin-main">
+    <div className="ftc-admin-main">
       <div className="page">
         <PageHead
           title="ميزانية الإصلاحات"
@@ -231,6 +231,6 @@ export default function BudgetPage() {
           </p>
         </Modal>
       </div>
-    </main>
+    </div>
   );
 }

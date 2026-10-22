@@ -78,7 +78,7 @@ export default function OverviewPage() {
   if (!session) return null;
 
   return (
-    <main className="ftc-admin-main">
+    <div className="ftc-admin-main">
       <div className="page">
         {/* Page Head */}
         <PageHead
@@ -218,6 +218,6 @@ export default function OverviewPage() {
           ) : null}
         </div>
       </div>
-    </main>
+    </div>
   );
 }

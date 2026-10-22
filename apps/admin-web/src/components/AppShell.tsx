@@ -34,9 +34,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setUnauthorizedHandler(() => {
       clearSession();
+      queryClient.clear();
       router.replace('/login');
     });
-  }, [router]);
+  }, [router, queryClient]);
 
   // Handle null (no session) - redirect to login
   useEffect(() => {
