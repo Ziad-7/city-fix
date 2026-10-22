@@ -7,6 +7,13 @@
 - Global offline banner; SelectField sheet got a separate close button and an inert backdrop for screen readers.
 - Shared files re-copied to `apps/web` (`triage-mock.ts`, its test, `services/api/index.ts`); `check:shared` passes.
 
+**Follow-up fixes (same PR)**
+- Waste-photo analysis: `POST /ai/waste-classify` gets `photoConsent: true` only after the person turns on the new "Allow AI photo analysis" toggle in the recycling pickup form (default off); without it no photo is uploaded for analysis and no call is made.
+- English UI: the server's Arabic fallback triage line is rebuilt in English.
+- Mock `getReport(userId, id)` returns only the caller's report (as the API's 403).
+- Offline queue: photos and the voice note are copied to app storage when a report is queued (web: small blob photos become data URIs); every report carries a stored `Idempotency-Key` (also sent on `POST /recycling/pickups`, reused on retry). Unknown header is harmless until the backend supports it.
+- CityCycle API client checked against `backend/app/routers/recycling.py` and `bins.py`: paths, query names and body shapes match; route test added.
+
 **Known issues**
 - Backend root cause (`backend/app/ai/keywords.py` uses `severity.value`) still to fix (W3).
 - Not tried on a device.

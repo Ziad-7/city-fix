@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { NewReportInput } from '@/domain/types';
 import { tr } from '@/i18n';
+import { newIdempotencyKey } from '@/services/media';
 
 /** A report saved on the phone, waiting for the network. */
 export type OutboxItem = {
@@ -12,6 +13,8 @@ export type OutboxItem = {
   input: NewReportInput;
   createdAt: string;
   attempts: number;
+  /** Sent as `Idempotency-Key` on every attempt, so a retry after a lost response cannot create a second report. */
+  idempotencyKey?: string;
   lastError?: string;
   /** Epoch ms: automatic retries wait for this (exponential backoff). Manual "send now" ignores it. */
   nextAttemptAt?: number;
@@ -21,7 +24,7 @@ type OutboxState = {
   items: OutboxItem[];
   /** Latest toast, never persisted (`n` changes on every one so the same text can show again). */
   notice: { n: number; ok: boolean; text: string } | null;
-  enqueue: (userId: string, input: NewReportInput) => OutboxItem;
+  enqueue: (userId: string, input: NewReportInput, idempotencyKey?: string) => OutboxItem;
   update: (id: string, patch: Partial<Omit<OutboxItem, 'id'>>) => void;
   remove: (id: string) => void;
   noteSent: () => void;
@@ -59,8 +62,8 @@ export const useOutbox = create<OutboxState>()(
     (set) => ({
       items: [],
       notice: null,
-      enqueue(userId, input) {
-        const item: OutboxItem = { id: newId(), userId, input, createdAt: new Date().toISOString(), attempts: 0 };
+      enqueue(userId, input, idempotencyKey) {
+        const item: OutboxItem = { id: newId(), userId, input, createdAt: new Date().toISOString(), attempts: 0, idempotencyKey: idempotencyKey ?? newIdempotencyKey() };
         set((s) => ({ items: [item, ...s.items] }));
         return item;
       },

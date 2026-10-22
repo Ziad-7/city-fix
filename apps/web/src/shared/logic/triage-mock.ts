@@ -162,6 +162,10 @@ export function triageSummaryFor(s: Pick<TriageSuggestion, 'options' | 'severity
  * token with the label in the current language. Summaries without Arabic (model text in English) are never touched.
  */
 export function cleanTriageSummary(s: TriageSuggestion): TriageSuggestion {
+  // The server's fallback line is Arabic; in English rebuild it (model text is never rewritten).
+  if (s.source === 'fallback' && s.options.length && tr('ar', 'en') === 'en' && HAS_ARABIC.test(s.summary ?? '')) {
+    return { ...s, summary: triageSummaryFor(s) };
+  }
   if (!s.summary || !HAS_ARABIC.test(s.summary)) return s;
   const summary = s.summary.replace(RAW_SEVERITY_TOKEN, (_m, pre: string, token: string) => {
     const sev = token as Severity;
