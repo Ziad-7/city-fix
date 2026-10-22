@@ -7,6 +7,7 @@ import { selectNearby } from '@/components/home/nearby';
 import {
   EmptyNote, ErrorCard, Greeting, HeroCard, HomeHeader, NearbyCard, SectionTitle, ServiceTile, SkeletonRow,
 } from '@/components/home/HomeParts';
+import { CityCycleSection } from '@/components/home/CityCycleSection';
 import { RequestCard } from '@/components/requests';
 import { AppText, Button, Screen } from '@/components/ui';
 import { DEFAULT_PLACE, findDistrict } from '@/domain/locations';
@@ -104,6 +105,8 @@ export default function HomeScreen() {
           ))}
         </Grid3>
       </View>
+
+      <CityCycleSection center={center} />
 
       {failed ? (
         <ErrorCard message={error ?? tr('حصلت مشكلة، جرّب تاني', 'Something went wrong. Try again')} onRetry={onRefresh} />

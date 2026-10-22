@@ -1,6 +1,6 @@
 import type { IconName, PaymentMethod, ServiceType, SlotId } from './types';
 
-export type ServiceGroup = 'cleaning' | 'gardens' | 'lighting';
+export type ServiceGroup = 'cleaning' | 'gardens' | 'lighting' | 'recycling';
 
 export type CatalogService = {
   id: string;
@@ -10,8 +10,10 @@ export type CatalogService = {
   subtitleAr: string;
   icon: IconName;
   group: ServiceGroup;
+  /** Button label on the card when it differs from the default ("احجز دلوقتي" for bookings, "شوف المواعيد" otherwise). */
+  cta?: { ar: string; en: string };
   /** App route to open; services without one are shown as "قريبًا". */
-  route?: '/services/bulky-waste' | '/services/tree' | '/services/garbage-schedule';
+  route?: '/services/bulky-waste' | '/services/tree' | '/services/garbage-schedule' | '/recycle/new' | '/recycle/guide';
 };
 
 export const SERVICE_GROUPS: { id: ServiceGroup | 'all'; labelAr: string }[] = [
@@ -19,12 +21,16 @@ export const SERVICE_GROUPS: { id: ServiceGroup | 'all'; labelAr: string }[] = [
   { id: 'cleaning', labelAr: 'النظافة' },
   { id: 'gardens', labelAr: 'الحدائق' },
   { id: 'lighting', labelAr: 'الإنارة' },
+  { id: 'recycling', labelAr: 'التدوير' },
 ];
 
 export const SERVICES: CatalogService[] = [
   { id: 'bulky', serviceType: 'bulky_waste', titleAr: 'رفع مخلفات كبيرة', subtitleAr: 'عفش قديم، أجهزة، مخلفات بناء · خلال ٤٨ ساعة', icon: 'trash', group: 'cleaning', route: '/services/bulky-waste' },
   { id: 'tree', serviceType: 'tree_maintenance', titleAr: 'تقليم أو إزالة شجرة', subtitleAr: 'إدارة الحدائق · خلال ٥ أيام', icon: 'tree', group: 'gardens', route: '/services/tree' },
   { id: 'garbage-schedule', titleAr: 'مواعيد جمع القمامة', subtitleAr: 'شوف ميعاد العربية في شارعك', icon: 'clock', group: 'cleaning', route: '/services/garbage-schedule' },
+  // CityCycle. The two screens belong to the citizen-pickup track; the routes are plain strings (typed routes are off).
+  { id: 'recycle-pickup', titleAr: 'استلام خامات قابلة للتدوير', subtitleAr: 'بلاستيك، ورق، معادن · مجانًا أو بمقابل', icon: 'recycle', group: 'recycling', route: '/recycle/new', cta: { ar: 'اطلب استلام', en: 'Request a pickup' } },
+  { id: 'recycle-guide', titleAr: 'دليل الفرز', subtitleAr: 'إزاي تفرز كل خامة بالصور', icon: 'bottle', group: 'recycling', route: '/recycle/guide', cta: { ar: 'افتح الدليل', en: 'Open the guide' } },
 ];
 
 export const TREE_WORK_TYPES = ['تقليم', 'إزالة شجرة واقعة', 'شجرة مايلة أو خطر', 'رش / مكافحة آفات'];

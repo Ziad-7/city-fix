@@ -1,5 +1,5 @@
 import { setLang } from '@/i18n';
-import { SERVICES } from '@/domain/services-catalog';
+import { SERVICES, SERVICE_GROUPS } from '@/domain/services-catalog';
 import { filterServices, normalizeArabic } from './filter';
 
 describe('filterServices', () => {
@@ -14,6 +14,11 @@ describe('filterServices', () => {
     expect(filterServices(SERVICES, 'مخلفات', 'all').map((s) => s.id)).toEqual(['bulky']);
     expect(filterServices(SERVICES, 'القماما', 'all')).toHaveLength(0);
     expect(filterServices(SERVICES, 'قمامه', 'all').map((s) => s.id)).toEqual(['garbage-schedule']);
+  });
+  it('has a recycling group with the CityCycle items', () => {
+    expect(filterServices(SERVICES, '', 'recycling').map((s) => s.id)).toEqual(['recycle-pickup', 'recycle-guide']);
+    expect(SERVICE_GROUPS.map((g) => g.id)).toContain('recycling');
+    expect(filterServices(SERVICES, '', 'recycling').every((s) => s.route?.startsWith('/recycle/'))).toBe(true);
   });
   it('combines group and query', () => {
     expect(filterServices(SERVICES, 'شجرة', 'cleaning')).toHaveLength(0);

@@ -43,7 +43,11 @@ export function ServiceCard({ service, onPress, notice }: Props) {
       </Pressable>
       {available ? (
         // The schedule is not a booking: both languages say so (see the 2026-10-21 review).
-        <Button label={tr(service.serviceType ? 'احجز دلوقتي' : 'شوف المواعيد', service.serviceType ? 'Book now' : 'See the times')} icon="calendar" onPress={onPress} />
+        <Button
+          label={service.cta ? tr(service.cta.ar, service.cta.en) : tr(service.serviceType ? 'احجز دلوقتي' : 'شوف المواعيد', service.serviceType ? 'Book now' : 'See the times')}
+          icon={service.cta ? service.icon : 'calendar'}
+          onPress={onPress}
+        />
       ) : null}
       {notice ? (
         <View style={styles.notice} accessibilityLiveRegion="polite">

@@ -1,15 +1,17 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { BinLegend, BinsLayer, LayerToggle, useBinsPolling } from '@/components/bins';
 import { IncidentMap, NASR_CITY } from '@/components/map';
 import { PinSheet, TopBar, filterPins, incidentToPin, type MapStatusFilter } from '@/components/map-screen';
 import { StateMessage } from '@/components/requests';
 import { AppText, Screen } from '@/components/ui';
+import { binPollMs, type MapLayer } from '@/domain/bin-map';
 import { findDistrict } from '@/domain/locations';
 import { useTr } from '@/i18n';
 import type { CategoryId } from '@/domain/types';
 import { refreshAll, useFollowingSet, useReports, useSession } from '@/store';
-import { colors, radius, shadows } from '@/theme/tokens';
+import { colors, fonts, radius, shadows } from '@/theme/tokens';
 import { haversineM } from '@/utils/geo';
 
 /** CityPulse: every open and recent incident as a status-coloured pin, with filters and a detail card. */
@@ -22,6 +24,8 @@ export default function MapScreen() {
   const governorate = useSession((s) => s.governorate);
   const district = useSession((s) => s.district);
 
+  const [layer, setLayer] = useState<MapLayer>('problems');
+  useBinsPolling(binPollMs(layer));
   const [statusFilter, setStatusFilter] = useState<MapStatusFilter>('all');
   const [category, setCategory] = useState<CategoryId | 'all'>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -80,12 +84,33 @@ export default function MapScreen() {
     />
   );
 
+  const toggle = <LayerToggle layer={layer} onLayer={setLayer} />;
+
+  if (layer === 'bins') {
+    return (
+      <Screen
+        edges={['top']}
+        scroll={false}
+        padded={false}
+        header={
+          <View style={styles.binsBar}>
+            <AppText accessibilityRole="header" style={styles.binsTitle}>{tr('الخريطة', 'Map')}</AppText>
+            {toggle}
+            <BinLegend />
+          </View>
+        }
+      >
+        <BinsLayer center={center} />
+      </Screen>
+    );
+  }
+
   return (
     <Screen
       edges={['top']}
       scroll={false}
       padded={false}
-      header={<TopBar status={statusFilter} onStatus={setStatusFilter} category={category} onCategory={setCategory} />}
+      header={<TopBar status={statusFilter} onStatus={setStatusFilter} category={category} onCategory={setCategory} layerToggle={toggle} />}
     >
       <View style={styles.body}>
         {Platform.OS === 'web' ? (
@@ -128,6 +153,8 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
+  binsBar: { backgroundColor: colors.paper, borderBottomWidth: 1, borderBottomColor: colors.line },
+  binsTitle: { fontFamily: fonts.display700, fontSize: 20, lineHeight: 30, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4, color: colors.ink },
   body: { flex: 1 },
   map: { flex: 1, borderRadius: 0 },
   webList: { flex: 1 },

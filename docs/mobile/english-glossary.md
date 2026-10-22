@@ -87,6 +87,16 @@ The app is Arabic-first. English is a full second language that people switch to
 | البطارية ضعيفة | Low battery |
 | مش بيبعت | Offline |
 | بلّغ إن الصندوق ممتلي | Report a full bin |
+| الصناديق الذكية | Smart bins |
+| المشاكل (طبقة الخريطة) | Problems (map layer) |
+| إعادة التدوير | Recycling |
+| اطلب استلام | Request a pickup |
+| دليل الفرز | Sorting guide |
+| أثري | My impact |
+| أقرب صناديق ذكية | Nearest smart bins |
+| الصندوق مليان | Bin is full |
+| آخر قراءة | Last reading |
+| الحرارة / البطارية | Temperature / Battery |
 | الأثر (كجم اتحوّلت لإعادة تدوير) | Impact (kg recycled) |
 | أرباحي | My earnings |
 | CO₂ اتفادى (تقديري) | CO₂ avoided (estimate) |
