@@ -1,9 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { diffStatuses, type KnownStatuses, type TrackedItem } from '@/domain/notifications';
-import type { AppNotification, IncidentStatus } from '@/domain/types';
+import { pickupChipStatus } from '@/domain/citycycle';
+import { diffStatuses, pickupStage, trackedKey, type KnownStatuses, type TrackedItem } from '@/domain/notifications';
+import type { AppNotification } from '@/domain/types';
 import { showLocalNotification } from '@/notifications/os';
+import { useCityCycle } from './useCityCycle';
 import { usePrefs } from './usePrefs';
 import { useReports } from './useReports';
 import { useServiceRequests } from './useServiceRequests';
@@ -25,12 +27,13 @@ type NotificationsState = {
 let counter = 0;
 
 /**
- * Status changes the citizen just caused themselves (reopening a report): the next sync records them as the new
- * baseline without a notification, so the person does not get an OS banner about their own tap.
+ * Status changes the citizen just caused themselves (reopening a report, cancelling a pickup): the next sync records
+ * them as the new baseline without a notification, so the person does not get an OS banner about their own tap.
+ * `status` is the incident status for reports, or the pickup stage ("cancelled") for pickups.
  */
-const ownChanges = new Map<string, IncidentStatus>();
+const ownChanges = new Map<string, string>();
 
-export function expectOwnChange(entityIds: string[], status: IncidentStatus): () => void {
+export function expectOwnChange(entityIds: string[], status: string): () => void {
   for (const id of entityIds) ownChanges.set(id, status);
   return () => {
     for (const id of entityIds) if (ownChanges.get(id) === status) ownChanges.delete(id);
@@ -46,12 +49,12 @@ export const useNotifications = create<NotificationsState>()(
         const at = new Date().toISOString();
         let before = get().known;
         for (const t of tracked) {
-          if (ownChanges.get(t.entityId) !== t.status) continue;
+          if (ownChanges.get(t.entityId) !== trackedKey(t)) continue;
           ownChanges.delete(t.entityId);
-          before = { ...before, [t.entityId]: t.status };
+          before = { ...before, [t.entityId]: trackedKey(t) };
         }
         const { known, created } = diffStatuses(before, tracked, at, (it, i) => `n-${Date.now()}-${counter++}-${i}-${it.entityId}`);
-        const baselineChanged = tracked.some((t) => get().known[t.entityId] !== t.status);
+        const baselineChanged = tracked.some((t) => get().known[t.entityId] !== trackedKey(t));
         if (created.length === 0) {
           if (baselineChanged) set({ known });
           return [];
@@ -77,7 +80,7 @@ export const useNotifications = create<NotificationsState>()(
 
 export const useUnreadCount = () => useNotifications((s) => s.items.filter((n) => !n.read).length);
 
-/** The citizen's reports (by incident status) and service requests as diff input. Only loaded stores count. */
+/** The citizen's reports (by incident status), service requests and recycling pickups as diff input. Only loaded stores count. */
 export function collectTracked(): TrackedItem[] {
   const out: TrackedItem[] = [];
   const reports = useReports.getState();
@@ -101,11 +104,23 @@ export function collectTracked(): TrackedItem[] {
       out.push({ entityType: 'service_request', entityId: r.id, status: r.status, note: r.timeline[r.timeline.length - 1]?.note });
     }
   }
+  const cityCycle = useCityCycle.getState();
+  if (cityCycle.status === 'ready') {
+    for (const p of cityCycle.pickups) {
+      out.push({
+        entityType: 'pickup',
+        entityId: p.id,
+        status: pickupChipStatus(p.status),
+        stage: pickupStage(p),
+        pickup: { name: p.collectorName?.trim().split(/\s+/)[0], totalKg: p.totalKg, paidEgp: p.paidToHouseholdEgp },
+      });
+    }
+  }
   return out;
 }
 
 /**
- * Subscribes to the reports and service-request stores (refresh, simulate and reopen all go through them) and
+ * Subscribes to the reports, service-request and recycling-pickup stores (refresh, simulate and reopen all go through them) and
  * notifies on status changes. Call once from the root layout; returns the unsubscribe function.
  * Waits for the persisted notification store so the baseline is the stored one.
  */
@@ -113,7 +128,7 @@ export function startNotificationSync(): () => void {
   const run = () => {
     if (useNotifications.persist.hasHydrated()) useNotifications.getState().sync(collectTracked());
   };
-  const unsubs = [useReports.subscribe(run), useServiceRequests.subscribe(run), useNotifications.persist.onFinishHydration(run)];
+  const unsubs = [useReports.subscribe(run), useServiceRequests.subscribe(run), useCityCycle.subscribe(run), useNotifications.persist.onFinishHydration(run)];
   run();
   return () => unsubs.forEach((u) => u());
 }

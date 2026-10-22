@@ -4,6 +4,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { EmergencyRow } from '@/components';
 import { Icon } from '@/components/Icon';
 import { StatsCard } from '@/components/profile';
+import { ImpactEntryCard } from '@/components/recycle/ImpactEntryCard';
 import { AppText, Button, Card, ChoiceChip, Screen, ScreenHeader, SelectField, TextField, ToggleRow, confirmAction } from '@/components/ui';
 import { setLang, placeName, useLang, useTr, type Lang } from '@/i18n';
 import { GOVERNORATES, findGovernorate } from '@/domain/locations';
@@ -145,6 +146,8 @@ export default function ProfileScreen() {
       </Card>
 
       <StatsCard reports={stats.reports} fixed={stats.fixed} />
+
+      <ImpactEntryCard />
 
       <Card rounded="lg" padding={16} style={styles.section}>
         <View style={styles.langRow}>

@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
-import { AppText, Card, StatusChips } from '@/components/ui';
+import { collectorFirstName, pickupStatusText } from '@/components/recycle/pickup';
+import { AppText, Card, StatusChip, StatusChips } from '@/components/ui';
 import { getCategory } from '@/domain/categories';
 import { SERVICES } from '@/domain/services-catalog';
 import { useTr } from '@/i18n';
@@ -21,6 +22,28 @@ export function RequestCard({ item }: { item: RequestItem }) {
   const critical = item.kind === 'report' && !!item.incident && isCriticalIncident(item.incident);
   const meta = `${isolateLtr(`#${item.id}`)} · ${relativeTime(item.createdAt)}`;
   const isService = item.kind === 'service';
+  if (item.kind === 'pickup') {
+    const p = item.pickup;
+    const first = collectorFirstName(p.collectorName);
+    const statusText = pickupStatusText(p);
+    return (
+      <Card onPress={() => router.push(`/requests/${item.id}`)} accessibilityLabel={`${item.title}${sep}${statusText}`} testID={`request-${item.id}`}>
+        <View style={styles.row}>
+          <RequestThumb uri={p.photoUris[0]} icon="recycle" tone="recycle" />
+          <View style={styles.text}>
+            <AppText variant="smallStrong" style={styles.title} numberOfLines={2}>{item.title}</AppText>
+            <AppText variant="caption" color={colors.inkMuted}>{meta}</AppText>
+            <AppText variant="caption" color={colors.inkMuted}>
+              {first ? `${tr('الجامع', 'Collector')}: ${first} · ` : ''}{dayText(p.day)} · {slotLabel(p.slot)}
+            </AppText>
+            <View style={styles.chipStart}>
+              <StatusChip status={item.status} label={statusText} />
+            </View>
+          </View>
+        </View>
+      </Card>
+    );
+  }
   const icon = isService
     ? (SERVICES.find((s) => s.serviceType === item.request.serviceType)?.icon ?? 'clipboard')
     : getCategory(item.categoryId).icon;
@@ -51,4 +74,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   text: { flex: 1, minWidth: 0, gap: 2 },
   title: { fontSize: 15, lineHeight: 24 },
+  chipStart: { alignSelf: 'flex-start', marginTop: 4 },
 });

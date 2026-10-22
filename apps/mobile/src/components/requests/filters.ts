@@ -1,12 +1,13 @@
 import { isOpenStatus } from '@/domain/types';
 import type { RequestItem } from '@/store';
 
-export type RequestFilter = 'all' | 'reports' | 'services' | 'open' | 'fixed';
+export type RequestFilter = 'all' | 'reports' | 'services' | 'recycling' | 'open' | 'fixed';
 
 export const REQUEST_FILTERS: { id: RequestFilter; labelAr: string; labelEn: string }[] = [
   { id: 'all', labelAr: 'الكل', labelEn: 'All' },
   { id: 'reports', labelAr: 'بلاغات', labelEn: 'Reports' },
   { id: 'services', labelAr: 'خدمات', labelEn: 'Services' },
+  { id: 'recycling', labelAr: 'تدوير', labelEn: 'Recycling' },
   { id: 'open', labelAr: 'مفتوحة', labelEn: 'Open' },
   { id: 'fixed', labelAr: 'اتصلّحت', labelEn: 'Fixed' },
 ];
@@ -20,6 +21,8 @@ export function filterRequests<T extends Filterable>(items: T[], filter: Request
       return items.filter((i) => i.kind === 'report');
     case 'services':
       return items.filter((i) => i.kind === 'service');
+    case 'recycling':
+      return items.filter((i) => i.kind === 'pickup');
     case 'open':
       return items.filter((i) => isOpenStatus(i.status));
     case 'fixed':

@@ -1,5 +1,5 @@
 export { SESSION_EXPIRED_MSG, expireSession, refreshAll, reopenReport, signOutAll, switchMode, uploadAndTranscribeVoiceNote, type VoiceNoteResult } from './actions';
-export { useRequestItem, useRequestItems, type RequestItem } from './useRequests';
+export { buildRequestItems, useRequestItem, useRequestItems, type RequestItem } from './useRequests';
 export { useFollowingSet, useReports } from './useReports';
 export { msgPickupOffline, useActivePickups, useCityCycle, useEstimate, usePrice, usePricesAreDemo } from './useCityCycle';
 export { collectorActorId, defaultOrigin, newClientId, useCollector, useCurrentJob, useFinishedJobs, type AcceptResult } from './useCollector';

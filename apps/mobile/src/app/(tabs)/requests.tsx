@@ -8,7 +8,7 @@ import { flushOutbox, refreshAll, useReports, useRequestItems, useServiceRequest
 import { useOutbox } from '@/store/useOutbox';
 import { colors } from '@/theme/tokens';
 
-/** طلباتي: my reports and service bookings, newest first. */
+/** طلباتي: my reports, service bookings and recycling pickups, newest first. */
 export default function RequestsScreen() {
   const tr = useTr();
   const items = useRequestItems();
@@ -58,6 +58,16 @@ export default function RequestsScreen() {
         body={tr('أول ما تبلّغ عن مشكلة أو تحجز خدمة هتلاقيها هنا وتتابع حالتها.', "When you report a problem or book a service, it'll show up here so you can follow it.")}
         actionLabel={tr('بلّغ عن مشكلة', 'Report a problem')}
         onAction={() => router.push('/report/category')}
+      />
+    );
+  } else if (visible.length === 0 && !showQueued && filter === 'recycling') {
+    body = (
+      <StateMessage
+        icon="recycle"
+        title={tr('لسه مفيش طلبات تدوير', 'No recycling requests yet')}
+        body={tr('سلّم الإزايز والكراتين والعلب لجامع معتمد، وتتابع الطلب هنا.', 'Hand your bottles, cardboard and cans to a verified collector, and follow the request here.')}
+        actionLabel={tr('اطلب استلام خامات', 'Request a pickup')}
+        onAction={() => router.push('/recycle/new')}
       />
     );
   } else if (visible.length === 0 && !showQueued) {

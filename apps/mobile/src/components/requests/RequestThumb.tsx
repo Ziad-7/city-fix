@@ -8,8 +8,8 @@ type Props = {
   uri?: string;
   icon: IconName;
   size?: number;
-  /** Services get a red-soft tile so they read differently from reports. */
-  tone?: 'report' | 'service';
+  /** Services get a red-soft tile so they read differently from reports; recycling pickups a green one. */
+  tone?: 'report' | 'service' | 'recycle';
 };
 
 /** Photo thumbnail, or the category / service icon on a tile when there is no photo. */
@@ -17,10 +17,11 @@ export function RequestThumb({ uri, icon, size = 52, tone = 'report' }: Props) {
   if (uri) {
     return <Image accessibilityIgnoresInvertColors source={{ uri }} style={[styles.base, { width: size, height: size }]} />;
   }
-  const service = tone === 'service';
+  const bg = tone === 'service' ? colors.redSoft : tone === 'recycle' ? colors.statusResolvedBg : colors.statusReceived;
+  const fg = tone === 'service' ? colors.red : tone === 'recycle' ? colors.statusResolved : colors.iconMuted;
   return (
-    <View style={[styles.base, styles.tile, { width: size, height: size, backgroundColor: service ? colors.redSoft : colors.statusReceived }]}>
-      <Icon name={icon} size={Math.round(size * 0.46)} color={service ? colors.red : colors.iconMuted} />
+    <View style={[styles.base, styles.tile, { width: size, height: size, backgroundColor: bg }]}>
+      <Icon name={icon} size={Math.round(size * 0.46)} color={fg} />
     </View>
   );
 }

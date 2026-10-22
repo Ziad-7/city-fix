@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Share, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
+import { PickupDetail } from '@/components/recycle/PickupDetail';
 import {
   InfoTiles,
   PriorityStrip,
@@ -27,11 +28,18 @@ import { colors, fonts } from '@/theme/tokens';
 import { isolateLtr, maskPhone } from '@/utils/digits';
 import { formatDate, formatDateTime } from '@/utils/time';
 
-/** متابعة البلاغ / الطلب: summary, timeline, updates preferences, share. */
+/** متابعة البلاغ / الطلب: summary, timeline, updates preferences, share. `RCY-…` ids are recycling pickups. */
 export default function RequestDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  return id?.startsWith('RCY-') ? <PickupDetail id={id} /> : <ReportOrServiceDetail />;
+}
+
+function ReportOrServiceDetail() {
   const tr = useTr();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const item = useRequestItem(id);
+  const found = useRequestItem(id);
+  // Pickups (RCY-…) have their own screen; this one only shows reports and service requests.
+  const item = found && found.kind !== 'pickup' ? found : null;
   const reportsStatus = useReports((s) => s.status);
   const servicesStatus = useServiceRequests((s) => s.status);
   const simulateReport = useReports((s) => s.simulateProgress);

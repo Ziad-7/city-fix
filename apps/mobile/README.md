@@ -112,8 +112,9 @@ function MyCard() {
 
 ```
 src/
-  app/          routes only (Expo Router): _layout, sign-in, (tabs)/*, report/*, requests/[id], services/*
-  components/   Icon, TabBar, Hotlines, ui/ (AppText, Button, Card, Chip, ChoiceChip, StatusChip, TextField,
+  app/          routes only (Expo Router): _layout, sign-in, (tabs)/*, report/*, requests/[id], services/*,
+                recycle/* (new, success, guide), impact
+  components/   recycle/ (citizen pickup flow, sorting guide, impact helpers), Icon, TabBar, Hotlines, ui/ (AppText, Button, Card, Chip, ChoiceChip, StatusChip, TextField,
                 SelectField, ToggleRow, ProgressBar, Screen, ScreenHeader, InlineNotice, confirm),
                 brand/ (LogoMark, LogoLockup, LogoPill, Skyline, Medal), map/ (IncidentMap .native/.web)
   domain/       types, categories (12), hotlines, locations, services-catalog, zod schemas,

@@ -100,5 +100,18 @@ The app is Arabic-first. English is a full second language that people switch to
 | الأثر (كجم اتحوّلت لإعادة تدوير) | Impact (kg recycled) |
 | أرباحي | My earnings |
 | CO₂ اتفادى (تقديري) | CO₂ avoided (estimate) |
+| تدوير | Recycling (filter in My requests) |
+| طلب استلام خامات (شاشة الطلب) | Recycling pickup |
+| اتبرّع بيها / بمقابل فلوس | Give for free / Get paid |
+| الوزن التقريبي | Approximate weight |
+| إيه اللي هتسلّمه؟ | What are you handing over? |
+| افحص الصورة بالذكاء الاصطناعي | Check the photo with AI |
+| دليل الفرز بالصور | Picture guide to sorting |
+| كده تمام / ماينفعش | Good / Please avoid |
+| أثري في التدوير | My recycling impact |
+| الجامع في الطريق | The collector is on the way |
+| أكّد إن الاستلام تم | Confirm the pickup |
+| الغي الطلب | Cancel request |
+| و٢ كمان | +2 more |
 
 Statuses, severities, categories, departments, hotlines, places, services and medals: `apps/mobile/src/i18n/labels.ts`.
