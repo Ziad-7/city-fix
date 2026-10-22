@@ -1,5 +1,10 @@
 # Progress log
 
+## 2026-10-22 — CityBrain status and remaining work
+
+- Added [`AI status and remaining work`](ai-status.md) as the current reference for delivered features, test evidence, privacy/quota gates, production integration, and the free-hosting limitations.
+- Marked the hosted implementation plan as a proposal whose provider/checklist details may be stale. The current transcription provider is Gemini; OCR remains out of scope at the user's request.
+
 ## 2026-10-22 — AI transcription audio validation
 
 - Added one bounded FFmpeg pass that rejects malformed media, clips over 30 seconds, and near-silence (peak at or below -75 dBFS) before Gemini. Quiet speech above the threshold continues to transcription; stored recordings remain untouched.

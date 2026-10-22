@@ -2,6 +2,8 @@
 
 > **For agentic workers:** Use `superpowers:executing-plans` to implement this plan task by task. Steps use checkboxes for tracking. This document is a plan, not an implemented or deployed service.
 
+> **Status note (2026-10-22):** The implementation has progressed since this proposal was written. Its checkboxes and proposed provider stack are not a current progress record; see [`docs/ai-status.md`](../../ai-status.md) for the implemented state and remaining work. In particular, the current backend uses Gemini for both triage and transcription; Groq Whisper remains only a proposed alternative.
+
 **Goal:** Deliver CityFix's photo/text triage, Egyptian Arabic transcription, optional OCR, privacy processing, and budget optimization with everything hosted online and no paid services.
 
 **Architecture:** Both clients call the same FastAPI backend on Render Free. The backend calls free inference APIs, stores durable data and uploads in Supabase Free, and returns a deterministic keyword fallback when triage inference is unavailable. Large open-weight models are an optional alternative on an eligible Hugging Face ZeroGPU Space, not a dependency of the initial deployment.
@@ -14,7 +16,7 @@
 
 - A small online demo can have a $0 service bill within free quotas. Unlimited inference, guaranteed uptime, and guaranteed cold-start latency cannot be promised for $0.
 - No local computer or tunnel is required by the recommended design.
-- The checked-out repository has client API adapters and mocks, but no `backend/` implementation. Member 4 must supply the API/auth/upload/database foundation; implementing only AI functions does not create a working full application.
+- The repository now contains a FastAPI backend and AI routes, but the checked-in app remains a local SQLite/demo assembly. Production persistence, media provisioning, real OTP, and deployment are still required; implementing AI routes alone does not create a production-ready application.
 - Suggested schedule: seven working days for the core features, assuming Member 4 works concurrently. OCR, automated privacy deployment, and similarity ranking have separate acceptance gates; extend the schedule if model evaluation or backend integration takes longer.
 - No training is required for the first version. Evaluate pretrained models on local examples before choosing fine-tuning.
 
