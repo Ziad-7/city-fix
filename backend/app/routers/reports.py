@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.admin_auth import current_claims
 from app.db import get_db
-from app.helpers import now_utc
+from app.helpers import json_response, now_utc
 from app.logic.domain import create_report
 from app.logic.duplicates import is_within_radius
 from app.logic.idempotency import claim, clean_key
@@ -118,7 +118,7 @@ def list_my_reports(
         .order_by(Report.created_at.desc(), Report.id.desc())
         .all()
     )
-    return [report_for_reader(report_view(r), payload["sub"], storage) for r in rows]
+    return json_response([report_for_reader(report_view(r), payload["sub"], storage) for r in rows])
 
 
 @router.get("/reports/{report_id}")

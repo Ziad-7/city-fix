@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.admin_auth import require_admin, require_staff
 from app.config import settings
 from app.db import get_db, reset_session
-from app.helpers import now_utc
+from app.helpers import json_response, now_utc
 from app.logic.budget import optimize_budget
 from app.logic.dashboard import build_dashboard
 from app.logic.domain import (
@@ -173,7 +173,7 @@ def list_incidents(
         ]
     incidents.sort(key=lambda i: (-i.priority_score, i.id))
     ctx = load_ctx(db, incidents)
-    return [admin_incident(ctx, i) for i in incidents]
+    return json_response([admin_incident(ctx, i) for i in incidents])
 
 
 @router.get("/incidents/{incident_id}")
@@ -360,7 +360,7 @@ def list_work_orders(
         dept = db.get(Department, department) or db.query(Department).filter_by(name_ar=department).first()
         query = query.filter(WorkOrder.department_id == (dept.id if dept else department))
     orders = query.order_by(WorkOrder.created_at.desc(), WorkOrder.id.desc()).all()
-    return work_orders_view(db, load_ctx(db, []), orders)
+    return json_response(work_orders_view(db, load_ctx(db, []), orders))
 
 
 def _work_order_or_404(db: Session, wo_id: str, payload: dict) -> WorkOrder:
@@ -528,7 +528,7 @@ def list_service_requests(
             s.id,
         )
     )
-    return _sr_json(db, srs)
+    return json_response(_sr_json(db, srs))
 
 
 @router.patch("/service-requests/{sr_id}")

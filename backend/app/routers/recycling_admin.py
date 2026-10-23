@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.admin_auth import require_admin, require_staff
 from app.db import get_db
-from app.helpers import now_utc
+from app.helpers import json_response, now_utc
 from app.logic.domain import actor_name
 from app.logic.notifications import create_status_notifications, record_pickup_status_notification
 from app.logic.recycling import (
@@ -106,8 +106,12 @@ def admin_pickups(
     if end:
         q = q.filter(RecyclingPickup.created_at <= end)
     rows = q.order_by(RecyclingPickup.created_at.desc(), RecyclingPickup.id.desc()).limit(limit).all()
-    return _with_district(
-        pickup_views(db, rows, viewer="admin", storage=storage if claims["role"] == "admin" else None), rows, claims
+    return json_response(
+        _with_district(
+            pickup_views(db, rows, viewer="admin", storage=storage if claims["role"] == "admin" else None),
+            rows,
+            claims,
+        )
     )
 
 
