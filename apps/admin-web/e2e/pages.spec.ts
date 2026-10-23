@@ -8,6 +8,8 @@ const routes: { path: string; ready: (page: Page) => Promise<void> }[] = [
   { path: '/map', ready: (p) => expect(p.locator('.leaflet-container').first()).toBeVisible() },
   { path: '/service-requests', ready: (p) => expect(p.locator('.page h1').first()).toBeVisible() },
   { path: '/work-orders', ready: (p) => expect(p.getByRole('heading', { name: 'أوامر الشغل', level: 1 })).toBeVisible() },
+  { path: '/bins', ready: (p) => expect(p.getByRole('heading', { name: 'الحاويات الذكية', level: 1 })).toBeVisible() },
+  { path: '/citycycle', ready: (p) => expect(p.getByRole('heading', { name: 'إعادة التدوير', level: 1 })).toBeVisible() },
   { path: '/budget', ready: (p) => expect(p.getByRole('heading', { name: 'ميزانية الإصلاحات' })).toBeVisible() },
 ];
 
