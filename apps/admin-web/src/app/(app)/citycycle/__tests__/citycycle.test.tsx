@@ -119,3 +119,33 @@ describe('staff view', () => {
     await waitFor(() => expect(screen.getByText('حفظ الأسعار')).toBeDisabled());
   });
 });
+
+describe('routes and payouts tabs', () => {
+  it('hides the route planner tab from staff but keeps payouts', async () => {
+    role = 'staff';
+    wrap(<Page />);
+    expect(screen.queryByRole('tab', { name: 'مسارات الجمع' })).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'مستحقات الجامعين' })).toBeInTheDocument();
+  });
+
+  it('shows the planner tab to admins', () => {
+    wrap(<Page />);
+    expect(screen.getByRole('tab', { name: 'مسارات الجمع' })).toBeInTheDocument();
+  });
+
+  it('renders demo payout rows from recorded weights when the route is missing', async () => {
+    wrap(<Page />);
+    await userEvent.click(screen.getByRole('tab', { name: 'مستحقات الجامعين' }));
+    const row = (await screen.findByText('محمود')).closest('tr')!;
+    expect(row).toHaveTextContent('7.5');
+    expect(screen.getByText('الإجمالي')).toBeInTheDocument();
+    expect(screen.getByText(/النظام مش بيدفع فلوس/)).toBeInTheDocument();
+  });
+
+  it('shows an error for a forbidden payouts request', async () => {
+    vi.stubGlobal('fetch', vi.fn(reply(403)));
+    wrap(<Page />);
+    await userEvent.click(screen.getByRole('tab', { name: 'مستحقات الجامعين' }));
+    expect(await screen.findByText('مقدرناش نحمّل المستحقات.')).toBeInTheDocument();
+  });
+});

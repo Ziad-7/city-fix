@@ -63,3 +63,35 @@ export interface RecyclingSummary {
   byMaterial: { materialId: MaterialId; kg: number }[];
   byDistrict: { district: string; kg: number }[];
 }
+
+export interface OptimizeRoutesInput {
+  pickupIds: string[];
+  depot: { lat: number; lng: number };
+  vehicleCount: number;
+  capacityKg: number;
+}
+
+export interface OptimizedRoute {
+  vehicleIndex: number;
+  pickupIds: string[];
+  loadKg: number;
+  distanceMeters: number;
+  stops: { pickupId: string; lat: number; lng: number }[];
+}
+
+export interface OptimizeRoutesResult {
+  algorithm: 'ortools';
+  distanceModel: 'haversine';
+  routes: OptimizedRoute[];
+  unassignedPickupIds: string[];
+  totalDistanceMeters: number;
+}
+
+export interface CollectorPayout {
+  collectorId: string;
+  collectorName: string | null;
+  kg: number;
+  valueEgp: number;
+  paidToHouseholdsEgp: number;
+  jobs: number;
+}

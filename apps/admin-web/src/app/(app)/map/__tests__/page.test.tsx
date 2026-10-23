@@ -7,6 +7,8 @@ import { ToastProvider } from '@/components/ui';
 
 const getIncidents = vi.fn();
 vi.mock('@/services/incidents', () => ({ getIncidents: (...a: unknown[]) => getIncidents(...a) }));
+const getHotspots = vi.fn();
+vi.mock('@/services/map', () => ({ getHotspots: (...a: unknown[]) => getHotspots(...a) }));
 vi.mock('@/services/departments', () => ({
   getDepartments: () => Promise.resolve([{ id: 'd1', nameAr: 'النظافة', external: false }]),
 }));
@@ -74,6 +76,7 @@ beforeEach(() => {
   params = new URLSearchParams();
   replace.mockReset();
   getIncidents.mockReset();
+  getHotspots.mockReset();
   getIncidents.mockImplementation((p?: { status?: string }) =>
     Promise.resolve(p?.status === 'resolved' ? [] : DATA),
   );
@@ -120,5 +123,37 @@ describe('MapPage', () => {
     getIncidents.mockRejectedValueOnce(new Error('x'));
     renderPage();
     expect(await screen.findByText('حصلت مشكلة وإحنا بنحمّل البيانات')).toBeInTheDocument();
+  });
+
+  it('does not ask for hotspots until the chip is toggled, then lists them by count with the privacy note', async () => {
+    getHotspots.mockResolvedValue({
+      generatedAt: 'x',
+      days: 30,
+      radiusMeters: 500,
+      minCount: 3,
+      items: [
+        { id: 'H1', lat: 30, lng: 31, count: 3, categoryCounts: [], maxPriorityScore: 40 },
+        { id: 'H2', lat: 30.1, lng: 31.1, count: 7, categoryCounts: [], maxPriorityScore: 80 },
+      ],
+    });
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText('pin-INC-1');
+    expect(getHotspots).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: /بؤر رمي المخلفات/ }));
+    expect(await screen.findByRole('heading', { name: 'بؤر متكررة' })).toBeInTheDocument();
+    const items = await screen.findAllByText(/أعلى أولوية/);
+    expect(items[0]).toHaveTextContent('7 بلاغات');
+    expect(items[1]).toHaveTextContent('3 بلاغات');
+    expect(screen.getByText(/في نطاق 500 متر/)).toHaveTextContent('مفيش بيانات مبلّغين');
+    expect(getHotspots).toHaveBeenCalledWith({ days: 30 });
+  });
+
+  it('shows a notice when the server has no hotspots route', async () => {
+    getHotspots.mockResolvedValue(null);
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('button', { name: /بؤر رمي المخلفات/ }));
+    expect(await screen.findByText('السيرفر ده مفيهوش البؤر')).toBeInTheDocument();
   });
 });

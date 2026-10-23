@@ -2,9 +2,13 @@
 
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Button, EmptyState, ErrorState, KpiCard, PageHead, Skeleton } from '@/components/ui';
-import type { SmartBin, SmartBinStatus } from '@/domain/admin-types';
-import { getSmartBinReadings, getSmartBins } from '@/services/bins';
+import { Button, EmptyState, ErrorState, KpiCard, Notice, PageHead, Skeleton } from '@/components/ui';
+import { RegisterBinModal } from '@/components/bins/RegisterBinModal';
+import { hoursToFullLabel } from '@/components/bins/forecast-format';
+import type { BinForecastItem, SmartBin, SmartBinStatus } from '@/domain/admin-types';
+import { formatNumber } from '@/lib/format';
+import { useSession } from '@/lib/session';
+import { getBinForecast, getSmartBinReadings, getSmartBins } from '@/services/bins';
 
 const STATUS_LABEL: Record<SmartBinStatus, string> = {
   offline: 'غير متصل',
@@ -59,7 +63,7 @@ function ReadingChart({ values }: { values: number[] }) {
   );
 }
 
-function BinCard({ bin, selected, onSelect }: { bin: SmartBin; selected: boolean; onSelect: () => void }) {
+function BinCard({ bin, forecast, selected, onSelect }: { bin: SmartBin; forecast?: BinForecastItem; selected: boolean; onSelect: () => void }) {
   return (
     <button
       type="button"
@@ -72,10 +76,19 @@ function BinCard({ bin, selected, onSelect }: { bin: SmartBin; selected: boolean
         <div><b>{bin.name}</b><div className="mini muted" dir="ltr">{bin.id} · {bin.district}</div></div>
         <span style={{ color: STATUS_COLOR[bin.status], fontWeight: 700, fontSize: 12 }}>{STATUS_LABEL[bin.status]}</span>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: 8, marginTop: 18 }}>
         <div><small className="mini muted">الامتلاء</small><b style={{ display: 'block' }}>{bin.fillPct == null ? '—' : `${bin.fillPct}%`}</b></div>
         <div><small className="mini muted">الحرارة</small><b style={{ display: 'block' }}>{bin.tempC == null ? '—' : `${bin.tempC} °م`}</b></div>
         <div><small className="mini muted">البطارية</small><b style={{ display: 'block' }}>{bin.batteryV == null ? '—' : `${bin.batteryV} V`}</b></div>
+        {forecast && (
+          <div>
+            <small className="mini muted">يمتلئ خلال</small>
+            <b style={{ display: 'block' }}>{hoursToFullLabel(forecast)}</b>
+            {forecast.predictedFillPct != null && (
+              <span className="mini muted">بعد 24 ساعة: <bdi dir="ltr">{formatNumber(forecast.predictedFillPct)}%</bdi></span>
+            )}
+          </div>
+        )}
       </div>
       <div style={{ height: 7, borderRadius: 8, background: '#eeeae3', marginTop: 12, overflow: 'hidden' }}>
         <span style={{ display: 'block', height: '100%', width: `${bin.fillPct ?? 0}%`, background: bin.isFull ? '#c8102e' : '#d4a20b' }} />
@@ -92,6 +105,18 @@ export default function SmartBinsPage() {
     queryFn: getSmartBins,
     refetchInterval: 30_000,
   });
+  const isAdmin = useSession()?.role === 'admin';
+  const [registering, setRegistering] = useState(false);
+  const forecastQuery = useQuery({
+    queryKey: ['smart-bins-forecast'],
+    queryFn: () => getBinForecast(24),
+    refetchInterval: 60_000,
+  });
+  const forecastById = useMemo(
+    () => new Map((forecastQuery.data?.items ?? []).map((item) => [item.binId, item])),
+    [forecastQuery.data],
+  );
+  const fullSoon = (forecastQuery.data?.items ?? []).filter((i) => i.hoursToFull != null && i.hoursToFull <= 24).length;
   const selected = bins.find((bin) => bin.id === selectedId) ?? bins[0];
   const readings = useQuery({
     queryKey: ['smart-bin-readings', selected?.id],
@@ -111,18 +136,32 @@ export default function SmartBinsPage() {
       <PageHead
         title="الحاويات الذكية"
         subtitle="قراءات الحاويات والامتلاء والحرارة والبطارية تصل من واجهة الأجهزة."
-        actions={<Button onClick={() => void refetch()}>تحديث</Button>}
+        actions={
+          <>
+            {isAdmin && <Button variant="secondary" onClick={() => setRegistering(true)}>تسجيل حاوية</Button>}
+            <Button onClick={() => void refetch()}>تحديث</Button>
+          </>
+        }
       />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 16 }}>
         <KpiCard label="إجمالي الحاويات" value={counts.total} />
         <KpiCard label="تنبيهات تحتاج متابعة" value={counts.alerts} />
         <KpiCard label="غير متصلة" value={counts.offline} />
+        <KpiCard label="هتمتلئ خلال 24 ساعة" value={forecastQuery.data ? fullSoon : '—'} />
       </div>
+      {forecastQuery.data === null && (
+        <Notice tone="gold" className="mb-3">السيرفر ده مفيهوش توقع الامتلاء، فالخانة فاضية.</Notice>
+      )}
+      {forecastQuery.error && <p className="mini muted" role="status">مقدرناش نحمّل توقع الامتلاء.</p>}
+      <p className="mini muted" style={{ marginBottom: 12 }}>التوقع خطي من قراءات الحساس المتزامنة في آخر 7 أيام، مش ذكاء اصطناعي.</p>
       {isLoading ? <Skeleton variant="block" height={180} /> : error ? <ErrorState message="تعذر تحميل بيانات الحاويات." /> : bins.length === 0 ? (
-        <EmptyState title="لا توجد حاويات مسجلة" message="سجّل جهازاً من واجهة API الإدارية لبدء استقبال القراءات." />
+        <EmptyState
+          title="لا توجد حاويات مسجلة"
+          message={isAdmin ? 'اضغط «تسجيل حاوية» عشان تبدأ تستقبل القراءات' : 'لسه مفيش حاويات مسجلة لجهتك'}
+        />
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
-          {bins.map((bin) => <BinCard key={bin.id} bin={bin} selected={selected?.id === bin.id} onSelect={() => setSelectedId(bin.id)} />)}
+          {bins.map((bin) => <BinCard key={bin.id} bin={bin} forecast={forecastById.get(bin.id)} selected={selected?.id === bin.id} onSelect={() => setSelectedId(bin.id)} />)}
         </div>
       )}
       {selected && (
@@ -145,6 +184,7 @@ export default function SmartBinsPage() {
           )}
         </section>
       )}
+      {isAdmin && <RegisterBinModal open={registering} onClose={() => setRegistering(false)} />}
     </main>
   );
 }

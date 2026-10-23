@@ -60,6 +60,8 @@ python -m pytest -q
 
 The API runs as a Vercel FastAPI project with **Root Directory `backend`** (`app/main.py` is the entrypoint, `vercel.json` sets the function limits). The filesystem is read-only there, so SQLite does not work: use PostgreSQL.
 
+Vercel installs from `uv.lock`, so every runtime dependency (for example `ortools`) must be in `[project].dependencies` in `pyproject.toml` (and `requirements.txt`), then run `uv lock`. `tests/test_packaging.py` checks this. After a deploy, call `POST /admin/recycling/routes/optimize` as admin with one requested pickup: a 503 "OR-Tools is unavailable" means the dependency is still missing.
+
 1. Set `DATABASE_URL` to the Supabase **session pooler** string (`postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`). The `postgres://` and `postgresql://` prefixes are rewritten to `postgresql+psycopg://` automatically.
 2. Set `JWT_SECRET` (random, 32+ bytes), `OTP_MODE=demo`, and set `DEMO_RESET_ENABLED=true` only for a disposable test deployment.
 3. Set `CORS_ORIGINS` to the two frontend URLs (comma-separated).

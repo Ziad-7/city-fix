@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export interface UseFocusTrapOptions {
   initialFocus?: HTMLElement | null;
@@ -19,6 +19,12 @@ export function useFocusTrap(
   options: UseFocusTrapOptions = {},
 ) {
   const { initialFocus, onEscape } = options;
+  // Latest handler without re-running the effect: callers pass a new closure every render,
+  // and re-running would pull focus back to the first field while someone is typing.
+  const onEscapeRef = useRef(onEscape);
+  useEffect(() => {
+    onEscapeRef.current = onEscape;
+  });
 
   useEffect(() => {
     if (!open || !ref.current) return;
@@ -51,7 +57,7 @@ export function useFocusTrap(
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onEscape?.();
+        onEscapeRef.current?.();
       } else if (e.key === 'Tab') {
         const focusables = getFocusables();
         const first = focusables[0];
@@ -79,5 +85,5 @@ export function useFocusTrap(
       container.tabIndex = -1; // Reset if we set it
       previousFocus?.focus();
     };
-  }, [open, ref, initialFocus, onEscape]);
+  }, [open, ref, initialFocus]);
 }

@@ -13,6 +13,10 @@ export class ApiError extends Error {
   }
 }
 
+/** The server answered "no such route": a deployment that predates the feature. */
+export const MISSING_ROUTE = new Set([404, 405, 501]);
+export const isMissingRoute = (e: unknown): boolean => e instanceof ApiError && MISSING_ROUTE.has(e.status);
+
 let token: string | null = null;
 let onUnauthorized: (() => void) | null = null;
 
