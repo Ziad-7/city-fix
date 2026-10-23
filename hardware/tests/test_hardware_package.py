@@ -107,6 +107,14 @@ class SchematicTests(unittest.TestCase):
             if wk is None and gpio != "3V3":
                 self.assertIn("Δ", delta, gpio)
 
+    def test_pfet_gates_are_driven_by_nfets(self):
+        # A 3.3 V GPIO cannot turn off a P-FET whose source sits at a full Li-ion cell.
+        nets = build_schematic.NETS
+        self.assertEqual(nets["SENS_EN"], ["U0.D32", "Q3.G"])
+        self.assertEqual(nets["GSM_EN"], ["U0.D33", "Q4.G"])
+        self.assertIn("Q2.G", nets["Q2_G"])
+        self.assertIn("Q1.G", nets["Q1_G"])
+
     def test_netlist_references_real_parts_and_pins(self):
         for net, pins in build_schematic.NETS.items():
             if net == "GND":
@@ -121,7 +129,8 @@ class SchematicTests(unittest.TestCase):
     def test_svg_has_key_features(self):
         svg = (HW / "schematics" / "smart-bin.svg").read_text(encoding="utf-8")
         for needle in ("R3 1k / R4 2k", "R7/R8 divider", "F1 fuse", "U1 TP4056", "C2 bulk cap", "GSM_EN", "SENS_EN",
-                       "SIM_TXD", "TAMPER", "stroke-dasharray", "not bench-validated"):
+                       "SIM_TXD", "TAMPER", "stroke-dasharray", "not bench-validated", "Q3 N-FET gate driver",
+                       "Q4 N-FET", "GND (system return)"):
             self.assertIn(needle, svg)
 
 

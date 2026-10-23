@@ -52,8 +52,8 @@ The Wokwi column names the `hardware/wokwi/smart-bin/diagram.json` connection fo
 | `DQ` | U0.D4, B1.DQ, R2.1 |
 | `ECHO` | R34.A, U0.D18 |
 | `ECHO_5V` | M1.ECHO, R34.B |
-| `GND` | all blocks (common return, not drawn) |
-| `GSM_EN` | U0.D33, Q1.G |
+| `GND` | U1.OUT- (protected return, never U1.B-), all other blocks (common return, not drawn) |
+| `GSM_EN` | U0.D33, Q4.G |
 | `GSM_VCC` | Q1.D, M3.VCC, C2.+ |
 | `LED_CHARGE` | U0.D23, BENCH.D23 |
 | `LED_FULL` | U0.D13, BENCH.D13 |
@@ -63,8 +63,10 @@ The Wokwi column names the `hardware/wokwi/smart-bin/diagram.json` connection fo
 | `OLED_SDA` | U0.D21, BENCH.D21 |
 | `PV` | PV.PV+, D1.A |
 | `PV_D` | D1.K, U1.IN+ |
+| `Q1_G` | Q4.D, Q1.G |
+| `Q2_G` | Q3.D, Q2.G |
 | `SAMPLE` | SW3.OUT, U0.D25 |
-| `SENS_EN` | U0.D32, Q2.G |
+| `SENS_EN` | U0.D32, Q3.G |
 | `SIM_RXD` | R56.B, M3.RXD |
 | `SIM_TXD` | M3.TXD, U0.D16 |
 | `TAMPER` | SW2.OUT, U0.D27 |
@@ -97,10 +99,12 @@ The Wokwi column names the `hardware/wokwi/smart-bin/diagram.json` connection fo
 2. **Protection.** The module's DW01A + FS8205 cut off on over-discharge and short circuit. Its TEMP pin is usually tied to GND, so there is **no thermal cutoff**: charging in a hot, shut bin is a field risk. Charge-temperature limits come from the cell datasheet (verify). See the [Field Deployment Brief](../../docs/field-brief/field-deployment-brief.md).
 3. **Fuse.** One inline fuse after the cell output, before the power switch; rating chosen from the worst-case load (not chosen yet).
 4. **3V3 rail.** Do not feed the DevKit VIN from the Li-ion cell: its regulator needs more input voltage than a discharged cell provides. Use a low-dropout, low-quiescent regulator (U2) rated for Wi-Fi/modem peaks; the part is not chosen. A dev board's sleep current is dominated by the USB-UART chip, regulator and power LED, so a field unit should use a bare module or remove the LED. Measure it: [`../power/README.md`](../power/README.md).
-5. **MOSFET gate drive.** With the P-MOSFET source at up to battery voltage, a 3.3 V GPIO at logic high may not turn the transistor fully off. If the bench confirms this, drive each gate through a small NPN or N-FET level shifter (BOM line B15).
+5. **MOSFET gate drive (drawn, not optional).** A full Li-ion cell sits at 4.2 V, so a 3.3 V GPIO driving a P-MOSFET gate directly leaves about 0.9 V of gate-source voltage at logic high: close to the threshold of small P-FETs such as the AO3401 (check its datasheet), so the switch may stay partly on, and during reset and deep sleep the GPIO floats. Each P-FET is therefore driven by a small N-FET (Q3 for Q2, Q4 for Q1, BOM line B15): GPIO high turns the N-FET on, which pulls the P-FET gate low (supply on). A gate-source pull-up on each P-FET (R9, R11) and a gate pull-down on each N-FET (R10, R12) keep both supplies off while the ESP32 is in reset or deep sleep. Values are a design choice (for example 100k), to check on the bench. The P-FET on-resistance at the real gate voltage must also be checked against the modem's peak current.
 6. **GSM.** SIM800L VCC comes straight from VBAT behind the fuse, gated by Q1, with a low-ESR bulk capacitor plus 100 nF next to the module (value from the SIM800 hardware design guide, verify). UART logic levels per the same guide (verify). The bin is metal, so use an external antenna placed on a plastic part of the lid. SIM800L is 2G only: whether each Egyptian operator still serves 2G is **to verify**; an LTE Cat-1 module is the alternative (BOM line B18).
-7. **DS18B20** runs from the continuous 3V3 rail (a small standby current, to verify against the datasheet) so its pull-up never feeds an unpowered chip. The simulator-era note "switch the DS18B20 supply with D32" is not used.
-8. **Battery divider** R7/R8: choose high values (for example 2 x 100k or 2 x 220k) plus 100 nF at the ADC pin; the constant drain is VBAT / (R7+R8) and goes in the power budget.
+7. **Ground and module choice.** The system ground is the charger module's OUT- (after the FS8205 protection switch), never B-: a load tied to B- bypasses the over-discharge and short-circuit cutoff. Use an ESP32-WROOM module or board: on WROVER modules GPIO16/17 are taken by PSRAM, so UART2 would need other pins. No strapping pin carries a field function except D5 (TRIG, an input on the sensor side, so it does not change the boot mode); GPIO0, 2, 12 and 15 and the flash pins 6 to 11 are unused. D34 is input-only and on ADC1, so it can be read while the radio is on. D25 and D27 are RTC GPIOs, so they can wake the chip; give the tamper switch a pull resistor that works in deep sleep (an RTC pull-up or an external one).
+8. **Back-powering.** Before switching a module's supply off, drive its signal lines low or set them as inputs (TRIG, TX2), otherwise current flows through the divider or the input protection into the unpowered module.
+9. **DS18B20** runs from the continuous 3V3 rail (a small standby current, to verify against the datasheet) so its pull-up never feeds an unpowered chip. The simulator-era note "switch the DS18B20 supply with D32" is not used.
+10. **Battery divider** R7/R8: choose high values (for example 2 x 100k or 2 x 220k) plus 100 nF at the ADC pin; the constant drain is VBAT / (R7+R8) and goes in the power budget.
 
 ## Verification
 

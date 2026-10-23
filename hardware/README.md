@@ -4,8 +4,10 @@
 
 ![Smart bin field wiring, rev A](schematics/smart-bin.svg)
 
+<p dir="rtl">صندوق قمامة ذكي يعمل بالطاقة الشمسية: لوح شمسي يشحن بطارية ليثيوم 18650 عبر شاحن محمي ومصهر. يقيس حساس فوق صوتي نسبة الامتلاء ومجس مقاوم للماء درجة الحرارة، ويرسل مودم SIM800L (الجيل الثاني) القراءات، وتنتظر القراءات غير المرسلة في ذاكرة تتسع لـ 32 قراءة. الإلكترونيات في علبة مقاومة للطقس تحت غطاء الصندوق، مع براغي أمان ومفتاح ضد العبث. <strong>الحالة:</strong> تصميم على الورق (النسخة أ)؛ السلوك مُتحقَّق منه في المحاكاة فقط، ولم تُبنَ أي وحدة ولم تُختبر على المنضدة أو في الميدان.</p>
+
 - **الطاقة / Power:** a solar panel charges an 18650 cell through a protected charger module, with a fuse and a 3.3 V regulator. Battery life is not measured yet.
-- **الاستشعار / Sensing:** an ultrasonic probe measures how full the bin is; a waterproof probe measures temperature. Both are switched off while the unit sleeps.
+- **الاستشعار / Sensing:** an ultrasonic probe measures how full the bin is (its supply is switched off while the unit sleeps); a waterproof probe measures temperature.
 - **الاتصال / Connectivity:** a SIM800L modem (2G) sends readings; unsent readings wait in a 32-row buffer. Whether each operator still serves 2G is to verify, with an LTE alternative listed.
 - **التركيب / Enclosure:** an off-the-shelf weatherproof box under the bin lid, with a panel guard, security screws and a tamper switch. The assembled unit has not been tested.
 - **الحالة / Status:** a paper design (rev A). The behaviour is checked in simulation only; no unit has been built or tested on a bench or in the field.
