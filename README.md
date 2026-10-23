@@ -9,7 +9,7 @@
 | 🌐 Citizen website | <https://city-fix-user.vercel.app/> |
 | 🛠️ Command Center (admin) | <https://city-fix-admin.vercel.app/> |
 | ⚙️ Backend API | <https://city-fix-api-backend.vercel.app/> |
-| 📱 Android APK (collector app) | [Expo build](https://expo.dev/accounts/abdulrahman-111s-team/projects/cityfix/builds/fe66cbe0-9afe-4541-bb61-d5c9efa24eba) |
+| 📱 Android APK (collector app) | [Expo build](https://expo.dev/accounts/abdulrahman-111s-team/projects/cityfix/builds/2b941844-b726-47a8-b98f-7aff82b792a2) |
 
 Hosted URLs are team-provided; see [Claims vs evidence](docs/evidence.md) for what has been independently verified.
 
