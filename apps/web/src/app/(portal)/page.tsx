@@ -14,6 +14,7 @@ import { formatDistance } from '@/utils/geo';
 import { greeting } from '@/utils/time';
 import { placeName, statusLabel, useTr } from '@/i18n';
 import { Skyline } from '@/ui/brand';
+import { SmartBinFigure } from '@/ui/citycycle';
 import { SosGrid } from '@/ui/Hotlines';
 import { Icon } from '@/ui/Icon';
 import { RequestRow } from '@/ui/RequestRow';
@@ -109,6 +110,17 @@ export default function HomePage() {
           <Link className="ftc-btn ftc-btn--secondary ftc-btn--sm" href="/impact" data-testid="home-impact"><Icon name="leaf" size={18} />{tr('أثري في التدوير', 'My recycling impact')}</Link>
           <Link className="ftc-btn ftc-btn--secondary ftc-btn--sm" href="/recycling-guide" data-testid="home-recycling-guide"><Icon name="recycle" size={18} />{tr('دليل التدوير', 'Recycling guide')}</Link>
         </div>
+      </section>
+
+      <section className="w-sec" aria-labelledby="t-bin">
+        <Link className="ftc-card h-bin w-card-link" href="/smart-bin" data-testid="home-smart-bin">
+          <SmartBinFigure fillPct={85} state="full" size={120} decorative />
+          <span className="w-grow">
+            <h2 className="w-h2" id="t-bin">{tr('الصندوق الذكي', 'Smart bin')}</h2>
+            <span className="w-sub">{tr('صندوق بيقول للحي إنه اتملى قبل ما يفيض. جرّبه بنفسك.', 'A bin that tells the district it is full before it overflows. Try it.')}</span>
+            <span className="ftc-btn ftc-btn--primary ftc-btn--sm"><Icon name="trash" size={18} />{tr('جرّب الصندوق الذكي', 'Try the smart bin')}</span>
+          </span>
+        </Link>
       </section>
 
       {failed ? (

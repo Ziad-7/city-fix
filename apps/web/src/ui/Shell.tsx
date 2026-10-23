@@ -94,7 +94,7 @@ export function Footer() {
       <span>{tr('CityFix · النسخة ١٫٠', 'CityFix · Version 1.0')}</span>
       <span>{tr('بلّغ.. وإحنا نتابع لحد ما تتصلّح', 'Report it, and we’ll follow it until it’s fixed')}</span>
       <Link href="/recycling-guide">{tr('دليل التدوير', 'Recycling guide')}</Link>
-      <a href="/smart-bin-simulator.html">{tr('محاكاة الحاويات الذكية', 'Smart bin simulator')}</a>
+      <Link href="/smart-bin">{tr('الصندوق الذكي', 'Smart bin')}</Link>
     </footer>
   );
 }
