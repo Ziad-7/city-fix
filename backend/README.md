@@ -27,6 +27,12 @@ CI (`.github/workflows/backend-ci.yml`) runs ruff check, ruff format --check, a 
 uv run --extra dev mypy app/auth.py app/auth_adapters.py app/admin_auth.py app/media.py   app/staff_auth.py app/routers/auth.py app/routers/staff_auth.py --ignore-missing-imports --follow-imports=skip
 ```
 
+### Benchmark (local only)
+
+`uv run python -m scripts.bench_api --scale large --repeat 5` prints latency, SQL statement count and payload size per endpoint.
+It always builds its own temporary SQLite file (it ignores `DATABASE_URL` and refuses unknown arguments), so it cannot touch a real database.
+Results and method: [docs/feature-verification.md](../docs/feature-verification.md).
+
 ### pip instead of uv
 
 `requirements.txt` (runtime) and `requirements-dev.txt` (adds pytest, httpx, ruff, mypy) mirror `pyproject.toml`; keep the three in sync when adding a dependency.
