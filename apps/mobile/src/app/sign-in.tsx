@@ -9,6 +9,7 @@ import { DEFAULT_DISTRICT, GOVERNORATES, findGovernorate } from '@/domain/locati
 import { otpSchema, phoneSchema } from '@/domain/schemas';
 import { placeName, setLang, useLang, useTr } from '@/i18n';
 import { MOCK_OTP, services } from '@/services';
+import { ApiError } from '@/services/api/http';
 import { usePrefs, useSession } from '@/store';
 import { colors, fonts, radius } from '@/theme/tokens';
 import { formatEgyptPhone, isolateLtr, normalizeEgyptPhone, toWesternDigits } from '@/utils/digits';
@@ -48,8 +49,9 @@ export default function SignInScreen() {
     try {
       await services.auth.requestCode(normalizeEgyptPhone(phone), otpChannel);
       setStep('code');
-    } catch {
-      setError(tr('معرفناش نبعت الكود، جرّب تاني', "We couldn't send the code. Try again"));
+    } catch (e) {
+      // The HTTP client already supplies citizen-safe network and server messages.
+      setError(e instanceof ApiError ? e.message : tr('معرفناش نبعت الكود، جرّب تاني', "We couldn't send the code. Try again"));
     } finally {
       setBusy(false);
     }
