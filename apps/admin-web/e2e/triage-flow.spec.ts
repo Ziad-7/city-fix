@@ -11,8 +11,8 @@ test('triage round trip: confirm AI, work order, status change with note, citize
   const firstLink = page.locator('table.inc-table tbody tr', { hasNotText: 'جاري التنفيذ' }).locator('a.ttl').first();
   await expect(firstLink).toBeVisible();
   await firstLink.click();
-  await expect(page).toHaveURL(/\/incidents\/INC-\d+/);
-  const id = page.url().match(/INC-\d+/)![0];
+  await expect(page).toHaveURL(/\/incidents\/INC-[A-Z0-9-]+/);
+  const id = page.url().match(/INC-[A-Z0-9-]+/)![0];
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 
   // AI suggestion: confirm if present and unconfirmed

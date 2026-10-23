@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { OpenByCategory } from '../OpenByCategory';
 
@@ -62,5 +62,15 @@ describe('OpenByCategory', () => {
     );
 
     expect(screen.getByText('باقي الأنواع')).toBeInTheDocument();
+  });
+
+  it('does not reuse the real "other" category key for the "rest" row (React duplicate-key warning)', () => {
+    const ids = ['other', 'pothole', 'open_manhole', 'garbage', 'sewage_overflow', 'water_pipe_burst', 'streetlight_out', 'exposed_wire', 'road_obstruction', 'stray_dogs', 'fallen_tree', 'broken_sidewalk'] as const;
+    const many = ids.map((categoryId, i) => ({ categoryId, count: 20 - i }));
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(<OpenByCategory data={many} open={200} loading={false} />);
+    const duplicateKey = error.mock.calls.some((c) => String(c[0]).includes('two children with the same key'));
+    error.mockRestore();
+    expect(duplicateKey).toBe(false);
   });
 });
