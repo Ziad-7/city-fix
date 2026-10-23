@@ -400,6 +400,14 @@ def test_public_bins(client, citizen_h):
     assert client.get("/bins", params={"bbox": "bad"}, headers=citizen_h).status_code == 400
 
 
+def test_seeded_bins_with_history_have_a_forecast(client, admin_h):
+    rows = client.get("/admin/bins/forecast", headers=admin_h).json()["items"]
+    by = {r["binId"]: r for r in rows}
+    assert by["BIN-012"]["reason"] == "ok" and by["BIN-012"]["sampleCount"] == 4
+    assert by["BIN-014"]["reason"] == "ok" and by["BIN-014"]["hoursToFull"] > 0
+    assert by["BIN-011"]["reason"] == "insufficient_data"  # one reading only
+
+
 def test_report_full_bin_creates_garbage_incident(client, citizen_h, other_citizen_h):
     before = len(client.get("/reports", headers=citizen_h).json())
     r = client.post("/bins/BIN-012/report-full", json={"note": "الريحة وحشة"}, headers=citizen_h)
