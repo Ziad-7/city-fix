@@ -1,8 +1,8 @@
-# CityFix / CityCycle — submission package
+# CityFix — submission package
 
 Track 4: **Unlocking Egypt’s Waste Economy** · Prepared 2026-10-23.
 
-CityCycle connects households, informal collectors and district staff through recyclables pickup, recorded weights and payments, and simulated smart-bin telemetry. Physical hardware is a design and simulation, not a built field unit.
+**CityFix is the project. CityCycle is its waste-and-recycling aspect**, alongside FixFirst, CityServe, CityOps, CityPulse and CityBrain. This Track 4 submission focuses on how CityFix addresses the waste challenge through CityCycle: recyclables pickup, collector workflows, recorded weights/payments and simulated smart-bin telemetry. Physical hardware is a design and simulation, not a built field unit.
 
 ## Required deliverables
 

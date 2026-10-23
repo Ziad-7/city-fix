@@ -2,7 +2,7 @@
 
 بلّغ.. وإحنا نتابع لحد ما تتصلّح — *Report it, and we follow it until it's fixed.*
 
-**CityCycle (سيتي سايكل)** is our entry for SolveThe17 2.0 · Track 4 "Unlocking Egypt's Waste Economy": a waste-and-recycling loop that pays informal collectors (الزبّالين) for verified weights and shows districts where bins fill up. It lives inside **CityFix**, a smart-city platform for Egyptian cities (citizens report problems and request services; the Command Center triages and coordinates the fix). Built in 7 days by a team of 5, joined by a 6th member for hardware.
+**CityFix (سيتي فيكس)** is our project: a smart-city platform for Egyptian cities that connects citizens, service teams and the Command Center. Its aspects include reporting and incident management, municipal services, operations, city maps and AI assistance. **CityCycle (سيتي سايكل)** is CityFix's waste-and-recycling aspect, through which the project addresses SolveThe17 2.0 · Track 4 "Unlocking Egypt's Waste Economy". It connects recyclables pickups, collectors, recorded weights/payments and simulated smart-bin telemetry.
 
 ## The CityCycle story
 
@@ -40,9 +40,9 @@ Clients (mobile, citizen web, Command Center) talk to one FastAPI backend; devic
 - Hardware package: overview [`hardware/README.md`](hardware/README.md), schematics [`hardware/schematics/`](hardware/schematics/README.md), Bill of Materials in EGP [`hardware/bom/`](hardware/bom/README.md) (prices only with a dated supplier source, otherwise to verify)
 - Field Deployment Brief: [`docs/field-brief/field-deployment-brief.md`](docs/field-brief/field-deployment-brief.md), printable [HTML](docs/field-brief/field-deployment-brief.html)
 
-## Also in CityFix
+## CityFix aspects
 
-These modules support CityCycle and share its backend, accounts and design.
+CityFix combines the following aspects, which share the platform backend, accounts and design. CityCycle is one aspect of this wider project.
 
 - **FixFirst** — report → incident management, explainable priority score, budget planning. Citizens report potholes, open manholes, broken streetlights, garbage and more.
 - **CityServe** — municipal service requests (bulky-waste pickup, tree maintenance).

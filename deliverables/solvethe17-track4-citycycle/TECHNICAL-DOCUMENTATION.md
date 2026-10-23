@@ -1,4 +1,4 @@
-# CityFix / CityCycle — Technical Documentation
+# CityFix — Technical Documentation
 
 **SolveThe17 · Track 4: Unlocking Egypt’s Waste Economy**
 
@@ -6,7 +6,7 @@ Submission snapshot: 2026-10-23. Software proof of concept with simulated hardwa
 
 ## 1. Purpose, users and honest scope
 
-CityCycle connects households offering sorted recyclables, informal collectors carrying out pickups, and district staff coordinating service. It adds waste recovery workflows to the CityFix citizen mobile app, citizen website and Command Center. The theme cites approximately 20 million tonnes of municipal solid waste annually in Egypt and recovery of up to 80% of the waste gathered by the Zabbaleen. The 80% figure is not Egypt's national recycling rate; these are challenge-provided facts, not our pilot results.
+**CityFix is the overall smart-city project**, bringing together FixFirst (reporting), CityServe (municipal services), CityCycle (waste and recycling), CityOps (operations), CityPulse (maps) and CityBrain (AI assistance). **CityCycle is one aspect of CityFix** and the focus of this Track 4 waste-economy submission. It connects households offering sorted recyclables, informal collectors carrying out pickups, and district staff coordinating service. It adds waste recovery workflows to the CityFix citizen mobile app, citizen website and Command Center. The theme cites approximately 20 million tonnes of municipal solid waste annually in Egypt and recovery of up to 80% of the waste gathered by the Zabbaleen. The 80% figure is not Egypt's national recycling rate; these are challenge-provided facts, not our pilot results.
 
 The implemented software includes pickup requests, collector acceptance, recorded material weights and cash amounts, household confirmation, bin telemetry ingestion, history and alerts. AI suggests; a person confirms. A deterministic fallback is not evidence of a successful Gemini call. Maps access does not establish backend access.
 
@@ -16,7 +16,7 @@ The PC simulator is operational locally; Wokwi bin and scale source and native l
 
 ## 2. System architecture
 
-![CityCycle system architecture](../../docs/diagrams/system-architecture.svg)
+![CityCycle subsystem architecture within CityFix](../../docs/diagrams/system-architecture.svg)
 
 The diagram describes implementation boundaries; hosting/database labels marked “to verify” are not deployment certifications. Team-provided web/API addresses and APK build are listed in the package index.
 
