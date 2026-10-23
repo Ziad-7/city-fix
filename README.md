@@ -2,6 +2,17 @@
 
 بلّغ.. وإحنا نتابع لحد ما تتصلّح — *Report it, and we follow it until it's fixed.*
 
+## 🔗 Live app
+
+| App | Link |
+| --- | --- |
+| 🌐 Citizen website | <https://city-fix-user.vercel.app/> |
+| 🛠️ Command Center (admin) | <https://city-fix-admin.vercel.app/> |
+| ⚙️ Backend API | <https://city-fix-api-backend.vercel.app/> |
+| 📱 Android APK (collector app) | [Expo build](https://expo.dev/accounts/abdulrahman-111s-team/projects/cityfix/builds/2b941844-b726-47a8-b98f-7aff82b792a2) |
+
+Hosted URLs are team-provided; see [Claims vs evidence](docs/evidence.md) for what has been independently verified.
+
 **CityFix (سيتي فيكس)** is our project: a smart-city platform for Egyptian cities that connects citizens, service teams and the Command Center. Its aspects include reporting and incident management, municipal services, operations, city maps and AI assistance. **CityCycle (سيتي سايكل)** is CityFix's waste-and-recycling aspect, through which the project addresses SolveThe17 2.0 · Track 4 "Unlocking Egypt's Waste Economy". It connects recyclables pickups, collectors, recorded weights/payments and simulated smart-bin telemetry.
 
 ## The CityCycle story
