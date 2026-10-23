@@ -494,9 +494,13 @@ def _sr_scope_ok(sr: ServiceRequest, payload: dict) -> bool:
 def _sr_json(db: Session, srs: list[ServiceRequest]) -> list[dict]:
     ctx = load_ctx(db, [])
     timelines = service_timelines(db, [s.id for s in srs])
-    wo_by_sr = {
-        w.service_request_id: w.id for w in db.query(WorkOrder).filter(WorkOrder.service_request_id.isnot(None))
-    }
+    sr_ids = [s.id for s in srs]
+    wo_query = db.query(WorkOrder)
+    if len(sr_ids) <= 1000:  # keeps the IN list well below every driver's bind-parameter limit
+        wo_query = wo_query.filter(WorkOrder.service_request_id.in_(sr_ids))
+    else:
+        wo_query = wo_query.filter(WorkOrder.service_request_id.isnot(None))
+    wo_by_sr = {w.service_request_id: w.id for w in wo_query} if sr_ids else {}
     return [admin_service_request(ctx, s, timelines.get(s.id, []), wo_by_sr.get(s.id)) for s in srs]
 
 
