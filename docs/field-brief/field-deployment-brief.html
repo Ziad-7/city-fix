@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Field Deployment Brief: CityCycle smart bin</title>
+<style>
+  @page { size: A4; margin: 15mm; }
+  :root { --ink: #1a1a1a; --mute: #555; --line: #bbb; --band: #f3f3ee; --accent: #0b5d3b; }
+  * { box-sizing: border-box; }
+  body { font: 10pt/1.35 Arial, Helvetica, sans-serif; color: var(--ink); background: #fff; margin: 0 auto; max-width: 180mm; padding: 8mm 4mm; }
+  h1 { font-size: 17pt; margin: 0 0 2mm; color: var(--accent); }
+  h2 { font-size: 11.5pt; margin: 4mm 0 1.5mm; border-bottom: 1px solid var(--line); padding-bottom: 0.5mm; }
+  p { margin: 0 0 2mm; }
+  .ar { direction: rtl; text-align: right; font-size: 10.5pt; }
+  .status { background: var(--band); border-left: 3px solid var(--accent); padding: 2mm 3mm; }
+  table { border-collapse: collapse; width: 100%; font-size: 8.4pt; margin: 1.5mm 0 2mm; }
+  th, td { border: 1px solid var(--line); padding: 1mm 1.6mm; vertical-align: top; text-align: left; }
+  th { background: var(--band); }
+  ul, ol { margin: 0 0 2mm; padding-left: 5mm; }
+  li { margin-bottom: 0.6mm; }
+  a { color: var(--accent); }
+  .page2 { break-before: page; }
+  .sticker { display: flex; gap: 4mm; align-items: center; direction: rtl; border: 2px solid var(--ink); border-radius: 3mm; padding: 3mm 4mm; width: 120mm; margin: 2mm 0; }
+  .sticker .num { font-size: 30pt; font-weight: bold; line-height: 1; }
+  .sticker .qr { width: 20mm; height: 20mm; border: 1.5px dashed var(--mute); display: flex; align-items: center; justify-content: center; font-size: 7pt; color: var(--mute); direction: ltr; text-align: center; }
+  .sticker .txt { font-size: 10pt; }
+  .note { color: var(--mute); font-size: 8.5pt; }
+  @media (max-width: 600px) { body { padding: 4mm 3mm; } }
+</style>
+</head>
+<body>
+<h1>Field Deployment Brief: CityCycle smart bin</h1>
+<p class="ar" lang="ar"><strong>موجز النشر الميداني: الصندوق الذكي (مرحلة التصميم، لم يُختبر في الميدان بعد).</strong><br>ملخص: صندوق بطاقة شمسية يقيس الامتلاء والحرارة ويرسل القراءات عبر شبكة الجوال، وهذا الموجز يوضح ما تحقق منه الفريق وما لم يتحقق.</p>
+<p class="note">Schematic: <a href="../../hardware/schematics/smart-bin.svg">smart-bin.svg</a> (relative link, used when opened from the repository).</p>
+
+<h2>What it is and where it stands</h2>
+<p>A solar-charged bin sensor for Egyptian streets. An ESP32 sleeps most of the time, wakes on a timer, reads fill level (ultrasonic) and temperature, and sends the reading over a SIM800L modem. The district sees which bins are full and which are hot, and collectors can be routed to those instead of to every bin.</p>
+<p class="status"><strong>Status, stated plainly:</strong> the logic is verified in a simulator and in host-side native tests. The wiring in this package is a paper design. <strong>No unit has been built, bench-tested or placed on a street.</strong> Nothing below is a field result. The "Verified in" column says where each claim has actually been checked; "none" means it has not.</p>
+
+<table>
+<thead><tr><th>Condition</th><th>Egyptian risk</th><th>Design response</th><th>Verified in</th><th>How to verify</th></tr></thead>
+<tbody>
+<tr><td>Heat</td><td>Hot bin and enclosure in summer; Li-ion should not be charged hot, and the charger module has no thermal cutoff</td><td>Light, shaded box; lower charge current; heat flag at the sensor; LiFePO4 considered</td><td>none</td><td>Heat-soak test with a temperature logger next to the cell; compare with the cell datasheet</td></tr>
+<tr><td>Dust, khamaseen</td><td>Dust on the panel and on the ultrasonic face</td><td>Sealed box with a breather plug; guard over the panel; sensor face cleaned on each visit</td><td>none</td><td>Dust test on the assembled unit; measure charge energy on a clean and a dusty day</td></tr>
+<tr><td>Water, street washing</td><td>Hose spray and rain splash</td><td>Gasketed box, glands, coating, silica gel</td><td>none</td><td>Splash test on the assembled unit; the box's IP label is the maker's claim only</td></tr>
+<tr><td>Weak or no GSM</td><td>Poor signal inside a metal bin; 2G service may not exist for every operator</td><td>32-reading buffer with retry; external antenna; LTE Cat-1 modem as the alternative</td><td>native test (buffer and retry logic) and simulator</td><td>Bench test with signal removed; ask each operator whether 2G is available where the bin stands</td></tr>
+<tr><td>Power</td><td>Shade, soiled panel, too small a battery</td><td>Energy budget formula, panel guard, cleaning schedule</td><td>none</td><td>Measure currents and a discharge run: <a href="../../hardware/power/README.md">hardware/power/</a></td></tr>
+<tr><td>Theft, vandalism</td><td>Valuables visible, easy to open</td><td>Security screws, no visible parts, conduit, lid tamper switch</td><td>none</td><td>Pilot inspection; check tamper wake on the bench</td></tr>
+<tr><td>Fire or heat alert</td><td>Hot waste, battery fault</td><td>Heat flag from the temperature probe; fuse; protection module</td><td>none (the flag exists in the simulator sketch only)</td><td>Bench test with a warmed probe; fuse and short-circuit test</td></tr>
+<tr><td>Low literacy</td><td>Collectors and residents may not read text</td><td>Icon sticker, large bin number, QR code to report</td><td>none</td><td>Test the sticker with a few collectors and residents</td></tr>
+</tbody>
+</table>
+
+<div class="page2"></div>
+<h2>Maintenance (concept)</h2>
+<p>A district crew or trained collectors visit on a schedule. A spare, pre-tested electronics tray can be swapped in, so a faulty unit is repaired at the workshop rather than on the street.</p>
+<table>
+<thead><tr><th>Interval</th><th>Check</th></tr></thead>
+<tbody>
+<tr><td>Monthly</td><td>Wipe the panel and the sensor face; check screws, seals, vent and antenna; read battery voltage from the last report</td></tr>
+<tr><td>After storms or washing</td><td>Open and look for water; replace silica gel if wet</td></tr>
+<tr><td>When a bin goes silent</td><td>Swap the tray; test the faulty one on the bench</td></tr>
+</tbody>
+</table>
+
+<h2>On-bin interface for low literacy</h2>
+<p>No text-dependent lights. The bin carries a sticker with a pictogram, the bin number in large figures, and a QR code that opens the citizen report page. A maintenance LED, if any, sits behind a light pipe and is for crews only. Mock-up of the Arabic sticker (example number, placeholder QR):</p>
+<div class="sticker" lang="ar">
+  <div class="qr">QR to report</div>
+  <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><rect x="12" y="14" width="32" height="38" rx="3" fill="none" stroke="#1a1a1a" stroke-width="3"/><rect x="8" y="8" width="40" height="6" rx="2" fill="#1a1a1a"/><path d="M22 22v22M34 22v22" stroke="#1a1a1a" stroke-width="3"/></svg>
+  <div class="txt">رقم الصندوق<div class="num">12</div></div>
+  <div class="txt">للإبلاغ عن مشكلة امسح الرمز</div>
+</div>
+
+<h2>Cost</h2>
+<p>The bill of materials is in <a href="../../hardware/bom/README.md">hardware/bom/README.md</a>. Each price there has a supplier page, a date and an evidence type; lines without one stay empty.</p>
+<p><strong>PARTIAL: not a per-bin cost.</strong> 11 lines sourced, 16 to verify; sourced lines add up to 973.25 EGP (one-time), monthly running cost not yet known.</p>
+
+<h2>Deployment steps</h2>
+<ol>
+<li>Build and bench-test one unit; fill the power table.</li>
+<li>Run the enclosure tests on the assembled unit.</li>
+<li>Pilot a small number of bins (the number is for the district to decide) in one area with known signal.</li>
+<li>Review the first weeks of readings with the crew, then adjust thresholds and routes.</li>
+<li>Expand only after the open items below are closed.</li>
+</ol>
+
+<h2>Data and privacy</h2>
+<p>The unit has no camera and collects no personal data: a bin id, fill level, temperature, battery voltage and a timestamp. The QR code leads to the normal citizen report page, which has its own privacy rules.</p>
+
+<h2>Open items before a field pilot</h2>
+<ul>
+<li>Bench-validate the wiring, including MOSFET gate drive and modem peak current.</li>
+<li>Measure sleep and transmit currents; compute battery life from the formulas.</li>
+<li>Choose and test the enclosure; run the dust, splash and heat tests.</li>
+<li>Confirm which Egyptian operators still serve 2G, or move to LTE Cat-1.</li>
+<li>Source the remaining BOM prices and size the solar panel.</li>
+<li>Implement the firmware changes listed in the schematics README.</li>
+</ul>
+</body>
+</html>
