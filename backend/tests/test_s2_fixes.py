@@ -2,6 +2,8 @@
 
 import pytest
 
+from app.models import Incident, IncidentFollower, Report
+
 
 # --------------------------------------------------------------------------- B1: collector writes are admin-only
 def test_b1_department_staff_cannot_change_collector_status(client, roads_h, admin_h):
@@ -30,3 +32,36 @@ def test_b2_valid_status_filters_still_work(client, admin_h):
     assert client.get("/admin/incidents?status=received", headers=admin_h).status_code == 200
     assert client.get("/admin/work-orders?status=in_progress", headers=admin_h).status_code == 200
     assert client.get("/admin/service-requests?status=received", headers=admin_h).status_code == 200
+
+
+# --------------------------------------------------------------------------- B3: a closed source cannot be merged again
+def _three_open_incidents(db):
+    rows = (
+        db.query(Incident)
+        .filter(Incident.status.in_(("received", "triaged", "assigned", "in_progress")))
+        .order_by(Incident.id)
+        .limit(3)
+        .all()
+    )
+    assert len(rows) == 3
+    return rows
+
+
+def test_b3_merged_incident_cannot_be_merged_again(client, db, admin_h):
+    source, target, other = _three_open_incidents(db)
+    first = client.post(f"/admin/incidents/{source.id}/merge", headers=admin_h, json={"intoIncidentId": target.id})
+    assert first.status_code == 200
+    reports_before = db.query(Report).filter_by(incident_id=other.id).count()
+    followers_before = db.query(IncidentFollower).filter_by(incident_id=other.id).count()
+    count_before = other.followers_count
+
+    again = client.post(f"/admin/incidents/{source.id}/merge", headers=admin_h, json={"intoIncidentId": other.id})
+    assert again.status_code == 400
+    assert again.json()["detail"] == "مينفعش تدمج بلاغ اتحل أو اتقفل"
+
+    db.refresh(other)
+    assert db.query(Report).filter_by(incident_id=other.id).count() == reports_before
+    assert db.query(IncidentFollower).filter_by(incident_id=other.id).count() == followers_before
+    assert other.followers_count == count_before
+    timeline = client.get(f"/admin/incidents/{source.id}", headers=admin_h).json()["timeline"]
+    assert sum(1 for t in timeline if "اتدمج" in (t.get("note") or "")) == 1  # one merge entry, not two

@@ -264,6 +264,10 @@ def merge_incident(
         raise HTTPException(status_code=422, detail=INVALID)  # an incident cannot be merged into itself
     if getattr(target.status, "value", target.status) in ("resolved", "closed"):
         raise HTTPException(status_code=400, detail="مينفعش تدمج في بلاغ اتحل أو اتقفل")
+    if getattr(source.status, "value", source.status) in ("resolved", "closed"):
+        # A merged incident is closed: merging it again would write a second misleading "merged" entry
+        # and could move its work order twice.
+        raise HTTPException(status_code=400, detail="مينفعش تدمج بلاغ اتحل أو اتقفل")
 
     def people(incident_id: str) -> set[str]:
         rows = db.query(IncidentFollower.user_id).filter(IncidentFollower.incident_id == incident_id).all()
