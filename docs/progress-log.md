@@ -7,6 +7,7 @@
 - `/citycycle`: "مسارات الجمع" tab (admin only) previews OR-Tools routes for unassigned requests that have a map position; "مستحقات الجامعين" tab shows recorded kg, list-price value and cash handed to households per collector, with a date range.
 - `/map`: optional "بؤر رمي المخلفات" layer (off by default) draws the server's hotspot circles and lists them with a fly-to button.
 - `useFocusTrap` no longer re-focuses the first field on every parent render (it made typing in a modal form jump to the first input).
+- Review fixes: the device key no longer sits in the React Query mutation cache, focus moves into the key step, weightless requests are left out of the route planner, and the optimiser's English 422 details are shown in Arabic.
 
 **Fallback rules**
 - Forecast and hotspots: only a missing route (404/405/501) gives a notice, with no made-up numbers; other errors show an error.
@@ -14,7 +15,7 @@
 
 **OR-Tools on Vercel**
 - `uv.lock` had no `ortools` in the runtime dependencies (`uv export --no-dev` listed none), so a build that installs from the lock file would answer 503 on the optimiser. Added `ortools` to `[project].dependencies`, re-locked, and added `backend/tests/test_packaging.py` to keep `requirements.txt`, `pyproject.toml` and `uv.lock` in step. Post-deploy check is in `backend/README.md`.
-- Measured: installing the locked runtime set for Linux x86_64 / Python 3.12 takes about 442 MB uncompressed (`ortools` 79 MB, plus `pandas` 45 MB it pulls in). Vercel's Python size limit was not confirmed from its docs search, so check the first deploy; if it is over the limit, the optimiser needs the Docker/Render deployment.
+- Measured: installing the locked runtime set for Linux x86_64 / Python 3.12 takes about 442 MB uncompressed (`ortools` 79 MB, plus `pandas` 45 MB it pulls in). Vercel documents a 500 MB uncompressed bundle limit for Python functions (raised from 250 MB), so this fits with about 58 MB to spare. The routing import does not load `pandas`. If a later dependency pushes it over, the optimiser needs the Docker/Render deployment.
 
 **Known issues**
 - The route preview assigns nobody; distances are straight-line, not roads.

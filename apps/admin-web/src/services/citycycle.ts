@@ -249,6 +249,11 @@ export function optimizeErrorMessage(e: unknown): string {
     case 405:
     case 501:
       return 'السيرفر ده مفيهوش تخطيط المسارات';
+    case 422:
+      // The server's 422 details are English; keep the admin screen Arabic.
+      if (/weight/i.test(e.message)) return 'فيه طلب من غير وزن متوقع للمواد، شيله من القائمة';
+      if (/coordinates/i.test(e.message)) return 'فيه طلب مكانه على الخريطة مش صحيح، شيله من القائمة';
+      return e.message;
     default:
       return e.message;
   }

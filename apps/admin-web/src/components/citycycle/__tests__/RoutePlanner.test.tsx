@@ -72,6 +72,7 @@ beforeEach(() => {
     pickup('RCY-2', 30.06, 'شارع ب'),
     { ...pickup('RCY-3', 30.07, 'شارع ج'), collectorId: 'COL-1' },
     { ...pickup('RCY-4', 30.08, 'بدون موقع'), location: { address: 'x' } },
+    { ...pickup('RCY-5', 30.09, 'بدون وزن'), items: [{ materialId: 'glass', estimatedKg: 0 }] },
   ]);
   optimizeRoutes.mockReset();
 });
@@ -83,6 +84,7 @@ describe('RoutesSection', () => {
     expect(screen.getByText(/شارع ب/)).toBeInTheDocument();
     expect(screen.queryByText(/شارع ج/)).not.toBeInTheDocument();
     expect(screen.queryByText(/بدون موقع/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/بدون وزن/)).not.toBeInTheDocument();
   });
 
   it('requires a capacity and then shows ordered stops, the preview notice and map pins', async () => {
@@ -98,7 +100,7 @@ describe('RoutesSection', () => {
     await user.type(screen.getByLabelText('سعة المركبة (كجم)'), '500');
     await user.click(screen.getByRole('button', { name: 'اقترح المسارات' }));
 
-    expect(await screen.findByText(/مركبة 1 · 2 محطات · 10 كجم · 4.2 كم/)).toBeInTheDocument();
+    expect(await screen.findByText(/مركبة 1 · محطتين · 10 كجم · 4.2 كم/)).toBeInTheDocument();
     const call = optimizeRoutes.mock.calls[0][0];
     expect(call).toMatchObject({ pickupIds: ['RCY-1', 'RCY-2'], vehicleCount: 1, capacityKg: 500 });
     expect(call.depot).toEqual({ lat: 30.055, lng: 31.3 });

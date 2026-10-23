@@ -57,13 +57,14 @@ const reading: SmartBinReading = {
 
 function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
+  const view = render(
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <SmartBinsPage />
       </ToastProvider>
     </QueryClientProvider>,
   );
+  return { ...view, queryClient };
 }
 
 const forecast = (o: Partial<BinForecast['items'][number]>): BinForecast => ({
@@ -127,7 +128,7 @@ describe('SmartBinsPage registration', () => {
   it('shows the device key once and only lets the admin finish after confirming the copy', async () => {
     vi.mocked(registerBin).mockResolvedValue({ bin, deviceKey: 'SECRET-KEY-1' });
     const user = userEvent.setup();
-    renderPage();
+    const { queryClient } = renderPage();
     await user.click(await screen.findByRole('button', { name: 'تسجيل حاوية' }));
     await user.type(screen.getByLabelText('رقم الجهاز'), 'BIN-9');
     await user.type(screen.getByLabelText('اسم الحاوية'), 'حاوية جديدة');
@@ -136,6 +137,13 @@ describe('SmartBinsPage registration', () => {
     await user.click(screen.getByRole('button', { name: 'تسجيل' }));
 
     expect(await screen.findByText('SECRET-KEY-1')).toBeInTheDocument();
+    // Focus moves into the key step, and the key never reaches the React Query caches.
+    expect(screen.getByRole('dialog')).toContainElement(document.activeElement as HTMLElement);
+    const cached = JSON.stringify([
+      queryClient.getMutationCache().getAll().map((mu) => mu.state.data),
+      queryClient.getQueryCache().getAll().map((qu) => qu.state.data),
+    ]);
+    expect(cached).not.toContain('SECRET-KEY-1');
     expect(vi.mocked(registerBin).mock.calls[0][0]).toMatchObject({ id: 'BIN-9', lat: 30.05, lng: 31.33, fullPct: 80, intervalMin: 30 });
     const done = screen.getByRole('button', { name: 'تم' });
     expect(done).toBeDisabled();

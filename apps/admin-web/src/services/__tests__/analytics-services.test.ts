@@ -105,6 +105,8 @@ describe('optimizeErrorMessage', () => {
     expect(optimizeErrorMessage(new ApiError(501, 'x'))).toContain('مفيهوش');
     expect(optimizeErrorMessage(new ApiError(405, 'x'))).toContain('مفيهوش');
     expect(optimizeErrorMessage(new ApiError(422, 'سعة غلط'))).toBe('سعة غلط');
+    expect(optimizeErrorMessage(new ApiError(422, 'pickup requires positive estimated item weight'))).toContain('وزن متوقع');
+    expect(optimizeErrorMessage(new ApiError(422, 'pickup has invalid coordinates'))).toContain('مكانه');
     expect(optimizeErrorMessage(new Error('boom'))).toBe('boom');
   });
 });

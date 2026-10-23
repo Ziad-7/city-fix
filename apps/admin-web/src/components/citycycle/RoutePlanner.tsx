@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Button, Checkbox, EmptyState, ErrorState, KpiCard, Notice, SelectField, Skeleton, TextField, useToast } from '@/components/ui';
 import type { OptimizeRoutesResult, RecyclingPickup } from '@/domain/citycycle-types';
-import { formatDecimal, formatNumber } from '@/lib/format';
+import { dual, formatDecimal, formatNumber } from '@/lib/format';
 import { getPickups, isCityCycleDemo, optimizeErrorMessage, optimizeRoutes } from '@/services/citycycle';
 
 const MapView = dynamic(() => import('@/components/map/MapView').then((m) => ({ default: m.MapView })), {
@@ -16,15 +16,22 @@ const MapView = dynamic(() => import('@/components/map/MapView').then((m) => ({ 
 const MAX_PICKUPS = 100;
 
 const kgOf = (p: RecyclingPickup) => p.items.reduce((sum, i) => sum + i.estimatedKg, 0);
+// The server rejects (422) a request whose items lack a positive estimated weight.
+const hasWeights = (p: RecyclingPickup) =>
+  p.items.length > 0 && p.items.every((i) => Number.isFinite(i.estimatedKg) && i.estimatedKg > 0);
+const stopsLabel = (n: number) => dual(n, 'محطة واحدة', 'محطتين', (k) => `${k} محطات`, (k) => `${formatNumber(k)} محطة`);
 const km = (meters: number) => formatDecimal(meters / 1000);
 
 export function RoutesSection() {
   const toast = useToast();
   const demo = isCityCycleDemo();
   const q = useQuery({ queryKey: ['cc-pickups', 'requested'], queryFn: () => getPickups('requested') });
-  // Only unassigned requests with a map position can be planned.
+  // Only unassigned requests with a map position and estimated weights can be planned.
   const candidates = useMemo(
-    () => (q.data ?? []).filter((p) => !p.collectorId && p.location?.lat != null && p.location?.lng != null).slice(0, MAX_PICKUPS),
+    () =>
+      (q.data ?? [])
+        .filter((p) => !p.collectorId && p.location?.lat != null && p.location?.lng != null && hasWeights(p))
+        .slice(0, MAX_PICKUPS),
     [q.data],
   );
   const [unticked, setUnticked] = useState<Set<string>>(new Set());
@@ -84,7 +91,7 @@ export function RoutesSection() {
         </Notice>
       )}
       {candidates.length === 0 ? (
-        <EmptyState icon="list" title="مفيش طلبات تتخطط" message="الطلبات الجديدة اللي ليها موقع على الخريطة ومتوزعتش على جامع هتظهر هنا." />
+        <EmptyState icon="list" title="مفيش طلبات تتخطط" message="الطلبات الجديدة اللي ليها موقع على الخريطة ووزن متوقع ومتوزعتش على جامع هتظهر هنا." />
       ) : (
         <div className="ftc-card" style={{ padding: 16 }}>
           <b>الطلبات اللي هتتخطط ({formatNumber(ticked.length)} من {formatNumber(candidates.length)})</b>
@@ -161,7 +168,7 @@ function RoutesResult({ result, byId, depot }: { result: OptimizeRoutesResult; b
         {result.routes.map((r) => (
           <div key={r.vehicleIndex} className="ftc-card" style={{ padding: 16 }}>
             <b>
-              مركبة {formatNumber(r.vehicleIndex + 1)} · {formatNumber(r.stops.length)} محطات · {formatDecimal(r.loadKg)} كجم · {km(r.distanceMeters)} كم
+              مركبة {formatNumber(r.vehicleIndex + 1)} · {stopsLabel(r.stops.length)} · {formatDecimal(r.loadKg)} كجم · {km(r.distanceMeters)} كم
             </b>
             <ol style={{ margin: '8px 0 0', paddingInlineStart: 24, listStyle: 'decimal' }}>
               {r.stops.map((s) => (

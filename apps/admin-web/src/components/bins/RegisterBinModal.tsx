@@ -80,18 +80,30 @@ export function RegisterBinModal({ open, onClose }: { open: boolean; onClose: ()
     setDeviceKey(null);
     setCopied(false);
     setSaved(false);
+    m.reset();
     onClose();
   };
 
   const m = useMutation({
-    mutationFn: (input: CreateBinInput) => registerBin(input),
-    onSuccess: (r) => {
+    // The key goes straight into component state; the mutation result (kept in the
+    // React Query mutation cache) holds only the bin, never the key.
+    mutationFn: async (input: CreateBinInput) => {
+      const r = await registerBin(input);
       setDeviceKey(r.deviceKey);
+      return r.bin;
+    },
+    gcTime: 0,
+    onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['smart-bins'] });
       void qc.invalidateQueries({ queryKey: ['smart-bins-forecast'] });
     },
     onError: (e: Error) => {
-      const msg = e instanceof ApiError && e.status === 409 ? 'الرقم ده مستخدم لحاوية تانية' : e.message;
+      const msg =
+        e instanceof ApiError && e.status === 409
+          ? 'الرقم ده مستخدم لحاوية تانية'
+          : e instanceof ApiError && e.status === 422 && /department/i.test(e.message)
+            ? 'الجهة دي مش موجودة، حدّث الصفحة واختار تاني'
+            : e.message;
       setFormError(msg);
       toast.error(msg);
     },
@@ -128,6 +140,7 @@ export function RegisterBinModal({ open, onClose }: { open: boolean; onClose: ()
   if (deviceKey !== null) {
     return (
       <Modal
+        key="key-step"
         open={open}
         onClose={close}
         dismissible={false}
@@ -161,6 +174,7 @@ export function RegisterBinModal({ open, onClose }: { open: boolean; onClose: ()
 
   return (
     <Modal
+      key="form-step"
       open={open}
       onClose={close}
       busy={m.isPending}

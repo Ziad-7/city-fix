@@ -30,7 +30,7 @@ import { CATEGORIES } from '@/domain/categories';
 import type { AdminIncident } from '@/domain/admin-types';
 import type { IncidentStatus } from '@/domain/types';
 import { priorityLevel, priorityReason } from '@/logic/priority';
-import { formatNumber, formatRelative, formatWhen, formatDueLabel, hoursLateOf } from '@/lib/format';
+import { dual, formatNumber, formatRelative, formatWhen, formatDueLabel, hoursLateOf } from '@/lib/format';
 import { ApiError } from '@/lib/http';
 import { useSession } from '@/lib/session';
 
@@ -68,6 +68,8 @@ function parseKinds(raw: string | null): Set<PinKind> {
   if (raw === null) return new Set(PIN_KINDS);
   return new Set(raw.split(',').filter((k): k is PinKind => (PIN_KINDS as string[]).includes(k)));
 }
+
+const reportsLabel = (n: number) => dual(n, 'بلاغ واحد', 'بلاغين', (k) => `${k} بلاغات`, (k) => `${formatNumber(k)} بلاغ`);
 
 export default function MapPage() {
   const searchParams = useSearchParams();
@@ -151,7 +153,7 @@ export default function MapPage() {
             lat: h.lat,
             lng: h.lng,
             radiusM: hotspots.data!.radiusMeters,
-            label: `${formatNumber(h.count)} بلاغات نظافة`,
+            label: `${reportsLabel(h.count)} نظافة`,
           }))
         : undefined,
     [showHotspots, hotspots.data, hotspotItems],
@@ -376,7 +378,7 @@ export default function MapPage() {
                   {hotspotItems.map((h) => (
                     <li key={h.id}>
                       <span>
-                        {formatNumber(h.count)} بلاغات · أعلى أولوية <span className="num">{formatNumber(h.maxPriorityScore)}</span>
+                        {reportsLabel(h.count)} · أعلى أولوية <span className="num">{formatNumber(h.maxPriorityScore)}</span>
                       </span>
                       <Button size="sm" variant="secondary" onClick={() => map?.flyTo([h.lat, h.lng], 16)}>
                         ورّيني
@@ -388,7 +390,7 @@ export default function MapPage() {
               {hotspots.data && (
                 <p className="mini">
                   تجميع لبلاغات النظافة القريبة من بعض (في نطاق {formatNumber(hotspots.data.radiusMeters)} متر،{' '}
-                  {formatNumber(hotspots.data.minCount)} بلاغات على الأقل). مفيش بيانات مبلّغين.
+                  {reportsLabel(hotspots.data.minCount)} على الأقل). مفيش بيانات مبلّغين.
                 </p>
               )}
             </section>
