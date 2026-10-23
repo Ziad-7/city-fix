@@ -20,12 +20,14 @@ from app.auth_adapters import DatabaseStaffDirectory, DatabaseUserRepository
 from app.config import settings, validate_settings
 from app.db import SessionLocal, get_db, init_db
 from app.models import Incident
+from app.otp import TwilioVerifyProvider
 from app.routers import (
     admin,
     auth,
     bins,
     incidents,
     map,
+    notifications,
     recycling,
     recycling_admin,
     reports,
@@ -79,14 +81,15 @@ async def lifespan(app: FastAPI):
     """Application lifespan: startup and shutdown."""
     # Startup
     validate_settings()
-    init_db()
+    if settings.database_url.startswith("sqlite") and settings.local_schema_bootstrap:
+        init_db()
     if getattr(app.state, "media_storage", None) is None and not settings.local_upload_stub_allowed:
         logger.warning(
             "Media storage is not configured: /uploads/sign answers 503 (set SUPABASE_* or ALLOW_LOCAL_UPLOAD_STUB)"
         )
 
     # Check if we should seed
-    if settings.seed_on_start:
+    if settings.database_url.startswith("sqlite") and settings.seed_on_start:
         db = SessionLocal()
         try:
             # Check if database is empty (no incidents)
@@ -122,6 +125,18 @@ app.state.auth_context = AuthContext(
     DatabaseUserRepository(),
 )
 app.state.staff_login_context = StaffLoginContext(DatabaseStaffDirectory())
+app.state.otp_provider = (
+    TwilioVerifyProvider(
+        settings.twilio_account_sid,
+        settings.twilio_auth_token,
+        settings.twilio_verify_service_sid,
+    )
+    if settings.otp_mode in {"twilio", "real"}
+    and settings.twilio_account_sid.strip()
+    and settings.twilio_auth_token.strip()
+    and settings.twilio_verify_service_sid.strip()
+    else None
+)
 # Optional private-media storage (Supabase); None = local upload stub.
 if settings.supabase_url.strip() and settings.supabase_service_role_key.strip():
     app.state.media_storage = SupabaseMediaStorage(
@@ -216,6 +231,7 @@ app.include_router(bins.admin_router)
 app.include_router(bins.public_router)
 app.include_router(recycling.router)
 app.include_router(recycling_admin.router)
+app.include_router(notifications.router)
 
 
 # ============================================================================

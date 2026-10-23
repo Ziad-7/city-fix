@@ -460,3 +460,77 @@ class IdempotencyKey(Base):
     created_at = Column(DateTime, nullable=False, default=utc_now)
 
     __table_args__ = (UniqueConstraint("user_id", "scope", "key", name="uq_idempotency_user_scope_key"),)
+
+
+class OTPChallenge(Base):
+    """A provider-accepted OTP generation; raw phone and code are never stored here."""
+
+    __tablename__ = "otp_challenges"
+    id = Column(String(36), primary_key=True)
+    phone_hash = Column(String(64), nullable=False, index=True)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    expires_at = Column(DateTime, nullable=False)
+    consumed_at = Column(DateTime, nullable=True)
+
+
+class OTPThrottle(Base):
+    """Per normalized-phone rate windows for OTP starts and checks."""
+
+    __tablename__ = "otp_throttles"
+    phone_hash = Column(String(64), primary_key=True)
+    window_started_at = Column(DateTime, nullable=False)
+    starts = Column(Integer, nullable=False, default=0)
+    checks = Column(Integer, nullable=False, default=0)
+
+
+class Notification(Base):
+    """Generic, caller-scoped update for an incident or pickup status transition."""
+
+    __tablename__ = "notifications"
+    id = Column(String(36), primary_key=True)
+    recipient_id = Column(String(50), ForeignKey("profiles.id"), nullable=False, index=True)
+    kind = Column(String(30), nullable=False)
+    title = Column(String(255), nullable=False)
+    body = Column(Text, nullable=False)
+    data = Column(JSON, nullable=False)
+    event_key = Column(String(255), nullable=False)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    read_at = Column(DateTime, nullable=True)
+
+    __table_args__ = (UniqueConstraint("event_key", "recipient_id", name="uq_notification_event_recipient"),)
+
+
+class PushToken(Base):
+    """A private Expo device token explicitly registered by its current owner."""
+
+    __tablename__ = "push_tokens"
+    id = Column(String(36), primary_key=True)
+    user_id = Column(String(50), ForeignKey("profiles.id"), nullable=False, index=True)
+    token = Column(String(256), nullable=False, unique=True)
+    platform = Column(String(10), nullable=False)
+    active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    updated_at = Column(DateTime, nullable=False, default=utc_now, onupdate=utc_now)
+
+
+class PushDelivery(Base):
+    """Retryable provider delivery state; ticket acceptance is not device delivery."""
+
+    __tablename__ = "push_deliveries"
+    id = Column(String(36), primary_key=True)
+    notification_id = Column(String(36), ForeignKey("notifications.id"), nullable=False)
+    push_token_id = Column(String(36), ForeignKey("push_tokens.id"), nullable=False)
+    status = Column(String(20), nullable=False, default="pending")
+    ticket_id = Column(String(100), nullable=True)
+    attempts = Column(Integer, nullable=False, default=0)
+    receipt_attempts = Column(Integer, nullable=False, default=0)
+    next_attempt_at = Column(DateTime, nullable=False, default=utc_now)
+    lease_until = Column(DateTime, nullable=True)
+    last_error = Column(Text, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    updated_at = Column(DateTime, nullable=False, default=utc_now, onupdate=utc_now)
+
+    __table_args__ = (
+        UniqueConstraint("notification_id", "push_token_id", name="uq_push_delivery_notification_token"),
+        Index("idx_push_delivery_pending", "status", "next_attempt_at"),
+    )

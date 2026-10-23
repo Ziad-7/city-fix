@@ -516,13 +516,17 @@ def test_sql_migration_covers_every_citycycle_table():
 
 
 # --------------------------------------------------------------------------- suspension, atomic cancel, idempotency
-def test_suspending_a_collector_releases_accepted_jobs(client, admin_h, collector_h, citizen_h):
+def test_suspending_a_collector_releases_accepted_jobs(client, admin_h, collector_h, citizen_h, db):
     accepted = client.post("/collector/jobs/RCY-3001/accept", headers=collector_h).json()
     assert accepted["status"] == "accepted"
     client.post("/collector/jobs/RCY-3002/accept", headers=collector_h)
     assert weigh(client, collector_h, "RCY-3002", "w1", "glass", 2).status_code == 201
     r = client.patch("/admin/collectors/COL-1", json={"status": "suspended"}, headers=admin_h)
     assert r.status_code == 200
+    from app.models import Notification
+
+    notices = db.query(Notification).filter_by(data={"pickupId": "RCY-3001"}).all()
+    assert {notice.recipient_id for notice in notices} == {"seed-household-1", "collector-001"}
     freed = client.get("/admin/recycling/pickups/RCY-3001", headers=admin_h).json()
     assert freed["status"] == "requested" and "collectorId" not in freed
     assert freed["timeline"][-1]["status"] == "requested" and "اتوقف" in freed["timeline"][-1]["note"]

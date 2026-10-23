@@ -96,6 +96,55 @@ class TestOTP:
         # Both should return same user ID but different tokens
         assert response1.json()["userId"] == response2.json()["userId"]
 
+    def test_real_provider_challenge_is_consumed_once(self, client, monkeypatch, db):
+        from app.main import app
+        from app.models import OTPChallenge
+
+        class Provider:
+            def start(self, phone, channel):
+                pass
+
+            def check(self, phone, code):
+                return code == "654321"
+
+        context = app.state.auth_context
+        monkeypatch.setattr(app.state, "otp_provider", Provider(), raising=False)
+        app.state.auth_context = replace(context, settings=replace(context.settings, demo_otp=False))
+        try:
+            started = client.post("/auth/otp", json={"phone": "01011122334", "channel": "sms"})
+            first = client.post("/auth/verify", json={"phone": "01011122334", "code": "654321"})
+            replay = client.post("/auth/verify", json={"phone": "01011122334", "code": "654321"})
+        finally:
+            app.state.auth_context = context
+        assert started.status_code == 204
+        assert first.status_code == 200
+        assert replay.status_code == 401
+        challenge = db.query(OTPChallenge).one()
+        assert challenge.consumed_at is not None
+        assert "01011122334" not in challenge.phone_hash
+
+    def test_real_otp_uses_provider_before_issuing_session(self, client, monkeypatch):
+        from app.main import app
+
+        class Provider:
+            def start(self, phone, channel):
+                assert phone == "+201011122233"
+                assert channel == "whatsapp"
+
+            def check(self, phone, code):
+                return code == "654321"
+
+        monkeypatch.setattr(app.state, "otp_provider", Provider(), raising=False)
+        ctx = app.state.auth_context
+        app.state.auth_context = replace(ctx, settings=replace(ctx.settings, demo_otp=False))
+        try:
+            started = client.post("/auth/otp", json={"phone": "01011122233", "channel": "whatsapp"})
+            verified = client.post("/auth/verify", json={"phone": "01011122233", "code": "654321"})
+        finally:
+            app.state.auth_context = ctx
+        assert started.status_code == 204
+        assert verified.status_code == 200
+
 
 class TestStaffLogin:
     """Tests for staff login endpoint."""

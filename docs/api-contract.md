@@ -101,8 +101,23 @@ TriageSuggestion  = {
 | POST | `/auth/verify` | `{ phone, code: "123456" }` | `{ userId, phone, name?, token }` |
 
 - Phone format: Egyptian mobile, `01[0125]` + 8 digits. Store it as `+201…`.
-- **Demo mode** (`OTP_MODE=demo`): no SMS is sent and the code is always `123456`. Real SMS/WhatsApp delivery is a stretch goal.
+- **Demo mode** (`OTP_MODE=demo`): no SMS is sent and the code is always `123456`. Configured production SMS/WhatsApp uses the Twilio Verify adapter; there is no demo fallback.
 - A first successful verify creates the citizen profile.
+
+The production adapter is opt-in through `OTP_MODE=twilio` and the server-only Twilio Verify bindings. Missing/rejected/unavailable provider configuration returns `503`, timeout `504`, provider throttling `429`; an expired/missing verification check counts as invalid and returns `401`. It never falls back to demo mode. Phone-keyed HMAC windows allow five starts and ten checks per ten minutes; raw OTPs are not stored. An approved challenge generation expires within ten minutes and is consumed atomically before issuing a session, so a replay returns `401`. `OTP_MODE=demo` is explicitly local/demo behavior and does not send a code.
+
+### Notifications and push
+
+| Method | Path | Body | Response |
+| --- | --- | --- | --- |
+| GET | `/notifications?limit=50&beforeId=<id>` | — | `{ items: Notification[], nextBeforeId: string \| null }` |
+| PATCH | `/notifications/{id}` | `{ read: true }` | `Notification` |
+| POST | `/notifications/push-tokens` | `{ token, platform: "ios" \| "android" }` | `204` |
+| DELETE | `/notifications/push-tokens` | `{ token }` | `204` |
+
+`Notification = { id, kind: "incident_status" | "pickup_status", title, body, data: { incidentId? | pickupId? }, createdAt, readAt }`. IDs are opaque UUID strings. The page is newest first, limit is 1..100, and `beforeId` must identify one of the caller's notifications or returns `404`. A foreign notification read/mark also returns `404`; marking read is idempotent. Bodies are generic and contain no exact location or phone. `data` contains exactly the relevant resource ID, which clients must load through its separately authorized route. A real incident status transition notifies linked reporters/followers once; a real pickup status transition notifies its household and assigned collector profile once, with duplicate profiles collapsed. No-op transitions and rolled-back domain changes emit nothing.
+
+Push tokens must match Expo token syntax and be at most 256 characters. Registration explicitly binds or transfers a token to the caller; deletion is caller-scoped and idempotent. Tokens are never returned. Notification/push rows are persisted even if provider dispatch is disabled. The bounded worker is invoked separately with `PUSH_ENABLED=true`; Expo ticket acceptance is pending delivery, while an `ok` receipt is recorded as delivered (Expo receipt, not proof a person saw it). Transient send failures retry at most three times. Receipt polling starts after 15 minutes; three empty polls spaced 15 minutes apart change a ticket to `unknown`. Uncertain sends are not resent automatically. `EXPO_TOKEN` is an optional server-side Expo access token, not a device token. No scheduler is configured.
 
 ### Reports and incidents (citizen)
 | Method | Path | Body | Response | Notes |
@@ -180,6 +195,16 @@ From the plan (§7). Admin role required.
 The app calls `/ai/transcribe` after the citizen records a voice note and appends `text` to the description (still editable); it ignores `language`. The authenticated API reads only a caller-owned `voice_note` from private storage. Any provider or storage error leaves the citizen free to type the description; the voice note itself is still sent with the report as `voiceNoteUri`. In API mode, the recording control discloses that the file is uploaded privately and sent to Gemini; the free tier may use submitted content to improve Google products.
 
 `TriageSuggestion` includes `source: "model" | "fallback"` and `emergency: boolean`. When `emergency` is true, clients display emergency contact options before the AI suggestion; client-side keyword detection remains a safety fallback while triage is loading or unavailable.
+
+### Analytics APIs (PR2, not implemented in the backend foundation)
+
+These endpoints are a frozen contract for the AI/optimizer work. Until that PR is deployed, clients must show an unavailable/retry state and must not fabricate results.
+
+`GET /admin/bins/forecast?horizonHours=24` is staff-only; `horizonHours` is integer 1..168. It returns `{ generatedAt, horizonHours, items: [{ binId, currentFillPct, predictedFillPct, hoursToFull, sampleCount, method: "linear"|"insufficient_data", reason: "ok"|"insufficient_data"|"stale"|"non_increasing" }] }`. It uses only valid synchronized readings from the preceding seven days, discards future readings, splits trend history after a 20-point collection reset, and requires at least three distinct timestamps spanning one hour. The newest persisted sequence must itself be synchronized, not future dated, and match both the bin's current fill and `lastSeq`; stale or misaligned data yields null predictions. Linear predictions are clamped to 0..100 and use the bin's full threshold; this is telemetry extrapolation, not a Gemini forecast.
+
+`POST /admin/recycling/routes/optimize` is admin-only and previews without assigning or persisting. Body: `{ pickupIds: string[], depot: { lat, lng }, vehicleCount, capacityKg }`; IDs are unique, 1..100, vehicle count 1..10, capacity finite >0 and <=10000, and coordinates use normal ranges. Pickups must be requested, unassigned, accessible and have positive known item weights; missing/inaccessible IDs return 404, changed/assigned pickups 409, invalid weights or coordinates 422. Demand and capacity are scaled to grams; OR-Tools CVRP uses straight-line haversine meters, one deterministic worker and a three-second deadline. Response: `{ algorithm: "ortools", distanceModel: "haversine", routes: [{ vehicleIndex, pickupIds, loadKg, distanceMeters, stops: [{ pickupId, lat, lng }] }], unassignedPickupIds, totalDistanceMeters }`. Every pickup appears once in a route or the unassigned list; empty routes are omitted. Unavailable OR-Tools returns 503 without a hidden fallback. Results contain no addresses, names or phone numbers.
+
+`GET /admin/hotspots?days=30&radiusMeters=500&minCount=3` is staff-only. Bounds are days 1..90, radius 100..2000m, and minimum count 3..20. It clusters only scoped, valid-coordinate garbage incidents created in the trailing window; other categories never contribute. Response: `{ generatedAt, days, radiusMeters, minCount, items: [{ id, lat, lng, count, categoryCounts: [{ categoryId, count }], maxPriorityScore }] }`. Clustering follows haversine DBSCAN semantics, stable incident-ID ordering and minCount including the point itself. IDs are `HS-` plus a hash of sorted scoped incident IDs; centroids are rounded to three decimals. No source incident IDs, reporters, addresses, descriptions, media or phones are exposed, and aggregation happens only after department scoping.
 
 ### Smart-bin telemetry and Command Center
 

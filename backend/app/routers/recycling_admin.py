@@ -10,6 +10,7 @@ from app.admin_auth import require_admin, require_staff
 from app.db import get_db
 from app.helpers import now_utc
 from app.logic.domain import actor_name
+from app.logic.notifications import create_status_notifications, record_pickup_status_notification
 from app.logic.recycling import (
     by_material,
     collector_view,
@@ -156,6 +157,7 @@ def admin_patch_pickup(
         raise HTTPException(404, "مش موجود")
     actor = actor_name(db, claims)
     note = (body.note or "").strip()
+    old_status = p.status
     if body.status is None:
         if body.collector_id or not note:
             raise HTTPException(422, "البيانات مش مكتملة")
@@ -174,7 +176,10 @@ def admin_patch_pickup(
         if result.rowcount != 1:
             raise HTTPException(409, "مينفعش يتلغى في الحالة دي.")
         db.refresh(p)
-        log(db, p.id, "cancelled", actor, note or "اتلغى من إدارة الحي")
+        activity = log(db, p.id, "cancelled", actor, note or "اتلغى من إدارة الحي")
+        record_pickup_status_notification(
+            db, pickup_id=p.id, old_status=old_status, new_status=p.status, activity_id=activity.id
+        )
     elif body.status == "accepted":
         collector = db.get(Collector, body.collector_id) if body.collector_id else None
         if collector is None:
@@ -197,7 +202,10 @@ def admin_patch_pickup(
         if result.rowcount != 1:
             raise HTTPException(409, "الطلب ده اتاخد أو اتلغى.")
         db.refresh(p)
-        log(db, p.id, "accepted", actor, note or f"اتحدد الجامع {first_name(collector.name)}")
+        activity = log(db, p.id, "accepted", actor, note or f"اتحدد الجامع {first_name(collector.name)}")
+        record_pickup_status_notification(
+            db, pickup_id=p.id, old_status=old_status, new_status=p.status, activity_id=activity.id
+        )
     else:
         raise HTTPException(409, "الحالة دي بتتغير من الجامع أو المواطن.")
     db.commit()
@@ -236,10 +244,19 @@ def _release_jobs(db: Session, c: Collector, claims: dict) -> None:
         if p.status == "accepted":
             has_weighing = db.query(Weighing.id).filter(Weighing.pickup_id == p.id).first() is not None
             if not has_weighing:
+                old_collector_profile_id = c.profile_id
                 p.status = "requested"
                 p.collector_id = None
                 p.accepted_at = None
-                log(db, p.id, "requested", actor, "الجامع اتوقف، الطلب رجع للقايمة وبندوّر على جامع تاني")
+                activity = log(db, p.id, "requested", actor, "الجامع اتوقف، الطلب رجع للقايمة وبندوّر على جامع تاني")
+                create_status_notifications(
+                    db,
+                    event_key=f"pickup:{p.id}:activity:{activity.id}",
+                    recipient_ids=[p.citizen_id, old_collector_profile_id],
+                    kind="pickup_status",
+                    resource_id=p.id,
+                    status="requested",
+                )
         elif p.status == "weighed" and not p.collector_finished_at:
             log(db, p.id, "weighed", actor, "الجامع اتوقف قبل ما يخلّص، محتاج متابعة من الإدارة")
 

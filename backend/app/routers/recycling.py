@@ -15,6 +15,7 @@ from app.helpers import iso_z, now_utc
 from app.logic.duplicates import haversine_m
 from app.logic.idempotency import claim, clean_key
 from app.logic.ids import next_id
+from app.logic.notifications import record_pickup_status_notification
 from app.logic.recycling import (
     approx,
     by_material,
@@ -141,6 +142,7 @@ def cancel_pickup(
     db: Session = Depends(get_db),
 ):
     pickup = _owned(db, pickup_id, claims["sub"])
+    old_status = pickup.status
     # Atomic: a collector accepting at the same moment must not be overwritten.
     result = db.execute(
         update(RecyclingPickup)
@@ -150,7 +152,10 @@ def cancel_pickup(
     if result.rowcount != 1:  # nothing was written, so there is nothing to roll back
         raise HTTPException(409, "مينفعش تلغي الطلب بعد ما الجامع قبله.")
     note = (body.note.strip() if body and body.note else "") or "المواطن لغى الطلب"
-    log(db, pickup.id, "cancelled", "مواطن", note)
+    activity = log(db, pickup.id, "cancelled", "مواطن", note)
+    record_pickup_status_notification(
+        db, pickup_id=pickup.id, old_status=old_status, new_status=pickup.status, activity_id=activity.id
+    )
     db.commit()
     db.refresh(pickup)
     return pickup_view(db, pickup, viewer="citizen", storage=storage)
@@ -163,9 +168,13 @@ def confirm_pickup(pickup_id: str, storage: Storage, claims: Claims, db: Session
         return pickup_view(db, pickup, viewer="citizen", storage=storage)
     if pickup.status != "weighed" or not pickup.collector_finished_at:
         raise HTTPException(409, "لسه الجامع مخلّصش.")
+    old_status = pickup.status
     pickup.status = "completed"
     pickup.confirmed_at = now_utc()
-    log(db, pickup.id, "completed", "مواطن", "اتأكد الوزن، شكرًا إنك بتدوّر")
+    activity = log(db, pickup.id, "completed", "مواطن", "اتأكد الوزن، شكرًا إنك بتدوّر")
+    record_pickup_status_notification(
+        db, pickup_id=pickup.id, old_status=old_status, new_status=pickup.status, activity_id=activity.id
+    )
     db.commit()
     return pickup_view(db, pickup, viewer="citizen", storage=storage)
 
@@ -330,6 +339,7 @@ def accept_job(job_id: str, claims: Claims, db: Session = Depends(get_db)):
         raise HTTPException(403, FORBIDDEN)
     if pickup.collector_id == collector.id:  # offline retry
         return pickup_view(db, pickup, viewer="collector")
+    old_status = pickup.status
     now = now_utc()
     # First accept wins: only one UPDATE can match status == requested.
     result = db.execute(
@@ -341,7 +351,10 @@ def accept_job(job_id: str, claims: Claims, db: Session = Depends(get_db)):
     )
     if result.rowcount != 1:  # nothing was written, so there is nothing to roll back
         raise HTTPException(409, "الطلب ده اتاخد أو اتلغى.")
-    log(db, job_id, "accepted", first_name(collector.name) or "الجامع", "الجامع قبل طلبك وجاي لك")
+    activity = log(db, job_id, "accepted", first_name(collector.name) or "الجامع", "الجامع قبل طلبك وجاي لك")
+    record_pickup_status_notification(
+        db, pickup_id=pickup.id, old_status=old_status, new_status="accepted", activity_id=activity.id
+    )
     db.commit()
     db.refresh(pickup)
     return pickup_view(db, pickup, viewer="collector")
@@ -370,7 +383,8 @@ def add_weighing(job_id: str, body: WeighingInput, response: Response, claims: C
         client_id=body.client_id,
         at=now_utc(),
     )
-    first = pickup.status == "accepted"
+    old_status = pickup.status
+    first = old_status == "accepted"
     # Atomic against a concurrent admin cancel: only an accepted/weighed, unfinished pickup may take a weighing.
     moved = db.execute(
         update(RecyclingPickup)
@@ -393,7 +407,10 @@ def add_weighing(job_id: str, body: WeighingInput, response: Response, claims: C
             return weighing_view(again)
         raise
     if first:
-        log(db, job_id, "weighed", first_name(collector.name) or "الجامع", "الجامع بدأ يوزن الخامات")
+        activity = log(db, job_id, "weighed", first_name(collector.name) or "الجامع", "الجامع بدأ يوزن الخامات")
+        record_pickup_status_notification(
+            db, pickup_id=pickup.id, old_status=old_status, new_status="weighed", activity_id=activity.id
+        )
     db.commit()
     response.status_code = 201
     return weighing_view(weighing)
