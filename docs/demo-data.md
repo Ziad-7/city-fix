@@ -47,7 +47,7 @@ CITYFIX_DEMO_SEED_CONFIRM=local python -m scripts.seed_large_demo --expected-pro
 
 1. Confirm with the project owner which database is meant. Prefer a staging or demo project. Do not run this on the live municipal database without their approval.
 2. Dry run and review the counts: `python -m scripts.seed_large_demo --expected-project-ref REF`.
-3. `export CITYFIX_DEMO_SEED_CONFIRM=REF`, then add `--apply`. It writes in transactions of about 200 units (one connection, 60 s statement timeout, 5 s lock timeout); about 20 seconds in total. If it stops, run it again: finished chunks are skipped. Run the resume on the same day, since timestamps are relative to the run time.
+3. `export CITYFIX_DEMO_SEED_CONFIRM=REF`, then add `--apply`. It writes in transactions of about 200 units (one connection, 60 s statement timeout, 5 s lock timeout); about 20 seconds in total. If it stops, run it again with the same `--scale` and `--seed`: finished chunks are skipped and the rest is generated around the first run's clock, so ids and timestamps line up. With other options it refuses (exit 2); run `--cleanup --apply` first.
 4. Spot-check the admin app, then `unset CITYFIX_DEMO_SEED_CONFIRM`.
 
 Gates, in order: `--expected-project-ref` must match the `DATABASE_URL` host (same check as the migration tool), writes need `CITYFIX_DEMO_SEED_CONFIRM` equal to the ref, and the base data (all 12 categories, their departments, `sanitation`, `parks`) must exist. In real-database mode the CLI never creates `requested` pickups (so no real collector is sent to a fake address), notifications, push rows, price rows or logins. It only inserts; it never updates or deletes a row it did not create.
@@ -60,7 +60,7 @@ Bin telemetry goes "offline" about two hours after the run and incidents age. Ri
 
 ## 6. Cleanup
 
-`--cleanup` is a dry run that lists counts; `--cleanup --apply` deletes exactly the rows with the `DEMOL` keys plus the rows that only exist for them (activity log, followers, readings, bin reports, status notifications and their push deliveries). It refuses with exit code 3 and deletes nothing if a real row points at demo data (for example a real report joined to a demo incident, a real pickup assigned to a demo collector); resolve those rows by hand and run it again. Exit codes: 0 ok, 1 database error (re-run), 2 refused by a gate, 3 cleanup blocked.
+`--cleanup` is a dry run that lists counts; `--cleanup --apply` deletes exactly the rows with the `DEMOL` keys plus the rows that only exist for them (activity log, followers, readings, bin reports, status notifications and their push deliveries). It refuses with exit code 3 and deletes nothing if a real row points at demo data (for example a real report joined to a demo incident, a real pickup assigned to a demo collector, or a demo incident that staff merged into a real one, which moves its reports, followers and work order onto the real incident); resolve those rows by hand and run it again. Status notifications addressed to demo profiles, and those about demo incidents and pickups (including ones sent to real followers of a demo incident), are deleted with the demo rows. Exit codes: 0 ok, 1 database error (re-run), 2 refused by a gate, 3 cleanup blocked.
 
 ## 7. Never
 

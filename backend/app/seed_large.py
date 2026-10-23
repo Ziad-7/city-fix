@@ -69,6 +69,7 @@ from app.seed_large_data import (
     FIRST_NAMES,
     LANDMARKS,
     PICKUP_NOTES,
+    PUBLIC_FIGURE_NAMES,
     SENSITIVE_PLACES,
     SR_ITEMS,
     SR_NOTES,
@@ -318,7 +319,8 @@ class _Generator:
     def names(self, n: int) -> list[str]:
         pairs = [(f, fam) for f in FIRST_NAMES for fam in FAMILY_NAMES]
         self.rng.shuffle(pairs)
-        return [f"{f} {fam}" for f, fam in pairs[:n]]
+        full = [f"{f} {fam}" for f, fam in pairs]
+        return [name for name in full if name not in PUBLIC_FIGURE_NAMES][:n]
 
     # ----- profiles
     def profiles(self) -> tuple[list[Unit], list[str]]:
@@ -653,6 +655,10 @@ class _Generator:
                 street, address = self.place(d)
                 lat, lng = self.point(d)
                 category = rng.choices(mix_ids, cum_weights=mix_cum)[0]
+                if category == "garbage" and d is self.nasr and a < 30:
+                    # background garbage would chain the dense Nasr City centre into one giant 500 m hotspot;
+                    # recent Nasr City garbage comes from the hotspot clusters, duplicates and full bins instead
+                    category = rng.choices(mix_ids[1:], weights=[w for _, w in CATEGORY_MIX[1:]])[0]
                 specs.append(
                     self._spec(category, d, lat, lng, street, address, self._created(a + 0.0), False, "normal")
                 )  # fmt: skip
@@ -1308,7 +1314,38 @@ def _counts(units: list[Unit]) -> dict[str, int]:
     return dict(sorted(counts.items()))
 
 
+def _run_clock(db: Session, now: datetime | None) -> datetime:
+    """The ``now`` the dataset is generated around.
+
+    Child ids (FTC/WO/AS/WGH) are numbered across units, and the draws depend on ``now``. A resume must therefore
+    regenerate around the clock of the interrupted run, or new units would reuse child ids of committed ones.
+    The anonymous profile (the last profile unit, committed before any child-numbered unit) is created exactly
+    180 days before that clock, so it is the anchor.
+    """
+    anon = db.get(Profile, ANON_ID)
+    if anon is not None and anon.created_at is not None:
+        return anon.created_at.replace(tzinfo=UTC) + timedelta(days=180)
+    return now or now_utc()
+
+
+def _check_same_generation(db: Session, units: list[Unit]) -> None:
+    """Refuse to add to demo rows made with another --scale/--seed (they would get colliding or mixed rows)."""
+    from app.models import Base
+
+    wanted = {u.root_id: u.rows[0].created_at for u in units if u.table in ("incidents", "recycling_pickups")}
+    for table in ("incidents", "recycling_pickups"):
+        t = Base.metadata.tables[table]
+        stored = db.execute(select(t.c.id, t.c.created_at).where(_like(t.c.id, SELECTORS[table]))).all()
+        for rid, created in stored:
+            if rid not in wanted or _naive(created) != wanted[rid]:
+                raise DemoSeedError(
+                    f"existing demo rows ({rid}) were generated with other options; use the same --scale/--seed "
+                    "or run --cleanup --apply first"
+                )
+
+
 def _pending(db: Session, units: list[Unit]) -> tuple[list[Unit], int]:
+    _check_same_generation(db, units)
     existing = _existing_roots(db)
     todo, present = [], 0
     for unit in units:
@@ -1324,7 +1361,7 @@ def _pending(db: Session, units: list[Unit]) -> tuple[list[Unit], int]:
 def plan(db: Session, opts: LargeOptions, now: datetime | None = None) -> dict:
     """Dry run: what ``apply`` would insert. Reads only."""
     ref = load_reference(db, opts)
-    units = build_dataset(now or now_utc(), ref, opts)
+    units = build_dataset(_run_clock(db, now), ref, opts)
     todo, present = _pending(db, units)
     samples: dict[str, list[str]] = {}
     for unit in todo:
@@ -1361,7 +1398,9 @@ def apply(db: Session, opts: LargeOptions, now: datetime | None = None, chunk_un
           pause_ms: int = 0) -> dict:  # fmt: skip
     """Insert the units that are not there yet. Chunked, resumable, idempotent; never updates or deletes."""
     ref = load_reference(db, opts)
-    units = build_dataset(now or now_utc(), ref, opts)
+    if chunk_units < 1 or pause_ms < 0:
+        raise DemoSeedError("chunk_units must be >= 1 and pause_ms >= 0")
+    units = build_dataset(_run_clock(db, now), ref, opts)
     todo, present = _pending(db, units)
     started = time.monotonic()
     inserted: dict[str, int] = {}
@@ -1445,6 +1484,31 @@ def _blockers(db: Session, ids: dict[str, list[str]]) -> dict[str, dict]:
                 sample += [str(getattr(r, "id", "")) for r in q.limit(5 - len(sample)).all()]
         if count:
             out[name] = {"count": count, "sample": sample[:5]}
+    # Demo rows that staff moved onto real rows (merging a demo incident into a real one moves its reports,
+    # followers and open work order): deleting them would change or dangle the real incident.
+    moved = {
+        "real_incidents_with_demo_work_order": db.query(Incident.id).filter(
+            Incident.work_order_id.like("WO-DEMOL-%"), Incident.id.notlike("INC-DEMOL-%")
+        ),
+        "demo_reports_on_real_incidents": db.query(Report.id).filter(
+            Report.id.like("FTC-DEMOL-%"), Report.incident_id.notlike("INC-DEMOL-%")
+        ),
+        "demo_work_orders_on_real_records": db.query(WorkOrder.id).filter(
+            WorkOrder.id.like("WO-DEMOL-%"),
+            or_(WorkOrder.incident_id.notlike("INC-DEMOL-%"), WorkOrder.service_request_id.notlike("SRV-DEMOL-%")),
+        ),
+        "demo_followers_on_real_incidents": db.query(IncidentFollower.incident_id).filter(
+            IncidentFollower.user_id.like("demol-%"), IncidentFollower.incident_id.notlike("INC-DEMOL-%")
+        ),
+        "real_bin_reports_on_demo_incidents": db.query(BinReport.incident_id).filter(
+            BinReport.incident_id.like("INC-DEMOL-%"), BinReport.bin_id.notlike("BIN-DEMOL-%"),
+            BinReport.bin_id.notlike("HUB-DEMOL-%"),
+        ),
+    }  # fmt: skip
+    for name, q in moved.items():
+        count = q.count()
+        if count:
+            out[name] = {"count": count, "sample": [str(r[0]) for r in q.limit(5).all()]}
     return out
 
 
@@ -1473,6 +1537,8 @@ def cleanup(db: Session, *, apply: bool = False) -> dict:
     ntf_ids = list(ids["notifications"])
     for prefix in ("incident:INC-DEMOL-", "pickup:RCY-DEMOL-"):
         ntf_ids += db.execute(select(ntf.c.id).where(ntf.c.event_key.like(prefix + "%"))).scalars().all()
+    # in-app updates addressed to a demo profile (nobody can sign in as one); they would block the profile delete
+    ntf_ids += db.execute(select(ntf.c.id).where(ntf.c.recipient_id.like("demol-%"))).scalars().all()
     ntf_ids = sorted(set(ntf_ids))
     wo_ids = ids["work_orders"]
     activity_filter = or_(

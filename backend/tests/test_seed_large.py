@@ -51,6 +51,7 @@ from app.routers.reports import _next_suggestion_id
 from app.seed import seed_db
 from app.seed_large import (
     SELECTORS,
+    DemoSeedError,
     LargeOptions,
     apply,
     build_dataset,
@@ -295,6 +296,73 @@ def test_cleanup_refuses_when_a_real_row_depends_on_demo_data(isolated_db):
     assert _snapshot(isolated_db) == before
 
 
+def test_resume_hours_later_regenerates_around_the_first_run_clock(isolated_db, monkeypatch):
+    clean_engine = _engine()
+    with Session(clean_engine) as clean:
+        _seed(clean)
+        apply(clean, SMALL, now=NOW, chunk_units=5)
+        expected = _snapshot(clean)
+    real_commit = Session.commit
+    calls = {"n": 0}
+
+    def flaky(self):
+        calls["n"] += 1
+        if calls["n"] == 30:  # inside the incident phase: child ids (FTC/WO/AS) are already numbered
+            raise RuntimeError("killed")
+        return real_commit(self)
+
+    monkeypatch.setattr(Session, "commit", flaky)
+    with pytest.raises(RuntimeError):
+        apply(isolated_db, SMALL, now=NOW, chunk_units=5)
+    monkeypatch.setattr(Session, "commit", real_commit)
+    assert isolated_db.query(Incident).filter(Incident.id.like("INC-DEMOL-%")).count() > 0
+    apply(isolated_db, SMALL, now=NOW + timedelta(hours=5), chunk_units=5)  # the operator resumes later
+    snap = _snapshot(isolated_db)
+
+    def demo(rows):  # the base fixture is stamped with the real clock, so compare the demo rows only
+        return [r for r in rows if "DEMOL" in r or "demol" in r]
+
+    for table in expected:
+        if table != "smart_bins":  # device key hashes are random per run
+            assert demo(snap[table]) == demo(expected[table]), table
+
+
+def test_apply_refuses_to_mix_generations(isolated_db):
+    apply(isolated_db, SMALL, now=NOW)
+    before = _snapshot(isolated_db)
+    for other in (LargeOptions(scale=0.3), LargeOptions(scale=0.15, seed=7)):
+        with pytest.raises(DemoSeedError):
+            apply(isolated_db, other, now=NOW)
+    assert _snapshot(isolated_db) == before
+
+
+def test_cleanup_refuses_after_a_demo_incident_was_merged_into_a_real_one(isolated_db):
+    apply(isolated_db, SMALL, now=NOW)
+    _real_graph(isolated_db)
+    src = (
+        isolated_db.query(Incident)
+        .filter(Incident.id.like("INC-DEMOL-%"), Incident.work_order_id.isnot(None))
+        .order_by(Incident.id)
+        .first()
+    )
+    real = isolated_db.get(Incident, "INC-900")
+    # what POST /admin/incidents/{demo}/merge into a real incident does to the rows
+    for r in isolated_db.query(Report).filter_by(incident_id=src.id).all():
+        r.incident_id = real.id
+    for f in isolated_db.query(IncidentFollower).filter_by(incident_id=src.id).all():
+        isolated_db.delete(f)
+        isolated_db.add(IncidentFollower(incident_id=real.id, user_id=f.user_id))
+    isolated_db.get(WorkOrder, src.work_order_id).incident_id = real.id
+    real.work_order_id, src.work_order_id = src.work_order_id, None
+    isolated_db.commit()
+    before = _snapshot(isolated_db)
+    result = cleanup(isolated_db, apply=True)
+    assert result["refused"] is True
+    assert {"real_incidents_with_demo_work_order", "demo_reports_on_real_incidents", "demo_work_orders_on_real_records",
+            "demo_followers_on_real_incidents"} <= set(result["blockers"])  # fmt: skip
+    assert _snapshot(isolated_db) == before
+
+
 # ----------------------------------------------------------------------------- business rules (scale 1.0, local)
 def test_counts_at_full_scale(big):
     c = big.report["counts"]
@@ -304,6 +372,13 @@ def test_counts_at_full_scale(big):
                   "bin_readings", "bin_reports", "notifications", "material_prices"):  # fmt: skip
         assert c[table] > 0, table
     assert big.report["wall"] < 30
+
+
+def test_no_demo_profile_carries_a_public_figure_name(big):
+    from app.seed_large_data import PUBLIC_FIGURE_NAMES
+
+    names = {p.name for p in big.query(Profile).filter(Profile.id.like("demol-%")).all()}
+    assert len(names) > 300 and not names & PUBLIC_FIGURE_NAMES
 
 
 def test_priority_matches_the_formula_and_followers_are_consistent(big):
@@ -384,7 +459,9 @@ def test_dashboard_is_full(big):
 def test_hotspots_and_duplicates_exist(big):
     admin = {"role": "admin", "sub": "admin-001"}
     spots = cluster_incidents(big, admin, days=30, radius_meters=500, min_count=3, now=now_utc())
-    assert len(spots["items"]) >= 3
+    assert len(spots["items"]) >= 5
+    # several street-sized hotspots, not the whole Nasr City centre chained into one
+    assert max(item["count"] for item in spots["items"]) <= 25
     with_dupes = 0
     for inc in big.query(Incident).filter(Incident.id.like("INC-DEMOL-%"), Incident.status.in_(OPEN_STATUSES)).all():
         if find_duplicates(big, inc):
