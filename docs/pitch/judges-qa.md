@@ -28,7 +28,7 @@ Short, honest answers. Evidence for each is in [../evidence.md](../evidence.md).
 
 **Does GSM work on Egyptian networks, and how long does the battery last?** Not measured. Test signal at the real bin location and log battery voltage over time; no figure is claimed.
 
-**What does a bin cost?** Not published. `hardware/bom/bom.csv` takes prices only from dated supplier quotes.
+**What does a bin cost?** See `hardware/bom/bom.csv`: we quote a price only when it has a dated supplier source; every other line is to verify. No total is claimed without those quotes.
 
 **Are 80% full and 60 °C right?** They are illustrative defaults in `backend/app/models.py`; agree them with the district.
 
@@ -44,6 +44,6 @@ Short, honest answers. Evidence for each is in [../evidence.md](../evidence.md).
 
 **Why would a Zabbal use it?** A verified weight, a record of earnings, nearby jobs on a map, and a simple low-literacy interface. Whether that is enough is what a pilot would test.
 
-**Theft and vandalism?** Design measures are in [../team/hardware-iot.md](../team/hardware-iot.md) section 5; the Field Deployment Brief (`docs/field-deployment-brief.md`, added in a parallel PR) covers them in more detail. Not field-tested.
+**Theft and vandalism?** Design measures are in [../team/hardware-iot.md](../team/hardware-iot.md) section 5; the Field Deployment Brief (`docs/field-brief/field-deployment-brief.md`, separate PR) covers them in more detail. Not field-tested.
 
 **What if there is no connection?** The device keeps readings in an outbox and retries (simulator and prototype firmware); the mobile app keeps collector actions and reports in an offline queue and sends them later.

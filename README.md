@@ -37,9 +37,8 @@ Clients (mobile, citizen web, Command Center) talk to one FastAPI backend; devic
 - [Claims vs evidence](docs/evidence.md): what is tested, simulated or still to verify, and how to reproduce
 - [Pitch kit](docs/pitch/README.md): 3-minute video script, deck outline, judges' Q&A
 - [Vision](docs/vision.md): the full picture and the grading map
-- Bill of Materials in EGP: `hardware/bom/bom.csv` (added in a parallel PR)
-- Hardware schematics: `hardware/schematics/` (added in a parallel PR)
-- Field Deployment Brief: `docs/field-deployment-brief.md` (added in a parallel PR)
+- Hardware package (separate PR): overview `hardware/README.md`, schematics `hardware/schematics/`, Bill of Materials in EGP `hardware/bom/bom.csv` (prices only with a dated supplier source, otherwise to verify)
+- Field Deployment Brief (separate PR): `docs/field-brief/field-deployment-brief.md`, printable `docs/field-brief/field-deployment-brief.html`
 
 ## Also in CityFix
 
@@ -59,7 +58,7 @@ These modules support CityCycle and share its backend, accounts and design.
 | `apps/mobile/` | Citizen and collector app — Expo (React Native) + TypeScript, Arabic-first RTL | Built; mock mode by default |
 | `apps/web/` | Citizen website (client portal) — Next.js, Arabic and English | Built; mock mode by default |
 | `apps/admin-web/` | City Command Center — Next.js web dashboard, Arabic | Built and integrated with the local demo API; deployment pending |
-| `hardware/` | CityCycle smart-bin simulator and ESP32 Wokwi prototypes | Simulation only; schematics and BOM in a parallel PR |
+| `hardware/` | CityCycle smart-bin simulator, ESP32 Wokwi prototypes and the hardware design package (`hardware/README.md`, separate PR) | Simulated only, no physical build; schematics and BOM are design documents |
 | `backend/` | FastAPI API (SQLite locally, PostgreSQL on Supabase for deployment), CityBrain AI, budget optimizer | Built; production PostgreSQL migration, real OTP and deployment pending |
 | `docs/` | Decisions, design, specs, progress log | Living |
 

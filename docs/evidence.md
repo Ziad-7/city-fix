@@ -30,7 +30,7 @@ What CityCycle claims, how sure we are, and how anyone can check it. Status valu
 | Heat, dust, GSM and battery behavior of a real unit | To verify | No physical unit; design targets are in [team/hardware-iot.md](team/hardware-iot.md) | Bench and field tests per section 7 of that brief |
 | Full and heat thresholds (80 % and 60 °C defaults) | To verify | `backend/app/models.py` defaults, illustrative | Agree values with the district |
 | CO2 avoided | Withheld | `/me/impact` omits it until emission factors have a cited source | Add a sourced factor per material |
-| Bill of Materials prices in EGP | To verify | `hardware/bom/bom.csv` (added in a parallel PR); prices only from dated quotes | Collect quotes from Egyptian suppliers and fill `price_date` |
+| Bill of Materials prices in EGP | To verify | `hardware/bom/bom.csv` (hardware package, separate PR); a price counts only with a dated supplier source | Collect dated quotes from Egyptian suppliers and record supplier and date on each line |
 | Admin screens for forecast, route planning, hotspots and bin registration | API implemented; admin screens added in a parallel PR | Endpoints: `GET /admin/bins/forecast`, `POST /admin/recycling/routes/optimize`, `GET /admin/hotspots`, `POST /admin/bins` | Maintainer: update this row after that PR merges |
 
 ## Reproduce
