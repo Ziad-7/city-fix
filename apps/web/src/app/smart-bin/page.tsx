@@ -27,7 +27,7 @@ export default function SmartBinPage() {
   const sentence: Record<BinState, string> = {
     ok: tr('الصندوق شغال وفيه مكان.', 'The bin is working and has room.'),
     full: tr('الصندوق اتملى. بيبعت تنبيه للحي لوحده.', 'The bin is full. It alerts the district by itself.'),
-    hot: tr(`الصندوق سخن جدًا. ده ممكن يكون حريق، لو شايف دخان كلّم المطافي ${localDigits(180)}.`, `The bin is very hot. It could be a fire. If you see smoke, call the fire brigade on ${localDigits(180)}.`),
+    hot: tr(`الصندوق سخن جدًا. ده ممكن يكون حريق. لو فيه دخان، كلّم المطافي ${localDigits(180)}.`, `The bin is very hot. It could be a fire. If there is smoke, call the fire brigade on ${localDigits(180)}.`),
     low_battery: tr('بطارية الصندوق ضعيفة. فريق الصيانة بياخد تنبيه يغيّرها.', 'The bin’s battery is weak. The maintenance team gets an alert to change it.'),
     offline: tr('الصندوق مش لاقي شبكة. بيحفظ قراءاته ويبعتها أول ما الشبكة ترجع.', 'The bin has no signal. It keeps its readings and sends them when the signal is back.'),
   };
@@ -112,7 +112,7 @@ export default function SmartBinPage() {
               ))}
             </ol>
             {state === 'ok' && !justEmptied ? (
-              <p className="ftc-help">{tr(`حرّك «قد إيه مليان» لفوق ${localDigits(FULL_PCT)}٪ عشان تشوف`, `Move “How full” above ${localDigits(FULL_PCT)}% to see it`)}</p>
+              <p className="ftc-help">{tr(`حرّك «قد إيه مليان» لـ${localDigits(FULL_PCT)}٪ أو أكتر وشوف هيحصل إيه`, `Move “How full” to ${FULL_PCT}% or more and see what happens`)}</p>
             ) : null}
           </section>
         </div>
@@ -121,7 +121,7 @@ export default function SmartBinPage() {
       <p className="ftc-help cc-sb-note" data-testid="sb-note">
         {tr(
           `دي محاكاة في المتصفح. مفيش صندوق حقيقي ولا بيانات بتتبعت لأي سيرفر. حدود التنبيه (${localDigits(FULL_PCT)}٪ مليان، ${localDigits(HEAT_C)}° حرارة، بطارية أقل من ${localDigits(String(LOW_BATTERY_V).replace('.', '٫'))} فولت) هي الإعدادات الافتراضية في نظام سيتي سايكل.`,
-          `This is a browser simulation. No real bin, and nothing is sent to any server. The alert limits (${FULL_PCT}% full, ${HEAT_C}° heat, battery under ${LOW_BATTERY_V} V) are CityCycle’s default settings.`,
+          `This is a browser simulation. There is no real bin, and nothing is sent to any server. The alert limits (${FULL_PCT}% full, ${HEAT_C}° heat, battery under ${LOW_BATTERY_V} V) are CityCycle’s default settings.`,
         )}
       </p>
       <div className="cc-sb-actions">

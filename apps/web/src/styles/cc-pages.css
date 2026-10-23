@@ -28,7 +28,7 @@ html[dir="ltr"] .p-medal .ttl,html[dir="ltr"] .h-slogan{font-family:var(--ftc-fo
 .cc-sb-ctl input[type="range"]{grid-column:1 / -1;width:100%;height:44px;margin:0;accent-color:var(--ftc-red)}
 .cc-sb-val{font:700 28px/36px var(--ftc-font-display)}
 .cc-sb-actions{display:flex;flex-wrap:wrap;gap:10px}
-.cc-sb-actions .ftc-btn{flex:1;min-height:48px}
+.cc-sb-actions .ftc-btn{flex:1 1 180px;min-height:48px;white-space:nowrap}
 .cc-sb-city{display:flex;flex-direction:column;gap:10px}
 .cc-sb-city .ftc-help{margin:0}
 .cc-sb-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
@@ -37,6 +37,8 @@ html[dir="ltr"] .p-medal .ttl,html[dir="ltr"] .h-slogan{font-family:var(--ftc-fo
 .cc-sb-steps li.is-now{border-color:var(--ftc-gold);background:var(--ftc-gold-soft);color:var(--ftc-ink)}
 .cc-sb-num{flex:none;width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:1.5px solid currentColor;font:700 14px/1 var(--ftc-font-sans)}
 .cc-sb-note{margin:20px 0 12px;max-width:640px}
+/* Phones: a smaller picture, so the bin and the first control fit on one screen. */
+@media (max-width:899px){.cc-sb-figure{min-height:0;padding:12px;--sbf-w:190px}}
 @media (min-width:900px){
   .cc-sb{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
   .cc-sb-steps{flex-direction:row}

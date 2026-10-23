@@ -9,6 +9,8 @@ import { BIN_COLOR, BIN_ICON } from './BinParts';
 
 const BODY = 'M30 70 H170 L158 245 Q157 252 150 252 H50 Q43 252 42 245 Z';
 const FILL_H = 182;
+/** Room above the rim for the open lid and heat lines, and below it for the wheels. */
+const VIEW = { y: -30, h: 305 };
 
 type Props = { fillPct: number; state: BinState; size?: number; decorative?: boolean };
 
@@ -24,24 +26,32 @@ export function SmartBinFigure({ fillPct, state, size = 260, decorative }: Props
   const markY = 252 - (FILL_H * FULL_PCT) / 100;
   const clipId = `sbf-clip-${size}`;
   return (
-    <div className="cc-sbf" style={{ width: size, height: (size * 260) / 200 }}>
-      <svg viewBox="0 0 200 260" width="100%" height="100%" {...a11y}>
+    // A parent can shrink the picture with the --sbf-w CSS variable (the demo page does on phones).
+    <div className="cc-sbf" style={{ width: `var(--sbf-w, ${size}px)`, aspectRatio: `200 / ${VIEW.h}` }}>
+      <svg viewBox={`0 ${VIEW.y} 200 ${VIEW.h}`} width="100%" height="100%" {...a11y}>
         <defs>
           <clipPath id={clipId}><path d={BODY} /></clipPath>
         </defs>
         <g opacity={state === 'offline' ? 0.55 : 1}>
+          <g fill="var(--ftc-ink)">
+            <circle cx="62" cy="258" r="13" />
+            <circle cx="138" cy="258" r="13" />
+          </g>
           <path d={BODY} fill="var(--ftc-surface)" />
           <g clipPath={`url(#${clipId})`}>
             <rect x="20" y={252 - h} width="160" height={h} fill={color} opacity="0.85" />
           </g>
           <path d={BODY} fill="none" stroke="var(--ftc-ink)" strokeWidth="4" strokeLinejoin="round" />
+          <line x1="36" x2="164" y1="84" y2="84" stroke="var(--ftc-ink)" strokeWidth="3" />
           <line x1="36" x2="164" y1={markY} y2={markY} stroke="var(--ftc-ink)" strokeWidth="1.5" strokeDasharray="5 4" />
-          <text x="100" y={markY - 4} textAnchor="middle" fontSize="11" fill="var(--ftc-ink)" fontWeight="600">{localDigits(FULL_PCT)}{tr('٪', '%')}</text>
+          <rect x="80" y={markY - 9} width="40" height="18" rx="9" fill="var(--ftc-surface)" stroke="var(--ftc-ink)" strokeWidth="1.5" />
+          <text x="100" y={markY + 4} textAnchor="middle" fontSize="12" fill="var(--ftc-ink)" fontWeight="700">{localDigits(FULL_PCT)}{tr('٪', '%')}</text>
           {full ? (
             <g stroke="var(--ftc-ink)" strokeWidth="3" fill="var(--ftc-surface)" strokeLinejoin="round">
-              <rect x="60" y="34" width="22" height="34" rx="6" transform="rotate(-12 71 51)" />
-              <rect x="92" y="40" width="34" height="28" rx="3" transform="rotate(8 109 54)" />
-              <rect x="124" y="32" width="18" height="36" rx="5" transform="rotate(14 133 50)" />
+              {/* A bottle, a crumpled paper and a can sticking out of the top. */}
+              <path d="M62 68 V40 Q62 34 68 32 V24 H76 V32 Q82 34 82 40 V68 Z" transform="rotate(-14 72 50)" />
+              <path d="M94 68 L90 46 L100 38 L112 44 L124 36 L128 52 L122 68 Z" />
+              <rect x="128" y="34" width="20" height="34" rx="4" transform="rotate(12 138 51)" />
             </g>
           ) : null}
           <g className="cc-sb-lid" style={{ transformOrigin: '20px 70px', transform: full ? 'rotate(-22deg)' : 'none' }}>
