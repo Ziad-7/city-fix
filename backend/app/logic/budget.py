@@ -31,30 +31,33 @@ class Candidate:
 def knapsack(items: list[Candidate], budget_egp: int) -> list[int]:
     """Indices of the best subset: max sum of priority, ties broken by sum of followers.
 
-    DP, exact over 100 EGP units (costs rounded up; value is the tuple (priority, followers), compared lexicographically).
+    DP, exact over 100 EGP units (costs rounded up; value is (priority, followers), compared lexicographically;
+    vectorised with numpy, and identical to the original tuple DP, see tests/test_budget_knapsack.py).
     Total cost in units never exceeds budget_egp // 100, so cost never exceeds the budget.
     """
     cap = min(budget_egp // UNIT_EGP, sum(i.units for i in items))
     if cap < 0 or not items:
         return []
-    zero = (0, 0)
-    # best[i][w] = best value using the first i items with capacity w
-    best = [[zero] * (cap + 1) for _ in range(len(items) + 1)]
-    for i, it in enumerate(items, start=1):
-        gain = (it.priority, it.followers)
-        for w in range(cap + 1):
-            skip = best[i - 1][w]
-            if it.units <= w:
-                prev = best[i - 1][w - it.units]
-                take = (prev[0] + gain[0], prev[1] + gain[1])
-                best[i][w] = max(skip, take)
-            else:
-                best[i][w] = skip
+    import numpy as np  # lazy: keeps the API cold start unchanged
+
+    # (priority, followers) compared lexicographically == priority * scale + followers, because the
+    # follower sum of any subset is < scale. One int64 per capacity cell instead of a tuple per item x cell.
+    scale = sum(i.followers for i in items) + 1
+    best = np.zeros(cap + 1, dtype=np.int64)  # best value for each capacity using the items seen so far
+    keep = np.zeros((len(items), cap + 1), dtype=bool)  # keep[n, w]: item n improved capacity w
+    for n, it in enumerate(items):
+        u = it.units
+        if u > cap:
+            continue
+        take = best[: cap + 1 - u] + (it.priority * scale + it.followers)  # built from the previous row only
+        better = take > best[u:]  # strict: on a tie the item is skipped, exactly as the tuple DP did
+        keep[n, u:] = better
+        best[u:] = np.where(better, take, best[u:])
     chosen, w = [], cap
-    for i in range(len(items), 0, -1):
-        if best[i][w] != best[i - 1][w]:
-            chosen.append(i - 1)
-            w -= items[i - 1].units
+    for n in range(len(items) - 1, -1, -1):
+        if keep[n, w]:
+            chosen.append(n)
+            w -= items[n].units
     return sorted(chosen)
 
 

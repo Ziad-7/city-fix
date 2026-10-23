@@ -60,6 +60,11 @@ class Ctx:
         ids = [i.id for i in incidents]
         db = self.db
         self.user_id = user_id
+        if not ids:
+            # Work-order / service-request contexts need only categories and departments: skip the
+            # activity, report, triage and budget-plan queries (they would all be empty IN () lookups).
+            self._load_following(user_id)
+            return self
         small = len(ids) < 400
 
         q = db.query(ActivityLog).filter(ActivityLog.entity_type == "incident")
@@ -85,11 +90,15 @@ class Ctx:
         plan = db.query(BudgetPlan).order_by(BudgetPlan.created_at.desc(), BudgetPlan.id.desc()).first()
         self.plan_selected = set(plan.selected or []) if plan else set()
 
+        self._load_following(user_id)
+        return self
+
+    def _load_following(self, user_id: str | None) -> None:
         if user_id:
+            db = self.db
             self.following = {
                 f.incident_id for f in db.query(IncidentFollower).filter(IncidentFollower.user_id == user_id)
             } | {r.incident_id for r in db.query(Report).filter(Report.reporter_id == user_id)}
-        return self
 
     def dept_name(self, department_id: str | None) -> str:
         d = self.departments.get(department_id) if department_id else None

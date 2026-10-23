@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.admin_auth import require_admin, require_staff
 from app.config import settings
 from app.db import get_db, reset_session
-from app.helpers import now_utc
+from app.helpers import json_response, now_utc
 from app.logic.budget import optimize_budget
 from app.logic.dashboard import build_dashboard
 from app.logic.domain import (
@@ -56,11 +56,13 @@ from app.schemas import (
     BudgetCommitRequest,
     BudgetOptimizeRequest,
     CreateWorkOrderRequest,
+    IncidentStatus,
     MergeIncidentRequest,
     PatchIncidentRequest,
     PatchServiceRequestRequest,
     PatchWorkOrderRequest,
     TriageConfirmRequest,
+    WorkOrderStatus,
 )
 from app.seed import TEAMS
 
@@ -136,7 +138,7 @@ def get_dashboard(
 # --------------------------------------------------------------------------- incidents
 @router.get("/incidents")
 def list_incidents(
-    status: str | None = None,
+    status: IncidentStatus | None = None,
     categoryId: str | None = None,
     department: str | None = None,
     critical: bool | None = None,
@@ -171,7 +173,7 @@ def list_incidents(
         ]
     incidents.sort(key=lambda i: (-i.priority_score, i.id))
     ctx = load_ctx(db, incidents)
-    return [admin_incident(ctx, i) for i in incidents]
+    return json_response([admin_incident(ctx, i) for i in incidents])
 
 
 @router.get("/incidents/{incident_id}")
@@ -262,6 +264,10 @@ def merge_incident(
         raise HTTPException(status_code=422, detail=INVALID)  # an incident cannot be merged into itself
     if getattr(target.status, "value", target.status) in ("resolved", "closed"):
         raise HTTPException(status_code=400, detail="مينفعش تدمج في بلاغ اتحل أو اتقفل")
+    if getattr(source.status, "value", source.status) in ("resolved", "closed"):
+        # A merged incident is closed: merging it again would write a second misleading "merged" entry
+        # and could move its work order twice.
+        raise HTTPException(status_code=400, detail="مينفعش تدمج بلاغ اتحل أو اتقفل")
 
     def people(incident_id: str) -> set[str]:
         rows = db.query(IncidentFollower.user_id).filter(IncidentFollower.incident_id == incident_id).all()
@@ -339,7 +345,7 @@ def confirm_triage(
 # --------------------------------------------------------------------------- work orders
 @router.get("/work-orders")
 def list_work_orders(
-    status: str | None = None,
+    status: WorkOrderStatus | None = None,
     department: str | None = None,
     payload: dict = Depends(require_staff),
     db: Session = Depends(get_db),
@@ -354,7 +360,7 @@ def list_work_orders(
         dept = db.get(Department, department) or db.query(Department).filter_by(name_ar=department).first()
         query = query.filter(WorkOrder.department_id == (dept.id if dept else department))
     orders = query.order_by(WorkOrder.created_at.desc(), WorkOrder.id.desc()).all()
-    return work_orders_view(db, load_ctx(db, []), orders)
+    return json_response(work_orders_view(db, load_ctx(db, []), orders))
 
 
 def _work_order_or_404(db: Session, wo_id: str, payload: dict) -> WorkOrder:
@@ -488,15 +494,19 @@ def _sr_scope_ok(sr: ServiceRequest, payload: dict) -> bool:
 def _sr_json(db: Session, srs: list[ServiceRequest]) -> list[dict]:
     ctx = load_ctx(db, [])
     timelines = service_timelines(db, [s.id for s in srs])
-    wo_by_sr = {
-        w.service_request_id: w.id for w in db.query(WorkOrder).filter(WorkOrder.service_request_id.isnot(None))
-    }
+    sr_ids = [s.id for s in srs]
+    wo_query = db.query(WorkOrder)
+    if len(sr_ids) <= 1000:  # keeps the IN list well below every driver's bind-parameter limit
+        wo_query = wo_query.filter(WorkOrder.service_request_id.in_(sr_ids))
+    else:
+        wo_query = wo_query.filter(WorkOrder.service_request_id.isnot(None))
+    wo_by_sr = {w.service_request_id: w.id for w in wo_query} if sr_ids else {}
     return [admin_service_request(ctx, s, timelines.get(s.id, []), wo_by_sr.get(s.id)) for s in srs]
 
 
 @router.get("/service-requests")
 def list_service_requests(
-    status: str | None = None,
+    status: IncidentStatus | None = None,
     serviceType: str | None = None,
     day: str | None = None,
     payment: str | None = None,
@@ -522,7 +532,7 @@ def list_service_requests(
             s.id,
         )
     )
-    return _sr_json(db, srs)
+    return json_response(_sr_json(db, srs))
 
 
 @router.patch("/service-requests/{sr_id}")

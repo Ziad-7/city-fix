@@ -1,7 +1,8 @@
 """Admin tests whose expectations are computed from the DB (they fail on the old hard-coded behaviour)."""
 
 import itertools
-from datetime import timedelta
+from datetime import UTC, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -15,8 +16,9 @@ OPEN = ("received", "triaged", "assigned", "in_progress")
 
 def _since(range_):
     now = now_utc()
-    if range_ == "today":
-        return now.replace(hour=0, minute=0, second=0, microsecond=0)
+    if range_ == "today":  # the product's day is the Cairo day (see test_s2_fixes B5)
+        cairo = ZoneInfo("Africa/Cairo")
+        return datetime.combine(now.astimezone(cairo).date(), time.min, tzinfo=cairo).astimezone(UTC)
     return now - timedelta(days=7 if range_ == "7d" else 30)
 
 

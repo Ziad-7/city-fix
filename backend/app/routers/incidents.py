@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.admin_auth import current_claims, is_staff
 from app.db import get_db
+from app.helpers import json_response
 from app.logic.domain import ensure_follower, staff_department
 from app.logic.serialize import incident_view, load_ctx
 from app.logic.status import change_incident_status
@@ -38,7 +39,7 @@ def list_incidents(payload: dict = Depends(current_claims), db: Session = Depend
     """All incidents, newest first. Public fields only; staff tokens also get the admin fields."""
     incidents = db.query(Incident).order_by(Incident.created_at.desc(), Incident.id.desc()).all()
     ctx = load_ctx(db, incidents, payload["sub"])
-    return [incident_view(ctx, i, _staff_sees_admin_fields(i, payload)) for i in incidents]
+    return json_response([incident_view(ctx, i, _staff_sees_admin_fields(i, payload)) for i in incidents])
 
 
 @router.get("/incidents/{incident_id}")

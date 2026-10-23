@@ -236,4 +236,36 @@ describe('DataTable', () => {
     headers = container.querySelectorAll('th');
     expect(headers[0]).toHaveAttribute('aria-sort', 'descending');
   });
+
+  it('actually reorders the rows when a sortable header is clicked (uncontrolled)', () => {
+    const { container } = render(
+      <DataTable<TestRow> ariaLabel="Test table" columns={columns} rows={rows} getRowId={(r) => r.id} />,
+    );
+    const order = () => Array.from(container.querySelectorAll('tbody tr')).map((tr) => tr.textContent);
+    expect(order()).toEqual(['1Item 1', '2Item 2']);
+    const sortButton = screen.getAllByRole('button')[0];
+    fireEvent.click(sortButton); // asc
+    expect(order()).toEqual(['1Item 1', '2Item 2']);
+    fireEvent.click(sortButton); // desc
+    expect(order()).toEqual(['2Item 2', '1Item 1']);
+    expect(container.querySelector('th')).toHaveAttribute('aria-sort', 'descending');
+    expect(container.querySelector('th button')).toHaveAttribute('data-dir', 'desc');
+  });
+
+  it('renders rows in the controlled sort order too', () => {
+    const { container } = render(
+      <DataTable<TestRow>
+        ariaLabel="Test table"
+        columns={columns}
+        rows={rows}
+        getRowId={(r) => r.id}
+        sort={{ id: 'id', dir: 'desc' }}
+        onSortChange={() => {}}
+      />,
+    );
+    expect(Array.from(container.querySelectorAll('tbody tr')).map((tr) => tr.textContent)).toEqual([
+      '2Item 2',
+      '1Item 1',
+    ]);
+  });
 });

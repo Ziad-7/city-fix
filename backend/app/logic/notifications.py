@@ -24,15 +24,24 @@ def create_status_notifications(
     title = "تحديث على بلاغك" if kind == "incident_status" else "تحديث على طلبك"
     body = "حالة البلاغ اتحدثت." if kind == "incident_status" else "حالة طلب التدوير اتحدثت."
     unique_recipients = list(dict.fromkeys(recipient_ids))
-    for recipient_id in unique_recipients:
-        existing = db.execute(
-            select(Notification.id).where(
-                Notification.event_key == event_key,
-                Notification.recipient_id == recipient_id,
-            )
-        ).first()
-        if existing:
-            continue
+    # Two queries for the whole audience (existing notifications, active push tokens) instead of two per recipient.
+    existing: set[str] = set()
+    for chunk in _chunks(unique_recipients):
+        existing.update(
+            db.execute(
+                select(Notification.recipient_id).where(
+                    Notification.event_key == event_key, Notification.recipient_id.in_(chunk)
+                )
+            ).scalars()
+        )
+    pending = [r for r in unique_recipients if r not in existing]
+    tokens_by_user: dict[str, list[PushToken]] = {}
+    for chunk in _chunks(pending):
+        for token in db.execute(
+            select(PushToken).where(PushToken.user_id.in_(chunk), PushToken.active.is_(True))
+        ).scalars():
+            tokens_by_user.setdefault(token.user_id, []).append(token)
+    for recipient_id in pending:
         notification = Notification(
             id=str(uuid.uuid4()),
             recipient_id=recipient_id,
@@ -43,11 +52,7 @@ def create_status_notifications(
             event_key=event_key,
         )
         db.add(notification)
-        db.flush()
-        tokens = db.execute(
-            select(PushToken).where(PushToken.user_id == recipient_id, PushToken.active.is_(True))
-        ).scalars()
-        for token in tokens:
+        for token in tokens_by_user.get(recipient_id, []):
             db.add(
                 PushDelivery(
                     id=str(uuid.uuid4()),
@@ -56,6 +61,13 @@ def create_status_notifications(
                     status="pending",
                 )
             )
+    db.flush()  # one batched flush (the unit of work inserts notifications before their deliveries)
+
+
+def _chunks(items: list[str], size: int = 500):
+    """IN-list chunks, so a very popular incident never exceeds a driver's bind-parameter limit."""
+    for start in range(0, len(items), size):
+        yield items[start : start + size]
 
 
 def incident_status_recipients(db: Session, incident_id: str) -> list[str]:

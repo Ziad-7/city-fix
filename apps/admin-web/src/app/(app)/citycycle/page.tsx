@@ -52,7 +52,7 @@ export default function CityCyclePage() {
         ))}
       </div>
       {tab === 'pickups' && <PickupsSection isAdmin={isAdmin} />}
-      {tab === 'collectors' && <CollectorsSection />}
+      {tab === 'collectors' && <CollectorsSection isAdmin={isAdmin} />}
       {tab === 'prices' && <PricesSection isAdmin={isAdmin} />}
       {tab === 'routes' && isAdmin && <RoutesSection />}
       {tab === 'payouts' && <PayoutsSection />}

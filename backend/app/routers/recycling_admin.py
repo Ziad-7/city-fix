@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.admin_auth import require_admin, require_staff
 from app.db import get_db
-from app.helpers import now_utc
+from app.helpers import json_response, now_utc
 from app.logic.domain import actor_name
 from app.logic.notifications import create_status_notifications, record_pickup_status_notification
 from app.logic.recycling import (
@@ -106,8 +106,12 @@ def admin_pickups(
     if end:
         q = q.filter(RecyclingPickup.created_at <= end)
     rows = q.order_by(RecyclingPickup.created_at.desc(), RecyclingPickup.id.desc()).limit(limit).all()
-    return _with_district(
-        pickup_views(db, rows, viewer="admin", storage=storage if claims["role"] == "admin" else None), rows, claims
+    return json_response(
+        _with_district(
+            pickup_views(db, rows, viewer="admin", storage=storage if claims["role"] == "admin" else None),
+            rows,
+            claims,
+        )
     )
 
 
@@ -223,11 +227,17 @@ def admin_collectors(
         q = q.filter(Collector.status == status)
     if district:
         q = q.filter(Collector.district == district)
+    collectors = q.order_by(Collector.joined_at.desc(), Collector.id.desc()).all()
+    profiles = (
+        {p.id: p for p in db.query(Profile).filter(Profile.id.in_([c.profile_id for c in collectors])).all()}
+        if collectors
+        else {}
+    )
     out = []
-    for c in q.order_by(Collector.joined_at.desc(), Collector.id.desc()).all():
+    for c in collectors:
         view = collector_view(c)
         view["userId"] = c.profile_id
-        profile = db.get(Profile, c.profile_id)
+        profile = profiles.get(c.profile_id)
         if profile and profile.phone:
             view["phone"] = profile.phone
         if c.review_note:
@@ -240,9 +250,16 @@ def _release_jobs(db: Session, c: Collector, claims: dict) -> None:
     """A collector who is no longer verified must not keep jobs: accepted ones go back to the open pool;
     ones already weighed (a household is waiting) stay with a timeline flag for staff to follow up."""
     actor = actor_name(db, claims)
-    for p in db.query(RecyclingPickup).filter(RecyclingPickup.collector_id == c.id).all():
+    pickups = db.query(RecyclingPickup).filter(RecyclingPickup.collector_id == c.id).all()
+    accepted_ids = [p.id for p in pickups if p.status == "accepted"]
+    weighed_ids = (
+        {row[0] for row in db.query(Weighing.pickup_id).filter(Weighing.pickup_id.in_(accepted_ids)).distinct()}
+        if accepted_ids
+        else set()
+    )
+    for p in pickups:
         if p.status == "accepted":
-            has_weighing = db.query(Weighing.id).filter(Weighing.pickup_id == p.id).first() is not None
+            has_weighing = p.id in weighed_ids
             if not has_weighing:
                 old_collector_profile_id = c.profile_id
                 p.status = "requested"
@@ -262,7 +279,7 @@ def _release_jobs(db: Session, c: Collector, claims: dict) -> None:
 
 
 @router.patch("/collectors/{collector_id}")
-def admin_patch_collector(collector_id: str, body: CollectorPatchInput, claims: Staff, db: Session = Depends(get_db)):
+def admin_patch_collector(collector_id: str, body: CollectorPatchInput, claims: Admin, db: Session = Depends(get_db)):
     c = db.get(Collector, collector_id)
     if not c:
         raise HTTPException(404, "مش موجود")

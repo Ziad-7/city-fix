@@ -3,7 +3,7 @@
 from collections.abc import Callable
 from uuid import uuid4
 
-from sqlalchemy import func
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -31,20 +31,25 @@ def describe_staff(db: Session, user: User) -> tuple[str, str | None]:
     return (f"موظف · {department}" if department else "موظف"), department
 
 
-def profile_to_user(db: Session, profile: Profile) -> User:
+def _user(profile: Profile, department_id: str | None) -> User:
     if profile.role not in ("citizen", "staff", "admin"):
         raise ValueError(f"Unsupported profile role: {profile.role}")
-    account = None
-    if profile.role in ("staff", "admin"):
-        account = db.query(StaffAccount).filter_by(profile_id=profile.id).first()
     return User(
         id=profile.id,
         phone=profile.phone or "",
         role=profile.role,  # type: ignore[arg-type]
         name=profile.name,
-        department_id=account.department_id if account else None,
+        department_id=department_id if profile.role in ("staff", "admin") else None,
         district=profile.district,
     )
+
+
+def profile_to_user(db: Session, profile: Profile) -> User:
+    department_id = None
+    if profile.role in ("staff", "admin"):
+        account = db.query(StaffAccount).filter_by(profile_id=profile.id).first()
+        department_id = account.department_id if account else None
+    return _user(profile, department_id)
 
 
 class DatabaseUserRepository(UserRepository):
@@ -70,8 +75,13 @@ class DatabaseUserRepository(UserRepository):
 
     def get_by_id(self, user_id: str) -> User | None:
         with self._session_factory() as db:
-            profile = db.query(Profile).filter_by(id=user_id).first()
-            return profile_to_user(db, profile) if profile is not None else None
+            # One round trip per authenticated request: profile and staff department together.
+            row = db.execute(
+                select(Profile, StaffAccount.department_id)
+                .outerjoin(StaffAccount, StaffAccount.profile_id == Profile.id)
+                .where(Profile.id == user_id)
+            ).first()
+            return _user(row[0], row[1]) if row is not None else None
 
 
 class DatabaseStaffDirectory(StaffDirectory):

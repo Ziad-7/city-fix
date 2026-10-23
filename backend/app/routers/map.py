@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.admin_auth import current_claims
 from app.db import get_db
+from app.helpers import json_response
 from app.logic.serialize import map_pin
 from app.models import Incident
 from app.schemas import CategoryId, IncidentStatus
@@ -46,4 +47,4 @@ def map_incidents(
     if bbox:
         min_lng, min_lat, max_lng, max_lat = parse_bbox(bbox)
         query = query.filter(Incident.lng.between(min_lng, max_lng), Incident.lat.between(min_lat, max_lat))
-    return [map_pin(i) for i in query.order_by(Incident.created_at.desc(), Incident.id.desc()).all()]
+    return json_response([map_pin(i) for i in query.order_by(Incident.created_at.desc(), Incident.id.desc()).all()])

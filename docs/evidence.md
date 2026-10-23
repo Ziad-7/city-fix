@@ -31,6 +31,7 @@ What CityCycle claims, how sure we are, and how anyone can check it. Status valu
 | Full and heat thresholds (80 % and 60 °C defaults) | To verify | `backend/app/models.py` defaults, illustrative | Agree values with the district |
 | CO2 avoided | Withheld | `/me/impact` omits it until emission factors have a cited source | Add a sourced factor per material |
 | Bill of Materials prices in EGP | To verify | `hardware/bom/bom.csv` (hardware package); a price counts only with a dated supplier source | Collect dated quotes from Egyptian suppliers and record supplier and date on each line |
+| Every admin and backend feature works end to end locally, and the hot endpoints are faster with identical responses | Verified locally (SQLite, local servers; not on Postgres or a deployment) | [feature-verification.md](feature-verification.md): backend suite, 25 Playwright specs on the default and large seeds, before/after benchmark, known issues | The commands in that document |
 | Admin screens for forecast, route planning, hotspots and bin registration | Built: API plus Command Center screens (`/bins` forecast and registration, `/citycycle` route planner and payouts, `/map` hotspots); tested with vitest, not run against a deployed API | Endpoints: `GET /admin/bins/forecast`, `POST /admin/recycling/routes/optimize`, `GET /admin/hotspots`, `POST /admin/bins` | `cd apps/admin-web && npm test`; run the backend and admin-web locally (see README) |
 
 ## Reproduce

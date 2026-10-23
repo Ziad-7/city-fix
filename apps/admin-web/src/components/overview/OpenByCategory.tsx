@@ -53,7 +53,7 @@ export function OpenByCategory({ data, open, loading }: OpenByCategoryProps) {
   if (data.length > 10) {
     const rest = data.slice(10).reduce((sum, item) => sum + item.count, 0);
     rows.push({
-      key: 'other',
+      key: 'rest',
       label: 'باقي الأنواع',
       value: rest,
       danger: false,
