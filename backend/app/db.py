@@ -48,6 +48,10 @@ def reset_session(db: Session) -> None:
         db.execute(table.delete())
     db.commit()
     seed_db(db)
+    if settings.seed_scale == "large" and db.get_bind().dialect.name == "sqlite":
+        from app.seed_large import seed_large_local
+
+        seed_large_local(db)
 
 
 def reset_db():

@@ -207,6 +207,7 @@ def seed_citycycle(db: Session) -> None:
                 last_seen_at=seen,
             )
         )
+        db.flush()  # PostgreSQL enforces the FK per statement: the bin row must exist before its readings
         if seen:
             history = _BIN_HISTORY.get(bin_id)
             for seq, past_fill in enumerate(history or [fill], start=1):

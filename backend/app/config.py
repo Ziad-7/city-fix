@@ -1,5 +1,7 @@
 """Configuration from environment variables."""
 
+from typing import Literal
+
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -49,6 +51,8 @@ class Settings(BaseSettings):
     # Optional local-only convenience; migrations own production schema changes.
     local_schema_bootstrap: bool = False
     seed_on_start: bool = False
+    # "large" adds the synthetic large dataset on top of the local fixture (SQLite + SEED_ON_START only).
+    seed_scale: Literal["default", "large"] = "default"
 
     # Destructive demo reset endpoint is disabled unless explicitly enabled.
     demo_reset_enabled: bool = False

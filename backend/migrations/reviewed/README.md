@@ -56,3 +56,5 @@ python -m scripts.seed_citycycle_additive --apply --expected-project-ref REF
 ```
 
 Review the dry-run before applying. A second apply inserts zero rows. Do not use the destructive demo reset command on an existing database.
+
+A larger synthetic dataset (no schema change) is described in [docs/demo-data.md](../../../docs/demo-data.md). It has its own gated CLI and an exact cleanup, and needs the project owner's confirmation before it touches any real database.

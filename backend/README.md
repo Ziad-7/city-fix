@@ -50,6 +50,7 @@ python -m pytest -q
 | `DEMO_RESET_ENABLED` | `false` | `POST /admin/demo/reset` deletes and re-seeds every record; it answers `404` unless this is `true`. Tests and the admin-web Playwright server set it. Enable only for a local demo |
 | `LOCAL_SCHEMA_BOOTSTRAP` | `false` | Explicitly run SQLite `create_all()` for local setup; ignored for PostgreSQL |
 | `SEED_ON_START` | `false` | Seed only a SQLite local database when explicitly enabled |
+| `SEED_SCALE` | `default` | `large` adds the synthetic large demo dataset on top of the local fixture (SQLite + `SEED_ON_START` only; the local demo reset keeps it). See [docs/demo-data.md](../docs/demo-data.md) |
 | `CORS_ORIGINS` | `http://localhost:3000,http://localhost:3001` | Comma-separated allowed origins (Expo web `:8081` is always allowed) |
 | `CORS_ORIGIN_REGEX` | `^http://(localhost\|127\.0\.0\.1)(:\d+)?$` | Also allow any localhost port; set to your deployed origins (e.g. the Vercel domains) in production |
 | `VERSION` | `0.1.0` | Reported by `/health` |
@@ -147,6 +148,8 @@ python -m scripts.seed_citycycle_additive --apply --expected-project-ref REF
 Revision `0001_existing_schema` is a frozen PostgreSQL snapshot and does not import mutable model metadata. Revision `0002_delivery_foundation` adds OTP state, notifications, push registrations and delivery rows, then enables RLS on CityFix-owned tables and `alembic_version`. The API must connect with a privileged backend database role that bypasses RLS. Do not grant direct `anon` or `authenticated` access to these tables. Real-project migration and seed execution remains blocked until the primary operator confirms the CityFix project and binding.
 
 The additive seed is separate from `app.seed_citycycle.seed_citycycle()`. It inserts synthetic household profiles, a phone-free demo collector and bins marked `isSimulated=true`. ID or unique-key collisions skip the whole dependent group. Existing prices, phones, profiles and device hashes are never updated; dry-run reports synthetic IDs and counts without auth credentials or device keys.
+
+A much larger synthetic set (about 19k rows: 700 incidents, 60 bins, 300 pickups, 25 collectors) has its own gated CLI, `python -m scripts.seed_large_demo`. It is a dry run by default, needs a confirmation variable to write, is additive and idempotent, and has an exact `--cleanup`. Runbook: [docs/demo-data.md](../docs/demo-data.md).
 
 ### Notifications, Expo push and citizen OTP
 

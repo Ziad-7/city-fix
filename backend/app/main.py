@@ -97,6 +97,10 @@ async def lifespan(app: FastAPI):
             incident_count = db.query(Incident).count()
             if incident_count == 0:
                 seed_db(db)
+                if settings.seed_scale == "large":
+                    from app.seed_large import seed_large_local
+
+                    seed_large_local(db)
         finally:
             db.close()
 
