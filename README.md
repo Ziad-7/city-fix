@@ -75,14 +75,11 @@ CityFix combines the following aspects, which share the platform backend, accoun
 
 ## Team
 
-| # | Role | Owner | Folder | Brief |
-| --- | --- | --- | --- | --- |
-| 1 | Citizen mobile app | Abood + Claude | `apps/mobile` | [spec](docs/mobile/implementation-spec.md) |
-| 2 | Citizen website (client portal) | _[name]_ | `apps/web` | [brief](docs/team/citizen-web-portal.md) |
-| 3 | Admin web (Command Center) | _[name]_ | `apps/admin-web` | [brief](docs/team/admin-web.md) |
-| 4 | Backend API & database | Moataz (citizen API/auth) + teammate (DB/operations; name pending) | `backend/` | [ownership split](docs/team/backend-split.md) |
-| 5 | AI & smart features (CityBrain) | _[name]_ | `backend/app/ai`, `backend/app/optimizer` | [brief](docs/team/ai-features.md) |
-| 6 | Hardware & IoT (CityCycle smart bin) | _[name]_ | `hardware/` | [brief](docs/team/hardware-iot.md) |
+- Abdulrahman Gomaa
+- Moataz Hendy
+- Mohamed Wageeh
+- Hesham Elkateb
+- Ziad Rabie
 
 Who owns what, hand-offs, the week plan and how we review: **[docs/team/README.md](docs/team/README.md)**. Design for every screen: [docs/design/index.html](docs/design/index.html).
 
