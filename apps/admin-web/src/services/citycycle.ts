@@ -1,9 +1,12 @@
-import { ApiError, http } from '@/lib/http';
+import { ApiError, http, isMissingRoute, MSG_GENERIC } from '@/lib/http';
 import type {
   Collector,
+  CollectorPayout,
   CollectorStatus,
   MaterialId,
   MaterialPrice,
+  OptimizeRoutesInput,
+  OptimizeRoutesResult,
   PickupStatus,
   RecyclingPickup,
   RecyclingSummary,
@@ -15,7 +18,7 @@ import { MATERIAL_IDS } from '@/domain/citycycle-types';
  * (the contract lists the pickups queue as "admin view"); when the server answers
  * 404/405/501 the service falls back to an in-memory demo so the pages still work.
  */
-type Resource = 'pickups' | 'collectors' | 'prices' | 'summary';
+type Resource = 'pickups' | 'collectors' | 'prices' | 'summary' | 'payouts';
 const demo = new Set<Resource>();
 const listeners = new Set<() => void>();
 export const isCityCycleDemo = (): boolean => demo.size > 0;
@@ -29,8 +32,6 @@ export const resetCityCycleDemo = (): void => {
   listeners.forEach((fn) => fn());
 };
 
-const MISSING = new Set([404, 405, 501]);
-
 /**
  * List GETs decide demo mode once per resource: only when the route itself is missing
  * (404/405/501). Everything else (403, 5xx, network) surfaces as an error.
@@ -40,7 +41,7 @@ async function listOrDemo<T>(res: Resource, live: () => Promise<T>, fake: () => 
   try {
     return await live();
   } catch (e) {
-    if (e instanceof ApiError && MISSING.has(e.status)) {
+    if (isMissingRoute(e)) {
       demo.add(res);
       listeners.forEach((fn) => fn());
       return fake();
@@ -195,4 +196,60 @@ export async function getRecyclingSummary(): Promise<RecyclingSummary> {
       byDistrict: [{ district: 'مدينة نصر', kg: 800 }, { district: 'مصر الجديدة', kg: 440 }],
     }),
   );
+}
+
+// ---- payouts (recorded from weighings and hand-overs; the system pays nothing) --
+export async function getPayouts(range?: { from?: string; to?: string }): Promise<CollectorPayout[]> {
+  const qs = new URLSearchParams();
+  if (range?.from) qs.set('from', range.from);
+  if (range?.to) qs.set('to', range.to);
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  return listOrDemo(
+    'payouts',
+    async () => (await http<CollectorPayout[]>('GET', `/admin/payouts${suffix}`)) ?? [],
+    () => {
+      // Only weights already in the demo pickups; no prices or cash are invented.
+      const rows = new Map<string, CollectorPayout>();
+      for (const p of mock.pickups) {
+        if (!p.collectorId || p.totalKg == null || (p.status !== 'weighed' && p.status !== 'completed')) continue;
+        const row = rows.get(p.collectorId) ?? {
+          collectorId: p.collectorId,
+          collectorName: p.collectorName ?? null,
+          kg: 0,
+          valueEgp: 0,
+          paidToHouseholdsEgp: 0,
+          jobs: 0,
+        };
+        row.kg += p.totalKg;
+        row.jobs += 1;
+        rows.set(p.collectorId, row);
+      }
+      return [...rows.values()];
+    },
+  );
+}
+
+// ---- route planner (preview only; never falls back to the demo store) ---------
+export async function optimizeRoutes(body: OptimizeRoutesInput): Promise<OptimizeRoutesResult> {
+  if (demo.has('pickups')) throw new ApiError(501, 'تخطيط المسارات محتاج السيرفر الحقيقي');
+  const r = await http<OptimizeRoutesResult>('POST', '/admin/recycling/routes/optimize', body);
+  if (!r) throw new ApiError(500, MSG_GENERIC);
+  return r;
+}
+
+export function optimizeErrorMessage(e: unknown): string {
+  if (!(e instanceof ApiError)) return e instanceof Error ? e.message : MSG_GENERIC;
+  switch (e.status) {
+    case 503:
+      return 'خدمة تحسين المسارات (OR-Tools) مش متاحة على السيرفر دلوقتي';
+    case 409:
+      return 'فيه طلب اتغيّر أو اتوزّع، حدّث القائمة وجرّب تاني';
+    case 404:
+      return 'فيه طلب مش موجود، حدّث القائمة';
+    case 405:
+    case 501:
+      return 'السيرفر ده مفيهوش تخطيط المسارات';
+    default:
+      return e.message;
+  }
 }

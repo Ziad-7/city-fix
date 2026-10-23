@@ -16,6 +16,7 @@ export interface MapViewProps {
   interactive?: boolean;
   cluster?: boolean;
   circle?: { lat: number; lng: number; radiusM: number };
+  areas?: { id: string; lat: number; lng: number; radiusM: number; label: string }[];
   onMapReady?: (map: L.Map) => void;
 }
 
@@ -24,6 +25,7 @@ function MapContent({
   selectedId,
   onSelect,
   circle,
+  areas,
   interactive,
   cluster = true,
   onMapReady,
@@ -86,6 +88,17 @@ function MapContent({
         />
       )}
 
+      {areas?.map((a) => (
+        <Circle
+          key={a.id}
+          center={[a.lat, a.lng]}
+          radius={a.radiusM}
+          pathOptions={{ color: '#A50E25', weight: 1.5, fillColor: '#A50E25', fillOpacity: 0.12 }}
+        >
+          <Tooltip>{a.label}</Tooltip>
+        </Circle>
+      ))}
+
       {cluster ? (
         <MarkerClusterGroup
           chunkedLoading
@@ -117,6 +130,7 @@ export function MapView({
   interactive = true,
   cluster = true,
   circle,
+  areas,
   onMapReady,
 }: MapViewProps) {
   return (
@@ -131,7 +145,7 @@ export function MapView({
         keyboard={interactive}
         style={{ height: '100%', width: '100%' }}
       >
-        <MapContent pins={pins} selectedId={selectedId} onSelect={onSelect} circle={circle} interactive={interactive} cluster={cluster} onMapReady={onMapReady} />
+        <MapContent pins={pins} selectedId={selectedId} onSelect={onSelect} circle={circle} areas={areas} interactive={interactive} cluster={cluster} onMapReady={onMapReady} />
       </MapContainer>
     </div>
   );

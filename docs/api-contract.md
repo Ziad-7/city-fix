@@ -457,7 +457,7 @@ Admin or staff role required; collectors never see these.
 | GET | `/admin/bins` | With latest readings; `POST /admin/bins` registers a bin and returns its device key **once**; `PATCH /admin/bins/{id}` (admin) `{ name?, isActive?, fullPct?, heatC?, intervalMin?, rotateKey? }`: `isActive: false` revokes device auth, `rotateKey: true` returns a new `deviceKey` **once** (`{ bin, deviceKey? }`) |
 | GET | `/admin/bins/{id}/readings` | Query `from`, `to` |
 | GET | `/admin/bins/forecast` | Fill forecast per bin — owner member 5 |
-| POST | `/admin/recycling/routes/optimize` | `{ date, collectors?, binIds? }` → ordered stops per vehicle — owner member 5 |
+| POST | `/admin/recycling/routes/optimize` | `{ pickupIds, depot, vehicleCount, capacityKg }` → routes per vehicle (preview, not saved); see the optimizer note above — owner member 5 |
 | GET | `/admin/hotspots` | Dumping hotspots with counts and status — owner member 5 (detection), member 4 (storage) |
 | GET | `/admin/payouts` | Query `from`, `to`, `collectorId?`: `{ collectorId, collectorName, kg, valueEgp, paidToHouseholdsEgp, jobs }[]` (recorded, not processed) |
 
