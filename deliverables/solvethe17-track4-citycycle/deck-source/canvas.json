@@ -1,0 +1,226 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-10-23T12:40:00Z"
+ },
+ "title": "CityFix Pitch Deck",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "Main.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1920,
+   "h": 1080,
+   "title": "01 Title"
+  },
+  "S02-Problem.dc.html": {
+   "x": 2000,
+   "y": 0,
+   "w": 1920,
+   "h": 1080,
+   "title": "02 The problem"
+  },
+  "S03-Answer.dc.html": {
+   "x": 4000,
+   "y": 0,
+   "w": 1920,
+   "h": 1080,
+   "title": "03 The question and our answer"
+  },
+  "S04-Solution.dc.html": {
+   "x": 6000,
+   "y": 0,
+   "w": 1920,
+   "h": 1080,
+   "title": "04 The solution in one picture"
+  },
+  "S05-Channels.dc.html": {
+   "x": 0,
+   "y": 1200,
+   "w": 1920,
+   "h": 1080,
+   "title": "05 One citizen, many channels"
+  },
+  "S06-Benefits.dc.html": {
+   "x": 2000,
+   "y": 1200,
+   "w": 1920,
+   "h": 1080,
+   "title": "06 Who benefits"
+  },
+  "S07-Story.dc.html": {
+   "x": 4000,
+   "y": 1200,
+   "w": 1920,
+   "h": 1080,
+   "title": "07 The five-step story"
+  },
+  "S08-CitizenApp.dc.html": {
+   "x": 6000,
+   "y": 1200,
+   "w": 1920,
+   "h": 1080,
+   "title": "08 The citizen app"
+  },
+  "S09-CityCycle.dc.html": {
+   "x": 0,
+   "y": 2400,
+   "w": 1920,
+   "h": 1080,
+   "title": "09 CityCycle: waste into value"
+  },
+  "S10-Collector.dc.html": {
+   "x": 2000,
+   "y": 2400,
+   "w": 1920,
+   "h": 1080,
+   "title": "10 Collector mode"
+  },
+  "S11-CommandCenter.dc.html": {
+   "x": 4000,
+   "y": 2400,
+   "w": 1920,
+   "h": 1080,
+   "title": "11 The Command Center"
+  },
+  "S12-CityBrain.dc.html": {
+   "x": 6000,
+   "y": 2400,
+   "w": 1920,
+   "h": 1080,
+   "title": "12 CityBrain: AI with safeguards"
+  },
+  "S13-SmartBin.dc.html": {
+   "x": 0,
+   "y": 3600,
+   "w": 1920,
+   "h": 1080,
+   "title": "13 Smart bin and hub scale"
+  },
+  "S14-Architecture.dc.html": {
+   "x": 2000,
+   "y": 3600,
+   "w": 1920,
+   "h": 1080,
+   "title": "14 Architecture"
+  },
+  "S15-Rigor.dc.html": {
+   "x": 4000,
+   "y": 3600,
+   "w": 1920,
+   "h": 1080,
+   "title": "15 Technical rigor"
+  },
+  "S16-Impact.dc.html": {
+   "x": 6000,
+   "y": 3600,
+   "w": 1920,
+   "h": 1080,
+   "title": "16 Impact: how we measure"
+  },
+  "S17-Feasibility.dc.html": {
+   "x": 0,
+   "y": 4800,
+   "w": 1920,
+   "h": 1080,
+   "title": "17 Economic and field feasibility"
+  },
+  "S18-Criteria.dc.html": {
+   "x": 2000,
+   "y": 4800,
+   "w": 1920,
+   "h": 1080,
+   "title": "18 The five criteria, answered"
+  },
+  "S19-Team.dc.html": {
+   "x": 4000,
+   "y": 4800,
+   "w": 1920,
+   "h": 1080,
+   "title": "19 Team, roadmap and try it"
+  },
+  "A1-API.dc.html": {
+   "x": 6000,
+   "y": 4800,
+   "w": 1920,
+   "h": 1080,
+   "title": "A1 API contract"
+  },
+  "A2-Data.dc.html": {
+   "x": 0,
+   "y": 6000,
+   "w": 1920,
+   "h": 1080,
+   "title": "A2 Data model"
+  },
+  "A3-Privacy.dc.html": {
+   "x": 2000,
+   "y": 6000,
+   "w": 1920,
+   "h": 1080,
+   "title": "A3 Privacy and consent"
+  },
+  "A4-Risks.dc.html": {
+   "x": 4000,
+   "y": 6000,
+   "w": 1920,
+   "h": 1080,
+   "title": "A4 Risk register"
+  },
+  "P1-Loop.dc.html": {
+   "x": 6000,
+   "y": 7200,
+   "w": 1920,
+   "h": 1080,
+   "title": "P1 Closing the loop (proposed)"
+  },
+  "P2-Collectors.dc.html": {
+   "x": 8000,
+   "y": 7200,
+   "w": 1920,
+   "h": 1080,
+   "title": "P2 Empowering collectors (proposed)"
+  },
+  "P3-Pilot.dc.html": {
+   "x": 10000,
+   "y": 7200,
+   "w": 1920,
+   "h": 1080,
+   "title": "P3 Practical pilot (proposed)"
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "S02-Problem.dc.html",
+  "S03-Answer.dc.html",
+  "S04-Solution.dc.html",
+  "S05-Channels.dc.html",
+  "S06-Benefits.dc.html",
+  "S07-Story.dc.html",
+  "S08-CitizenApp.dc.html",
+  "S09-CityCycle.dc.html",
+  "S10-Collector.dc.html",
+  "S11-CommandCenter.dc.html",
+  "S12-CityBrain.dc.html",
+  "S13-SmartBin.dc.html",
+  "S14-Architecture.dc.html",
+  "S15-Rigor.dc.html",
+  "S16-Impact.dc.html",
+  "S17-Feasibility.dc.html",
+  "P1-Loop.dc.html",
+  "P2-Collectors.dc.html",
+  "P3-Pilot.dc.html",
+  "S18-Criteria.dc.html",
+  "S19-Team.dc.html",
+  "A1-API.dc.html",
+  "A2-Data.dc.html",
+  "A3-Privacy.dc.html",
+  "A4-Risks.dc.html"
+ ],
+ "notes": {},
+ "designSystems": []
+}
