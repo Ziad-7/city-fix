@@ -56,11 +56,13 @@ from app.schemas import (
     BudgetCommitRequest,
     BudgetOptimizeRequest,
     CreateWorkOrderRequest,
+    IncidentStatus,
     MergeIncidentRequest,
     PatchIncidentRequest,
     PatchServiceRequestRequest,
     PatchWorkOrderRequest,
     TriageConfirmRequest,
+    WorkOrderStatus,
 )
 from app.seed import TEAMS
 
@@ -136,7 +138,7 @@ def get_dashboard(
 # --------------------------------------------------------------------------- incidents
 @router.get("/incidents")
 def list_incidents(
-    status: str | None = None,
+    status: IncidentStatus | None = None,
     categoryId: str | None = None,
     department: str | None = None,
     critical: bool | None = None,
@@ -339,7 +341,7 @@ def confirm_triage(
 # --------------------------------------------------------------------------- work orders
 @router.get("/work-orders")
 def list_work_orders(
-    status: str | None = None,
+    status: WorkOrderStatus | None = None,
     department: str | None = None,
     payload: dict = Depends(require_staff),
     db: Session = Depends(get_db),
@@ -496,7 +498,7 @@ def _sr_json(db: Session, srs: list[ServiceRequest]) -> list[dict]:
 
 @router.get("/service-requests")
 def list_service_requests(
-    status: str | None = None,
+    status: IncidentStatus | None = None,
     serviceType: str | None = None,
     day: str | None = None,
     payment: str | None = None,
