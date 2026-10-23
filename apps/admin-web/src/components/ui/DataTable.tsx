@@ -130,11 +130,11 @@ export function DataTable<T>({
                   <button
                     type="button"
                     className="th-sort"
-                    data-dir={sort && sort.id === c.id ? sort.dir : undefined}
+                    data-dir={activeSort && activeSort.id === c.id ? activeSort.dir : undefined}
                     onClick={() => handleSort(c.id)}
                   >
                     {c.header}
-                    <Icon name="chevron-down" size={14} className={sort && sort.id === c.id && sort.dir === 'asc' ? 'rotate-180' : ''} />
+                    <Icon name="chevron-down" size={14} className={activeSort && activeSort.id === c.id && activeSort.dir === 'asc' ? 'rotate-180' : ''} />
                   </button>
                 ) : (
                   c.header
@@ -154,12 +154,12 @@ export function DataTable<T>({
                 ))}
               </tr>
             ))
-          ) : rows.length === 0 && empty ? (
+          ) : sortedRows.length === 0 && empty ? (
             <tr>
               <td colSpan={columns.length}>{empty}</td>
             </tr>
           ) : (
-            rows.map((r) => {
+            sortedRows.map((r) => {
               const id = getRowId(r);
               const selected = selectedId === id;
               return (
