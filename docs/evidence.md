@@ -61,7 +61,15 @@ Live Gemini evaluations (waste photos, transcription): not run; they need a key 
 
 ## Deployment status
 
-No verified live deployment URL is recorded in this repo as of 2026-10-23. Known facts:
+The team supplied these hosted addresses on 2026-10-23:
+
+- Backend: <https://city-fix-api-backend.vercel.app/>
+- Command Center: <https://city-fix-admin.vercel.app/>
+- Citizen website: <https://city-fix-user.vercel.app/>
+
+The managed workspace's network policy prevented requests to these domains. These are recorded addresses, not independent confirmation of uptime, production database configuration, live end-to-end workflows or successful Gemini analysis. The operator reported Maps working in an earlier Android APK; Maps does not establish backend acceptance. See the [submission verification record](../deliverables/solvethe17-track4-citycycle/VERIFICATION.md) for the fresh local checks and remaining live acceptance checks.
+
+Known deployment considerations:
 
 - `backend/README.md` documents Vercel (API) plus Supabase PostgreSQL.
 - Applying migrations to the real Supabase project is blocked until the primary operator confirms the project and binding.

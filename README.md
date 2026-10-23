@@ -25,7 +25,7 @@ Amounts are recorded only: no payment provider is integrated and no money moves 
 | Smart bin | Simulated only: browser page `/smart-bin` in `apps/web`, PC simulator, ESP32 Wokwi prototypes. No physical bench build | [`hardware/simulator/`](hardware/simulator/README.md), [`hardware/wokwi/`](hardware/wokwi/README.md) |
 | Route optimizer and fill forecast | Built: admin-only OR-Tools route preview and linear fill forecast, with Command Center screens (bins forecast, route planner, hotspots, payouts). OR-Tools in a production build is still to verify | `backend/tests/test_route_optimizer.py`, `backend/tests/test_bin_forecast.py` |
 | AI suggestions (CityBrain) | Suggestions only, with deterministic fallback; photo analysis off by default | [AI status](docs/ai-status.md) |
-| Deployment | To verify: no live URL recorded | [Claims vs evidence](docs/evidence.md) |
+| Deployment | Team-provided hosted URLs recorded; live end-to-end behaviour not independently verified | [Submission package](deliverables/solvethe17-track4-citycycle/README.md), [Claims vs evidence](docs/evidence.md) |
 
 ![System architecture](docs/diagrams/system-architecture.svg)
 
@@ -113,6 +113,7 @@ Scan the QR code with **Expo Go** (Android/iOS). The app runs fully on **mock da
 
 ## Documentation
 
+- [Submission package: required deliverables, report PDFs, estimated BOM and prototype runbook](deliverables/solvethe17-track4-citycycle/README.md)
 - [Docs index](docs/README.md)
 - [Architecture](docs/architecture.md) · [Claims vs evidence](docs/evidence.md) · [Pitch kit](docs/pitch/README.md)
 - [Vision: the complete sustainable-city picture](docs/vision.md) · [CityCycle features per member](docs/features/README.md) · [Decision 0004 — CityCycle](docs/decisions/0004-citycycle-waste-pillar.md)

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>CityFix / CityCycle — Field Deployment Brief</title>
+<style>
+@page {size:A4;margin:14mm 15mm} *{box-sizing:border-box} body{font:10pt/1.34 Arial,sans-serif;color:#182c28;margin:0}
+h1{font-size:21pt;line-height:1.1;margin:0 0 3mm;color:#155b45} h2{font-size:12pt;margin:3mm 0 1.5mm;color:#155b45}
+p{margin:0 0 2mm} ul,ol{margin:1mm 0 2mm;padding-left:5mm} li{margin-bottom:1mm} table{width:100%;border-collapse:collapse;font-size:9pt;margin:2mm 0}td,th{border:1px solid #ccd9d3;padding:1.8mm;text-align:left;vertical-align:top} th,.note{background:#edf4ef}.note{padding:2mm 3mm;border-left:3px solid #155b45}.meta{font-size:8.5pt;color:#52645d}.page{break-after:page}.page:last-child{break-after:auto} tr{break-inside:avoid}.foot{font-size:8pt;margin-top:3mm;border-top:1px solid #ccd9d3;padding-top:2mm}
+</style></head><body>
+<section class="page">
+<p class="meta">SOLVETHE17 · TRACK 4 · EGYPT · 23 OCTOBER 2026 · PAGE 1 OF 2</p>
+<h1>CityCycle: Field Deployment Brief</h1>
+<p><strong>Turn sorted waste into economic value while strengthening existing collectors.</strong> CityCycle connects households, informal collectors and district staff through pickup requests, recorded weights/cash amounts and smart-bin information.</p>
+<p class="note"><strong>Current proof of concept:</strong> software and a PC simulator; Wokwi source for an ESP32 bin and hub scale. No physical unit or field trial exists. The field solar/GSM circuit is a paper design. This brief describes how deployment would work, not measured field performance.</p>
+<h2>1. Operate with local partners</h2>
+<p>Start in one neighbourhood with participating collectors, a collection hub, a receiving recycler and the district. Co-design the route, price display and dispute process with workers. Use existing bins, scales and phones where practical; place new sensors only where overflow information changes collection decisions.</p>
+<p>Households request a pickup; collectors accept, weigh materials, record cash paid and complete the job; households confirm. Staff inspect requests and alerts. Recycler receipts and collector net-income tracking are proposed next steps, not current verified app features. No electronic payment processing is claimed.</p>
+<h2>2. Egyptian conditions and controls</h2>
+<table><thead><tr><th>Condition</th><th>Proposed response and field acceptance</th></tr></thead><tbody>
+<tr><td>Summer heat and battery risk</td><td>Shaded, light-coloured enclosure; select cell/charger protection and charge-temperature limits from datasheets. The draft TP4056 module lacks thermal cutoff: resolve this before use. Heat-soak the assembled unit and log cell temperature and resets. A bin temperature alert is not battery protection.</td></tr>
+<tr><td>Dust, khamaseen and street washing</td><td>Gasketed enclosure, glands, membrane vent and accessible sensor face; clean panel/sensor during visits. Dust and splash-test the complete unit. Do not claim an assembled IP rating from an enclosure label alone.</td></tr>
+<tr><td>Weak mobile coverage</td><td>Retain unacknowledged readings with sequence IDs and retry/backoff. Check signal at the exact site and test outage/recovery without duplicates. Verify operator 2G availability; choose LTE if needed. Wokwi scale HTTP is still missing.</td></tr>
+<tr><td>Shade and power interruptions</td><td>Measure sleep, sensing and modem peak current before sizing solar/battery. Include dust, shade and regulator losses. Real deep sleep, GSM and power-switching firmware remain to implement. Synthetic battery/solar controls do not prove energy autonomy.</td></tr>
+<tr><td>Theft, metal bins and maintenance</td><td>Concealed fixings, protected wiring, external antenna on a suitable non-metal mounting and replaceable electronics tray. Tamper wake and mounting strength require bench/field checks.</td></tr>
+</tbody></table>
+<p class="foot">References: hardware/schematics/README.md · hardware/power/README.md · hardware/enclosure/README.md. No battery life, sensor accuracy, operating-cost saving or field result is claimed.</p>
+</section>
+<section class="page">
+<p class="meta">CITYFIX / CITYCYCLE · FIELD DEPLOYMENT BRIEF · PAGE 2 OF 2</p>
+<h2>3. Access, worker benefit and privacy</h2>
+<p>Use Egyptian Arabic, English, familiar material icons, large controls and assisted onboarding. Test comprehension with collectors and households instead of assuming literacy or smartphone access. Existing mobile queues support offline work; validate reconnect behaviour on the pilot phones. Non-smartphone access is a future channel, not an implemented guarantee.</p>
+<p>Publish dated material prices and explain estimates versus final weights. Manual entries must remain distinguishable from future authenticated scale readings. Agree a weight/payment dispute process and participation terms without displacing collectors. Restrict home locations and financial records by role; keep keys private and obtain consent before photo analysis. Device telemetry has no camera.</p>
+<h2>4. Maintenance and responsibility</h2>
+<table><thead><tr><th>Owner / trigger</th><th>Action</th></tr></thead><tbody>
+<tr><td>Trained collector or district crew — routine visit</td><td>Inspect mounting, wipe panel and sensor, check seals and antenna, review battery trend. Start with monthly inspection and adjust from pilot evidence.</td></tr>
+<tr><td>District technician — silent device / storm / washing</td><td>Inspect connectivity and water ingress; swap a pre-tested tray if needed. Reconcile queued readings after recovery. Isolate damaged batteries for qualified handling.</td></tr>
+<tr><td>Hub operator — scale setup and checks</td><td>Tare, verify with known reference weights, record calibration and reject unstable readings. Physical scale accuracy and trusted pickup linkage remain unvalidated.</td></tr>
+<tr><td>Software operator — deployment and incidents</td><td>Verify API health, role access, durable storage/backups and provider limits. Test login/media/AI on real phones. Retain the local simulator as a clearly labelled demo backup.</td></tr>
+</tbody></table>
+<h2>5. Cost and viable operation</h2>
+<p>The accompanying <strong>CityFix-BOM-Estimate.csv</strong> and <strong>COST-ESTIMATE.md</strong> record sourced prices and quantities, separating hardware from the connectivity reference. Priced bin components total <strong>7,243.00 EGP</strong>; the custom mount still needs a workshop quote. This is not a complete installed cost. Labour, vehicles, installation, existing bins/phones/computers, taxes/delivery and paid cloud/provider usage need separate quotations.</p>
+<p>Do not promise payback until hardware, maintenance and connectivity costs can be compared with observed trip savings or service value. Confirm who funds operations with the district/partner; no funding agreement or revenue result is claimed.</p>
+<h2>6. Pilot gates and evaluation</h2>
+<ol>
+<li><strong>Software demonstration:</strong> run pickup → collector → household confirmation and simulated reading → API → staff history. Test lost connection and retries; label demo prices and data.</li>
+<li><strong>Bench gate:</strong> finish field firmware, safe power design, per-bin calibration and scale integration. Measure accuracy, currents and outage recovery; complete heat, dust and splash checks.</li>
+<li><strong>Neighbourhood pilot:</strong> agree sites, collector participation, recycler acceptance and a baseline. Proposed planning scope: 2–4 weeks; partner agreement and resources are not yet secured.</li>
+<li><strong>Evaluate before expansion:</strong> measure collection time, overflow duration, contamination and cost/kg. Recycler-confirmed recovery and collector net earnings require receipt/cost tracking; current collected kg and material value are not substitutes. Agree numerical targets after baseline measurement.</li>
+</ol>
+<p class="foot">Pilot and future features are proposals. Exact rollout size, hardware prices, solar sizing, service thresholds and success targets require partner agreement and measured evidence. Prepared for submission; not a field-validation certificate.</p>
+</section></body></html>

@@ -1,42 +1,28 @@
 # Bill of Materials (EGP)
 
-[`bom.csv`](bom.csv) is the source of truth. **It is partial: most lines are not priced yet, and the total below is not a per-bin cost.**
+[`bom.csv`](bom.csv) is the source of truth. **Retail prices are recorded for all standard rows; the custom lid/sensor mount still needs a workshop quote. The subtotal is not a complete installed-system cost.**
 
 ## Method
 
-- Prices come from Egyptian supplier pages, searched on **2026-10-23** (Makers Electronics was the only supplier that returned usable EGP prices; RAM Electronics, Future Electronics, Amazon.eg and Noon returned nothing usable in those searches).
-- Evidence type for every sourced line is `search_snippet`: the price was read from a web-search result for the supplier's page, **not from a page opened in a browser**. Confirm on the live page before buying.
-- A line is `sourced` only with a price, supplier URL, ISO date and evidence type. Everything else is `to_verify` with an **empty** price. Nothing is estimated, and nothing is converted from another currency.
-- Quantity-tier prices are used only where a supplier lists them (none are used yet).
-- Block `alternative` lines are listed but never counted. Block `running_cost` (SIM data plan) is monthly and kept apart from the one-time hardware cost.
+- EGP prices, supplier links and dates are recorded per item. The October 23 research is in [price-research-2026-10-23.json](price-research-2026-10-23.json); it distinguishes product-page evidence, indexed supplier prices and arithmetic derived from listings.
+- A listed price confirms price evidence, not field suitability. Component ratings, calibration, wiring fit and power design still require validation.
+- Quantities refer to the exact priced item or set described in `spec`. No currency conversions or invented supplier prices are used.
+- The tariff reference is 37 EGP per 28 days; its annualized calendar-month equivalent is 40.19 EGP. Activation, recharge charges and business IoT terms need operator confirmation.
+- The custom bracket (B24) remains unpriced: no dimensions, finished CAD or verifiable workshop quote exist. It is not silently counted as free.
+- Alternative LTE hardware is recorded but excluded from the bin subtotal.
 
 ## Totals (output of `bom_totals.py`)
 
 ```text
-BOM lines counted: 27 (sourced 11, to_verify 16); alternatives listed but not counted: 1
-One-time hardware, sourced lines only: 973.25 EGP
-Monthly running cost, sourced lines only: 0.00 EGP
+BOM lines counted: 27 (sourced 26, to_verify 1); alternatives listed but not counted: 1
+One-time hardware, sourced lines only: 7243.00 EGP
+Monthly running cost, sourced lines only: 40.19 EGP
 PARTIAL: not a per-bin cost. Lines still to verify:
-  B02 (one-time) JSN-SR04T ultrasonic probe
-  B04 (one-time) Pull-up resistor 4.7k
-  B09 (one-time) Solar panel
-  B11 (one-time) Inline fuse and holder
-  B12 (one-time) 3.3 V LDO low quiescent
-  B15 (one-time) Gate-drive transistor
-  B16 (one-time) Bulk capacitor
-  B19 (monthly) SIM card and data plan
-  B20 (one-time) Weatherproof enclosure
-  B22 (one-time) Breather vent plug
-  B23 (one-time) Security screws
   B24 (one-time) Lid bracket and sensor mount
-  B25 (one-time) Conformal coating
-  B26 (one-time) Silica gel sachets
-  B27 (one-time) Wiring and connectors
-  B28 (one-time) Perfboard or small PCB
 Prices are EGP as listed by the supplier on the stated date; nothing converted from another currency.
 ```
 
-Notes on the sourced lines: B05 is a 600-piece resistor kit counted once per bin, which overstates the per-bin share. The subtotal is therefore neither a floor nor a ceiling.
+The total is a one-off component basket, including full consumable/fastener sets. It is not an optimized per-bin production cost. Labour, delivery, taxes not included in a listing, installation, required power-design substitutions and unfinished custom work are outside the subtotal.
 
 ## Running the check
 
@@ -49,7 +35,12 @@ It validates the schema (price present exactly when `sourced`, ISO date, https U
 ## Payback (formula only)
 
 ```text
-payback_months = bin_hw_cost / (avoided_trips_per_month x cost_per_trip - monthly_running_cost)
+BOM lines counted: 27 (sourced 26, to_verify 1); alternatives listed but not counted: 1
+One-time hardware, sourced lines only: 7243.00 EGP
+Monthly running cost, sourced lines only: 40.19 EGP
+PARTIAL: not a per-bin cost. Lines still to verify:
+  B24 (one-time) Lid bracket and sensor mount
+Prices are EGP as listed by the supplier on the stated date; nothing converted from another currency.
 ```
 
 | Variable | Value | Source |

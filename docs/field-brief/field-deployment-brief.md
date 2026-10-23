@@ -40,7 +40,7 @@ No text-dependent lights. The bin carries a sticker with a pictogram, the bin nu
 
 The bill of materials is in [`hardware/bom/README.md`](../../hardware/bom/README.md). Each price there has a supplier page, a date and an evidence type; lines without one stay empty.
 
-PARTIAL: not a per-bin cost. 11 lines sourced, 16 to verify; sourced lines add up to 973.25 EGP (one-time), monthly running cost not yet known.
+PARTIAL: not a per-bin cost. 26 lines sourced, 1 to verify; sourced lines add up to 7243.00 EGP (one-time). The custom mount needs a quote; a 40.19 EGP calendar-month connectivity reference is recorded. Full installed cost remains unverified.
 
 ## Deployment steps
 

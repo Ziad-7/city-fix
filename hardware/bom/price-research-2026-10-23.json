@@ -1,0 +1,149 @@
+{
+  "checked_on": "2026-10-23",
+  "meaning": "Published EGP prices for specific procurement candidates; not supplier quotations or engineering approval. Product-page and search-snippet evidence are distinguished. Tax treatment is as displayed by each supplier; no common tax rate is assumed.",
+  "items": {
+    "B02": {
+      "price": "375.00",
+      "supplier": "Electra Store",
+      "url": "https://electra.store/products/waterproof-distance-measuring-ultrasonic-sensor-jsn-sr04t",
+      "evidence": "product_page",
+      "spec": "JSN-SR04T, SKU EW-25041; exact revision to confirm",
+      "notes": "Price verified on product page. Only probe is weather resistant; verify blind zone and board protection."
+    },
+    "B04": {
+      "price": "0.25",
+      "supplier": "Makers Electronics",
+      "url": "https://makerselectronics.com/product/carbon-resistor-4-7k%CF%89-0-5w-through-hole/",
+      "evidence": "product_page",
+      "spec": "4.7k ohm 0.5W through-hole; substitutes the original 0.25W pull-up",
+      "notes": "Higher power rating does not change the intended pull-up resistance."
+    },
+    "B09": {
+      "price": "240.00",
+      "supplier": "Makers Electronics",
+      "url": "https://makerselectronics.com/product/monocrystalline-solar-panel-6v-6w/",
+      "evidence": "search_snippet",
+      "spec": "SYP-SO6V6W, 6V 6W; candidate only",
+      "notes": "Product fetch timed out; price from indexed supplier listing. Listed Voc is 7.2V: do not connect to the draft TP4056 circuit without checking/replacing the charger and input protection. Final power sizing unresolved."
+    },
+    "B11": {
+      "price": "10.75",
+      "supplier": "RAM Electronics",
+      "url": "https://www.ram-e-shop.com/shop/fuse-pocket1-fuse-pocket-holder-external-for-t5x20-size-type-1-5995",
+      "evidence": "derived_from_supplier_listings",
+      "spec": "One 5x20 external holder plus one 3A glass fuse, provisional rating",
+      "notes": "10.00 holder + 0.75 fuse = 10.75 EGP. Fuse source: https://www.ram-e-shop.com/shop/fuse3a-glass-fuse-short-3a-250v-size-t5x20mm-5997 . Final fuse rating/interrupt capacity must follow measured current and cell/wire protection design."
+    },
+    "B12": {
+      "price": "16.00",
+      "supplier": "RS Egypt",
+      "url": "https://eg.rsdelivers.com/product/diodeszetex/ap2112k-33trg1/diodeszetex-ap2112k-33trg1-voltage-regulator-6v-23/8283509",
+      "evidence": "search_snippet",
+      "spec": "AP2112K-3.3TRG1 LDO candidate, SOT-23-5; needs supporting components and thermal/dropout validation",
+      "notes": "Published per-regulator price, excluding VAT. Verify peak current, dropout/cell cutoff and required capacitors from manufacturer datasheet; candidate only."
+    },
+    "B15": {
+      "price": "2.50",
+      "supplier": "UGE Electronics Egypt",
+      "url": "https://uge-one.com/product/2n7000-small-signal-n-channel-mosfet/",
+      "evidence": "product_page",
+      "spec": "2N7000 N-channel TO-92 gate driver, two per bin",
+      "notes": "Gate pull-up/down resistors remain in B05. Check exact transistor pinout and operation at 3.3V on bench."
+    },
+    "B16": {
+      "price": "2.00",
+      "supplier": "Makers Electronics",
+      "url": "https://makerselectronics.com/product/capacitors-100uf-6-3v-6mmx5mm-dip/",
+      "evidence": "search_snippet",
+      "spec": "100uF 6.3V radial capacitor candidate; seller describes low ESR",
+      "notes": "Seller description is not an ESR guarantee. Verify a named manufacturer's ESR, ripple and temperature data against the modem hardware guide; increase/substitute if needed. Modem burst stability remains untested."
+    },
+    "B18": {
+      "price": "10000.00",
+      "supplier": "Makers Electronics",
+      "url": "https://makerselectronics.com/product/sim7600e-h-4g-hat-for-raspberry-pi/",
+      "evidence": "search_snippet",
+      "spec": "SIM7600E-H LTE Cat-4 HAT with antennas; reference alternative only",
+      "notes": "Excluded from bin total. This is a full Raspberry Pi HAT, not a low-cost Cat-1 module or drop-in ESP32 replacement; power/interface integration must be redesigned. Seek a Cat-1 quote before choosing LTE."
+    },
+    "B19": {
+      "price": "40.19",
+      "supplier": "Vodafone Egypt",
+      "url": "https://web.vodafone.com.eg/en/mobile-internet-bundles",
+      "evidence": "derived_from_supplier_listing",
+      "spec": "Plus 1400 MB listed 37 EGP per 28 days; normalized monthly reference",
+      "notes": "Published bundle price is 37 EGP/28 days, not 37/calendar month. Annualized monthly equivalent = 37*365/28/12 = 40.19 EGP, rounded. SIM activation, required base plan, recharge taxes and IoT/APN terms are not quoted or included; this is not a business IoT offer."
+    },
+    "B20": {
+      "price": "275.00",
+      "supplier": "Makers Electronics",
+      "url": "https://makerselectronics.com/product/waterproof-project-box-200x120x55mm/",
+      "evidence": "search_snippet",
+      "spec": "200x120x55mm project box; fit and assembled sealing to verify",
+      "notes": "Candidate must fit board, antenna, cable bend radius and protected cell. No certified assembled IP rating claimed."
+    },
+    "B22": {
+      "price": "389.85",
+      "supplier": "AETRONIX Egypt",
+      "url": "https://eg.aetronix.com/product/amphenol-industrial-aipg/vent-ps1ybk-n8001/breathable-vent-with-nut?pid=74298c50-bb51-42f3-aaff-21fcbf95d349",
+      "evidence": "search_snippet",
+      "spec": "Amphenol VENT-PS1YBK-N8001 M12 breathable vent with nut",
+      "notes": "Supplier displays 339.00 ex VAT and 389.85 inc VAT; use its displayed inclusive amount, do not infer a tax rate. Mounting and assembled ingress protection remain to verify."
+    },
+    "B23": {
+      "price": "1883.00",
+      "supplier": "Desertcart Egypt",
+      "url": "https://www.desertcart.com.eg/products/45542787-uxcell-a16110300ux0448-m6x20mm-304-stainless-steel-button-head-torx-security-tamper-proof-screws-pack-of-20",
+      "evidence": "search_snippet",
+      "spec": "20-piece set M6x20 A2/304 pin-Torx security screws; one set",
+      "notes": "Price for one fastener set; verify thread size, nuts, driver bit and mounting compatibility."
+    },
+    "B25": {
+      "price": "2352.90",
+      "supplier": "AETRONIX Egypt",
+      "url": "https://eg.aetronix.com/product/mg-chemicals/422b-55ml/conformal-coating?pid=0ed9511b-452c-4697-80ba-9bfa36699ef3",
+      "evidence": "search_snippet",
+      "spec": "MG Chemicals 422B-55ML, full 55ml bottle purchase",
+      "notes": "Supplier displays 2046.00 ex VAT and 2352.90 inc VAT. Whole bottle counted for one-off procurement; shared use lowers allocated cost but no coverage yield is invented. Follow manufacturer application and masking instructions."
+    },
+    "B26": {
+      "price": "135.00",
+      "supplier": "Silica Egypt",
+      "url": "https://silicaeg.com/products/premium-30-sachets-of-10g-silica-gel",
+      "evidence": "product_page",
+      "spec": "One purchased set of 30 x 10g sachets",
+      "notes": "Price for one 30-sachet set. Required quantity and replacement interval are not measured."
+    },
+    "B27": {
+      "price": "540.00",
+      "supplier": "Makers Electronics and RAM Electronics",
+      "url": "https://makerselectronics.com/product/flexible-tinned-copper-silicone-wire-awg-22-1m/",
+      "evidence": "derived_from_supplier_listings",
+      "spec": "2m AWG22 silicone wire + two LD20 2-pin inline connector sets; example power-wiring basket",
+      "notes": "2*30 EGP wire + 2*240 EGP connectors = 540. Sensor cables pass through B21 glands; these two-pin connectors are for power only. Connector source: https://www.ram-e-shop.com/shop/ld20-2pin-ld20-docking-ip67-2pin-waterproof-dustproof-connector-water-depth-1m-9045 . Check cable seal diameter and current. Extra sensor/control leads, heatshrink and ferrules are not fully itemized."
+    },
+    "B28": {
+      "price": "45.00",
+      "supplier": "RAM Electronics",
+      "url": "https://www.ram-e-shop.com/shop/pcb26-holes-double-9x15-pcb-fr-4-dots-holes-9x15-cm2-double-side-with-green-musk-sku-pcb26-6769",
+      "evidence": "product_page",
+      "spec": "PCB26 double-sided 9x15cm prototype board",
+      "notes": "Candidate perfboard, not a finished field PCB. SMD regulator requires an appropriate carrier/layout; include that quote after choosing the power circuit."
+    }
+  },
+  "unpriced": {
+    "B24": "Custom bin-lid bracket and sensor mount: exact dimensions and a workshop quote are required. No finished CAD or verifiable price was found; no real price can be invented."
+  },
+  "scale_reference_prices": {
+    "load_cell_50kg": {
+      "price": "350.00",
+      "supplier": "RAM Electronics",
+      "url": "https://www.ram-e-shop.com/shop/kit-load-cell-50kg-load-cell-50kg-weight-sensor-strain-gauge-7308"
+    },
+    "hx711": {
+      "price": "75.00",
+      "supplier": "RAM Electronics",
+      "url": "https://www.ram-e-shop.com/shop/kit-hx711-adc-hx711-weight-scale-analog-to-digital-converter-adc-24-bit-7087"
+    }
+  }
+}

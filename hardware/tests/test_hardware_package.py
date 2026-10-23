@@ -62,7 +62,7 @@ class BomTests(unittest.TestCase):
     def test_bad_rows_are_rejected(self):
         bad = [dict(self.rows[0], supplier_url="")]
         self.assertTrue(bom_totals.validate(bad))
-        bad = [dict(self.rows[1], unit_price_egp="10.00")]  # to_verify line with a price
+        bad = [dict(self.rows[1], status="to_verify", unit_price_egp="10.00")]  # unverified line with a price
         self.assertTrue(bom_totals.validate(bad))
 
     def test_bom_readme_shows_current_output(self):
