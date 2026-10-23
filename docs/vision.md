@@ -83,7 +83,7 @@ Every metric comes from data the platform records. Targets are set after the fir
 | **Technical rigor and MVP (25)** | Working citizen app and website, Command Center, FastAPI + PostGIS backend with a documented contract, collector mode with offline-first sync, device-authenticated telemetry, OR-Tools routing, CI per folder, tests, accuracy numbers for the AI on a labelled set. |
 | **Innovation and interdisciplinarity (20)** | Software + hardware + physical science: ESP32 smart bin (ultrasonic or ToF fill level, temperature for heat or fire risk, solar power, deep sleep) and a hub scale (load cell) whose verified kg pay collectors; computer vision for waste type; GIS for pickups, routes and hotspots; ML for fill forecasting. |
 | **Economic and field feasibility (20)** | Bill of Materials in EGP with local suppliers ([`hardware/bom/bom.csv`](team/hardware-iot.md#6-bill-of-materials-in-egp), prices **to verify** with suppliers), local availability of every part, maintenance plan, enclosure rated for dust and sun, designed for 45–50 °C, weak GSM, vandalism and theft. |
-| **Technical communication and pitch (10)** | System architecture diagram, technical documentation in this repo, the two-page Field Deployment Brief, a 3-minute demo video and a technical deck. Owners in [`features/README.md`](features/README.md#hackathon-deliverables-and-owners). |
+| **Technical communication and pitch (10)** | System architecture diagram ([`architecture.md`](architecture.md)), technical documentation in this repo, the two-page Field Deployment Brief, a 3-minute demo video and a technical deck (outlines in [`pitch/`](pitch/README.md)). Owners in [`features/README.md`](features/README.md#hackathon-deliverables-and-owners). |
 
 ## What is not claimed
 

@@ -63,6 +63,14 @@ _BINS = [
 ]
 
 
+# Synthetic readings so the forecast demo has history: fills (oldest first) one hour apart, the last equal to the
+# bin's current fill and recorded at its last-seen time. The forecast needs 3+ clock-synced readings over 1+ hour.
+_BIN_HISTORY = {
+    "BIN-012": [70, 78, 86, 94],
+    "BIN-014": [30, 36, 42, 48],
+}
+
+
 def seed_citycycle(db: Session) -> None:
     now = now_utc()
     for material_id in MATERIAL_IDS:
@@ -190,7 +198,7 @@ def seed_citycycle(db: Session) -> None:
                 lng=lng,
                 device_key_hash=hashlib.sha256(secrets.token_bytes(32)).hexdigest(),
                 is_simulated=True,
-                last_seq=1 if seen else 0,
+                last_seq=len(_BIN_HISTORY.get(bin_id, [fill])) if seen else 0,
                 fill_pct=fill,
                 temp_c=temp,
                 battery_v=battery,
@@ -200,17 +208,21 @@ def seed_citycycle(db: Session) -> None:
             )
         )
         if seen:
-            db.add(
-                BinReading(
-                    bin_id=bin_id,
-                    seq=1,
-                    recorded_at=seen,
-                    received_at=seen,
-                    fill_pct=fill,
-                    temp_c=temp,
-                    battery_v=battery,
-                    is_full=bool(fill >= 80),
-                    is_hot=bool(temp >= 60),
+            history = _BIN_HISTORY.get(bin_id)
+            for seq, past_fill in enumerate(history or [fill], start=1):
+                at = seen - timedelta(hours=len(history) - seq) if history else seen
+                db.add(
+                    BinReading(
+                        bin_id=bin_id,
+                        seq=seq,
+                        recorded_at=at,
+                        received_at=at,
+                        clock_unsynced=False if history else None,
+                        fill_pct=past_fill,
+                        temp_c=temp,
+                        battery_v=battery,
+                        is_full=bool(past_fill >= 80),
+                        is_hot=bool(temp >= 60),
+                    )
                 )
-            )
     db.commit()

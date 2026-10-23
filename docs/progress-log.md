@@ -1,5 +1,19 @@
 # Progress log
 
+## 2026-10-23 — Submission package (branch `claude/p4-submission-package`)
+
+**Done**
+- MIT `LICENSE` (assumption: holder "CityFix contributors"; the repo owner must confirm licence and holder name).
+- Root `README.md` now leads with CityCycle and Track 4, has an honest "what actually runs today" table, the corrected backend run command (`LOCAL_SCHEMA_BOOTSTRAP=true SEED_ON_START=true`), demo logins and a licence section.
+- `docs/architecture.md` (Mermaid source, two data flows) and `docs/diagrams/system-architecture.svg` (checked-in export).
+- `docs/evidence.md` (claims vs evidence, reproduce commands, deployment runbook) and `docs/pitch/` (video script, deck outline, judges' Q&A).
+- Demo seed: `BIN-012` and `BIN-014` now carry 4 synthetic readings so `GET /admin/bins/forecast` shows a forecast; asserted in `backend/tests/test_citycycle.py`.
+
+**Known issues**
+- `CONTRIBUTING.md` suggests `JWT_SECRET=dummy` for pytest, but the app needs at least 32 bytes; CI uses `ci-dummy-secret-not-for-production`.
+- Files named as "parallel PR" in the docs (BOM, schematics, field brief, admin screens) are not part of this change.
+- No verified live deployment URL.
+
 ## 2026-10-23 — Mobile: localised severity in AI triage summary, offline banner (branch `feat/mobile-complete`, PR #49)
 
 **Done**
