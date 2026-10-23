@@ -103,5 +103,5 @@ Amounts are recorded only. No payment provider is integrated and no money moves 
 - [API contract](api-contract.md) and [hardware and IoT brief](team/hardware-iot.md)
 - [Wokwi ESP32 prototypes](../hardware/wokwi/README.md) and [PC simulator](../hardware/simulator/README.md)
 - [Claims vs evidence](evidence.md)
-- Hardware package (separate PR): `hardware/README.md`, schematics in `hardware/schematics/`, Bill of Materials in `hardware/bom/bom.csv`
-- Field Deployment Brief (separate PR): `docs/field-brief/field-deployment-brief.md`
+- Hardware package: [`hardware/README.md`](../hardware/README.md), schematics in [`hardware/schematics/`](../hardware/schematics/README.md), Bill of Materials in [`hardware/bom/`](../hardware/bom/README.md)
+- Field Deployment Brief: [field-brief/field-deployment-brief.md](field-brief/field-deployment-brief.md)

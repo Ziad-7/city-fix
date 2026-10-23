@@ -23,7 +23,7 @@ Amounts are recorded only: no payment provider is integrated and no money moves 
 | Citizen web CityCycle screens | Built; mock mode by default | `apps/web/src/app/(portal)/services/recycling/`, [web README](apps/web/README.md) |
 | Command Center CityCycle and smart-bin pages | Built | `apps/admin-web/src/app/(app)/citycycle/`, `apps/admin-web/src/app/(app)/bins/` |
 | Smart bin | Simulated only: browser page `/smart-bin` in `apps/web`, PC simulator, ESP32 Wokwi prototypes. No physical bench build | [`hardware/simulator/`](hardware/simulator/README.md), [`hardware/wokwi/`](hardware/wokwi/README.md) |
-| Route optimizer and fill forecast | API implemented (admin-only OR-Tools preview, linear forecast); admin screens added in a parallel PR | `backend/tests/test_route_optimizer.py`, `backend/tests/test_bin_forecast.py` |
+| Route optimizer and fill forecast | Built: admin-only OR-Tools route preview and linear fill forecast, with Command Center screens (bins forecast, route planner, hotspots, payouts). OR-Tools in a production build is still to verify | `backend/tests/test_route_optimizer.py`, `backend/tests/test_bin_forecast.py` |
 | AI suggestions (CityBrain) | Suggestions only, with deterministic fallback; photo analysis off by default | [AI status](docs/ai-status.md) |
 | Deployment | To verify: no live URL recorded | [Claims vs evidence](docs/evidence.md) |
 
@@ -37,8 +37,8 @@ Clients (mobile, citizen web, Command Center) talk to one FastAPI backend; devic
 - [Claims vs evidence](docs/evidence.md): what is tested, simulated or still to verify, and how to reproduce
 - [Pitch kit](docs/pitch/README.md): 3-minute video script, deck outline, judges' Q&A
 - [Vision](docs/vision.md): the full picture and the grading map
-- Hardware package (separate PR): overview `hardware/README.md`, schematics `hardware/schematics/`, Bill of Materials in EGP `hardware/bom/bom.csv` (prices only with a dated supplier source, otherwise to verify)
-- Field Deployment Brief (separate PR): `docs/field-brief/field-deployment-brief.md`, printable `docs/field-brief/field-deployment-brief.html`
+- Hardware package: overview [`hardware/README.md`](hardware/README.md), schematics [`hardware/schematics/`](hardware/schematics/README.md), Bill of Materials in EGP [`hardware/bom/`](hardware/bom/README.md) (prices only with a dated supplier source, otherwise to verify)
+- Field Deployment Brief: [`docs/field-brief/field-deployment-brief.md`](docs/field-brief/field-deployment-brief.md), printable [HTML](docs/field-brief/field-deployment-brief.html)
 
 ## Also in CityFix
 
@@ -58,7 +58,7 @@ These modules support CityCycle and share its backend, accounts and design.
 | `apps/mobile/` | Citizen and collector app — Expo (React Native) + TypeScript, Arabic-first RTL | Built; mock mode by default |
 | `apps/web/` | Citizen website (client portal) — Next.js, Arabic and English | Built; mock mode by default |
 | `apps/admin-web/` | City Command Center — Next.js web dashboard, Arabic | Built and integrated with the local demo API; deployment pending |
-| `hardware/` | CityCycle smart-bin simulator, ESP32 Wokwi prototypes and the hardware design package (`hardware/README.md`, separate PR) | Simulated only, no physical build; schematics and BOM are design documents |
+| `hardware/` | CityCycle smart-bin simulator, ESP32 Wokwi prototypes and the hardware design package ([`hardware/README.md`](hardware/README.md)) | Simulated only, no physical build; schematics and BOM are design documents |
 | `backend/` | FastAPI API (SQLite locally, PostgreSQL on Supabase for deployment), CityBrain AI, budget optimizer | Built; production PostgreSQL migration, real OTP and deployment pending |
 | `docs/` | Decisions, design, specs, progress log | Living |
 

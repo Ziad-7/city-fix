@@ -44,6 +44,6 @@ Short, honest answers. Evidence for each is in [../evidence.md](../evidence.md).
 
 **Why would a Zabbal use it?** A verified weight, a record of earnings, nearby jobs on a map, and a simple low-literacy interface. Whether that is enough is what a pilot would test.
 
-**Theft and vandalism?** Design measures are in [../team/hardware-iot.md](../team/hardware-iot.md) section 5; the Field Deployment Brief (`docs/field-brief/field-deployment-brief.md`, separate PR) covers them in more detail. Not field-tested.
+**Theft and vandalism?** Design measures are in [../team/hardware-iot.md](../team/hardware-iot.md) section 5; the Field Deployment Brief ([field-brief/field-deployment-brief.md](../field-brief/field-deployment-brief.md)) covers them in more detail. Not field-tested.
 
 **What if there is no connection?** The device keeps readings in an outbox and retries (simulator and prototype firmware); the mobile app keeps collector actions and reports in an offline queue and sends them later.
