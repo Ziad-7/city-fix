@@ -18,6 +18,7 @@
 | [`architecture.md`](architecture.md) · [`diagrams/`](diagrams/system-architecture.svg) | System architecture (Mermaid source and checked-in SVG) and the two main data flows |
 | [`evidence.md`](evidence.md) | Claims vs evidence: verified in tests, simulated, or to verify, with how to reproduce; deployment runbook |
 | [`pitch/`](pitch/README.md) | Submission pitch kit: 3-minute video script, deck outline, judges' Q&A |
+| [`field-brief/`](field-brief/field-deployment-brief.md) | Field Deployment Brief for the CityCycle smart bin: Egyptian field conditions, what is verified and what is not, maintenance, open items (printable A4 [HTML](field-brief/field-deployment-brief.html)) |
 | [`ai-status.md`](ai-status.md) | CityBrain implementation status: delivered AI work, verification evidence, and remaining release/deployment steps |
 | [`progress-log.md`](progress-log.md) | Dated log of what was built, how to test it, known issues |
 

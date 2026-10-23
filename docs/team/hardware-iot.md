@@ -148,6 +148,10 @@ misc,wires/connectors/fasteners,1,,,,,,
 
 If the board is not ready on demo day, run the simulator: it sends the same payload, so every screen still works. Say so openly in the demo.
 
+## Status (2026-10-23)
+
+Added as a paper design, not bench-validated: field wiring schematic, pin table and netlist ([`hardware/schematics/`](../../hardware/schematics/README.md)), a partial EGP BOM with a supplier page, date and evidence per price ([`hardware/bom/`](../../hardware/bom/README.md)), enclosure notes and test procedure, power formulas with blank tables, and the [Field Deployment Brief](../field-brief/field-deployment-brief.md). Still open: building a unit, measuring currents, firmware for the real hardware (a delta table is in the schematics README), enclosure tests, 2G availability per operator, remaining BOM prices.
+
 ## 9. Hand-offs
 
 - **Member 4 (API & DB):** you ask for the device registry (`bins`, `hubs`, device keys), the readings and weighings endpoints, and thresholds served in the response. You give the exact payload and the sample data.
