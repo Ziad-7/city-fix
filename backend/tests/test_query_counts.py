@@ -14,14 +14,14 @@ from .query_counter import count_queries
 
 # (name, role, url, ceiling)
 _PLAIN = [
-    ("admin_incidents", "admin", "/admin/incidents", 9),
+    ("admin_incidents", "admin", "/admin/incidents", 8),
     ("citizen_incidents", "citizen", "/incidents", 10),
-    ("admin_work_orders", "admin", "/admin/work-orders", 10),
-    ("admin_service_requests", "admin", "/admin/service-requests", 10),
-    ("admin_dashboard", "admin", "/admin/dashboard", 8),
-    ("admin_pickups", "admin", "/admin/recycling/pickups", 6),
-    ("admin_forecast", "admin", "/admin/bins/forecast", 6),
-    ("admin_collectors", "admin", "/admin/collectors", 4),
+    ("admin_work_orders", "admin", "/admin/work-orders", 6),
+    ("admin_service_requests", "admin", "/admin/service-requests", 6),
+    ("admin_dashboard", "admin", "/admin/dashboard", 7),
+    ("admin_pickups", "admin", "/admin/recycling/pickups", 5),
+    ("admin_forecast", "admin", "/admin/bins/forecast", 5),
+    ("admin_collectors", "admin", "/admin/collectors", 3),
 ]
 ROUTES = [pytest.param(*r, id=r[0]) for r in _PLAIN]
 
@@ -63,7 +63,7 @@ def _add_followers(db, incident_id, total):
     db.flush()
 
 
-NOTIFY_CEILING = 19
+NOTIFY_CEILING = 18
 
 
 def test_status_change_notification_fanout_is_constant(client, db, admin_h):
