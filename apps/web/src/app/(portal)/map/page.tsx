@@ -181,13 +181,16 @@ export default function MapPage() {
             </button>
           </div>
           {isBins ? (
-            <div className="m-legend" aria-label={tr('دليل حالات الصناديق', 'Bin state key')}>
-              {BIN_STATES.map((st) => (
-                <span key={st} style={{ ['--cc-bin' as string]: BIN_COLOR[st] }}>
-                  <span className="cc-legend-icon"><Icon name={BIN_ICON[st]} size={14} /></span>{binStateLabel(st)}
-                </span>
-              ))}
-            </div>
+            <>
+              <div className="m-legend" aria-label={tr('دليل حالات الصناديق', 'Bin state key')}>
+                {BIN_STATES.map((st) => (
+                  <span key={st} style={{ ['--cc-bin' as string]: BIN_COLOR[st] }}>
+                    <span className="cc-legend-icon"><Icon name={BIN_ICON[st]} size={14} /></span>{binStateLabel(st)}
+                  </span>
+                ))}
+              </div>
+              <Link className="ftc-help" href="/smart-bin" data-testid="map-smart-bin">{tr('إزاي الصندوق الذكي بيشتغل؟', 'How does a smart bin work?')}</Link>
+            </>
           ) : (
             <>
               <div className="ftc-field">

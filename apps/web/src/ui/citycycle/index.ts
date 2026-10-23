@@ -1,4 +1,5 @@
 export { BIN_COLOR, BIN_ICON, BinSheet, BinStateChip } from './BinParts';
+export { SmartBinFigure } from './SmartBinFigure';
 export { DemoPricesNote } from './DemoPricesNote';
 export { KgStepper } from './KgStepper';
 export { MaterialBadge, MaterialGrid, MaterialLines } from './MaterialParts';

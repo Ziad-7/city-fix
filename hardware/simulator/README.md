@@ -1,6 +1,6 @@
 # CityCycle smart-bin simulator
 
-This folder contains the PC simulator for smart-bin telemetry. Separate free-plan ESP32 firmware prototypes are documented in [hardware/wokwi](../wokwi/README.md); they do not change this PC simulator. It runs a local browser panel and durable SQLite outbox. By default it uses a local mock receiver; in `real` mode it sends device-authenticated readings to the CityFix API, where staff can inspect bins and history in the Command Center at **الحاويات الذكية**. The browser-only fleet demo is served publicly at `/smart-bin-simulator.html` when the `apps/web` site is deployed to Vercel. It uses sample data in that visitor's browser and never writes to the API.
+This folder contains the PC simulator for smart-bin telemetry. Separate free-plan ESP32 firmware prototypes are documented in [hardware/wokwi](../wokwi/README.md); they do not change this PC simulator. It runs a local browser panel and durable SQLite outbox. By default it uses a local mock receiver; in `real` mode it sends device-authenticated readings to the CityFix API, where staff can inspect bins and history in the Command Center at **الحاويات الذكية**. The browser-only one-bin demo is served publicly at `/smart-bin` when the `apps/web` site is deployed to Vercel. It runs in that visitor's browser and never writes to the API.
 
 ## Start it
 
@@ -70,7 +70,7 @@ The implemented telemetry and staff API shape is documented in [API contract](..
 
 ## Online hosting and free-tier limits
 
-The public interactive simulator is a static HTML/CSS/JavaScript page with no paid model, server process, or database. It can be hosted with the existing `apps/web` Vercel deployment at `/smart-bin-simulator.html`; its editable demo state stays in the visitor's browser storage. The API ingestion path is separate: deploy the FastAPI backend and a persistent database, then configure the Command Center's `NEXT_PUBLIC_API_URL` and the simulator's real-mode variables. The backend's SQLite default is for development and is not suitable for an ephemeral serverless filesystem. A free host may sleep, impose quotas, or change its free tier; continuous live telemetry and durable hosted history cannot be promised as permanently free. The local demo and static online simulation remain free to run.
+The public interactive demo is the `/smart-bin` page of the existing `apps/web` Vercel deployment: one sample bin, no paid model, server process, or database; its state stays in the visitor's browser. The API ingestion path is separate: deploy the FastAPI backend and a persistent database, then configure the Command Center's `NEXT_PUBLIC_API_URL` and the simulator's real-mode variables. The backend's SQLite default is for development and is not suitable for an ephemeral serverless filesystem. A free host may sleep, impose quotas, or change its free tier; continuous live telemetry and durable hosted history cannot be promised as permanently free. The local demo and the online browser demo remain free to run.
 
 ## Checks
 

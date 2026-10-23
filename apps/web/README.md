@@ -44,11 +44,12 @@ Sign in with any valid Egyptian mobile number (for example `01012345678`) and th
 | `/services/recycling` | CityCycle recyclables pickup: materials and kg, free or paid with an EGP estimate, photo with AI suggestion, place, day and slot, voice note |
 | `/impact` | My recycling impact (kg, EGP; CO₂ only when the backend sends a verified figure) |
 | `/recycling-guide` | Picture sorting guide, printable; open without signing in |
+| `/smart-bin` | Smart bin demo: change the fill, heat, battery and signal of one sample bin and see what the city does; browser only, open without signing in |
 | `/map` | Incident map with category filters and pin cards, and a smart-bin layer with "report full" |
 | `/notifications` | Notifications, reached from the bell in the top bar |
 | `/profile` | Name, area, language (Arabic / English), CityCycle links, a collector card that points to the app, sign-out |
 
-Pickups appear in `/requests` under the Recycling filter (`RCY-` ids). Everything except `/sign-in` and `/recycling-guide` sits in the `(portal)` route group, which sends signed-out visitors to sign-in and brings them back afterwards. Collector mode is not on the web; collectors use the app.
+Pickups appear in `/requests` under the Recycling filter (`RCY-` ids). Everything except `/sign-in`, `/recycling-guide` and `/smart-bin` sits in the `(portal)` route group, which sends signed-out visitors to sign-in and brings them back afterwards. Collector mode is not on the web; collectors use the app.
 
 ## Languages
 
