@@ -125,19 +125,19 @@ def pickup_timelines(db: Session, ids: list[str]) -> dict[str, list[dict]]:
     return out
 
 
-def log(db: Session, pickup_id: str, status: str, actor: str, note: str) -> None:
-    db.add(
-        ActivityLog(
-            entity_type=ENTITY,
-            entity_id=pickup_id,
-            status=status,
-            note=note,
-            actor=actor,
-            kind="status_change",
-            at=now_utc(),
-        )
+def log(db: Session, pickup_id: str, status: str, actor: str, note: str) -> ActivityLog:
+    row = ActivityLog(
+        entity_type=ENTITY,
+        entity_id=pickup_id,
+        status=status,
+        note=note,
+        actor=actor,
+        kind="status_change",
+        at=now_utc(),
     )
+    db.add(row)
     db.flush()
+    return row
 
 
 def pickup_view(

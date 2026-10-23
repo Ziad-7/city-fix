@@ -1,0 +1,1926 @@
+{
+  "activity_log": {
+    "columns": {
+      "actor": {
+        "length": 255,
+        "nullable": false,
+        "type": "String"
+      },
+      "at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "entity_id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "entity_type": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "id": {
+        "length": null,
+        "nullable": false,
+        "type": "Integer"
+      },
+      "kind": {
+        "length": 50,
+        "nullable": true,
+        "type": "String"
+      },
+      "note": {
+        "length": null,
+        "nullable": true,
+        "type": "Text"
+      },
+      "status": {
+        "length": 50,
+        "nullable": true,
+        "type": "String"
+      }
+    },
+    "foreign_keys": [],
+    "indexes": [
+      {
+        "columns": [
+          "at"
+        ],
+        "name": "idx_activity_at",
+        "unique": false
+      },
+      {
+        "columns": [
+          "entity_type",
+          "entity_id"
+        ],
+        "name": "idx_activity_entity",
+        "unique": false
+      }
+    ],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": []
+  },
+  "ai_suggestions": {
+    "columns": {
+      "accepted": {
+        "length": null,
+        "nullable": true,
+        "type": "Boolean"
+      },
+      "created_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "kind": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "latency_ms": {
+        "length": null,
+        "nullable": true,
+        "type": "Integer"
+      },
+      "model": {
+        "length": 100,
+        "nullable": true,
+        "type": "String"
+      },
+      "payload": {
+        "length": null,
+        "nullable": false,
+        "type": "JSON"
+      },
+      "report_id": {
+        "length": 50,
+        "nullable": true,
+        "type": "String"
+      }
+    },
+    "foreign_keys": [
+      {
+        "column": "report_id",
+        "referred": "id",
+        "table": "reports"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": []
+  },
+  "bin_readings": {
+    "columns": {
+      "battery_v": {
+        "length": null,
+        "nullable": true,
+        "type": "Float"
+      },
+      "bin_id": {
+        "length": 64,
+        "nullable": false,
+        "type": "String"
+      },
+      "clock_unsynced": {
+        "length": null,
+        "nullable": true,
+        "type": "Boolean"
+      },
+      "device_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "distance_cm": {
+        "length": null,
+        "nullable": true,
+        "type": "Float"
+      },
+      "fill_pct": {
+        "length": null,
+        "nullable": false,
+        "type": "Float"
+      },
+      "firmware": {
+        "length": 40,
+        "nullable": true,
+        "type": "String"
+      },
+      "id": {
+        "length": null,
+        "nullable": false,
+        "type": "Integer"
+      },
+      "is_full": {
+        "length": null,
+        "nullable": false,
+        "type": "Boolean"
+      },
+      "is_hot": {
+        "length": null,
+        "nullable": false,
+        "type": "Boolean"
+      },
+      "received_at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "recorded_at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "rssi": {
+        "length": null,
+        "nullable": true,
+        "type": "Integer"
+      },
+      "seq": {
+        "length": null,
+        "nullable": false,
+        "type": "BigInteger"
+      },
+      "temp_c": {
+        "length": null,
+        "nullable": true,
+        "type": "Float"
+      }
+    },
+    "foreign_keys": [
+      {
+        "column": "bin_id",
+        "referred": "id",
+        "table": "smart_bins"
+      }
+    ],
+    "indexes": [
+      {
+        "columns": [
+          "bin_id",
+          "received_at"
+        ],
+        "name": "idx_bin_reading_received",
+        "unique": false
+      }
+    ],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": [
+      [
+        "bin_id",
+        "seq"
+      ]
+    ]
+  },
+  "bin_reports": {
+    "columns": {
+      "bin_id": {
+        "length": 64,
+        "nullable": false,
+        "type": "String"
+      },
+      "created_at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "id": {
+        "length": null,
+        "nullable": false,
+        "type": "Integer"
+      },
+      "incident_id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "note": {
+        "length": null,
+        "nullable": true,
+        "type": "Text"
+      },
+      "reporter_id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      }
+    },
+    "foreign_keys": [
+      {
+        "column": "bin_id",
+        "referred": "id",
+        "table": "smart_bins"
+      },
+      {
+        "column": "incident_id",
+        "referred": "id",
+        "table": "incidents"
+      },
+      {
+        "column": "reporter_id",
+        "referred": "id",
+        "table": "profiles"
+      }
+    ],
+    "indexes": [
+      {
+        "columns": [
+          "bin_id",
+          "created_at"
+        ],
+        "name": "idx_bin_report_bin",
+        "unique": false
+      }
+    ],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": []
+  },
+  "budget_plans": {
+    "columns": {
+      "budget_egp": {
+        "length": null,
+        "nullable": false,
+        "type": "Integer"
+      },
+      "created_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "remaining": {
+        "length": null,
+        "nullable": false,
+        "type": "Integer"
+      },
+      "selected": {
+        "length": null,
+        "nullable": false,
+        "type": "JSON"
+      },
+      "skipped": {
+        "length": null,
+        "nullable": false,
+        "type": "JSON"
+      },
+      "total_cost": {
+        "length": null,
+        "nullable": false,
+        "type": "Integer"
+      }
+    },
+    "foreign_keys": [],
+    "indexes": [],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": []
+  },
+  "categories": {
+    "columns": {
+      "danger": {
+        "length": null,
+        "nullable": true,
+        "type": "Boolean"
+      },
+      "default_severity": {
+        "length": 20,
+        "nullable": true,
+        "type": "String"
+      },
+      "department_id": {
+        "length": 100,
+        "nullable": true,
+        "type": "String"
+      },
+      "estimated_cost_egp": {
+        "length": null,
+        "nullable": true,
+        "type": "Integer"
+      },
+      "id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "label_ar": {
+        "length": 255,
+        "nullable": false,
+        "type": "String"
+      },
+      "target_days": {
+        "length": null,
+        "nullable": true,
+        "type": "Integer"
+      }
+    },
+    "foreign_keys": [
+      {
+        "column": "department_id",
+        "referred": "id",
+        "table": "departments"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": []
+  },
+  "collectors": {
+    "columns": {
+      "district": {
+        "length": 100,
+        "nullable": false,
+        "type": "String"
+      },
+      "id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "joined_at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "materials": {
+        "length": null,
+        "nullable": false,
+        "type": "JSON"
+      },
+      "name": {
+        "length": 255,
+        "nullable": false,
+        "type": "String"
+      },
+      "profile_id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "review_note": {
+        "length": null,
+        "nullable": true,
+        "type": "Text"
+      },
+      "status": {
+        "length": 20,
+        "nullable": false,
+        "type": "String"
+      },
+      "vehicle": {
+        "length": 255,
+        "nullable": true,
+        "type": "String"
+      }
+    },
+    "foreign_keys": [
+      {
+        "column": "profile_id",
+        "referred": "id",
+        "table": "profiles"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": [
+      [
+        "profile_id"
+      ]
+    ]
+  },
+  "departments": {
+    "columns": {
+      "district": {
+        "length": 100,
+        "nullable": true,
+        "type": "String"
+      },
+      "external_hotline": {
+        "length": 20,
+        "nullable": true,
+        "type": "String"
+      },
+      "id": {
+        "length": 100,
+        "nullable": false,
+        "type": "String"
+      },
+      "name_ar": {
+        "length": 255,
+        "nullable": false,
+        "type": "String"
+      }
+    },
+    "foreign_keys": [],
+    "indexes": [],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": []
+  },
+  "hub_weighings": {
+    "columns": {
+      "hub_id": {
+        "length": 64,
+        "nullable": false,
+        "type": "String"
+      },
+      "id": {
+        "length": null,
+        "nullable": false,
+        "type": "Integer"
+      },
+      "kg": {
+        "length": null,
+        "nullable": false,
+        "type": "Float"
+      },
+      "material_id": {
+        "length": 30,
+        "nullable": false,
+        "type": "String"
+      },
+      "pickup_id": {
+        "length": 50,
+        "nullable": true,
+        "type": "String"
+      },
+      "received_at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "recorded_at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "seq": {
+        "length": null,
+        "nullable": false,
+        "type": "BigInteger"
+      }
+    },
+    "foreign_keys": [
+      {
+        "column": "hub_id",
+        "referred": "id",
+        "table": "smart_bins"
+      },
+      {
+        "column": "pickup_id",
+        "referred": "id",
+        "table": "recycling_pickups"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": [
+      [
+        "hub_id",
+        "seq"
+      ]
+    ]
+  },
+  "idempotency_keys": {
+    "columns": {
+      "created_at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "id": {
+        "length": null,
+        "nullable": false,
+        "type": "Integer"
+      },
+      "key": {
+        "length": 100,
+        "nullable": false,
+        "type": "String"
+      },
+      "resource_id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "scope": {
+        "length": 30,
+        "nullable": false,
+        "type": "String"
+      },
+      "user_id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      }
+    },
+    "foreign_keys": [],
+    "indexes": [],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": [
+      [
+        "key",
+        "scope",
+        "user_id"
+      ]
+    ]
+  },
+  "incident_followers": {
+    "columns": {
+      "created_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "incident_id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "user_id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      }
+    },
+    "foreign_keys": [
+      {
+        "column": "incident_id",
+        "referred": "id",
+        "table": "incidents"
+      },
+      {
+        "column": "user_id",
+        "referred": "id",
+        "table": "profiles"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "incident_id",
+      "user_id"
+    ],
+    "unique_constraints": []
+  },
+  "incidents": {
+    "columns": {
+      "address": {
+        "length": 500,
+        "nullable": false,
+        "type": "String"
+      },
+      "area_underserved": {
+        "length": null,
+        "nullable": true,
+        "type": "Boolean"
+      },
+      "category_id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "created_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "department_id": {
+        "length": 100,
+        "nullable": true,
+        "type": "String"
+      },
+      "estimated_cost_egp": {
+        "length": null,
+        "nullable": true,
+        "type": "Integer"
+      },
+      "eta": {
+        "length": 255,
+        "nullable": true,
+        "type": "String"
+      },
+      "followers_count": {
+        "length": null,
+        "nullable": true,
+        "type": "Integer"
+      },
+      "id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "landmark": {
+        "length": 255,
+        "nullable": true,
+        "type": "String"
+      },
+      "last_reviewed_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "last_reviewed_by": {
+        "length": 255,
+        "nullable": true,
+        "type": "String"
+      },
+      "lat": {
+        "length": null,
+        "nullable": false,
+        "type": "Float"
+      },
+      "lng": {
+        "length": null,
+        "nullable": false,
+        "type": "Float"
+      },
+      "priority_factors": {
+        "length": null,
+        "nullable": true,
+        "type": "JSON"
+      },
+      "priority_score": {
+        "length": null,
+        "nullable": true,
+        "type": "Integer"
+      },
+      "sensitive_place": {
+        "length": 255,
+        "nullable": true,
+        "type": "String"
+      },
+      "severity": {
+        "length": 8,
+        "nullable": true,
+        "type": "Enum",
+        "enum_name": "severityenum"
+      },
+      "status": {
+        "length": 11,
+        "nullable": true,
+        "type": "Enum",
+        "enum_name": "incidentstatusenum"
+      },
+      "title": {
+        "length": 500,
+        "nullable": false,
+        "type": "String"
+      },
+      "updated_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "work_order_id": {
+        "length": 50,
+        "nullable": true,
+        "type": "String"
+      }
+    },
+    "foreign_keys": [
+      {
+        "column": "category_id",
+        "referred": "id",
+        "table": "categories"
+      },
+      {
+        "column": "department_id",
+        "referred": "id",
+        "table": "departments"
+      }
+    ],
+    "indexes": [
+      {
+        "columns": [
+          "lat",
+          "lng"
+        ],
+        "name": "idx_incident_lat_lng",
+        "unique": false
+      },
+      {
+        "columns": [
+          "status",
+          "category_id"
+        ],
+        "name": "idx_incident_status_category",
+        "unique": false
+      },
+      {
+        "columns": [
+          "created_at"
+        ],
+        "name": "idx_incident_created_at",
+        "unique": false
+      }
+    ],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": []
+  },
+  "material_prices": {
+    "columns": {
+      "district": {
+        "length": 100,
+        "nullable": false,
+        "type": "String"
+      },
+      "material_id": {
+        "length": 30,
+        "nullable": false,
+        "type": "String"
+      },
+      "price_egp_per_kg": {
+        "length": null,
+        "nullable": true,
+        "type": "Float"
+      },
+      "updated_at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      }
+    },
+    "foreign_keys": [],
+    "indexes": [],
+    "primary_key": [
+      "district",
+      "material_id"
+    ],
+    "unique_constraints": []
+  },
+  "notifications": {
+    "columns": {
+      "body": {
+        "length": null,
+        "nullable": false,
+        "type": "Text"
+      },
+      "created_at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "data": {
+        "length": null,
+        "nullable": false,
+        "type": "JSON"
+      },
+      "event_key": {
+        "length": 255,
+        "nullable": false,
+        "type": "String"
+      },
+      "id": {
+        "length": 36,
+        "nullable": false,
+        "type": "String"
+      },
+      "kind": {
+        "length": 30,
+        "nullable": false,
+        "type": "String"
+      },
+      "read_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "recipient_id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "title": {
+        "length": 255,
+        "nullable": false,
+        "type": "String"
+      }
+    },
+    "foreign_keys": [
+      {
+        "column": "recipient_id",
+        "referred": "id",
+        "table": "profiles"
+      }
+    ],
+    "indexes": [
+      {
+        "columns": [
+          "recipient_id"
+        ],
+        "name": "ix_notifications_recipient_id",
+        "unique": false
+      }
+    ],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": [
+      [
+        "event_key",
+        "recipient_id"
+      ]
+    ]
+  },
+  "otp_challenges": {
+    "columns": {
+      "consumed_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "created_at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "expires_at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "id": {
+        "length": 36,
+        "nullable": false,
+        "type": "String"
+      },
+      "phone_hash": {
+        "length": 64,
+        "nullable": false,
+        "type": "String"
+      }
+    },
+    "foreign_keys": [],
+    "indexes": [
+      {
+        "columns": [
+          "phone_hash"
+        ],
+        "name": "ix_otp_challenges_phone_hash",
+        "unique": false
+      }
+    ],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": []
+  },
+  "otp_throttles": {
+    "columns": {
+      "checks": {
+        "length": null,
+        "nullable": false,
+        "type": "Integer"
+      },
+      "phone_hash": {
+        "length": 64,
+        "nullable": false,
+        "type": "String"
+      },
+      "starts": {
+        "length": null,
+        "nullable": false,
+        "type": "Integer"
+      },
+      "window_started_at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      }
+    },
+    "foreign_keys": [],
+    "indexes": [],
+    "primary_key": [
+      "phone_hash"
+    ],
+    "unique_constraints": []
+  },
+  "profiles": {
+    "columns": {
+      "created_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "district": {
+        "length": 100,
+        "nullable": true,
+        "type": "String"
+      },
+      "governorate": {
+        "length": 100,
+        "nullable": true,
+        "type": "String"
+      },
+      "id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "name": {
+        "length": 255,
+        "nullable": true,
+        "type": "String"
+      },
+      "phone": {
+        "length": 20,
+        "nullable": true,
+        "type": "String"
+      },
+      "prefs": {
+        "length": null,
+        "nullable": true,
+        "type": "JSON"
+      },
+      "role": {
+        "length": 20,
+        "nullable": true,
+        "type": "String"
+      }
+    },
+    "foreign_keys": [],
+    "indexes": [],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": [
+      [
+        "phone"
+      ]
+    ]
+  },
+  "push_deliveries": {
+    "columns": {
+      "attempts": {
+        "length": null,
+        "nullable": false,
+        "type": "Integer"
+      },
+      "receipt_attempts": {
+        "length": null,
+        "nullable": false,
+        "type": "Integer"
+      },
+      "created_at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "id": {
+        "length": 36,
+        "nullable": false,
+        "type": "String"
+      },
+      "last_error": {
+        "length": null,
+        "nullable": true,
+        "type": "Text"
+      },
+      "lease_until": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "next_attempt_at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "notification_id": {
+        "length": 36,
+        "nullable": false,
+        "type": "String"
+      },
+      "push_token_id": {
+        "length": 36,
+        "nullable": false,
+        "type": "String"
+      },
+      "status": {
+        "length": 20,
+        "nullable": false,
+        "type": "String"
+      },
+      "ticket_id": {
+        "length": 100,
+        "nullable": true,
+        "type": "String"
+      },
+      "updated_at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      }
+    },
+    "foreign_keys": [
+      {
+        "column": "notification_id",
+        "referred": "id",
+        "table": "notifications"
+      },
+      {
+        "column": "push_token_id",
+        "referred": "id",
+        "table": "push_tokens"
+      }
+    ],
+    "indexes": [
+      {
+        "columns": [
+          "status",
+          "next_attempt_at"
+        ],
+        "name": "idx_push_delivery_pending",
+        "unique": false
+      }
+    ],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": [
+      [
+        "notification_id",
+        "push_token_id"
+      ]
+    ]
+  },
+  "push_tokens": {
+    "columns": {
+      "active": {
+        "length": null,
+        "nullable": false,
+        "type": "Boolean"
+      },
+      "created_at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "id": {
+        "length": 36,
+        "nullable": false,
+        "type": "String"
+      },
+      "platform": {
+        "length": 10,
+        "nullable": false,
+        "type": "String"
+      },
+      "token": {
+        "length": 256,
+        "nullable": false,
+        "type": "String"
+      },
+      "updated_at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "user_id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      }
+    },
+    "foreign_keys": [
+      {
+        "column": "user_id",
+        "referred": "id",
+        "table": "profiles"
+      }
+    ],
+    "indexes": [
+      {
+        "columns": [
+          "user_id"
+        ],
+        "name": "ix_push_tokens_user_id",
+        "unique": false
+      }
+    ],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": [
+      [
+        "token"
+      ]
+    ]
+  },
+  "readable_id_counters": {
+    "columns": {
+      "last_value": {
+        "length": null,
+        "nullable": false,
+        "type": "BigInteger"
+      },
+      "prefix": {
+        "length": 10,
+        "nullable": false,
+        "type": "String"
+      }
+    },
+    "foreign_keys": [],
+    "indexes": [],
+    "primary_key": [
+      "prefix"
+    ],
+    "unique_constraints": []
+  },
+  "recycling_pickups": {
+    "columns": {
+      "accepted_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "address": {
+        "length": 500,
+        "nullable": false,
+        "type": "String"
+      },
+      "citizen_id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "collector_finished_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "collector_id": {
+        "length": 50,
+        "nullable": true,
+        "type": "String"
+      },
+      "confirmed_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "created_at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "day": {
+        "length": 10,
+        "nullable": false,
+        "type": "String"
+      },
+      "district": {
+        "length": 100,
+        "nullable": false,
+        "type": "String"
+      },
+      "estimated_value_egp": {
+        "length": null,
+        "nullable": true,
+        "type": "Float"
+      },
+      "id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "items": {
+        "length": null,
+        "nullable": false,
+        "type": "JSON"
+      },
+      "landmark": {
+        "length": 255,
+        "nullable": true,
+        "type": "String"
+      },
+      "lat": {
+        "length": null,
+        "nullable": false,
+        "type": "Float"
+      },
+      "lng": {
+        "length": null,
+        "nullable": false,
+        "type": "Float"
+      },
+      "mode": {
+        "length": 10,
+        "nullable": false,
+        "type": "String"
+      },
+      "note": {
+        "length": null,
+        "nullable": true,
+        "type": "Text"
+      },
+      "paid_to_household_egp": {
+        "length": null,
+        "nullable": true,
+        "type": "Float"
+      },
+      "photo_paths": {
+        "length": null,
+        "nullable": true,
+        "type": "JSON"
+      },
+      "slot": {
+        "length": 20,
+        "nullable": false,
+        "type": "String"
+      },
+      "status": {
+        "length": 20,
+        "nullable": false,
+        "type": "String"
+      }
+    },
+    "foreign_keys": [
+      {
+        "column": "citizen_id",
+        "referred": "id",
+        "table": "profiles"
+      },
+      {
+        "column": "collector_id",
+        "referred": "id",
+        "table": "collectors"
+      }
+    ],
+    "indexes": [
+      {
+        "columns": [
+          "status",
+          "created_at"
+        ],
+        "name": "idx_pickup_status",
+        "unique": false
+      },
+      {
+        "columns": [
+          "citizen_id",
+          "created_at"
+        ],
+        "name": "idx_pickup_citizen",
+        "unique": false
+      },
+      {
+        "columns": [
+          "collector_id"
+        ],
+        "name": "idx_pickup_collector",
+        "unique": false
+      }
+    ],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": []
+  },
+  "recycling_weighings": {
+    "columns": {
+      "at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "client_id": {
+        "length": 100,
+        "nullable": false,
+        "type": "String"
+      },
+      "collector_id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "kg": {
+        "length": null,
+        "nullable": false,
+        "type": "Float"
+      },
+      "material_id": {
+        "length": 30,
+        "nullable": false,
+        "type": "String"
+      },
+      "pickup_id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "price_egp_per_kg": {
+        "length": null,
+        "nullable": true,
+        "type": "Float"
+      },
+      "scale_id": {
+        "length": 100,
+        "nullable": true,
+        "type": "String"
+      },
+      "source": {
+        "length": 20,
+        "nullable": false,
+        "type": "String"
+      },
+      "value_egp": {
+        "length": null,
+        "nullable": true,
+        "type": "Float"
+      }
+    },
+    "foreign_keys": [
+      {
+        "column": "collector_id",
+        "referred": "id",
+        "table": "collectors"
+      },
+      {
+        "column": "pickup_id",
+        "referred": "id",
+        "table": "recycling_pickups"
+      }
+    ],
+    "indexes": [
+      {
+        "columns": [
+          "pickup_id"
+        ],
+        "name": "idx_weighing_pickup",
+        "unique": false
+      },
+      {
+        "columns": [
+          "collector_id",
+          "at"
+        ],
+        "name": "idx_weighing_collector_at",
+        "unique": false
+      }
+    ],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": [
+      [
+        "client_id",
+        "pickup_id"
+      ]
+    ]
+  },
+  "reports": {
+    "columns": {
+      "address": {
+        "length": 500,
+        "nullable": false,
+        "type": "String"
+      },
+      "anonymous": {
+        "length": null,
+        "nullable": true,
+        "type": "Boolean"
+      },
+      "blur_faces": {
+        "length": null,
+        "nullable": true,
+        "type": "Boolean"
+      },
+      "category_id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "created_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "description": {
+        "length": null,
+        "nullable": true,
+        "type": "Text"
+      },
+      "id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "incident_id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "landmark": {
+        "length": 255,
+        "nullable": true,
+        "type": "String"
+      },
+      "lat": {
+        "length": null,
+        "nullable": false,
+        "type": "Float"
+      },
+      "lng": {
+        "length": null,
+        "nullable": false,
+        "type": "Float"
+      },
+      "photo_paths": {
+        "length": null,
+        "nullable": true,
+        "type": "JSON"
+      },
+      "reporter_id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "severity_suggested": {
+        "length": 20,
+        "nullable": true,
+        "type": "String"
+      },
+      "source": {
+        "length": 20,
+        "nullable": true,
+        "type": "String"
+      },
+      "voice_note_path": {
+        "length": 500,
+        "nullable": true,
+        "type": "String"
+      }
+    },
+    "foreign_keys": [
+      {
+        "column": "category_id",
+        "referred": "id",
+        "table": "categories"
+      },
+      {
+        "column": "incident_id",
+        "referred": "id",
+        "table": "incidents"
+      },
+      {
+        "column": "reporter_id",
+        "referred": "id",
+        "table": "profiles"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": []
+  },
+  "service_requests": {
+    "columns": {
+      "address": {
+        "length": 500,
+        "nullable": false,
+        "type": "String"
+      },
+      "citizen_id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "created_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "details": {
+        "length": null,
+        "nullable": false,
+        "type": "JSON"
+      },
+      "id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "landmark": {
+        "length": 255,
+        "nullable": true,
+        "type": "String"
+      },
+      "lat": {
+        "length": null,
+        "nullable": false,
+        "type": "Float"
+      },
+      "lng": {
+        "length": null,
+        "nullable": false,
+        "type": "Float"
+      },
+      "paid": {
+        "length": null,
+        "nullable": true,
+        "type": "Boolean"
+      },
+      "service_type": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "status": {
+        "length": 11,
+        "nullable": true,
+        "type": "Enum",
+        "enum_name": "incidentstatusenum"
+      }
+    },
+    "foreign_keys": [
+      {
+        "column": "citizen_id",
+        "referred": "id",
+        "table": "profiles"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": []
+  },
+  "smart_bins": {
+    "columns": {
+      "battery_v": {
+        "length": null,
+        "nullable": true,
+        "type": "Float"
+      },
+      "created_at": {
+        "length": null,
+        "nullable": false,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "department_id": {
+        "length": 100,
+        "nullable": true,
+        "type": "String"
+      },
+      "device_key_hash": {
+        "length": 64,
+        "nullable": false,
+        "type": "String"
+      },
+      "district": {
+        "length": 100,
+        "nullable": false,
+        "type": "String"
+      },
+      "fill_pct": {
+        "length": null,
+        "nullable": true,
+        "type": "Float"
+      },
+      "full_pct": {
+        "length": null,
+        "nullable": false,
+        "type": "Float"
+      },
+      "heat_c": {
+        "length": null,
+        "nullable": false,
+        "type": "Float"
+      },
+      "id": {
+        "length": 64,
+        "nullable": false,
+        "type": "String"
+      },
+      "interval_min": {
+        "length": null,
+        "nullable": false,
+        "type": "Integer"
+      },
+      "is_active": {
+        "length": null,
+        "nullable": false,
+        "type": "Boolean"
+      },
+      "is_full": {
+        "length": null,
+        "nullable": false,
+        "type": "Boolean"
+      },
+      "is_hot": {
+        "length": null,
+        "nullable": false,
+        "type": "Boolean"
+      },
+      "is_simulated": {
+        "length": null,
+        "nullable": false,
+        "type": "Boolean"
+      },
+      "last_seen_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "last_seq": {
+        "length": null,
+        "nullable": false,
+        "type": "BigInteger"
+      },
+      "lat": {
+        "length": null,
+        "nullable": false,
+        "type": "Float"
+      },
+      "lng": {
+        "length": null,
+        "nullable": false,
+        "type": "Float"
+      },
+      "name": {
+        "length": 255,
+        "nullable": false,
+        "type": "String"
+      },
+      "temp_c": {
+        "length": null,
+        "nullable": true,
+        "type": "Float"
+      }
+    },
+    "foreign_keys": [
+      {
+        "column": "department_id",
+        "referred": "id",
+        "table": "departments"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": []
+  },
+  "staff_accounts": {
+    "columns": {
+      "department_id": {
+        "length": 100,
+        "nullable": true,
+        "type": "String"
+      },
+      "email": {
+        "length": 255,
+        "nullable": false,
+        "type": "String"
+      },
+      "password_hash": {
+        "length": 255,
+        "nullable": false,
+        "type": "String"
+      },
+      "profile_id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      }
+    },
+    "foreign_keys": [
+      {
+        "column": "department_id",
+        "referred": "id",
+        "table": "departments"
+      },
+      {
+        "column": "profile_id",
+        "referred": "id",
+        "table": "profiles"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "profile_id"
+    ],
+    "unique_constraints": [
+      [
+        "email"
+      ]
+    ]
+  },
+  "work_orders": {
+    "columns": {
+      "created_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "department_id": {
+        "length": 100,
+        "nullable": false,
+        "type": "String"
+      },
+      "due_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "estimated_cost_egp": {
+        "length": null,
+        "nullable": true,
+        "type": "Integer"
+      },
+      "id": {
+        "length": 50,
+        "nullable": false,
+        "type": "String"
+      },
+      "incident_id": {
+        "length": 50,
+        "nullable": true,
+        "type": "String"
+      },
+      "resolved_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      },
+      "service_request_id": {
+        "length": 50,
+        "nullable": true,
+        "type": "String"
+      },
+      "status": {
+        "length": 11,
+        "nullable": true,
+        "type": "Enum",
+        "enum_name": "workorderstatusenum"
+      },
+      "supervisor": {
+        "length": 255,
+        "nullable": true,
+        "type": "String"
+      },
+      "tasks": {
+        "length": null,
+        "nullable": true,
+        "type": "JSON"
+      },
+      "team": {
+        "length": 255,
+        "nullable": true,
+        "type": "String"
+      },
+      "team_size": {
+        "length": null,
+        "nullable": true,
+        "type": "Integer"
+      },
+      "updated_at": {
+        "length": null,
+        "nullable": true,
+        "type": "DateTime",
+        "timezone": false
+      }
+    },
+    "foreign_keys": [
+      {
+        "column": "department_id",
+        "referred": "id",
+        "table": "departments"
+      },
+      {
+        "column": "incident_id",
+        "referred": "id",
+        "table": "incidents"
+      },
+      {
+        "column": "service_request_id",
+        "referred": "id",
+        "table": "service_requests"
+      }
+    ],
+    "indexes": [],
+    "primary_key": [
+      "id"
+    ],
+    "unique_constraints": []
+  }
+}

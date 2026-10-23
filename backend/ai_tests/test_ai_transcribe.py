@@ -245,6 +245,8 @@ async def test_gemini_transcriber_sends_audio_and_validates_arabic_output():
     sent = requests[0].read().decode()
     assert "dm9pY2UtYnl0ZXM=" in sent
     assert "audio/mp4" in sent
+    assert "Transcribe this Egyptian Arabic voice note verbatim." in sent
+    assert 'maxOutputTokens":512' in sent
 
 
 @pytest.mark.anyio

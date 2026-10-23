@@ -1,0 +1,346 @@
+{
+  "compute": [
+    {
+      "name": "severity low",
+      "input": {
+        "severity": "low",
+        "near_sensitive_place": false,
+        "reporters": 1,
+        "days_open": 0,
+        "target_days": 5,
+        "area_underserved": false
+      },
+      "expected": {
+        "score": 5,
+        "factors": {
+          "severity": 5,
+          "sensitive": 0,
+          "reporters": 0,
+          "age": 0,
+          "equity": 0
+        },
+        "level": "low"
+      }
+    },
+    {
+      "name": "severity medium",
+      "input": {
+        "severity": "medium",
+        "near_sensitive_place": false,
+        "reporters": 1,
+        "days_open": 0,
+        "target_days": 5,
+        "area_underserved": false
+      },
+      "expected": {
+        "score": 15,
+        "factors": {
+          "severity": 15,
+          "sensitive": 0,
+          "reporters": 0,
+          "age": 0,
+          "equity": 0
+        },
+        "level": "low"
+      }
+    },
+    {
+      "name": "severity high",
+      "input": {
+        "severity": "high",
+        "near_sensitive_place": false,
+        "reporters": 1,
+        "days_open": 0,
+        "target_days": 5,
+        "area_underserved": false
+      },
+      "expected": {
+        "score": 28,
+        "factors": {
+          "severity": 28,
+          "sensitive": 0,
+          "reporters": 0,
+          "age": 0,
+          "equity": 0
+        },
+        "level": "low"
+      }
+    },
+    {
+      "name": "severity critical",
+      "input": {
+        "severity": "critical",
+        "near_sensitive_place": false,
+        "reporters": 1,
+        "days_open": 0,
+        "target_days": 5,
+        "area_underserved": false
+      },
+      "expected": {
+        "score": 40,
+        "factors": {
+          "severity": 40,
+          "sensitive": 0,
+          "reporters": 0,
+          "age": 0,
+          "equity": 0
+        },
+        "level": "medium"
+      }
+    },
+    {
+      "name": "reporters 0",
+      "input": {
+        "severity": "low",
+        "near_sensitive_place": false,
+        "reporters": 0,
+        "days_open": 0,
+        "target_days": 5,
+        "area_underserved": false
+      },
+      "expected": {
+        "score": 5,
+        "factors": {
+          "severity": 5,
+          "sensitive": 0,
+          "reporters": 0,
+          "age": 0,
+          "equity": 0
+        },
+        "level": "low"
+      }
+    },
+    {
+      "name": "reporters 1",
+      "input": {
+        "severity": "low",
+        "near_sensitive_place": false,
+        "reporters": 1,
+        "days_open": 0,
+        "target_days": 5,
+        "area_underserved": false
+      },
+      "expected": {
+        "score": 5,
+        "factors": {
+          "severity": 5,
+          "sensitive": 0,
+          "reporters": 0,
+          "age": 0,
+          "equity": 0
+        },
+        "level": "low"
+      }
+    },
+    {
+      "name": "reporters 8",
+      "input": {
+        "severity": "low",
+        "near_sensitive_place": false,
+        "reporters": 8,
+        "days_open": 0,
+        "target_days": 5,
+        "area_underserved": false
+      },
+      "expected": {
+        "score": 25,
+        "factors": {
+          "severity": 5,
+          "sensitive": 0,
+          "reporters": 20,
+          "age": 0,
+          "equity": 0
+        },
+        "level": "low"
+      }
+    },
+    {
+      "name": "reporters 20",
+      "input": {
+        "severity": "low",
+        "near_sensitive_place": false,
+        "reporters": 20,
+        "days_open": 0,
+        "target_days": 5,
+        "area_underserved": false
+      },
+      "expected": {
+        "score": 25,
+        "factors": {
+          "severity": 5,
+          "sensitive": 0,
+          "reporters": 20,
+          "age": 0,
+          "equity": 0
+        },
+        "level": "low"
+      }
+    },
+    {
+      "name": "target zero contributes no age points",
+      "input": {
+        "severity": "low",
+        "near_sensitive_place": false,
+        "reporters": 1,
+        "days_open": 14,
+        "target_days": 0,
+        "area_underserved": false
+      },
+      "expected": {
+        "score": 5,
+        "factors": {
+          "severity": 5,
+          "sensitive": 0,
+          "reporters": 0,
+          "age": 0,
+          "equity": 0
+        },
+        "level": "low"
+      }
+    },
+    {
+      "name": "half point rounds upward",
+      "input": {
+        "severity": "low",
+        "near_sensitive_place": false,
+        "reporters": 1,
+        "days_open": 1,
+        "target_days": 20,
+        "area_underserved": false
+      },
+      "expected": {
+        "score": 6,
+        "factors": {
+          "severity": 5,
+          "sensitive": 0,
+          "reporters": 0,
+          "age": 1,
+          "equity": 0
+        },
+        "level": "low"
+      }
+    },
+    {
+      "name": "one and a half rounds upward",
+      "input": {
+        "severity": "low",
+        "near_sensitive_place": false,
+        "reporters": 1,
+        "days_open": 3,
+        "target_days": 20,
+        "area_underserved": false
+      },
+      "expected": {
+        "score": 7,
+        "factors": {
+          "severity": 5,
+          "sensitive": 0,
+          "reporters": 0,
+          "age": 2,
+          "equity": 0
+        },
+        "level": "low"
+      }
+    },
+    {
+      "name": "age points cap at fifteen",
+      "input": {
+        "severity": "low",
+        "near_sensitive_place": false,
+        "reporters": 1,
+        "days_open": 20,
+        "target_days": 5,
+        "area_underserved": false
+      },
+      "expected": {
+        "score": 20,
+        "factors": {
+          "severity": 5,
+          "sensitive": 0,
+          "reporters": 0,
+          "age": 15,
+          "equity": 0
+        },
+        "level": "low"
+      }
+    },
+    {
+      "name": "sensitive place and underserved area",
+      "input": {
+        "severity": "low",
+        "near_sensitive_place": true,
+        "reporters": 1,
+        "days_open": 0,
+        "target_days": 5,
+        "area_underserved": true
+      },
+      "expected": {
+        "score": 30,
+        "factors": {
+          "severity": 5,
+          "sensitive": 20,
+          "reporters": 0,
+          "age": 0,
+          "equity": 5
+        },
+        "level": "low"
+      }
+    },
+    {
+      "name": "combined factors cap total at one hundred",
+      "input": {
+        "severity": "critical",
+        "near_sensitive_place": true,
+        "reporters": 20,
+        "days_open": 20,
+        "target_days": 5,
+        "area_underserved": true
+      },
+      "expected": {
+        "score": 100,
+        "factors": {
+          "severity": 40,
+          "sensitive": 20,
+          "reporters": 20,
+          "age": 15,
+          "equity": 5
+        },
+        "level": "critical"
+      }
+    }
+  ],
+  "levels": [
+    {
+      "score": 0,
+      "level": "low"
+    },
+    {
+      "score": 39,
+      "level": "low"
+    },
+    {
+      "score": 40,
+      "level": "medium"
+    },
+    {
+      "score": 64,
+      "level": "medium"
+    },
+    {
+      "score": 65,
+      "level": "high"
+    },
+    {
+      "score": 84,
+      "level": "high"
+    },
+    {
+      "score": 85,
+      "level": "critical"
+    },
+    {
+      "score": 100,
+      "level": "critical"
+    }
+  ]
+}

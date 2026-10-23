@@ -34,7 +34,9 @@ def get_db() -> Session:
 
 
 def init_db():
-    """Initialize database tables."""
+    """Create tables for explicit disposable SQLite setup only."""
+    if engine.dialect.name != "sqlite":
+        raise RuntimeError("Production schemas must be changed through reviewed Alembic migrations")
     Base.metadata.create_all(bind=engine)
 
 

@@ -4,6 +4,7 @@ Every status change (incident, service request, work order) goes through one of 
 functions below, which also writes an ``activity_log`` row. Timelines are built from it.
 """
 
+from sqlalchemy import inspect, select
 from sqlalchemy.orm import Session
 
 from app.helpers import now_utc
@@ -14,19 +15,19 @@ INCIDENT_STATUSES = (*OPEN_STATUSES, "resolved", "closed")
 WORK_ORDER_STATUSES = ("open", "assigned", "in_progress", "done")
 
 
-def _log(db: Session, entity_type: str, entity_id: str, status: str, note: str, actor: str) -> None:
-    db.add(
-        ActivityLog(
-            entity_type=entity_type,
-            entity_id=entity_id,
-            status=status,
-            note=note,
-            actor=actor,
-            kind="status_change",
-            at=now_utc(),
-        )
+def _log(db: Session, entity_type: str, entity_id: str, status: str, note: str, actor: str) -> ActivityLog:
+    row = ActivityLog(
+        entity_type=entity_type,
+        entity_id=entity_id,
+        status=status,
+        note=note,
+        actor=actor,
+        kind="status_change",
+        at=now_utc(),
     )
+    db.add(row)
     db.flush()
+    return row
 
 
 def add_incident_note(db: Session, incident: Incident, note: str, actor: str) -> None:
@@ -52,9 +53,36 @@ def _value(status) -> str:
 
 def change_incident_status(db: Session, incident: Incident, status: str, note: str, actor: str) -> None:
     """Change incident status and write an activity log entry (note is shown to citizens)."""
+    # Reload while holding the PostgreSQL row lock. Two staff requests that
+    # began from the same stale ORM object must not both emit a transition.
+    state = inspect(incident)
+    pending_fields = {
+        attribute.key: getattr(incident, attribute.key)
+        for attribute in state.attrs
+        if attribute.key != "status" and attribute.history.has_changes()
+    }
+    persisted = db.execute(
+        select(Incident).where(Incident.id == incident.id).with_for_update().execution_options(populate_existing=True)
+    ).scalar_one_or_none()
+    if persisted is not None:
+        incident = persisted
+        for field, value in pending_fields.items():
+            setattr(incident, field, value)
+    previous = _value(incident.status)
     incident.status = status
     incident.updated_at = now_utc()
-    _log(db, "incident", incident.id, status, note, actor)
+    activity = _log(db, "incident", incident.id, status, note, actor)
+    if previous != status:
+        from app.logic.notifications import create_status_notifications, incident_status_recipients
+
+        create_status_notifications(
+            db,
+            event_key=f"incident:{incident.id}:activity:{activity.id}",
+            recipient_ids=incident_status_recipients(db, incident.id),
+            kind="incident_status",
+            resource_id=incident.id,
+            status=status,
+        )
 
 
 def change_service_request_status(db: Session, sr: ServiceRequest, status: str, note: str, actor: str) -> None:

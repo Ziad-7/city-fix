@@ -1,0 +1,5 @@
+{
+  "incidentstatusenum": ["RECEIVED", "TRIAGED", "ASSIGNED", "IN_PROGRESS", "RESOLVED", "CLOSED"],
+  "severityenum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+  "workorderstatusenum": ["OPEN", "ASSIGNED", "IN_PROGRESS", "DONE"]
+}

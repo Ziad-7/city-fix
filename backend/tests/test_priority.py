@@ -1,5 +1,8 @@
 """Tests for priority calculation logic."""
 
+import json
+from pathlib import Path
+
 from app.logic.priority import (
     MAX,
     compute_priority,
@@ -126,3 +129,17 @@ class TestPriorityLevel:
         """Score < 40 should be low."""
         assert priority_level(0) == "low"
         assert priority_level(39) == "low"
+
+
+def test_shared_priority_parity_fixture():
+    fixture = json.loads(
+        (Path(__file__).resolve().parents[2] / "docs" / "fixtures" / "priority-parity.json").read_text()
+    )
+    for case in fixture["compute"]:
+        result = compute_priority(case["input"])
+        factor_points = {factor["key"]: factor["points"] for factor in result["factors"]}
+        assert result["score"] == case["expected"]["score"], case["name"]
+        assert factor_points == case["expected"]["factors"], case["name"]
+        assert priority_level(result["score"]) == case["expected"]["level"], case["name"]
+    for case in fixture["levels"]:
+        assert priority_level(case["score"]) == case["level"]

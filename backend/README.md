@@ -7,12 +7,12 @@ FastAPI + SQLAlchemy 2 (SQLite by default) serving the citizen mobile app, the c
 ```bash
 cd backend
 uv sync                                              # Python >= 3.12
-uv run uvicorn app.main:app --reload --port 8000     # seeds demo data when the DB is empty
+LOCAL_SCHEMA_BOOTSTRAP=true SEED_ON_START=true uv run uvicorn app.main:app --reload --port 8000
 ```
 
 Health check: `GET http://localhost:8000/health`. Interactive docs: `/docs`.
 
-Schema changes need no migration on SQLite: models + `create_all`. After changing `app/models.py` delete `fixthecity.db` (stop the server first) and it re-seeds on start, or run `uv run python scripts/reset_demo.py`. `POST /admin/demo/reset` (admin, needs `DEMO_RESET_ENABLED=true`) re-seeds a running server.
+Schema changes use Alembic. Production startup never runs `create_all()` or seeds automatically. For a disposable local SQLite database, set `LOCAL_SCHEMA_BOOTSTRAP=true`; set `SEED_ON_START=true` only when you want the local demo fixture. The explicit reset tool and `/admin/demo/reset` remain destructive and are never migration steps.
 
 ## Test and lint
 
@@ -42,10 +42,14 @@ python -m pytest -q
 | --- | --- | --- |
 | `DATABASE_URL` | `sqlite:///./fixthecity.db` | SQLAlchemy URL |
 | `JWT_SECRET` | dev value | HS256 secret (>= 32 bytes). **Required** when `OTP_MODE` is not `demo`: the app refuses to start with the built-in dev value |
-| `OTP_MODE` | `demo` | `demo`: no SMS, the code is always `123456`. Any other value has no OTP store yet, so `POST /auth/otp` and `/auth/verify` answer `503` (the demo code is never accepted outside demo mode) |
+| `OTP_MODE` | `demo` | `demo`: no SMS, the code is always `123456`; `twilio`: use Twilio Verify for SMS/WhatsApp and never fall back to demo |
+| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID` | empty | Required server-only bindings for `OTP_MODE=twilio`; provider is not called if any is missing |
+| `EXPO_TOKEN` | empty | Optional server-only Expo API access token; this is not a device token and does not prove delivery |
+| `PUSH_ENABLED` | `false` | Explicitly enables the bounded `scripts.send_push` provider worker; keep false until an approved invocation is configured |
 | `TOKEN_MINUTES` | `10080` | Session token lifetime (7 days) |
 | `DEMO_RESET_ENABLED` | `false` | `POST /admin/demo/reset` deletes and re-seeds every record; it answers `404` unless this is `true`. Tests and the admin-web Playwright server set it. Enable only for a local demo |
-| `SEED_ON_START` | `true` | Seed demo data on startup when the DB has no incidents |
+| `LOCAL_SCHEMA_BOOTSTRAP` | `false` | Explicitly run SQLite `create_all()` for local setup; ignored for PostgreSQL |
+| `SEED_ON_START` | `false` | Seed only a SQLite local database when explicitly enabled |
 | `CORS_ORIGINS` | `http://localhost:3000,http://localhost:3001` | Comma-separated allowed origins (Expo web `:8081` is always allowed) |
 | `CORS_ORIGIN_REGEX` | `^http://(localhost\|127\.0\.0\.1)(:\d+)?$` | Also allow any localhost port; set to your deployed origins (e.g. the Vercel domains) in production |
 | `VERSION` | `0.1.0` | Reported by `/health` |
@@ -57,10 +61,10 @@ python -m pytest -q
 The API runs as a Vercel FastAPI project with **Root Directory `backend`** (`app/main.py` is the entrypoint, `vercel.json` sets the function limits). The filesystem is read-only there, so SQLite does not work: use PostgreSQL.
 
 1. Set `DATABASE_URL` to the Supabase **session pooler** string (`postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`). The `postgres://` and `postgresql://` prefixes are rewritten to `postgresql+psycopg://` automatically.
-2. Set `JWT_SECRET` (random, 32+ bytes), `OTP_MODE=demo`, `SEED_ON_START=true`, `DEMO_RESET_ENABLED=true` for a test deployment.
+2. Set `JWT_SECRET` (random, 32+ bytes), `OTP_MODE=demo`, and set `DEMO_RESET_ENABLED=true` only for a disposable test deployment.
 3. Set `CORS_ORIGINS` to the two frontend URLs (comma-separated).
 4. Turn off Vercel Authentication for the API project, or browsers get a login page instead of JSON.
-5. Call `/health` once; the first start creates the tables and seeds the demo data.
+5. Run the reviewed migration command below before deployment. Runtime startup does not create tables or seed data.
 6. In the frontends set `NEXT_PUBLIC_API_URL` to the API URL (and `NEXT_PUBLIC_API_MODE=api` for `apps/web`), then redeploy: these values are inlined at build time.
 
 Limits on Vercel: no FFmpeg (voice-note validation and `/ai/transcribe` are unavailable; the UI falls back to typing), and photo upload is a stub unless the Supabase storage variables are set.
@@ -114,14 +118,7 @@ Voice notes are limited to 5 MB and 30 seconds by the clients and enforced again
 
 Reading temperature and battery are nullable measurements; a missing temperature never triggers heat. The history response keeps `recordedAt` as its effective display time, the actual receive time in `receivedAt`, the original nullable device timestamp in `deviceAt`, and `clockUnsynced` to identify readings recorded without a device clock. Sequence retries compare the original nullable timestamp and every measurement exactly. Latest fleet state advances with a conditional database update, and the `(bin_id, seq)` unique key makes retries safe across workers.
 
-The public Vercel demo at `/smart-bin-simulator.html` is a browser-only simulation: scenarios, sample fleet, charts, and injected faults are stored in that browser and do not reach this API. Use the local Python simulator in real mode to send data into an API deployment. `create_all()` creates these tables on a fresh database; it does not alter existing tables. Before upgrading an existing PostgreSQL database, apply a reviewed migration equivalent to:
-
-```sql
-ALTER TABLE bin_readings ALTER COLUMN temp_c DROP NOT NULL;
-ALTER TABLE bin_readings ALTER COLUMN battery_v DROP NOT NULL;
-ALTER TABLE bin_readings ADD COLUMN device_at TIMESTAMP NULL;
-ALTER TABLE bin_readings ADD COLUMN clock_unsynced BOOLEAN NULL;
-```
+The public Vercel demo at `/smart-bin-simulator.html` is a browser-only simulation: scenarios, sample fleet, charts, and injected faults are stored in that browser and do not reach this API. Use the local Python simulator in real mode to send data into an API deployment. Production schema changes run through reviewed Alembic migrations, never startup `create_all()`.
 
 Do not infer old devices' original timestamps from `recorded_at`: migrated rows retain `device_at = NULL` and `clock_unsynced = NULL` to mean timestamp provenance is unknown. Their original timestamp cannot be compared, so same-sequence retries for those legacy rows return `409` rather than risk acknowledging a changed payload. New rows store `clock_unsynced` as `TRUE` or `FALSE`, and retries compare their exact original timestamp. Existing SQLite databases must be backed up and rebuilt/recreated with the updated schema; old demo data can instead be discarded with the documented reset. Production also needs a persistent PostgreSQL database, HTTPS, secret provisioning, and deployment validation. SQLite on an ephemeral serverless filesystem will lose data.
 
@@ -129,6 +126,30 @@ Do not infer old devices' original timestamps from `recorded_at`: migrated rows 
 
 Routes: `app/routers/recycling.py` (citizen pickups, collectors, impact), `recycling_admin.py` (Command Center), public bins and `report-full` in `routers/bins.py`, `app/ai/waste.py`. Demo data (`app/seed_citycycle.py`): DEMO prices for `مدينة نصر أول`, open pickups `RCY-3001..3004`, a finished `RCY-3100` for the demo citizen, verified collector `COL-1` (login phone `01022223333`, OTP `123456`), pending `COL-2` (`01033334444`) and seven smart bins `BIN-011..HUB-001` (assigned to the sanitation department).
 
-There is no Alembic. New tables are created by `create_all()` on start (also on Postgres/Supabase), which only adds missing tables. `migrations/001_citycycle.sql` is the same DDL, idempotent (`IF NOT EXISTS`) with Row Level Security enabled and no policies, for running by hand in the Supabase SQL editor before deploying. It needs the existing `profiles`, `incidents` and `smart_bins` tables. The seed runs only on an empty database; on an existing database add demo rows yourself or reset it.
+The legacy `migrations/001_citycycle.sql` is kept for historical review only; production upgrades use the checked Alembic revisions above and never execute that file blindly. Runtime startup does not migrate Postgres or seed it. Use the additive CityCycle seed command when synthetic rows are explicitly wanted.
 
-CityCycle `RCY`, `COL` and `WGH` IDs use `readable_id_counters`: each prefix is lazily seeded above the existing numeric maximum, then reserved with an atomic database increment in the caller transaction. Rollback releases the reservation; commits keep it even if no entity was inserted. Apply the counter DDL in `001_citycycle.sql` before upgrading an existing deployment. Counter rows have RLS enabled with no public policies and require the privileged backend database role. Other ID prefixes retain their existing behavior.
+### Reviewed PostgreSQL migration and additive seed
+
+Use a direct or session PostgreSQL connection that can run DDL. `--check` is read-only, `--plan` emits Alembic SQL, and `--apply` verifies the expected project reference before upgrading. A populated database is stamped only when its tables, columns, types, nullability, keys, foreign keys and indexes match the frozen baseline. Drift and unversioned delivery tables are refused. Never pass the expected reference before confirming the CityFix project identity, and redact database URLs.
+
+```bash
+cd backend
+python -m scripts.migrate --check --expected-project-ref REF
+python -m scripts.migrate --plan --expected-project-ref REF
+# Review the SQL and confirm the project before applying.
+python -m scripts.migrate --apply --expected-project-ref REF
+python -m scripts.seed_citycycle_additive --dry-run --expected-project-ref REF
+python -m scripts.seed_citycycle_additive --apply --expected-project-ref REF
+```
+
+Revision `0001_existing_schema` is a frozen PostgreSQL snapshot and does not import mutable model metadata. Revision `0002_delivery_foundation` adds OTP state, notifications, push registrations and delivery rows, then enables RLS on CityFix-owned tables and `alembic_version`. The API must connect with a privileged backend database role that bypasses RLS. Do not grant direct `anon` or `authenticated` access to these tables. Real-project migration and seed execution remains blocked until the primary operator confirms the CityFix project and binding.
+
+The additive seed is separate from `app.seed_citycycle.seed_citycycle()`. It inserts synthetic household profiles, a phone-free demo collector and bins marked `isSimulated=true`. ID or unique-key collisions skip the whole dependent group. Existing prices, phones, profiles and device hashes are never updated; dry-run reports synthetic IDs and counts without auth credentials or device keys.
+
+### Notifications, Expo push and citizen OTP
+
+`GET /notifications?limit=50&beforeId=...` and `PATCH /notifications/{id}` are scoped to the refreshed authenticated profile. `POST` and `DELETE /notifications/push-tokens` register or revoke a caller-owned Expo token; tokens are never returned. A status transition stages generic notification and push-delivery rows in its domain transaction. `python -m scripts.send_push --limit 100` dispatches a bounded batch only when `PUSH_ENABLED=true`; add `--receipts` to poll tickets. Expo ticket acceptance is `ticketed`; only an `ok` receipt becomes `delivered`. Receipt polling begins after 15 minutes; after three empty polls at 15-minute intervals a ticket becomes `unknown`. A send timeout or a worker crash after a send starts also becomes `unknown`, so the backend does not blindly resend an uncertain request. No scheduler is provisioned.
+
+`OTP_MODE=demo` keeps the local `123456` flow and sends nothing. `OTP_MODE=twilio` requires `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_VERIFY_SERVICE_SID`; incomplete bindings return `503`, with no demo fallback. Challenge generations use HMAC phone keys, have ten-minute expiry and rate limits, and can be consumed only once before a citizen session is issued. Provider errors do not reveal response bodies or credentials. No live provider calls were made in local verification.
+
+CityCycle `RCY`, `COL` and `WGH` IDs use `readable_id_counters`: each prefix is lazily seeded above the existing numeric maximum, then reserved with an atomic database increment in the caller transaction. Rollback releases the reservation; commits keep it even if no entity was inserted. Existing deployments must pass the reviewed schema compatibility check and apply the frozen Alembic revisions before using these counters. Counter rows have RLS enabled with no public policies and require the privileged backend database role. Other ID prefixes retain their existing behavior.

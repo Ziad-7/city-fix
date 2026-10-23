@@ -35,11 +35,20 @@ class Settings(BaseSettings):
     # Session lifetime in minutes (default 7 days)
     token_minutes: int = 7 * 24 * 60
 
-    # OTP_MODE=demo uses fixed code "123456". Real SMS/WhatsApp delivery is not implemented.
+    # OTP_MODE=demo uses fixed code "123456". Real delivery uses Twilio Verify.
     otp_mode: str = "demo"
 
-    # Seed the database on startup if it's empty
-    seed_on_start: bool = True
+    twilio_account_sid: str = ""
+    twilio_auth_token: str = ""
+    twilio_verify_service_sid: str = ""
+
+    # Optional server-side Expo access token; it is unrelated to a registered device push token.
+    expo_token: str = ""
+    push_enabled: bool = False
+
+    # Optional local-only convenience; migrations own production schema changes.
+    local_schema_bootstrap: bool = False
+    seed_on_start: bool = False
 
     # Destructive demo reset endpoint is disabled unless explicitly enabled.
     demo_reset_enabled: bool = False
@@ -91,3 +100,5 @@ def validate_settings(cfg: Settings | None = None) -> None:
     cfg = cfg or settings
     if cfg.otp_mode != "demo" and cfg.jwt_secret == DEFAULT_JWT_SECRET:
         raise RuntimeError("JWT_SECRET must be set to a real secret when OTP_MODE is not 'demo'")
+    if cfg.otp_mode not in {"demo", "twilio", "real"}:
+        raise RuntimeError("OTP_MODE must be 'demo' or 'twilio'")

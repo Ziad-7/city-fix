@@ -1,36 +1,17 @@
-# CityCycle — Member 5 · AI & smart features
+# Member 5 — AI, optimization, and analytics
 
-Folders `backend/app/ai/`, `backend/app/optimizer/`, `backend/app/routers/` (AI routers), `backend/ai-eval/` · branch `feat/ai-…` · existing brief: [`../team/ai-features.md`](../team/ai-features.md). Same guardrails: **suggestions only**, always answer, neutral Egyptian Arabic, privacy, cost limits.
+Member 5 preserves the existing consent-gated AI routes and adds deterministic operations previews. The analytics work is implemented in this branch on top of Member 4. Forecasts, route optimization, and hotspots are human-reviewed suggestions; they do not write operational data or call Gemini.
 
-## Features
+| Endpoint | Access | Behavior |
+| --- | --- | --- |
+| `POST /ai/waste-classify` | Authenticated citizen with consent and enabled photo analysis | Existing model suggestion with private-media ownership and image redaction; deterministic fallback remains available. |
+| `POST /ai/transcribe` | Authenticated owner of the voice-note asset | Existing bounded, validated Egyptian Arabic transcription. |
+| `GET /admin/bins/forecast?horizonHours=24` | Staff, department scoped | Least-squares fill trend over synchronized, recent telemetry; collection resets split the trend and an unaligned latest sequence refuses extrapolation. |
+| `POST /admin/recycling/routes/optimize` | Admin | OR-Tools CVRP preview for requested, unassigned pickups; haversine distance estimates, capacity constraints, and an explicit unassigned list. |
+| `GET /admin/hotspots?days=30&radiusMeters=500&minCount=3` | Staff, department scoped | Haversine DBSCAN semantics over garbage incidents only; output omits source IDs and sensitive incident details. |
 
-| # | Feature | Endpoint | Priority |
-| --- | --- | --- | --- |
-| 1 | **Waste photo classification** (type and size): material top 3 with confidence, size small/medium/large, optional kg range, for pickups and dumping reports. Fallback when the model fails: ask the person to choose. | `POST /ai/waste-classify` | Should |
-| 2 | **Bin fill forecasting:** predict when each bin will be full from its readings (start with a simple per-bin rate model; keep it explainable). | `GET /admin/bins/forecast` | Should |
-| 3 | **Collection route optimisation:** OR-Tools VRP over bins and accepted pickups, with vehicle count and time windows; returns ordered stops. | `POST /admin/recycling/routes/optimize` | Should |
-| 4 | **Dumping hotspot detection:** cluster repeated garbage reports and photos by area and time (DBSCAN or a PostGIS grid). | `GET /admin/hotspots` | Stretch |
-| 5 | **Impact estimates:** kg and CO₂ from weighings (deterministic maths, not a model); the CO₂ factors are **to verify** and cited before use. | inside `/me/impact`, admin summary | Should |
+OR-Tools is an optional runtime extra (`routing`) and part of backend development requirements so CI exercises solver behavior. Deployments without the package receive `503`; there is no heuristic fallback. Install local development dependencies with `pip install -r requirements-dev.txt` from `backend/`. Production deployments that need route previews install `pip install ".[routing]"`. These APIs require no schema migration or project SQL because they read existing bins, readings, incidents, and recycling pickups.
 
-## Rules
+The hotspot query is bounded to the requested time window and category, then DBSCAN compares candidate pairs in O(n²) time. It does not silently truncate. Measure scoped candidate size and the query plan before high-volume use; add a suitable composite index if that measured workload needs one.
 
-- **Not AI:** priority score, prices, payments and weighings stay deterministic and human-confirmed.
-- The photo model only suggests material and size; a collector's weighing is the truth for kg.
-- Forecasts and routes show their inputs; staff can override. A route is a plan, not an order.
-- Evaluate: a labelled set of waste photos (**to collect**: Egyptian household waste, mixed light, bags) with accuracy and top-3 accuracy; for forecasting, an error measure on simulated and real readings. Report the numbers; do not claim any before you measure them.
-- Data in: bins and readings from member 4's queries; simulated readings from member 6 until real ones exist.
-
-## Acceptance checks
-
-- `/ai/waste-classify` answers within about 5 s, falls back with `source: "fallback"`, and is covered by tests with a fake model.
-- The route optimizer never exceeds vehicle capacity or time limit, uses only valid ids, and is deterministic for a fixed input.
-- Forecast returns a time or "not enough data", never an error.
-- Eval README lists the numbers for the demo.
-
-## Needs from whom
-
-| From | What |
-| --- | --- |
-| 4 | New `queries.py` functions (bins, readings, open pickups), env vars, storage access for photos |
-| 6 | Reading history (simulated or real), bin positions |
-| 3, 1, 2 | Where each result is shown |
+Deferred from the broader Member 5 roadmap: time-window routing, bin-route optimization, and CO₂ impact-factor verification. No new impact estimate is claimed. Gemini baseline/candidate evaluation remains blocked until existing credentials and permitted, consented fixtures are available; no prompt change or quality claim is made. Local eval commands, normalization rules, and manifest examples are documented in [`../../backend/ai_eval/README.md`](../../backend/ai_eval/README.md).
