@@ -1,7 +1,11 @@
 """Regression tests for the correctness fixes made while optimising (B1-B5)."""
 
+from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfo
+
 import pytest
 
+from app.logic.dashboard import window_bounds
 from app.logic.ids import next_id
 from app.models import Incident, IncidentFollower, RecyclingPickup, Report
 
@@ -105,3 +109,32 @@ def test_b4_counter_resyncs_after_out_of_band_insert(db, prefix, model, make):
     db.add(make(f"{prefix}-9999"))
     db.flush()
     assert next_id(db, prefix) == f"{prefix}-10000"
+
+
+# --------------------------------------------------------------------------- B5: "today" is a Cairo calendar day
+CAIRO = ZoneInfo("Africa/Cairo")
+
+
+@pytest.mark.parametrize(
+    "now_utc_value",
+    [
+        datetime(2026, 10, 23, 22, 30, tzinfo=UTC),  # 01:30 Cairo on the 24th (summer time), still the 23rd in UTC
+        datetime(2026, 12, 15, 22, 30, tzinfo=UTC),  # 00:30 Cairo on the 16th (winter time)
+        datetime(2026, 7, 1, 12, 0, tzinfo=UTC),  # midday: UTC and Cairo agree on the date
+    ],
+)
+def test_b5_today_window_starts_at_cairo_midnight(now_utc_value):
+    since, previous = window_bounds("today", now_utc_value)
+    local = now_utc_value.astimezone(CAIRO)
+    midnight = datetime(local.year, local.month, local.day, tzinfo=CAIRO)
+    assert since == midnight.astimezone(UTC)
+    assert since <= now_utc_value
+    # the previous window is the Cairo day before, not "now minus 24 h" or UTC midnight
+    previous_day = local.date() - timedelta(days=1)
+    assert previous == datetime(previous_day.year, previous_day.month, previous_day.day, tzinfo=CAIRO).astimezone(UTC)
+
+
+def test_b5_other_ranges_unchanged():
+    now = datetime(2026, 10, 23, 22, 30, tzinfo=UTC)
+    assert window_bounds("7d", now) == (now - timedelta(days=7), now - timedelta(days=14))
+    assert window_bounds("30d", now) == (now - timedelta(days=30), now - timedelta(days=60))

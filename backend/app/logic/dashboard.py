@@ -1,6 +1,7 @@
 """Dashboard aggregation (DashboardStats)."""
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.orm import Session
 
@@ -11,13 +12,16 @@ from app.logic.status import INCIDENT_STATUSES, OPEN_STATUSES
 from app.models import ActivityLog, Category, Department, Incident, ServiceRequest, WorkOrder
 
 RANGES = ("today", "7d", "30d")
+CAIRO = ZoneInfo("Africa/Cairo")  # the product's calendar: "today" starts at Cairo midnight, not UTC midnight
 
 
 def window_bounds(range_: str, now: datetime) -> tuple[datetime, datetime]:
     """(since, previous_since): the window is [since, now], the previous one [previous_since, since)."""
     if range_ == "today":
-        since = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        return since, since - timedelta(days=1)
+        today = now.astimezone(CAIRO).date()
+        since = datetime.combine(today, time.min, tzinfo=CAIRO).astimezone(UTC)
+        previous = datetime.combine(today - timedelta(days=1), time.min, tzinfo=CAIRO).astimezone(UTC)
+        return since, previous
     days = 7 if range_ == "7d" else 30
     return now - timedelta(days=days), now - timedelta(days=2 * days)
 
