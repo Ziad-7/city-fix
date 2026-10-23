@@ -5,9 +5,9 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from app.logic.dashboard import window_bounds
+from app.logic.dashboard import resolved_at_map, window_bounds
 from app.logic.ids import next_id
-from app.models import Incident, IncidentFollower, RecyclingPickup, Report
+from app.models import ActivityLog, Incident, IncidentFollower, RecyclingPickup, Report
 
 
 # --------------------------------------------------------------------------- B1: collector writes are admin-only
@@ -138,3 +138,19 @@ def test_b5_other_ranges_unchanged():
     now = datetime(2026, 10, 23, 22, 30, tzinfo=UTC)
     assert window_bounds("7d", now) == (now - timedelta(days=7), now - timedelta(days=14))
     assert window_bounds("30d", now) == (now - timedelta(days=30), now - timedelta(days=60))
+
+
+# --------------------------------------------------------------------------- O7: resolved_at_map is a SQL aggregate
+def test_o7_resolved_at_map_returns_the_latest_resolved_entry_per_incident(db):
+    older = datetime(2026, 1, 1, 10, 0)
+    newer = datetime(2026, 1, 3, 12, 30)
+    for at in (newer, older):  # inserted out of order on purpose
+        db.add(ActivityLog(entity_type="incident", entity_id="INC-ZZZ", status="resolved", note="x", actor="a", at=at))
+    db.add(ActivityLog(entity_type="incident", entity_id="INC-ZZY", status="triaged", note="x", actor="a", at=newer))
+    db.add(ActivityLog(entity_type="work_order", entity_id="WO-1", status="resolved", note="x", actor="a", at=newer))
+    db.flush()
+    mapping = resolved_at_map(db)
+    assert mapping["INC-ZZZ"] == newer.replace(tzinfo=UTC)
+    assert "INC-ZZY" not in mapping
+    assert "WO-1" not in mapping
+    assert all(value.tzinfo is not None for value in mapping.values())

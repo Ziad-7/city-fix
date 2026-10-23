@@ -3,6 +3,7 @@
 from datetime import UTC, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.helpers import iso_z, now_utc
@@ -27,14 +28,14 @@ def window_bounds(range_: str, now: datetime) -> tuple[datetime, datetime]:
 
 
 def resolved_at_map(db: Session) -> dict[str, datetime]:
-    """Incident id -> time of its latest ``resolved`` activity."""
-    out: dict[str, datetime] = {}
-    rows = db.query(ActivityLog).filter(ActivityLog.entity_type == "incident", ActivityLog.status == "resolved")
-    for a in rows.all():
-        at = aware(a.at)
-        if a.entity_id not in out or at > out[a.entity_id]:
-            out[a.entity_id] = at
-    return out
+    """Incident id -> time of its latest ``resolved`` activity (aggregated in SQL, no ORM rows)."""
+    rows = (
+        db.query(ActivityLog.entity_id, func.max(ActivityLog.at))
+        .filter(ActivityLog.entity_type == "incident", ActivityLog.status == "resolved")
+        .group_by(ActivityLog.entity_id)
+        .all()
+    )
+    return {entity_id: aware(at) for entity_id, at in rows}
 
 
 def _avg_days(incs: list[Incident], resolved: dict[str, datetime]) -> float:
