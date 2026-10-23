@@ -63,10 +63,9 @@ def _add_followers(db, incident_id, total):
     db.flush()
 
 
-NOTIFY_CEILING = 28
+NOTIFY_CEILING = 19
 
 
-@pytest.mark.xfail(strict=True, reason="N+1 fixed in O5")
 def test_status_change_notification_fanout_is_constant(client, db, admin_h):
     """Notifying 20 followers costs the same number of statements as notifying 2."""
     inc = db.get(Incident, "INC-501")
