@@ -2,10 +2,19 @@
 
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import func
+from sqlalchemy import Row, func
 from sqlalchemy.orm import Session
 
 from app.models import BinReading, SmartBin
+
+# The forecast only needs these columns; selecting them avoids hydrating ~20k ORM objects (7 days x 30 min x bins).
+_READING_COLUMNS = (
+    BinReading.bin_id,
+    BinReading.seq,
+    BinReading.recorded_at,
+    BinReading.fill_pct,
+    BinReading.clock_unsynced,
+)
 
 
 def _utc(value: datetime) -> datetime:
@@ -13,7 +22,7 @@ def _utc(value: datetime) -> datetime:
 
 
 def _forecast_bin(
-    device: SmartBin, readings: list[BinReading], *, latest: BinReading | None, horizon_hours: int, now: datetime
+    device: SmartBin, readings: list[Row], *, latest: Row | None, horizon_hours: int, now: datetime
 ) -> dict:
     current = device.fill_pct
     base = {
@@ -87,13 +96,13 @@ def forecast_bins(db: Session, claims: dict, horizon_hours: int, *, now: datetim
     ids = [item.id for item in devices]
     since = _utc(now) - timedelta(days=7)
     rows = (
-        db.query(BinReading)
+        db.query(*_READING_COLUMNS)
         .filter(BinReading.bin_id.in_(ids), BinReading.recorded_at >= since.replace(tzinfo=None))
         .all()
         if ids
         else []
     )
-    by_id: dict[str, list[BinReading]] = {key: [] for key in ids}
+    by_id: dict[str, list[Row]] = {key: [] for key in ids}
     for row in rows:
         by_id[row.bin_id].append(row)
     latest_rows = {}
@@ -107,7 +116,7 @@ def forecast_bins(db: Session, claims: dict, horizon_hours: int, *, now: datetim
         if latest_seqs:
             latest_rows = {
                 row.bin_id: row
-                for row in db.query(BinReading)
+                for row in db.query(*_READING_COLUMNS)
                 .filter(BinReading.bin_id.in_(latest_seqs), BinReading.seq.in_(list(latest_seqs.values())))
                 .all()
                 if latest_seqs.get(row.bin_id) == row.seq
