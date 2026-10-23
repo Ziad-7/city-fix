@@ -1,0 +1,2167 @@
+{
+ "admin GET /admin/bins": {
+  "shape": [
+   {
+    "batteryV": "null|number",
+    "departmentId": "str",
+    "district": "str",
+    "fillPct": "null|number",
+    "fullPct": "number",
+    "heatC": "number",
+    "id": "str",
+    "intervalMin": "number",
+    "isActive": "bool",
+    "isFull": "bool",
+    "isHot": "bool",
+    "isSimulated": "bool",
+    "lastSeenAt": "null|str",
+    "lastSeq": "number",
+    "lat": "number",
+    "lng": "number",
+    "name": "str",
+    "status": "str",
+    "tempC": "null|number"
+   }
+  ],
+  "status": 200
+ },
+ "admin GET /admin/bins/BIN-SHAPE-001/latest": {
+  "shape": {
+   "batteryV": "number",
+   "binId": "str",
+   "clockUnsynced": "bool",
+   "deviceAt": "str",
+   "distanceCm": "number",
+   "fillPct": "number",
+   "firmware": "str",
+   "id": "number",
+   "isFull": "bool",
+   "isHot": "bool",
+   "receivedAt": "str",
+   "recordedAt": "str",
+   "rssi": "number",
+   "seq": "number",
+   "tempC": "number"
+  },
+  "status": 200
+ },
+ "admin GET /admin/bins/BIN-SHAPE-001/readings": {
+  "shape": [
+   {
+    "batteryV": "number",
+    "binId": "str",
+    "clockUnsynced": "bool",
+    "deviceAt": "str",
+    "distanceCm": "number",
+    "fillPct": "number",
+    "firmware": "str",
+    "id": "number",
+    "isFull": "bool",
+    "isHot": "bool",
+    "receivedAt": "str",
+    "recordedAt": "str",
+    "rssi": "number",
+    "seq": "number",
+    "tempC": "number"
+   }
+  ],
+  "status": 200
+ },
+ "admin GET /admin/bins/forecast": {
+  "shape": {
+   "generatedAt": "str",
+   "horizonHours": "number",
+   "items": [
+    {
+     "binId": "str",
+     "currentFillPct": "null|number",
+     "hoursToFull": "null|number",
+     "method": "str",
+     "predictedFillPct": "null|number",
+     "reason": "str",
+     "sampleCount": "number"
+    }
+   ]
+  },
+  "status": 200
+ },
+ "admin GET /admin/collectors": {
+  "shape": [
+   {
+    "district": "str",
+    "id": "str",
+    "joinedAt": "str",
+    "materials": [
+     "str"
+    ],
+    "name": "str",
+    "phone": "str",
+    "status": "str",
+    "userId": "str",
+    "vehicle": "str"
+   }
+  ],
+  "status": 200
+ },
+ "admin GET /admin/dashboard": {
+  "shape": {
+   "activity": [
+    {
+     "actor": "str",
+     "at": "str",
+     "entityId": "str",
+     "status": "str",
+     "text": "str"
+    }
+   ],
+   "avgResolutionDays": "number",
+   "avgResolutionDeltaDays": "number",
+   "byCategory": [
+    {
+     "categoryId": "str",
+     "count": "number"
+    }
+   ],
+   "byStatus": [
+    {
+     "count": "number",
+     "status": "str"
+    }
+   ],
+   "departments": [
+    {
+     "avgResolutionDays": "number",
+     "department": "str",
+     "external": "bool",
+     "externalHotline": "str",
+     "loadPct": "number",
+     "open": "number",
+     "overdue": "number"
+    }
+   ],
+   "nav": {
+    "incidentsOpen": "number",
+    "serviceRequestsOpen": "number"
+   },
+   "open": "number",
+   "openDelta": "number",
+   "overdue": "number",
+   "overdueList": [
+    {
+     "address": "str",
+     "department": "str",
+     "dueAt": "str",
+     "external": "bool",
+     "externalHotline": "str",
+     "hoursLate": "number",
+     "incidentId": "str",
+     "priorityScore": "number",
+     "title": "str"
+    }
+   ],
+   "overdueTotal": "number",
+   "resolvedDelta": "number",
+   "resolvedThisWeek": "number"
+  },
+  "status": 200
+ },
+ "admin GET /admin/dashboard?range=30d": {
+  "shape": {
+   "activity": [
+    {
+     "actor": "str",
+     "at": "str",
+     "entityId": "str",
+     "status": "str",
+     "text": "str"
+    }
+   ],
+   "avgResolutionDays": "number",
+   "avgResolutionDeltaDays": "number",
+   "byCategory": [
+    {
+     "categoryId": "str",
+     "count": "number"
+    }
+   ],
+   "byStatus": [
+    {
+     "count": "number",
+     "status": "str"
+    }
+   ],
+   "departments": [
+    {
+     "avgResolutionDays": "number",
+     "department": "str",
+     "external": "bool",
+     "externalHotline": "str",
+     "loadPct": "number",
+     "open": "number",
+     "overdue": "number"
+    }
+   ],
+   "nav": {
+    "incidentsOpen": "number",
+    "serviceRequestsOpen": "number"
+   },
+   "open": "number",
+   "openDelta": "number",
+   "overdue": "number",
+   "overdueList": [
+    {
+     "address": "str",
+     "department": "str",
+     "dueAt": "str",
+     "external": "bool",
+     "externalHotline": "str",
+     "hoursLate": "number",
+     "incidentId": "str",
+     "priorityScore": "number",
+     "title": "str"
+    }
+   ],
+   "overdueTotal": "number",
+   "resolvedDelta": "number",
+   "resolvedThisWeek": "number"
+  },
+  "status": 200
+ },
+ "admin GET /admin/dashboard?range=today": {
+  "shape": {
+   "activity": [
+    {
+     "actor": "str",
+     "at": "str",
+     "entityId": "str",
+     "status": "str",
+     "text": "str"
+    }
+   ],
+   "avgResolutionDays": "number",
+   "avgResolutionDeltaDays": "number",
+   "byCategory": [
+    {
+     "categoryId": "str",
+     "count": "number"
+    }
+   ],
+   "byStatus": [
+    {
+     "count": "number",
+     "status": "str"
+    }
+   ],
+   "departments": [
+    {
+     "avgResolutionDays": "number",
+     "department": "str",
+     "external": "bool",
+     "externalHotline": "str",
+     "loadPct": "number",
+     "open": "number",
+     "overdue": "number"
+    }
+   ],
+   "nav": {
+    "incidentsOpen": "number",
+    "serviceRequestsOpen": "number"
+   },
+   "open": "number",
+   "openDelta": "number",
+   "overdue": "number",
+   "overdueList": [
+    {
+     "address": "str",
+     "department": "str",
+     "dueAt": "str",
+     "external": "bool",
+     "externalHotline": "str",
+     "hoursLate": "number",
+     "incidentId": "str",
+     "priorityScore": "number",
+     "title": "str"
+    }
+   ],
+   "overdueTotal": "number",
+   "resolvedDelta": "number",
+   "resolvedThisWeek": "number"
+  },
+  "status": 200
+ },
+ "admin GET /admin/departments": {
+  "shape": [
+   {
+    "external": "bool",
+    "externalHotline": "str",
+    "id": "str",
+    "nameAr": "str"
+   }
+  ],
+  "status": 200
+ },
+ "admin GET /admin/hotspots": {
+  "shape": {
+   "days": "number",
+   "generatedAt": "str",
+   "items": [],
+   "minCount": "number",
+   "radiusMeters": "number"
+  },
+  "status": 200
+ },
+ "admin GET /admin/incidents": {
+  "shape": [
+   {
+    "areaUnderserved": "bool",
+    "categoryId": "str",
+    "createdAt": "str",
+    "department": "str",
+    "dueAt": "str",
+    "estimatedCostEgp": "number",
+    "external": "bool",
+    "externalHotline": "str",
+    "followers": "number",
+    "id": "str",
+    "inBudgetPlan": "bool",
+    "linkedReportIds": [
+     "str"
+    ],
+    "linkedReports": [
+     {
+      "createdAt": "str",
+      "description": "str",
+      "id": "str",
+      "photoCount": "number",
+      "reporter": "str",
+      "source": "str"
+     }
+    ],
+    "location": {
+     "address": "str",
+     "lat": "number",
+     "lng": "number"
+    },
+    "overdue": "bool",
+    "priority": {
+     "factors": [
+      {
+       "key": "str",
+       "label": "str",
+       "max": "number",
+       "points": "number"
+      }
+     ],
+     "score": "number"
+    },
+    "sensitivePlace": "str",
+    "severity": "str",
+    "status": "str",
+    "timeline": [
+     {
+      "actor": "str",
+      "at": "str",
+      "note": "str",
+      "status": "str"
+     }
+    ],
+    "title": "str",
+    "triage": {
+     "confirmed": "bool",
+     "duplicates": [],
+     "options": [
+      {
+       "categoryId": "str",
+       "confidence": "number"
+      }
+     ],
+     "severity": "str",
+     "source": "str",
+     "summary": "str"
+    },
+    "updatedAt": "str",
+    "workOrderId": "str"
+   }
+  ],
+  "status": 200
+ },
+ "admin GET /admin/incidents/INC-501": {
+  "shape": {
+   "areaUnderserved": "bool",
+   "categoryId": "str",
+   "createdAt": "str",
+   "department": "str",
+   "dueAt": "str",
+   "estimatedCostEgp": "number",
+   "external": "bool",
+   "followers": "number",
+   "id": "str",
+   "inBudgetPlan": "bool",
+   "linkedReportIds": [
+    "str"
+   ],
+   "linkedReports": [
+    {
+     "createdAt": "str",
+     "description": "str",
+     "id": "str",
+     "photoCount": "number",
+     "photoUrls": [],
+     "reporter": "str",
+     "source": "str"
+    }
+   ],
+   "location": {
+    "address": "str",
+    "lat": "number",
+    "lng": "number"
+   },
+   "overdue": "bool",
+   "priority": {
+    "factors": [
+     {
+      "key": "str",
+      "label": "str",
+      "max": "number",
+      "points": "number"
+     }
+    ],
+    "score": "number"
+   },
+   "sensitivePlace": "str",
+   "severity": "str",
+   "status": "str",
+   "timeline": [
+    {
+     "actor": "str",
+     "at": "str",
+     "note": "str",
+     "status": "str"
+    }
+   ],
+   "title": "str",
+   "updatedAt": "str",
+   "workOrderId": "str"
+  },
+  "status": 200
+ },
+ "admin GET /admin/incidents/INC-501/similar": {
+  "shape": [],
+  "status": 200
+ },
+ "admin GET /admin/incidents?categoryId=pothole": {
+  "shape": [
+   {
+    "areaUnderserved": "bool",
+    "categoryId": "str",
+    "createdAt": "str",
+    "department": "str",
+    "dueAt": "str",
+    "estimatedCostEgp": "number",
+    "external": "bool",
+    "followers": "number",
+    "id": "str",
+    "inBudgetPlan": "bool",
+    "linkedReportIds": [
+     "str"
+    ],
+    "linkedReports": [
+     {
+      "createdAt": "str",
+      "description": "str",
+      "id": "str",
+      "photoCount": "number",
+      "reporter": "str",
+      "source": "str"
+     }
+    ],
+    "location": {
+     "address": "str",
+     "lat": "number",
+     "lng": "number"
+    },
+    "overdue": "bool",
+    "priority": {
+     "factors": [
+      {
+       "key": "str",
+       "label": "str",
+       "max": "number",
+       "points": "number"
+      }
+     ],
+     "score": "number"
+    },
+    "sensitivePlace": "str",
+    "severity": "str",
+    "status": "str",
+    "timeline": [
+     {
+      "actor": "str",
+      "at": "str",
+      "note": "str",
+      "status": "str"
+     }
+    ],
+    "title": "str",
+    "updatedAt": "str",
+    "workOrderId": "str"
+   }
+  ],
+  "status": 200
+ },
+ "admin GET /admin/incidents?critical=true": {
+  "shape": [
+   {
+    "areaUnderserved": "bool",
+    "categoryId": "str",
+    "createdAt": "str",
+    "department": "str",
+    "dueAt": "str",
+    "estimatedCostEgp": "number",
+    "external": "bool",
+    "externalHotline": "str",
+    "followers": "number",
+    "id": "str",
+    "inBudgetPlan": "bool",
+    "linkedReportIds": [
+     "str"
+    ],
+    "linkedReports": [
+     {
+      "createdAt": "str",
+      "description": "str",
+      "id": "str",
+      "photoCount": "number",
+      "reporter": "str",
+      "source": "str"
+     }
+    ],
+    "location": {
+     "address": "str",
+     "lat": "number",
+     "lng": "number"
+    },
+    "overdue": "bool",
+    "priority": {
+     "factors": [
+      {
+       "key": "str",
+       "label": "str",
+       "max": "number",
+       "points": "number"
+      }
+     ],
+     "score": "number"
+    },
+    "sensitivePlace": "str",
+    "severity": "str",
+    "status": "str",
+    "timeline": [
+     {
+      "actor": "str",
+      "at": "str",
+      "note": "str",
+      "status": "str"
+     }
+    ],
+    "title": "str",
+    "triage": {
+     "confirmed": "bool",
+     "duplicates": [],
+     "options": [
+      {
+       "categoryId": "str",
+       "confidence": "number"
+      }
+     ],
+     "severity": "str",
+     "source": "str",
+     "summary": "str"
+    },
+    "updatedAt": "str",
+    "workOrderId": "str"
+   }
+  ],
+  "status": 200
+ },
+ "admin GET /admin/incidents?overdue=true": {
+  "shape": [
+   {
+    "areaUnderserved": "bool",
+    "categoryId": "str",
+    "createdAt": "str",
+    "department": "str",
+    "dueAt": "str",
+    "estimatedCostEgp": "number",
+    "external": "bool",
+    "externalHotline": "str",
+    "followers": "number",
+    "id": "str",
+    "inBudgetPlan": "bool",
+    "linkedReportIds": [
+     "str"
+    ],
+    "linkedReports": [
+     {
+      "createdAt": "str",
+      "description": "str",
+      "id": "str",
+      "photoCount": "number",
+      "reporter": "str",
+      "source": "str"
+     }
+    ],
+    "location": {
+     "address": "str",
+     "lat": "number",
+     "lng": "number"
+    },
+    "overdue": "bool",
+    "priority": {
+     "factors": [
+      {
+       "key": "str",
+       "label": "str",
+       "max": "number",
+       "points": "number"
+      }
+     ],
+     "score": "number"
+    },
+    "severity": "str",
+    "status": "str",
+    "timeline": [
+     {
+      "actor": "str",
+      "at": "str",
+      "note": "str",
+      "status": "str"
+     }
+    ],
+    "title": "str",
+    "triage": {
+     "confirmed": "bool",
+     "duplicates": [],
+     "options": [
+      {
+       "categoryId": "str",
+       "confidence": "number"
+      }
+     ],
+     "severity": "str",
+     "source": "str",
+     "summary": "str"
+    },
+    "updatedAt": "str",
+    "workOrderId": "str"
+   }
+  ],
+  "status": 200
+ },
+ "admin GET /admin/incidents?q=INC": {
+  "shape": [
+   {
+    "areaUnderserved": "bool",
+    "categoryId": "str",
+    "createdAt": "str",
+    "department": "str",
+    "dueAt": "str",
+    "estimatedCostEgp": "number",
+    "external": "bool",
+    "externalHotline": "str",
+    "followers": "number",
+    "id": "str",
+    "inBudgetPlan": "bool",
+    "linkedReportIds": [
+     "str"
+    ],
+    "linkedReports": [
+     {
+      "createdAt": "str",
+      "description": "str",
+      "id": "str",
+      "photoCount": "number",
+      "reporter": "str",
+      "source": "str"
+     }
+    ],
+    "location": {
+     "address": "str",
+     "lat": "number",
+     "lng": "number"
+    },
+    "overdue": "bool",
+    "priority": {
+     "factors": [
+      {
+       "key": "str",
+       "label": "str",
+       "max": "number",
+       "points": "number"
+      }
+     ],
+     "score": "number"
+    },
+    "sensitivePlace": "str",
+    "severity": "str",
+    "status": "str",
+    "timeline": [
+     {
+      "actor": "str",
+      "at": "str",
+      "note": "str",
+      "status": "str"
+     }
+    ],
+    "title": "str",
+    "triage": {
+     "confirmed": "bool",
+     "duplicates": [],
+     "options": [
+      {
+       "categoryId": "str",
+       "confidence": "number"
+      }
+     ],
+     "severity": "str",
+     "source": "str",
+     "summary": "str"
+    },
+    "updatedAt": "str",
+    "workOrderId": "str"
+   }
+  ],
+  "status": 200
+ },
+ "admin GET /admin/incidents?status=received": {
+  "shape": [
+   {
+    "areaUnderserved": "bool",
+    "categoryId": "str",
+    "createdAt": "str",
+    "department": "str",
+    "dueAt": "str",
+    "estimatedCostEgp": "number",
+    "external": "bool",
+    "externalHotline": "str",
+    "followers": "number",
+    "id": "str",
+    "inBudgetPlan": "bool",
+    "linkedReportIds": [
+     "str"
+    ],
+    "linkedReports": [
+     {
+      "createdAt": "str",
+      "description": "str",
+      "id": "str",
+      "photoCount": "number",
+      "reporter": "str",
+      "source": "str"
+     }
+    ],
+    "location": {
+     "address": "str",
+     "lat": "number",
+     "lng": "number"
+    },
+    "overdue": "bool",
+    "priority": {
+     "factors": [
+      {
+       "key": "str",
+       "label": "str",
+       "max": "number",
+       "points": "number"
+      }
+     ],
+     "score": "number"
+    },
+    "sensitivePlace": "str",
+    "severity": "str",
+    "status": "str",
+    "timeline": [
+     {
+      "actor": "str",
+      "at": "str",
+      "note": "str",
+      "status": "str"
+     }
+    ],
+    "title": "str",
+    "triage": {
+     "confirmed": "bool",
+     "duplicates": [],
+     "options": [
+      {
+       "categoryId": "str",
+       "confidence": "number"
+      }
+     ],
+     "severity": "str",
+     "source": "str",
+     "summary": "str"
+    },
+    "updatedAt": "str"
+   }
+  ],
+  "status": 200
+ },
+ "admin GET /admin/insights": {
+  "shape": {
+   "hotspots": [
+    {
+     "address": "str",
+     "count": "number"
+    }
+   ],
+   "overdueDepartments": [
+    "str"
+   ],
+   "risingCategories": [
+    {
+     "categoryId": "str",
+     "delta": "number"
+    }
+   ],
+   "summary": "str"
+  },
+  "status": 200
+ },
+ "admin GET /admin/material-prices": {
+  "shape": [
+   {
+    "district": "str",
+    "materialId": "str",
+    "priceEgpPerKg": "null|number",
+    "updatedAt": "str"
+   }
+  ],
+  "status": 200
+ },
+ "admin GET /admin/payouts": {
+  "shape": [
+   {
+    "collectorId": "str",
+    "collectorName": "str",
+    "jobs": "number",
+    "kg": "number",
+    "paidToHouseholdsEgp": "number",
+    "valueEgp": "number"
+   }
+  ],
+  "status": 200
+ },
+ "admin GET /admin/recycling/pickups": {
+  "shape": [
+   {
+    "citizenId": "str",
+    "collectorFinishedAt": "str",
+    "collectorId": "str",
+    "collectorName": "str",
+    "confirmedAt": "str",
+    "createdAt": "str",
+    "day": "str",
+    "district": "str",
+    "estimatedValueEgp": "number",
+    "id": "str",
+    "items": [
+     {
+      "estimatedKg": "number",
+      "materialId": "str"
+     }
+    ],
+    "location": {
+     "address": "str",
+     "landmark": "str",
+     "lat": "number",
+     "lng": "number"
+    },
+    "mode": "str",
+    "paidToHouseholdEgp": "number",
+    "photoUris": [],
+    "slot": "str",
+    "status": "str",
+    "timeline": [
+     {
+      "actor": "str",
+      "at": "str",
+      "note": "str",
+      "status": "str"
+     }
+    ],
+    "totalKg": "number",
+    "totalValueEgp": "number",
+    "weighings": [
+     {
+      "at": "str",
+      "clientId": "str",
+      "id": "str",
+      "kg": "number",
+      "materialId": "str",
+      "pickupId": "str",
+      "priceEgpPerKg": "number",
+      "source": "str",
+      "valueEgp": "number"
+     }
+    ]
+   }
+  ],
+  "status": 200
+ },
+ "admin GET /admin/recycling/pickups/RCY-3001": {
+  "shape": {
+   "citizenId": "str",
+   "createdAt": "str",
+   "day": "str",
+   "district": "str",
+   "estimatedValueEgp": "number",
+   "id": "str",
+   "items": [
+    {
+     "estimatedKg": "number",
+     "materialId": "str"
+    }
+   ],
+   "location": {
+    "address": "str",
+    "landmark": "str",
+    "lat": "number",
+    "lng": "number"
+   },
+   "mode": "str",
+   "photoUris": [],
+   "slot": "str",
+   "status": "str",
+   "timeline": [
+    {
+     "actor": "str",
+     "at": "str",
+     "note": "str",
+     "status": "str"
+    }
+   ],
+   "weighings": []
+  },
+  "status": 200
+ },
+ "admin GET /admin/recycling/summary": {
+  "shape": {
+   "avgResponseMinutes": "number",
+   "byDistrict": [
+    {
+     "district": "str",
+     "kg": "number"
+    }
+   ],
+   "byMaterial": [
+    {
+     "kg": "number",
+     "materialId": "str"
+    }
+   ],
+   "byStatus": {
+    "accepted": "number",
+    "cancelled": "number",
+    "completed": "number",
+    "requested": "number",
+    "weighed": "number"
+   },
+   "pickups": "number",
+   "tonnes": "number",
+   "totalKg": "number"
+  },
+  "status": 200
+ },
+ "admin GET /admin/service-requests": {
+  "shape": [
+   {
+    "citizenId": "str",
+    "createdAt": "str",
+    "department": "str",
+    "details": {
+     "day": "str",
+     "items": [
+      "str"
+     ],
+     "payment": "str",
+     "slot": "str"
+    },
+    "id": "str",
+    "location": {
+     "address": "str",
+     "lat": "number",
+     "lng": "number"
+    },
+    "paid": "bool",
+    "serviceType": "str",
+    "status": "str",
+    "timeline": [
+     {
+      "actor": "str",
+      "at": "str",
+      "note": "str",
+      "status": "str"
+     }
+    ]
+   }
+  ],
+  "status": 200
+ },
+ "admin GET /admin/teams": {
+  "shape": [
+   {
+    "department": "str",
+    "name": "str",
+    "size": "number"
+   }
+  ],
+  "status": 200
+ },
+ "admin GET /admin/work-orders": {
+  "shape": [
+   {
+    "address": "str",
+    "createdAt": "str",
+    "department": "str",
+    "dueAt": "str",
+    "estimatedCostEgp": "number",
+    "external": "bool",
+    "externalHotline": "str",
+    "followers": "number",
+    "id": "str",
+    "incidentId": "str",
+    "overdue": "bool",
+    "priorityScore": "number",
+    "resolvedAt": "str",
+    "status": "str",
+    "supervisor": "str",
+    "tasks": [
+     {
+      "done": "bool",
+      "label": "str"
+     }
+    ],
+    "team": "str",
+    "teamSize": "number",
+    "title": "str",
+    "updatedAt": "str",
+    "updates": [
+     {
+      "actor": "str",
+      "at": "str",
+      "note": "str",
+      "status": "str"
+     }
+    ]
+   }
+  ],
+  "status": 200
+ },
+ "admin GET /admin/work-orders/WO-336": {
+  "shape": {
+   "address": "str",
+   "createdAt": "str",
+   "department": "str",
+   "dueAt": "str",
+   "estimatedCostEgp": "number",
+   "external": "bool",
+   "followers": "number",
+   "id": "str",
+   "incidentId": "str",
+   "overdue": "bool",
+   "priorityScore": "number",
+   "status": "str",
+   "supervisor": "str",
+   "tasks": [
+    {
+     "done": "bool",
+     "label": "str"
+    }
+   ],
+   "team": "str",
+   "teamSize": "number",
+   "title": "str",
+   "updatedAt": "str",
+   "updates": [
+    {
+     "actor": "str",
+     "at": "str",
+     "note": "str",
+     "status": "str"
+    }
+   ]
+  },
+  "status": 200
+ },
+ "admin GET /auth/me": {
+  "shape": {
+   "district": "str",
+   "name": "str",
+   "role": "str",
+   "title": "str",
+   "userId": "str"
+  },
+  "status": 200
+ },
+ "admin GET /bins": {
+  "shape": [
+   {
+    "batteryV": "number",
+    "fillPct": "number",
+    "id": "str",
+    "kind": "str",
+    "lastSeenAt": "str",
+    "location": {
+     "address": "str",
+     "lat": "number",
+     "lng": "number"
+    },
+    "name": "str",
+    "state": "str",
+    "tempC": "number"
+   }
+  ],
+  "status": 200
+ },
+ "admin GET /health": {
+  "shape": {
+   "status": "str",
+   "version": "str"
+  },
+  "status": 200
+ },
+ "admin GET /incidents": {
+  "shape": [
+   {
+    "areaUnderserved": "bool",
+    "categoryId": "str",
+    "createdAt": "str",
+    "department": "str",
+    "dueAt": "str",
+    "estimatedCostEgp": "number",
+    "external": "bool",
+    "externalHotline": "str",
+    "followers": "number",
+    "id": "str",
+    "inBudgetPlan": "bool",
+    "isFollowing": "bool",
+    "linkedReportIds": [
+     "str"
+    ],
+    "linkedReports": [
+     {
+      "createdAt": "str",
+      "description": "str",
+      "id": "str",
+      "photoCount": "number",
+      "reporter": "str",
+      "source": "str"
+     }
+    ],
+    "location": {
+     "address": "str",
+     "lat": "number",
+     "lng": "number"
+    },
+    "overdue": "bool",
+    "priority": {
+     "factors": [
+      {
+       "key": "str",
+       "label": "str",
+       "max": "number",
+       "points": "number"
+      }
+     ],
+     "score": "number"
+    },
+    "sensitivePlace": "str",
+    "severity": "str",
+    "status": "str",
+    "timeline": [
+     {
+      "actor": "str",
+      "at": "str",
+      "note": "str",
+      "status": "str"
+     }
+    ],
+    "title": "str",
+    "triage": {
+     "confirmed": "bool",
+     "duplicates": [],
+     "options": [
+      {
+       "categoryId": "str",
+       "confidence": "number"
+      }
+     ],
+     "severity": "str",
+     "source": "str",
+     "summary": "str"
+    },
+    "updatedAt": "str",
+    "workOrderId": "str"
+   }
+  ],
+  "status": 200
+ },
+ "admin GET /map/incidents": {
+  "shape": [
+   {
+    "categoryId": "str",
+    "id": "str",
+    "lat": "number",
+    "lng": "number",
+    "severity": "str",
+    "status": "str",
+    "title": "str"
+   }
+  ],
+  "status": 200
+ },
+ "admin GET /recycling/materials": {
+  "shape": [
+   {
+    "district": "str",
+    "materialId": "str",
+    "priceEgpPerKg": "null|number",
+    "updatedAt": "str"
+   }
+  ],
+  "status": 200
+ },
+ "admin PATCH /admin/incidents/INC-501": {
+  "shape": {
+   "areaUnderserved": "bool",
+   "categoryId": "str",
+   "createdAt": "str",
+   "department": "str",
+   "dueAt": "str",
+   "estimatedCostEgp": "number",
+   "external": "bool",
+   "followers": "number",
+   "id": "str",
+   "inBudgetPlan": "bool",
+   "linkedReportIds": [
+    "str"
+   ],
+   "linkedReports": [
+    {
+     "createdAt": "str",
+     "description": "str",
+     "id": "str",
+     "photoCount": "number",
+     "reporter": "str",
+     "source": "str"
+    }
+   ],
+   "location": {
+    "address": "str",
+    "lat": "number",
+    "lng": "number"
+   },
+   "overdue": "bool",
+   "priority": {
+    "factors": [
+     {
+      "key": "str",
+      "label": "str",
+      "max": "number",
+      "points": "number"
+     }
+    ],
+    "score": "number"
+   },
+   "sensitivePlace": "str",
+   "severity": "str",
+   "status": "str",
+   "timeline": [
+    {
+     "actor": "str",
+     "at": "str",
+     "note": "str",
+     "status": "str"
+    }
+   ],
+   "title": "str",
+   "updatedAt": "str",
+   "workOrderId": "str"
+  },
+  "status": 200
+ },
+ "admin POST /admin/bins": {
+  "shape": {
+   "bin": {
+    "batteryV": "null",
+    "departmentId": "str",
+    "district": "str",
+    "fillPct": "null",
+    "fullPct": "number",
+    "heatC": "number",
+    "id": "str",
+    "intervalMin": "number",
+    "isActive": "bool",
+    "isFull": "bool",
+    "isHot": "bool",
+    "isSimulated": "bool",
+    "lastSeenAt": "null",
+    "lastSeq": "number",
+    "lat": "number",
+    "lng": "number",
+    "name": "str",
+    "status": "str",
+    "tempC": "null"
+   },
+   "deviceKey": "str"
+  },
+  "status": 201
+ },
+ "admin POST /admin/budget/optimize": {
+  "shape": {
+   "budgetEgp": "number",
+   "citizensServed": "number",
+   "citizensTotal": "number",
+   "coveredPriority": "number",
+   "remaining": "number",
+   "selected": [
+    {
+     "categoryId": "str",
+     "costEgp": "number",
+     "followers": "number",
+     "incidentId": "str",
+     "priorityScore": "number",
+     "reason": "str",
+     "title": "str"
+    }
+   ],
+   "skipped": [
+    {
+     "categoryId": "str",
+     "costEgp": "number",
+     "followers": "number",
+     "incidentId": "str",
+     "priorityScore": "number",
+     "reason": "str",
+     "title": "str"
+    }
+   ],
+   "totalCost": "number",
+   "totalPriority": "number"
+  },
+  "status": 200
+ },
+ "admin POST /admin/incidents/INC-504/merge": {
+  "shape": {
+   "areaUnderserved": "bool",
+   "categoryId": "str",
+   "createdAt": "str",
+   "department": "str",
+   "dueAt": "str",
+   "estimatedCostEgp": "number",
+   "external": "bool",
+   "followers": "number",
+   "id": "str",
+   "inBudgetPlan": "bool",
+   "linkedReportIds": [
+    "str"
+   ],
+   "linkedReports": [
+    {
+     "createdAt": "str",
+     "description": "str",
+     "id": "str",
+     "photoCount": "number",
+     "reporter": "str",
+     "source": "str"
+    }
+   ],
+   "location": {
+    "address": "str",
+    "lat": "number",
+    "lng": "number"
+   },
+   "overdue": "bool",
+   "priority": {
+    "factors": [
+     {
+      "key": "str",
+      "label": "str",
+      "max": "number",
+      "points": "number"
+     }
+    ],
+    "score": "number"
+   },
+   "severity": "str",
+   "status": "str",
+   "timeline": [
+    {
+     "actor": "str",
+     "at": "str",
+     "note": "str",
+     "status": "str"
+    }
+   ],
+   "title": "str",
+   "triage": {
+    "confirmed": "bool",
+    "duplicates": [],
+    "options": [
+     {
+      "categoryId": "str",
+      "confidence": "number"
+     }
+    ],
+    "severity": "str",
+    "source": "str",
+    "summary": "str"
+   },
+   "updatedAt": "str"
+  },
+  "status": 200
+ },
+ "admin POST /admin/work-orders": {
+  "shape": {
+   "address": "str",
+   "createdAt": "str",
+   "department": "str",
+   "dueAt": "str",
+   "estimatedCostEgp": "number",
+   "external": "bool",
+   "externalHotline": "str",
+   "followers": "number",
+   "id": "str",
+   "incidentId": "str",
+   "overdue": "bool",
+   "priorityScore": "number",
+   "status": "str",
+   "tasks": [
+    {
+     "done": "bool",
+     "label": "str"
+    }
+   ],
+   "team": "str",
+   "title": "str",
+   "updatedAt": "str",
+   "updates": [
+    {
+     "actor": "str",
+     "at": "str",
+     "note": "str",
+     "status": "str"
+    }
+   ]
+  },
+  "status": 200
+ },
+ "citizen GET /admin/incidents": {
+  "shape": {
+   "detail": "str"
+  },
+  "status": 403
+ },
+ "citizen GET /auth/me": {
+  "shape": {
+   "detail": "str"
+  },
+  "status": 403
+ },
+ "citizen GET /bins": {
+  "shape": [
+   {
+    "batteryV": "number",
+    "fillPct": "number",
+    "id": "str",
+    "kind": "str",
+    "lastSeenAt": "str",
+    "location": {
+     "address": "str",
+     "lat": "number",
+     "lng": "number"
+    },
+    "name": "str",
+    "state": "str",
+    "tempC": "number"
+   }
+  ],
+  "status": 200
+ },
+ "citizen GET /collectors/me": {
+  "shape": {
+   "detail": "str"
+  },
+  "status": 404
+ },
+ "citizen GET /incidents": {
+  "shape": [
+   {
+    "areaUnderserved": "bool",
+    "categoryId": "str",
+    "createdAt": "str",
+    "department": "str",
+    "estimatedCostEgp": "number",
+    "followers": "number",
+    "id": "str",
+    "isFollowing": "bool",
+    "linkedReportIds": [
+     "str"
+    ],
+    "location": {
+     "address": "str",
+     "lat": "number",
+     "lng": "number"
+    },
+    "priority": {
+     "factors": [
+      {
+       "key": "str",
+       "label": "str",
+       "max": "number",
+       "points": "number"
+      }
+     ],
+     "score": "number"
+    },
+    "sensitivePlace": "str",
+    "severity": "str",
+    "status": "str",
+    "timeline": [
+     {
+      "actor": "str",
+      "at": "str",
+      "note": "str",
+      "status": "str"
+     }
+    ],
+    "title": "str",
+    "updatedAt": "str",
+    "workOrderId": "str"
+   }
+  ],
+  "status": 200
+ },
+ "citizen GET /incidents/INC-501": {
+  "shape": {
+   "areaUnderserved": "bool",
+   "categoryId": "str",
+   "createdAt": "str",
+   "department": "str",
+   "estimatedCostEgp": "number",
+   "followers": "number",
+   "id": "str",
+   "isFollowing": "bool",
+   "linkedReportIds": [
+    "str"
+   ],
+   "location": {
+    "address": "str",
+    "lat": "number",
+    "lng": "number"
+   },
+   "priority": {
+    "factors": [
+     {
+      "key": "str",
+      "label": "str",
+      "max": "number",
+      "points": "number"
+     }
+    ],
+    "score": "number"
+   },
+   "sensitivePlace": "str",
+   "severity": "str",
+   "status": "str",
+   "timeline": [
+    {
+     "actor": "str",
+     "at": "str",
+     "note": "str",
+     "status": "str"
+    }
+   ],
+   "title": "str",
+   "updatedAt": "str",
+   "workOrderId": "str"
+  },
+  "status": 200
+ },
+ "citizen GET /map/incidents": {
+  "shape": [
+   {
+    "categoryId": "str",
+    "id": "str",
+    "lat": "number",
+    "lng": "number",
+    "severity": "str",
+    "status": "str",
+    "title": "str"
+   }
+  ],
+  "status": 200
+ },
+ "citizen GET /me/impact": {
+  "shape": {
+   "byMaterial": [
+    {
+     "kg": "number",
+     "materialId": "str"
+    }
+   ],
+   "pickups": "number",
+   "totalKg": "number"
+  },
+  "status": 200
+ },
+ "citizen GET /notifications": {
+  "shape": {
+   "items": [],
+   "nextBeforeId": "null"
+  },
+  "status": 200
+ },
+ "citizen GET /recycling/materials": {
+  "shape": [
+   {
+    "district": "str",
+    "materialId": "str",
+    "priceEgpPerKg": "null|number",
+    "updatedAt": "str"
+   }
+  ],
+  "status": 200
+ },
+ "citizen GET /recycling/pickups": {
+  "shape": [
+   {
+    "citizenId": "str",
+    "collectorFinishedAt": "str",
+    "collectorId": "str",
+    "collectorName": "str",
+    "confirmedAt": "str",
+    "createdAt": "str",
+    "day": "str",
+    "estimatedValueEgp": "number",
+    "id": "str",
+    "items": [
+     {
+      "estimatedKg": "number",
+      "materialId": "str"
+     }
+    ],
+    "location": {
+     "address": "str",
+     "lat": "number",
+     "lng": "number"
+    },
+    "mode": "str",
+    "paidToHouseholdEgp": "number",
+    "photoUris": [],
+    "slot": "str",
+    "status": "str",
+    "timeline": [
+     {
+      "actor": "str",
+      "at": "str",
+      "note": "str",
+      "status": "str"
+     }
+    ],
+    "totalKg": "number",
+    "totalValueEgp": "number",
+    "weighings": [
+     {
+      "at": "str",
+      "clientId": "str",
+      "id": "str",
+      "kg": "number",
+      "materialId": "str",
+      "pickupId": "str",
+      "priceEgpPerKg": "number",
+      "source": "str",
+      "valueEgp": "number"
+     }
+    ]
+   }
+  ],
+  "status": 200
+ },
+ "citizen GET /reports": {
+  "shape": [
+   {
+    "anonymous": "bool",
+    "blurFaces": "bool",
+    "categoryId": "str",
+    "createdAt": "str",
+    "description": "str",
+    "id": "str",
+    "incidentId": "str",
+    "location": {
+     "address": "str",
+     "lat": "number",
+     "lng": "number"
+    },
+    "photoUris": [],
+    "reporterId": "str"
+   }
+  ],
+  "status": 200
+ },
+ "citizen GET /reports/FTC-1042": {
+  "shape": {
+   "anonymous": "bool",
+   "blurFaces": "bool",
+   "categoryId": "str",
+   "createdAt": "str",
+   "description": "str",
+   "id": "str",
+   "incidentId": "str",
+   "location": {
+    "address": "str",
+    "lat": "number",
+    "lng": "number"
+   },
+   "photoUris": [],
+   "reporterId": "str"
+  },
+  "status": 200
+ },
+ "citizen GET /service-requests": {
+  "shape": [
+   {
+    "citizenId": "str",
+    "createdAt": "str",
+    "details": {
+     "day": "str",
+     "items": [
+      "str"
+     ],
+     "payment": "str",
+     "slot": "str"
+    },
+    "id": "str",
+    "location": {
+     "address": "str",
+     "lat": "number",
+     "lng": "number"
+    },
+    "serviceType": "str",
+    "status": "str",
+    "timeline": [
+     {
+      "actor": "str",
+      "at": "str",
+      "note": "str",
+      "status": "str"
+     }
+    ]
+   }
+  ],
+  "status": 200
+ },
+ "collector GET /collector/earnings": {
+  "shape": {
+   "byMaterial": [
+    {
+     "kg": "number",
+     "materialId": "str",
+     "valueEgp": "number"
+    }
+   ],
+   "jobs": "number",
+   "paidToHouseholdsEgp": "number",
+   "period": {
+    "from": "str",
+    "to": "str"
+   },
+   "totalKg": "number",
+   "valueEgp": "number"
+  },
+  "status": 200
+ },
+ "collector GET /collector/jobs?lat=30.06&lng=31.34&radiusM=50000": {
+  "shape": [
+   {
+    "day": "str",
+    "distanceM": "number",
+    "estimatedKg": "number",
+    "estimatedValueEgp": "number",
+    "id": "str",
+    "items": [
+     {
+      "estimatedKg": "number",
+      "materialId": "str"
+     }
+    ],
+    "location": {
+     "address": "str",
+     "lat": "number",
+     "lng": "number"
+    },
+    "mode": "str",
+    "slot": "str"
+   }
+  ],
+  "status": 200
+ },
+ "collector GET /collector/pickups": {
+  "shape": [
+   {
+    "citizenId": "str",
+    "collectorFinishedAt": "str",
+    "collectorId": "str",
+    "collectorName": "str",
+    "confirmedAt": "str",
+    "createdAt": "str",
+    "day": "str",
+    "estimatedValueEgp": "number",
+    "id": "str",
+    "items": [
+     {
+      "estimatedKg": "number",
+      "materialId": "str"
+     }
+    ],
+    "location": {
+     "address": "str",
+     "lat": "number",
+     "lng": "number"
+    },
+    "mode": "str",
+    "paidToHouseholdEgp": "number",
+    "photoUris": [],
+    "slot": "str",
+    "status": "str",
+    "timeline": [
+     {
+      "actor": "str",
+      "at": "str",
+      "note": "str",
+      "status": "str"
+     }
+    ],
+    "totalKg": "number",
+    "totalValueEgp": "number",
+    "weighings": [
+     {
+      "at": "str",
+      "clientId": "str",
+      "id": "str",
+      "kg": "number",
+      "materialId": "str",
+      "pickupId": "str",
+      "priceEgpPerKg": "number",
+      "source": "str",
+      "valueEgp": "number"
+     }
+    ]
+   }
+  ],
+  "status": 200
+ },
+ "collector GET /collectors/me": {
+  "shape": {
+   "district": "str",
+   "id": "str",
+   "joinedAt": "str",
+   "materials": [
+    "str"
+   ],
+   "name": "str",
+   "status": "str",
+   "vehicle": "str"
+  },
+  "status": 200
+ },
+ "device POST /iot/bins/BIN-SHAPE-001/readings": {
+  "shape": {
+   "accepted": [
+    "number"
+   ],
+   "fullPct": "number",
+   "heatC": "number",
+   "intervalMin": "number"
+  },
+  "status": 202
+ },
+ "roads GET /admin/collectors": {
+  "shape": [
+   {
+    "district": "str",
+    "id": "str",
+    "joinedAt": "str",
+    "materials": [
+     "str"
+    ],
+    "name": "str",
+    "phone": "str",
+    "status": "str",
+    "userId": "str",
+    "vehicle": "str"
+   }
+  ],
+  "status": 200
+ },
+ "roads GET /admin/dashboard": {
+  "shape": {
+   "activity": [
+    {
+     "actor": "str",
+     "at": "str",
+     "entityId": "str",
+     "status": "str",
+     "text": "str"
+    }
+   ],
+   "avgResolutionDays": "number",
+   "avgResolutionDeltaDays": "number",
+   "byCategory": [
+    {
+     "categoryId": "str",
+     "count": "number"
+    }
+   ],
+   "byStatus": [
+    {
+     "count": "number",
+     "status": "str"
+    }
+   ],
+   "departments": [
+    {
+     "avgResolutionDays": "number",
+     "department": "str",
+     "external": "bool",
+     "loadPct": "number",
+     "open": "number",
+     "overdue": "number"
+    }
+   ],
+   "nav": {
+    "incidentsOpen": "number",
+    "serviceRequestsOpen": "number"
+   },
+   "open": "number",
+   "openDelta": "number",
+   "overdue": "number",
+   "overdueList": [
+    {
+     "address": "str",
+     "department": "str",
+     "dueAt": "str",
+     "external": "bool",
+     "hoursLate": "number",
+     "incidentId": "str",
+     "priorityScore": "number",
+     "title": "str"
+    }
+   ],
+   "overdueTotal": "number",
+   "resolvedDelta": "number",
+   "resolvedThisWeek": "number"
+  },
+  "status": 200
+ },
+ "roads GET /admin/departments": {
+  "shape": [
+   {
+    "external": "bool",
+    "externalHotline": "str",
+    "id": "str",
+    "nameAr": "str"
+   }
+  ],
+  "status": 200
+ },
+ "roads GET /admin/hotspots": {
+  "shape": {
+   "days": "number",
+   "generatedAt": "str",
+   "items": [],
+   "minCount": "number",
+   "radiusMeters": "number"
+  },
+  "status": 200
+ },
+ "roads GET /admin/incidents": {
+  "shape": [
+   {
+    "areaUnderserved": "bool",
+    "categoryId": "str",
+    "createdAt": "str",
+    "department": "str",
+    "dueAt": "str",
+    "estimatedCostEgp": "number",
+    "external": "bool",
+    "followers": "number",
+    "id": "str",
+    "inBudgetPlan": "bool",
+    "linkedReportIds": [
+     "str"
+    ],
+    "linkedReports": [
+     {
+      "createdAt": "str",
+      "description": "str",
+      "id": "str",
+      "photoCount": "number",
+      "reporter": "str",
+      "source": "str"
+     }
+    ],
+    "location": {
+     "address": "str",
+     "lat": "number",
+     "lng": "number"
+    },
+    "overdue": "bool",
+    "priority": {
+     "factors": [
+      {
+       "key": "str",
+       "label": "str",
+       "max": "number",
+       "points": "number"
+      }
+     ],
+     "score": "number"
+    },
+    "sensitivePlace": "str",
+    "severity": "str",
+    "status": "str",
+    "timeline": [
+     {
+      "actor": "str",
+      "at": "str",
+      "note": "str",
+      "status": "str"
+     }
+    ],
+    "title": "str",
+    "triage": {
+     "confirmed": "bool",
+     "duplicates": [],
+     "options": [
+      {
+       "categoryId": "str",
+       "confidence": "number"
+      }
+     ],
+     "severity": "str",
+     "source": "str",
+     "summary": "str"
+    },
+    "updatedAt": "str",
+    "workOrderId": "str"
+   }
+  ],
+  "status": 200
+ },
+ "roads GET /admin/insights": {
+  "shape": {
+   "hotspots": [
+    {
+     "address": "str",
+     "count": "number"
+    }
+   ],
+   "overdueDepartments": [
+    "str"
+   ],
+   "risingCategories": [
+    {
+     "categoryId": "str",
+     "delta": "number"
+    }
+   ],
+   "summary": "str"
+  },
+  "status": 200
+ },
+ "roads GET /admin/recycling/summary": {
+  "shape": {
+   "avgResponseMinutes": "number",
+   "byDistrict": [
+    {
+     "district": "str",
+     "kg": "number"
+    }
+   ],
+   "byMaterial": [
+    {
+     "kg": "number",
+     "materialId": "str"
+    }
+   ],
+   "byStatus": {
+    "accepted": "number",
+    "cancelled": "number",
+    "completed": "number",
+    "requested": "number",
+    "weighed": "number"
+   },
+   "pickups": "number",
+   "tonnes": "number",
+   "totalKg": "number"
+  },
+  "status": 200
+ },
+ "roads GET /admin/service-requests": {
+  "shape": [],
+  "status": 200
+ },
+ "roads GET /admin/work-orders": {
+  "shape": [
+   {
+    "address": "str",
+    "createdAt": "str",
+    "department": "str",
+    "dueAt": "str",
+    "estimatedCostEgp": "number",
+    "external": "bool",
+    "followers": "number",
+    "id": "str",
+    "incidentId": "str",
+    "overdue": "bool",
+    "priorityScore": "number",
+    "resolvedAt": "str",
+    "status": "str",
+    "supervisor": "str",
+    "tasks": [
+     {
+      "done": "bool",
+      "label": "str"
+     }
+    ],
+    "team": "str",
+    "teamSize": "number",
+    "title": "str",
+    "updatedAt": "str",
+    "updates": [
+     {
+      "actor": "str",
+      "at": "str",
+      "note": "str",
+      "status": "str"
+     }
+    ]
+   }
+  ],
+  "status": 200
+ },
+ "roads GET /auth/me": {
+  "shape": {
+   "department": "str",
+   "district": "str",
+   "name": "str",
+   "role": "str",
+   "title": "str",
+   "userId": "str"
+  },
+  "status": 200
+ }
+}
