@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { getIncidents } from '@/services/incidents';
 import { getDepartments } from '@/services/departments';
+import { getHotspots } from '@/services/map';
 import {
   PageHead,
   FilterChip,
@@ -29,7 +30,7 @@ import { CATEGORIES } from '@/domain/categories';
 import type { AdminIncident } from '@/domain/admin-types';
 import type { IncidentStatus } from '@/domain/types';
 import { priorityLevel, priorityReason } from '@/logic/priority';
-import { formatRelative, formatWhen, formatDueLabel, hoursLateOf } from '@/lib/format';
+import { dual, formatNumber, formatRelative, formatWhen, formatDueLabel, hoursLateOf } from '@/lib/format';
 import { ApiError } from '@/lib/http';
 import { useSession } from '@/lib/session';
 
@@ -68,6 +69,8 @@ function parseKinds(raw: string | null): Set<PinKind> {
   return new Set(raw.split(',').filter((k): k is PinKind => (PIN_KINDS as string[]).includes(k)));
 }
 
+const reportsLabel = (n: number) => dual(n, 'بلاغ واحد', 'بلاغين', (k) => `${k} بلاغات`, (k) => `${formatNumber(k)} بلاغ`);
+
 export default function MapPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -86,6 +89,7 @@ export default function MapPage() {
   const [selectedId, setSelectedId] = useState<string | null>(searchParams.get('focus'));
   const [search, setSearch] = useState('');
   const [noMatch, setNoMatch] = useState(false);
+  const [showHotspots, setShowHotspots] = useState(false);
 
   useEffect(() => {
     document.title = 'CityFix — مركز القيادة: الخريطة';
@@ -129,6 +133,31 @@ export default function MapPage() {
     queryFn: getDepartments,
     staleTime: Infinity,
   });
+
+  // Off by default: the hotspot request only fires once someone asks for it.
+  const hotspots = useQuery({
+    queryKey: ['hotspots', 30],
+    queryFn: () => getHotspots({ days: 30 }),
+    enabled: showHotspots,
+    staleTime: 60_000,
+  });
+  const hotspotItems = useMemo(
+    () => [...(hotspots.data?.items ?? [])].sort((a, b) => b.count - a.count),
+    [hotspots.data],
+  );
+  const areas = useMemo(
+    () =>
+      showHotspots && hotspots.data
+        ? hotspotItems.map((h) => ({
+            id: h.id,
+            lat: h.lat,
+            lng: h.lng,
+            radiusM: hotspots.data!.radiusMeters,
+            label: `${reportsLabel(h.count)} نظافة`,
+          }))
+        : undefined,
+    [showHotspots, hotspots.data, hotspotItems],
+  );
 
   const { isLoading, error, refetch, dataUpdatedAt } = query;
 
@@ -216,6 +245,10 @@ export default function MapPage() {
         </div>
 
         <div className="filter-group">
+          <FilterChip label="بؤر رمي المخلفات (آخر 30 يوم)" pressed={showHotspots} onClick={() => setShowHotspots((v) => !v)} />
+        </div>
+
+        <div className="filter-group">
           <SelectField
             id="map-category"
             label="النوع"
@@ -276,7 +309,7 @@ export default function MapPage() {
             ) : (
               <>
                 <div style={{ height: 'clamp(420px, 66vh, 700px)' }}>
-                  <MapView pins={pins} selectedId={selectedId} onSelect={setSelectedId} onMapReady={setMap} />
+                  <MapView pins={pins} selectedId={selectedId} onSelect={setSelectedId} onMapReady={setMap} areas={areas} />
                 </div>
                 {pins.length === 0 && <div className="maptag">مفيش بلاغات بالفلاتر دي</div>}
                 <div className="zoom">
@@ -322,6 +355,44 @@ export default function MapPage() {
           ) : (
             <section className="ftc-card">
               <EmptyState icon="pin" title="اضغط على دبوس" message="هتشوف هنا تفاصيل البلاغ." />
+            </section>
+          )}
+
+          {showHotspots && (
+            <section className="ftc-card" aria-labelledby="h-hot">
+              <h2 className="sec-title" id="h-hot">
+                بؤر متكررة
+              </h2>
+              {hotspots.isLoading ? (
+                <Skeleton variant="line" />
+              ) : hotspots.error ? (
+                <p className="mini" role="alert">
+                  مقدرناش نحمّل البؤر.
+                </p>
+              ) : hotspots.data === null ? (
+                <Notice tone="gold">السيرفر ده مفيهوش البؤر</Notice>
+              ) : hotspotItems.length === 0 ? (
+                <p className="mini">مفيش بؤر في الفترة دي</p>
+              ) : (
+                <ul className="sum">
+                  {hotspotItems.map((h) => (
+                    <li key={h.id}>
+                      <span>
+                        {reportsLabel(h.count)} · أعلى أولوية <span className="num">{formatNumber(h.maxPriorityScore)}</span>
+                      </span>
+                      <Button size="sm" variant="secondary" onClick={() => map?.flyTo([h.lat, h.lng], 16)}>
+                        ورّيني
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {hotspots.data && (
+                <p className="mini">
+                  تجميع لبلاغات النظافة القريبة من بعض (في نطاق {formatNumber(hotspots.data.radiusMeters)} متر،{' '}
+                  {reportsLabel(hotspots.data.minCount)} على الأقل). مفيش بيانات مبلّغين.
+                </p>
+              )}
             </section>
           )}
 

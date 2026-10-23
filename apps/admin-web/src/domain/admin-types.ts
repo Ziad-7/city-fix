@@ -197,3 +197,57 @@ export interface SmartBinReading {
   isFull: boolean;
   isHot: boolean;
 }
+
+export type BinForecastReason = 'ok' | 'insufficient_data' | 'stale' | 'non_increasing';
+
+export interface BinForecastItem {
+  binId: string;
+  currentFillPct: number | null;
+  predictedFillPct: number | null;
+  hoursToFull: number | null;
+  sampleCount: number;
+  method: 'linear' | 'insufficient_data';
+  reason: BinForecastReason;
+}
+
+export interface BinForecast {
+  generatedAt: string;
+  horizonHours: number;
+  items: BinForecastItem[];
+}
+
+export interface CreateBinInput {
+  id: string;
+  name: string;
+  district?: string;
+  departmentId?: string;
+  lat: number;
+  lng: number;
+  isSimulated?: boolean;
+  fullPct?: number;
+  heatC?: number;
+  intervalMin?: number;
+}
+
+/** deviceKey is returned once, at registration, and never again. */
+export interface RegisteredBin {
+  bin: SmartBin;
+  deviceKey: string;
+}
+
+export interface Hotspot {
+  id: string;
+  lat: number;
+  lng: number;
+  count: number;
+  categoryCounts: { categoryId: string; count: number }[];
+  maxPriorityScore: number;
+}
+
+export interface HotspotsResponse {
+  generatedAt: string;
+  days: number;
+  radiusMeters: number;
+  minCount: number;
+  items: Hotspot[];
+}

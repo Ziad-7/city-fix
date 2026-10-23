@@ -8,6 +8,7 @@ import type { CollectorStatus, MaterialId, PickupStatus } from '@/domain/citycyc
 import {
   getCollectors,
   getMaterialPrices,
+  getPayouts,
   getPickups,
   getRecyclingSummary,
   patchCollector,
@@ -16,7 +17,7 @@ import {
 } from '@/services/citycycle';
 import { getSmartBins } from '@/services/bins';
 import { COLLECTOR_STATUS_LABEL_AR, MATERIAL_LABEL_AR, PICKUP_STATUS_LABEL_AR } from '@/lib/text';
-import { formatNumber } from '@/lib/format';
+import { formatDecimal, formatEgp, formatNumber } from '@/lib/format';
 
 const mat = (id: string) => MATERIAL_LABEL_AR[id] ?? id;
 
@@ -224,6 +225,59 @@ export function ImpactSection() {
           <ul style={{ listStyle: 'none', padding: 0 }}>{s.byDistrict.map((r) => <li key={r.district}>{r.district}: {formatNumber(r.kg)} كجم</li>)}</ul>
         </div>
       </div>
+    </section>
+  );
+}
+
+export function PayoutsSection() {
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const q = useQuery({ queryKey: ['cc-payouts', from, to], queryFn: () => getPayouts({ from: from || undefined, to: to || undefined }) });
+  const rows = q.data ?? [];
+  const total = rows.reduce(
+    (t, r) => ({ kg: t.kg + r.kg, value: t.value + r.valueEgp, paid: t.paid + r.paidToHouseholdsEgp, jobs: t.jobs + r.jobs }),
+    { kg: 0, value: 0, paid: 0, jobs: 0 },
+  );
+  return (
+    <section aria-label="مستحقات الجامعين">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 220px))', gap: 12, marginBottom: 12 }}>
+        <TextField type="date" id="payouts-from" label="من تاريخ" dir="ltr" value={from} onChange={setFrom} />
+        <TextField type="date" id="payouts-to" label="لحد تاريخ" dir="ltr" value={to} onChange={setTo} />
+      </div>
+      <p className="mini muted">الأرقام مسجّلة من الوزن والتسليم بس، النظام مش بيدفع فلوس.</p>
+      {q.isLoading ? (
+        <Loading />
+      ) : q.error ? (
+        <ErrorState message="مقدرناش نحمّل المستحقات." />
+      ) : rows.length === 0 ? (
+        <EmptyState icon="list" title="مفيش وزن مسجّل في الفترة دي" />
+      ) : (
+        <div className="ftc-card" style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
+            <thead>
+              <tr><th>الجامع</th><th>كجم</th><th>القيمة بسعر القائمة</th><th>اتدفع للأسر</th><th>عدد الطلبات</th></tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.collectorId}>
+                  <td>{r.collectorName ?? <span dir="ltr">{r.collectorId}</span>}</td>
+                  <td>{formatDecimal(r.kg)}</td>
+                  <td>{formatEgp(r.valueEgp)}</td>
+                  <td>{formatEgp(r.paidToHouseholdsEgp)}</td>
+                  <td>{formatNumber(r.jobs)}</td>
+                </tr>
+              ))}
+              <tr style={{ fontWeight: 700 }}>
+                <td>الإجمالي</td>
+                <td>{formatDecimal(total.kg)}</td>
+                <td>{formatEgp(total.value)}</td>
+                <td>{formatEgp(total.paid)}</td>
+                <td>{formatNumber(total.jobs)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   );
 }
