@@ -91,3 +91,22 @@ def test_route_mounted_in_app_and_authenticated(client, citizen_h):
     assert client.post("/ai/waste-classify", json={"path": "p"}).status_code == 401
     r = client.post("/ai/waste-classify", json={"path": "photos/x.jpg"}, headers=citizen_h)
     assert r.status_code == 200 and r.json()["source"] == "fallback"
+
+
+def test_waste_classifier_request_uses_canonical_prompt_contract():
+    import asyncio
+
+    from app.ai.waste import waste_prompt_contract
+
+    requests = []
+
+    async def handle(request):
+        requests.append(json.loads(request.content))
+        return httpx.Response(200, json={"candidates": [{"content": {"parts": [{"text": json.dumps(GOOD)}]}}]})
+
+    classifier = GeminiWasteClassifier("k", "m", transport=httpx.MockTransport(handle))
+    asyncio.run(classifier.classify(b"fixture-photo"))
+    payload = requests[0]
+    contract = waste_prompt_contract()
+    assert payload["contents"][0]["parts"][0]["text"] == contract["prompt"]
+    assert payload["generationConfig"] == contract["generationConfig"]
