@@ -7,7 +7,7 @@
 A circular-economy loop for an Egyptian district:
 
 1. A household sorts recyclables (with a picture guide), requests a pickup, and sees what the material is worth.
-2. A verified informal collector (Zabbal, الزبّال) sees nearby jobs, picks up, weighs, and records the payment.
+2. A verified informal collector sees nearby jobs, picks up, weighs, and records the payment.
 3. Smart bins tell the district when they are full or hot; collection hubs with a scale give verified weights.
 4. The Command Center sees tonnes diverted, bin alerts, routes, dumping hotspots and collector earnings.
 5. AI suggests (waste type from a photo, when a bin will be full, the best route); people confirm.

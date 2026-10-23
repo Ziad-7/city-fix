@@ -2,12 +2,12 @@
 
 بلّغ.. وإحنا نتابع لحد ما تتصلّح — *Report it, and we follow it until it's fixed.*
 
-**CityCycle (سيتي سايكل)** is our entry for SolveThe17 2.0 · Track 4 "Unlocking Egypt's Waste Economy": a waste-and-recycling loop that pays informal collectors (الزبّالين) for verified weights and shows districts where bins fill up. It lives inside **CityFix**, a smart-city platform for Egyptian cities (citizens report problems and request services; the Command Center triages and coordinates the fix). Built in 7 days by a team of 5, joined by a 6th member for hardware.
+**CityCycle (سيتي سايكل)** is our entry for SolveThe17 2.0 · Track 4 "Unlocking Egypt's Waste Economy": a waste-and-recycling loop that pays informal collectors for verified weights and shows districts where bins fill up. It lives inside **CityFix**, a smart-city platform that supports Egyptian authorities: citizens' reports and bin sensors give the Command Center real-time visibility, so teams find issues earlier and fix them faster. Built in 7 days by a team of 5, joined by a 6th member for hardware.
 
 ## The CityCycle story
 
 1. A household sorts recyclables with a picture guide and requests a pickup, with an estimate from the district price list.
-2. A verified Zabbal (informal collector) accepts a nearby job (first accept wins) and weighs each material, by hand or on a hub scale.
+2. A verified collector accepts a nearby job (first accept wins) and weighs each material, by hand or on a hub scale.
 3. Each weighing keeps the district price per kg that applied at that moment; the collector records what was paid to the household, and the household confirms the weight.
 4. Impact moves: kg by material for the household, EGP for the collector, tonnes per district in the Command Center.
 5. A smart bin reports its fill level (device key, de-duplicated readings), turns red in the Command Center at the full threshold, and the district can plan a collection route with OR-Tools.

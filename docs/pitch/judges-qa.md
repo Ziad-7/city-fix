@@ -42,7 +42,7 @@ Short, honest answers. Evidence for each is in [../evidence.md](../evidence.md).
 
 **Does money move?** No. The platform records weighings, the amount paid to the household and payouts. No payment provider is integrated.
 
-**Why would a Zabbal use it?** A verified weight, a record of earnings, nearby jobs on a map, and a simple low-literacy interface. Whether that is enough is what a pilot would test.
+**Why would a collector use it?** A verified weight, a record of earnings, nearby jobs on a map, and a simple low-literacy interface. Whether that is enough is what a pilot would test.
 
 **Theft and vandalism?** Design measures are in [../team/hardware-iot.md](../team/hardware-iot.md) section 5; the Field Deployment Brief ([field-brief/field-deployment-brief.md](../field-brief/field-deployment-brief.md)) covers them in more detail. Not field-tested.
 

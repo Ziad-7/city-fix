@@ -13,7 +13,7 @@ CityFix is entered in the SolveThe17 2.0 hackathon (IEEE EUI) under **Track 4 ·
 Facts from the theme (the only numbers on this page that are not ours to measure):
 
 - About **20 million tonnes** of municipal solid waste a year (EEAA).
-- Cairo's informal collectors, the **Zabbaleen (الزبالين)**, recover **up to 80%** of the waste they gather.
+- Cairo's informal collectors recover **up to 80%** of the waste they gather.
 
 CityFix already knows where garbage piles up (FixFirst) and already books bulky-waste pickups (CityServe). CityCycle closes the loop: sorted recyclables go to the people who recover them, the collector gets a fair and verified price, the household sees the result, and the district sees where bins overflow and where dumping keeps coming back.
 
@@ -59,7 +59,7 @@ CityFix already knows where garbage piles up (FixFirst) and already books bulky-
 | Who | What changes |
 | --- | --- |
 | **Citizens** | Sort at home with a picture guide, schedule a pickup, see what the material is worth, choose to give it for free or get paid, see their own impact. Overflowing bins and dumping get reported and fixed. |
-| **Informal collectors (Zabbaleen)** | Nearby pickup jobs on a map, verified weights, a record of earnings, payment per kg from a published district price list, no middleman guessing the weight. Works offline-first and with a low-literacy UI. |
+| **Informal collectors** | Nearby pickup jobs on a map, verified weights, a record of earnings, payment per kg from a published district price list, no middleman guessing the weight. Works offline-first and with a low-literacy UI. |
 | **Districts** | Bins are emptied when full, not on a fixed guess; routes are shorter; dumping hotspots are visible and cleared; tonnes diverted from landfill are measured, not estimated. |
 
 ## Impact we will show

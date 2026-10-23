@@ -12,7 +12,7 @@ Legend: solid arrow = implemented and covered by tests; dashed = simulated or pr
 flowchart LR
   subgraph People["People"]
     HH["Household"]
-    ZB["Collector / Zabbal"]
+    ZB["Collector"]
     ST["District staff"]
   end
 
