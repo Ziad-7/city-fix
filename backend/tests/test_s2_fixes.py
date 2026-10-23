@@ -2,7 +2,8 @@
 
 import pytest
 
-from app.models import Incident, IncidentFollower, Report
+from app.logic.ids import next_id
+from app.models import Incident, IncidentFollower, RecyclingPickup, Report
 
 
 # --------------------------------------------------------------------------- B1: collector writes are admin-only
@@ -65,3 +66,42 @@ def test_b3_merged_incident_cannot_be_merged_again(client, db, admin_h):
     assert other.followers_count == count_before
     timeline = client.get(f"/admin/incidents/{source.id}", headers=admin_h).json()["timeline"]
     assert sum(1 for t in timeline if "اتدمج" in (t.get("note") or "")) == 1  # one merge entry, not two
+
+
+# --------------------------------------------------------------------------- B4: readable ids are reserved, not recomputed
+def test_b4_reservations_do_not_repeat_before_commit(db):
+    """Two reservations in a row (two requests racing before either inserts its row) must differ."""
+    first = next_id(db, "INC")
+    second = next_id(db, "INC")
+    assert first != second
+    assert int(second.split("-")[1]) == int(first.split("-")[1]) + 1  # consecutive, as before when nothing races
+
+
+@pytest.mark.parametrize(
+    ("prefix", "model", "make"),
+    [
+        ("INC", Incident, lambda i: Incident(id=i, category_id="pothole", title="x", lat=30.0, lng=31.0, address="a")),
+        (
+            "RCY",
+            RecyclingPickup,
+            lambda i: RecyclingPickup(
+                id=i,
+                citizen_id="citizen-001",
+                items=[],
+                lat=30.0,
+                lng=31.0,
+                address="a",
+                district="d",
+                day="2026-11-01",
+                slot="morning",
+                mode="free",
+            ),
+        ),
+    ],
+)
+def test_b4_counter_resyncs_after_out_of_band_insert(db, prefix, model, make):
+    """Rows inserted by a seed script after the counter exists must never collide with the next id."""
+    next_id(db, prefix)  # counter row now exists
+    db.add(make(f"{prefix}-9999"))
+    db.flush()
+    assert next_id(db, prefix) == f"{prefix}-10000"
