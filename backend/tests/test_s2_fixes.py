@@ -4,7 +4,9 @@ from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
+from sqlalchemy.orm import sessionmaker
 
+from app.auth_adapters import DatabaseUserRepository
 from app.logic.dashboard import resolved_at_map, window_bounds
 from app.logic.ids import next_id
 from app.models import ActivityLog, Incident, IncidentFollower, RecyclingPickup, Report
@@ -154,3 +156,20 @@ def test_o7_resolved_at_map_returns_the_latest_resolved_entry_per_incident(db):
     assert "INC-ZZY" not in mapping
     assert "WO-1" not in mapping
     assert all(value.tzinfo is not None for value in mapping.values())
+
+
+# --------------------------------------------------------------------------- O8: auth lookup is one statement
+@pytest.mark.parametrize(
+    ("user_id", "role", "department"),
+    [("admin-001", "admin", None), ("staff-001", "staff", "roads"), ("citizen-001", "citizen", None)],
+)
+def test_o8_get_by_id_uses_one_statement_and_loads_department(db, user_id, role, department):
+    from .query_counter import count_queries
+
+    repo = DatabaseUserRepository(sessionmaker(bind=db.get_bind()))
+    with count_queries(db.get_bind().engine) as seen:
+        user = repo.get_by_id(user_id)
+    assert user is not None
+    assert (user.role, user.department_id) == (role, department)
+    assert len(seen) == 1
+    assert repo.get_by_id("no-such-user") is None
