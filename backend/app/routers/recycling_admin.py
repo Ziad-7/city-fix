@@ -262,7 +262,7 @@ def _release_jobs(db: Session, c: Collector, claims: dict) -> None:
 
 
 @router.patch("/collectors/{collector_id}")
-def admin_patch_collector(collector_id: str, body: CollectorPatchInput, claims: Staff, db: Session = Depends(get_db)):
+def admin_patch_collector(collector_id: str, body: CollectorPatchInput, claims: Admin, db: Session = Depends(get_db)):
     c = db.get(Collector, collector_id)
     if not c:
         raise HTTPException(404, "مش موجود")

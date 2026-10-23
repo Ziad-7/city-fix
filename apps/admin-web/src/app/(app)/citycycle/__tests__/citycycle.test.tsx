@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '@/components/ui';
 import { ApiError } from '@/lib/http';
-import { PickupsSection, PricesSection } from '@/components/citycycle/sections';
+import { CollectorsSection, PickupsSection, PricesSection } from '@/components/citycycle/sections';
 import {
   cancelPickup,
   getPickups,
@@ -147,5 +147,26 @@ describe('routes and payouts tabs', () => {
     wrap(<Page />);
     await userEvent.click(screen.getByRole('tab', { name: 'مستحقات الجامعين' }));
     expect(await screen.findByText('مقدرناش نحمّل المستحقات.')).toBeInTheDocument();
+  });
+});
+
+describe('collectors tab permissions', () => {
+  const collectors = [
+    { id: 'COL-9', userId: 'u', name: 'منى علي', district: 'مدينة نصر', status: 'pending', materials: [], joinedAt: '' },
+  ];
+
+  it('hides verify/suspend buttons from department staff (the API is admin-only)', async () => {
+    vi.stubGlobal('fetch', vi.fn(reply(200, collectors)));
+    wrap(<CollectorsSection isAdmin={false} />);
+    await waitFor(() => expect(screen.getByText('منى علي')).toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: 'توثيق' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'إيقاف' })).not.toBeInTheDocument();
+  });
+
+  it('shows verify/suspend buttons to admins', async () => {
+    vi.stubGlobal('fetch', vi.fn(reply(200, collectors)));
+    wrap(<CollectorsSection isAdmin />);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'توثيق' })).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'إيقاف' })).toBeInTheDocument();
   });
 });

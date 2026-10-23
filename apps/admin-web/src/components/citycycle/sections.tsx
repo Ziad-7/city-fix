@@ -84,7 +84,7 @@ export function PickupsSection({ isAdmin = false }: { isAdmin?: boolean }) {
   );
 }
 
-export function CollectorsSection() {
+export function CollectorsSection({ isAdmin = false }: { isAdmin?: boolean }) {
   const qc = useQueryClient();
   const toast = useToast();
   const q = useQuery({ queryKey: ['cc-collectors'], queryFn: () => getCollectors() });
@@ -113,8 +113,8 @@ export function CollectorsSection() {
               <td>{c.vehicle ?? '—'}</td>
               <td>{COLLECTOR_STATUS_LABEL_AR[c.status]}</td>
               <td style={{ display: 'flex', gap: 6 }}>
-                {c.status !== 'verified' && <Button size="sm" disabled={m.isPending} onClick={() => m.mutate({ id: c.id, status: 'verified' })}>توثيق</Button>}
-                {c.status !== 'suspended' && <Button size="sm" variant="secondary" disabled={m.isPending} onClick={() => m.mutate({ id: c.id, status: 'suspended' })}>إيقاف</Button>}
+                {isAdmin && c.status !== 'verified' && <Button size="sm" disabled={m.isPending} onClick={() => m.mutate({ id: c.id, status: 'verified' })}>توثيق</Button>}
+                {isAdmin && c.status !== 'suspended' && <Button size="sm" variant="secondary" disabled={m.isPending} onClick={() => m.mutate({ id: c.id, status: 'suspended' })}>إيقاف</Button>}
               </td>
             </tr>
           ))}
