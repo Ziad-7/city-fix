@@ -21,17 +21,9 @@ _PLAIN = [
     ("admin_dashboard", "admin", "/admin/dashboard", 8),
     ("admin_pickups", "admin", "/admin/recycling/pickups", 6),
     ("admin_forecast", "admin", "/admin/bins/forecast", 6),
+    ("admin_collectors", "admin", "/admin/collectors", 4),
 ]
-ROUTES = [pytest.param(*r, id=r[0]) for r in _PLAIN] + [
-    pytest.param(
-        "admin_collectors",
-        "admin",
-        "/admin/collectors",
-        11,
-        id="admin_collectors",
-        marks=pytest.mark.xfail(strict=True, reason="N+1 fixed in O4"),
-    ),
-]
+ROUTES = [pytest.param(*r, id=r[0]) for r in _PLAIN]
 
 
 def _headers(request, role):
