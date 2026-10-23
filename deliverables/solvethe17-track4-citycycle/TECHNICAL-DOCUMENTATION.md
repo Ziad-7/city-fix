@@ -14,6 +14,19 @@ The PC simulator is operational locally; Wokwi bin and scale source and native l
 
 **Proposed idea, not implemented acceptance:** recycler handover receipts, confirmed recovery rather than collection alone, collector net earnings after costs, authenticated scale-to-pickup verification and weight/payment dispute handling. These extend the pitch and pilot plan; they are not features added by this documentation package.
 
+### 1.1 CityFix modules and their status
+
+Statuses follow [docs/evidence.md](../../docs/evidence.md). “Built” means the feature exists in the source and is covered by tests or screens; it does not mean field-tested or certified on the hosted deployment.
+
+| Module | What it does | Status today |
+| --- | --- | --- |
+| FixFirst | Citizens report a problem with photo, voice note and location; an explainable priority score ranks it; staff plan repairs within a budget. | Built (mobile, web, Command Center). Keyword triage passes a 33-case synthetic smoke set; this is not an accuracy benchmark. |
+| CityServe | Municipal service requests such as bulky-waste pickup, tree maintenance and garbage schedule. | Built in the citizen app; not field-tested. |
+| CityCycle | Recyclables pickup requests, collector mode, district price list, weighings, household confirmation, impact ledger and smart-bin readings. | Built and verified in backend tests with demo prices and seed data. Smart bin and hub scale are simulated. Recycler receipts and confirmed recovery are proposed. |
+| CityOps | Work orders and department assignment from the Command Center. | Built; tested with vitest, not run against a deployed API. |
+| CityPulse | Live map of incidents, smart bins and dumping hotspots. | Built; bin readings come from simulators, not physical bins. |
+| CityBrain | AI triage, fill forecasting, route optimisation and hotspot detection. AI only suggests; a person confirms. | Forecast, routing and hotspots verified in tests. Gemini and photo-analysis quality are to verify; photo analysis is off by default. |
+
 ## 2. System architecture
 
 ![CityCycle subsystem architecture within CityFix](../../docs/diagrams/system-architecture.svg)
