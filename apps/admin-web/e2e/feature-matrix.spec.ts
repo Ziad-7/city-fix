@@ -48,6 +48,7 @@ test.describe.serial('feature matrix', () => {
     await expect(rows.first()).toBeVisible();
     const open = await rows.count();
     expect(open).toBeLessThanOrEqual(100); // the page caps the table at 100 rows (no server pagination)
+    if (open === 100) await expect(page.getByText('بنعرض أول 100 بلاغ')).toBeVisible(); // large seed: cap notice
 
     await page.locator('#status-select').selectOption('all');
     await expect.poll(() => rows.count()).toBeGreaterThanOrEqual(open);
@@ -57,7 +58,8 @@ test.describe.serial('feature matrix', () => {
     await page.locator('#status-select').selectOption('open');
 
     await page.locator('#category-select').selectOption('pothole');
-    await expect.poll(() => rows.count()).toBeLessThan(open);
+    // default seed: fewer rows; large seed: both lists hit the 100-row cap, so only "not more" holds
+    await expect.poll(() => rows.count()).toBeLessThanOrEqual(open);
     await page.locator('#category-select').selectOption('');
 
     await page.getByRole('textbox', { name: 'ابحث برقم البلاغ أو الشارع' }).fill('INC-502');
@@ -138,10 +140,10 @@ test.describe.serial('feature matrix', () => {
     await page.getByRole('button', { name: 'الكل', exact: true }).click();
 
     // an "open"/"assigned" internal work order, found through the API
-    const orders = (await getJson(request, '/admin/work-orders')) as { id: string; status: string; external?: boolean }[];
-    const target = orders.find((o) => (o.status === 'open' || o.status === 'assigned') && !o.external);
+    const orders = (await getJson(request, '/admin/work-orders')) as { id: string; status: string; external?: boolean; incidentId?: string }[];
+    const target = orders.find((o) => (o.status === 'open' || o.status === 'assigned') && !o.external && !!o.incidentId);
     expect(target, 'no movable work order in the seed').toBeTruthy();
-    await page.locator('.wo', { hasText: target!.id }).first().click();
+    await page.locator('.wo', { hasText: target!.id }).first().click({ position: { x: 8, y: 8 } });
     const drawer = page.getByRole('dialog');
     await expect(drawer).toBeVisible();
     await drawer.getByLabel('الحالة الجديدة').selectOption('in_progress');
@@ -288,17 +290,23 @@ test.describe.serial('feature matrix', () => {
       .toBeGreaterThan(0);
     await shot(page, '09a-citycycle-pickups');
 
-    // الجامعون: verify COL-2 then suspend it
+    // الجامعون: verify one pending collector, then suspend it (the large seed has many collectors, so the row is
+    // picked by its button, and the effect is checked through the API as a status-count change)
     await page.getByRole('tab', { name: 'الجامعون' }).click();
-    const col2 = page.locator('tr', { hasText: 'منى' });
-    await col2.getByRole('button', { name: 'توثيق' }).click();
-    await expect
-      .poll(async () => (await getJson(request, '/admin/collectors') as { id: string; status: string }[]).find((c) => c.id === 'COL-2')?.status)
-      .toBe('verified');
-    await col2.getByRole('button', { name: 'إيقاف' }).click();
-    await expect
-      .poll(async () => (await getJson(request, '/admin/collectors') as { id: string; status: string }[]).find((c) => c.id === 'COL-2')?.status)
-      .toBe('suspended');
+    const statusCount = async (status: string) =>
+      ((await getJson(request, '/admin/collectors')) as { status: string }[]).filter((c) => c.status === status).length;
+    const rows = page.getByRole('region', { name: 'الجامعون' }).locator('tbody tr');
+    await expect(rows.first()).toBeVisible();
+    const idx = await rows.evaluateAll((trs) =>
+      trs.findIndex((tr) => [...tr.querySelectorAll('button')].some((b) => b.textContent === 'توثيق')),
+    );
+    expect(idx, 'no unverified collector to act on').toBeGreaterThanOrEqual(0);
+    const verifiedBefore = await statusCount('verified');
+    const suspendedBefore = await statusCount('suspended');
+    await rows.nth(idx).getByRole('button', { name: 'توثيق' }).click();
+    await expect.poll(() => statusCount('verified')).toBe(verifiedBefore + 1);
+    await rows.nth(idx).getByRole('button', { name: 'إيقاف' }).click();
+    await expect.poll(() => statusCount('suspended')).toBe(suspendedBefore + 1);
     await shot(page, '09b-citycycle-collectors');
 
     // الأسعار: edit one price and save
