@@ -168,6 +168,50 @@ class AudioTranscriber(Protocol):
     async def transcribe(self, audio: bytes, mime_type: str) -> Transcription: ...
 
 
+def transcription_prompt_contract() -> dict:
+    """Return the exact model prompt and generation configuration, without audio bytes."""
+    prompt = (
+        "Transcribe this Egyptian Arabic voice note verbatim. "
+        "Return concise Arabic-script text, without translation "
+        "or added explanation. If speech is unclear, "
+        "transcribe only the clear words and lower confidence. "
+        "Return language ar-EG and confidence from 0 to 1."
+    )
+    return {
+        "prompt": prompt,
+        "generationConfig": {
+            "temperature": 0,
+            "maxOutputTokens": 512,
+            "responseMimeType": "application/json",
+            "responseSchema": {
+                "type": "OBJECT",
+                "properties": {
+                    "text": {"type": "STRING"},
+                    "language": {"type": "STRING", "enum": ["ar-EG"]},
+                    "confidence": {"type": "NUMBER", "minimum": 0, "maximum": 1},
+                },
+                "required": ["text", "language", "confidence"],
+            },
+        },
+    }
+
+
+def build_transcription_request(audio: bytes, mime_type: str) -> dict:
+    contract = transcription_prompt_contract()
+    return {
+        "contents": [
+            {
+                "role": "user",
+                "parts": [
+                    {"text": contract["prompt"]},
+                    {"inlineData": {"mimeType": mime_type, "data": base64.b64encode(audio).decode("ascii")}},
+                ],
+            }
+        ],
+        "generationConfig": contract["generationConfig"],
+    }
+
+
 class GeminiAudioTranscriber:
     """One-call structured audio transcription; credentials remain server-side."""
 
@@ -186,44 +230,7 @@ class GeminiAudioTranscriber:
     async def transcribe(self, audio: bytes, mime_type: str) -> Transcription:
         if mime_type not in {"audio/mp4", "audio/mpeg", "audio/webm", "audio/ogg"}:
             raise ProviderError("Unsupported voice-note media type")
-        request = {
-            "contents": [
-                {
-                    "role": "user",
-                    "parts": [
-                        {
-                            "text": (
-                                "Transcribe this Egyptian Arabic voice note verbatim. "
-                                "Return concise Arabic-script text, without translation "
-                                "or added explanation. If speech is unclear, "
-                                "transcribe only the clear words and lower confidence. "
-                                "Return language ar-EG and confidence from 0 to 1."
-                            )
-                        },
-                        {
-                            "inlineData": {
-                                "mimeType": mime_type,
-                                "data": base64.b64encode(audio).decode("ascii"),
-                            }
-                        },
-                    ],
-                }
-            ],
-            "generationConfig": {
-                "temperature": 0,
-                "maxOutputTokens": 512,
-                "responseMimeType": "application/json",
-                "responseSchema": {
-                    "type": "OBJECT",
-                    "properties": {
-                        "text": {"type": "STRING"},
-                        "language": {"type": "STRING", "enum": ["ar-EG"]},
-                        "confidence": {"type": "NUMBER", "minimum": 0, "maximum": 1},
-                    },
-                    "required": ["text", "language", "confidence"],
-                },
-            },
-        }
+        request = build_transcription_request(audio, mime_type)
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
         try:
             async with httpx.AsyncClient(timeout=self.timeout_seconds, transport=self.transport) as client:

@@ -23,6 +23,7 @@ from app.models import Incident
 from app.otp import TwilioVerifyProvider
 from app.routers import (
     admin,
+    analytics,
     auth,
     bins,
     incidents,
@@ -227,6 +228,7 @@ app.include_router(incidents.router)
 app.include_router(map.router)
 app.include_router(service_requests.router)
 app.include_router(bins.iot_router)
+app.include_router(analytics.router)
 app.include_router(bins.admin_router)
 app.include_router(bins.public_router)
 app.include_router(recycling.router)

@@ -196,9 +196,9 @@ The app calls `/ai/transcribe` after the citizen records a voice note and append
 
 `TriageSuggestion` includes `source: "model" | "fallback"` and `emergency: boolean`. When `emergency` is true, clients display emergency contact options before the AI suggestion; client-side keyword detection remains a safety fallback while triage is loading or unavailable.
 
-### Analytics APIs (PR2, not implemented in the backend foundation)
+### Analytics APIs (Member 5)
 
-These endpoints are a frozen contract for the AI/optimizer work. Until that PR is deployed, clients must show an unavailable/retry state and must not fabricate results.
+These endpoints are implemented by the Member 5 AI/optimizer branch. Clients should show an unavailable/retry state when the branch is not deployed or an optional runtime dependency is unavailable.
 
 `GET /admin/bins/forecast?horizonHours=24` is staff-only; `horizonHours` is integer 1..168. It returns `{ generatedAt, horizonHours, items: [{ binId, currentFillPct, predictedFillPct, hoursToFull, sampleCount, method: "linear"|"insufficient_data", reason: "ok"|"insufficient_data"|"stale"|"non_increasing" }] }`. It uses only valid synchronized readings from the preceding seven days, discards future readings, splits trend history after a 20-point collection reset, and requires at least three distinct timestamps spanning one hour. The newest persisted sequence must itself be synchronized, not future dated, and match both the bin's current fill and `lastSeq`; stale or misaligned data yields null predictions. Linear predictions are clamped to 0..100 and use the bin's full threshold; this is telemetry extrapolation, not a Gemini forecast.
 
@@ -324,7 +324,7 @@ Optional keys are omitted, never `null`. Dashboard semantics: `open` is always t
 
 ## CityCycle — proposed
 
-> **Backend status (2026-10):** every route in this section is implemented in `backend/` except `GET /admin/bins/forecast`, `POST /admin/recycling/routes/optimize`, `GET /admin/hotspots` (member 5) and `POST /gateway/sms` (stretch). Tests: `backend/tests/test_citycycle.py`, `test_waste_classify.py`. Exact behaviours the backend added are in *Backend behaviour* below.
+> **Backend status (2026-10):** the analytics routes `GET /admin/bins/forecast`, `POST /admin/recycling/routes/optimize`, and `GET /admin/hotspots` are implemented on the Member 5 branch. `POST /gateway/sms` remains deferred. Tests: `backend/tests/test_citycycle.py`, `test_waste_classify.py`. Exact behaviours the backend added are in *Backend behaviour* below.
 
 Waste and recycling pillar ([vision](vision.md), [decision 0004](decisions/0004-citycycle-waste-pillar.md)). **Everything in this section is *proposed*:** agree it by contract PR before building on it. It only **adds** to the contract above; nothing above changes (`ServiceType` stays `bulky_waste | tree_maintenance`). Owner: member 4 (API & DB); AI routes member 5; device (IoT) routes member 6. Feature plan: [`features/`](features/README.md).
 
